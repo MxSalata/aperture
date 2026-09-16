@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-demo/
+# www/ is the IPM-served build; regenerate with `npm run build:www` before a release
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.vite/
+*.log
+.DS_Store
+.env.local
+.env.*.local

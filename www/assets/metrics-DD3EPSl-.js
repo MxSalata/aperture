@@ -1,0 +1,1 @@
+import{Z as m}from"./index-CjKHDzaW.js";import"./mantine-Caa8Nfyz.js";import"./query-CJ8lSMWB.js";import"./react-BrX_WU0W.js";const p=120,i=m()(e=>({samples:[],push:r=>e(s=>{const l=s.samples[s.samples.length-1];if(l&&r.t-l.t<500)return s;const t=[...s.samples,r];return{samples:t.length>p?t.slice(t.length-p):t}}),clear:()=>e({samples:[]})}));export{i as useMetrics};

@@ -1,0 +1,36 @@
+:root {
+  --aperture-mono: ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular figures make numeric columns line up. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.mono {
+  font-family: var(--aperture-mono);
+  font-size: 0.85em;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+/* Sticky table header inside scroll areas. */
+.sticky-thead thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--mantine-color-body);
+}

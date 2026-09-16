@@ -1,0 +1,7 @@
+dist
+dist-demo
+node_modules
+spec
+src/api/schema.d.ts
+src/api/spec-index.json
+public/mockServiceWorker.js

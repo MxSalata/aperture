@@ -1,0 +1,41 @@
+# One command to try Aperture against a real IRIS:
+#   docker compose up --build
+# then open http://localhost:8080 (nginx, browser routing) or
+#           http://localhost:52773/aperture/ (served by IRIS itself, hash routing).
+# Login: _SYSTEM / SYS  (or SuperUser / SYS)
+
+services:
+  iris:
+    image: ${IRIS_IMAGE:-intersystemsdc/iris-community:latest}
+    container_name: aperture-iris
+    ports:
+      - '1972:1972'
+      - '52773:52773'
+    environment:
+      - ISC_DATA_DIRECTORY=/durable/iris
+    volumes:
+      - iris-durable:/durable
+      - ./:/opt/aperture:ro
+    command: --check-caps false --ISCAgent false -a /opt/aperture/docker/iris/init.sh
+    healthcheck:
+      test: ['CMD', 'iris', 'qlist', 'IRIS']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  portal:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: aperture-portal
+    ports:
+      - '8080:80'
+    environment:
+      - IRIS_UPSTREAM=http://iris:52773
+      - IRIS_API_PREFIX=/api/admin
+    depends_on:
+      iris:
+        condition: service_healthy
+
+volumes:
+  iris-durable:

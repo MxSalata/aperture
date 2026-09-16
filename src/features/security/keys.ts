@@ -1,0 +1,35 @@
+export const secKeys = {
+  users: ['security', 'users'] as const,
+  user: (n: string) => ['security', 'users', n] as const,
+  roles: ['security', 'roles'] as const,
+  role: (n: string) => ['security', 'roles', n] as const,
+  resources: ['security', 'resources'] as const,
+  services: ['security', 'services'] as const,
+  webApps: ['security', 'web-apps'] as const,
+  webApp: (n: string) => ['security', 'web-apps', n] as const,
+  auditEnabled: ['security', 'audit', 'enabled'] as const,
+  auditEvents: ['security', 'audit', 'events'] as const,
+  ssl: ['security', 'ssl'] as const,
+  sslOne: (n: string) => ['security', 'ssl', n] as const,
+  sqlPrivs: (ns: string, grantee: string) => ['security', 'sql', ns, grantee] as const,
+};
+
+/** AutheEnabled bit flags (Security.Applications / Security.Services). */
+export const AUTHE_FLAGS: { bit: number; label: string; hint: string }[] = [
+  { bit: 32, label: 'Password', hint: 'IRIS username/password' },
+  { bit: 64, label: 'Unauthenticated', hint: 'Anonymous access as UnknownUser' },
+  { bit: 16, label: 'OS', hint: 'Operating-system authentication' },
+  { bit: 1, label: 'Kerberos (K5 cache)', hint: 'Kerberos credentials cache' },
+  { bit: 256, label: 'LDAP', hint: 'LDAP directory' },
+  { bit: 1024, label: 'Delegated', hint: 'ZAUTHENTICATE routine' },
+  { bit: 2048, label: 'Login token', hint: 'Login token (2FA flows)' },
+];
+
+export function flagsToBits(flags: number[]): number {
+  return flags.reduce((a, b) => a | b, 0);
+}
+
+export function bitsToFlags(bits: number | undefined): number[] {
+  const v = bits ?? 0;
+  return AUTHE_FLAGS.map((f) => f.bit).filter((b) => (v & b) === b);
+}

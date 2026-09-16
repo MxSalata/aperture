@@ -1,0 +1,39 @@
+zn "%SYS"
+Write "IRIS version: ",$zversion,!
+Do ##class(Security.Users).UnExpireUserPasswords("*")
+// ---- /api/admin: enable, allow password auth, turn on JWT (IRIS 2026.2+) -----
+Set app="/api/admin"
+If ##class(Security.Applications).Exists(app) {
+  Do ##class(Security.Applications).Get(app,.p)
+  Set p("Enabled")=1
+  Set p("AutheEnabled")=$zboolean(+$get(p("AutheEnabled")),32,7)
+  Set p("JWTAuthEnabled")=1
+  Set sc=##class(Security.Applications).Modify(app,.p)
+  Write "Configured ",app,": ",$select(sc:"OK",1:$system.Status.GetErrorText(sc)),!
+} Else {
+  Write "WARNING: web application ",app," does not exist on this IRIS version.",!
+}
+// ---- Aperture itself, served by IRIS at /aperture (same origin, no proxy) --------
+Set www="/opt/aperture/www/"
+If ##class(%File).Exists(www_"index.html") {
+  Set name="/aperture"
+  Kill a
+  Set a("NameSpace")="%SYS"
+  Set a("Description")="Aperture management portal"
+  Set a("Path")=www
+  Set a("Enabled")=1
+  Set a("ServeFiles")=1
+  Set a("Recurse")=1
+  Set a("AutheEnabled")=64
+  Set a("UseCookies")=2
+  Set a("CSPZENEnabled")=0
+  If ##class(Security.Applications).Exists(name) {
+    Set sc=##class(Security.Applications).Modify(name,.a)
+  } Else {
+    Set sc=##class(Security.Applications).Create(name,.a)
+  }
+  Write "Web application ",name,": ",$select(sc:"OK",1:$system.Status.GetErrorText(sc)),!
+} Else {
+  Write "No built portal at ",www," (run `npm run build:www`); skipping /aperture",!
+}
+halt
