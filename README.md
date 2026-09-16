@@ -149,8 +149,19 @@ browser ──HTTPS──▶ nginx (dist/) ──/api/admin──▶ IRIS privat
   for every operation without a hand-written handler. The same handlers run in the browser (demo)
   and in Node (Vitest, Playwright).
 
-Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the details, and
-[docs/CONTEST_PLAN.md](docs/CONTEST_PLAN.md) for the contest evaluation.
+## Documentation
+
+| File | Purpose |
+| --- | --- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | how the layers fit: typed client, auth, async jobs, privileges, mock, deployment |
+| [docs/ARCHITECTURE_OVERVIEW.mmd](docs/ARCHITECTURE_OVERVIEW.mmd) | the same as a Mermaid diagram |
+| [docs/CONTEST_PLAN.md](docs/CONTEST_PLAN.md) | contest requirements, judging, bonuses, plan |
+| [docs/OPENEXCHANGE_SUBMISSION.md](docs/OPENEXCHANGE_SUBMISSION.md) | paste-ready Open Exchange listing |
+| [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md) | everything to tick before the deadline |
+| [docs/DEMO_ASSETS_CHECKLIST.md](docs/DEMO_ASSETS_CHECKLIST.md) | screenshots (generated) and video assets |
+| [docs/ARTICLE.md](docs/ARTICLE.md) | Developer Community article draft |
+| [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md) | demo video storyboard |
+| [docs/prototype/](docs/prototype/) | the original single-file prototype this repository started from (archived) |
 
 ## Spec findings
 
