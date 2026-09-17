@@ -52,7 +52,7 @@ docker compose up --build
 - http://localhost:52773/aperture/ - Aperture served by IRIS itself (after `npm run build:www`, see below)
 - Sign in with `_SYSTEM` / `SYS`
 
-The `iris` service runs `intersystemsdc/iris-community:latest` (override with `IRIS_IMAGE=...`).
+The `iris` service runs `intersystemsdc/iris-community:latest`; set `IRIS_IMAGE=intersystemsdc/irishealth-community:latest` in a `.env` file next to the compose file for IRIS for Health Community.
 On first start [`docker/iris/init.script`](docker/iris/init.script) enables the `/api/admin` web
 application with password + JWT authentication and, if `www/` exists, registers the portal as the
 `/aperture` web application.
@@ -85,6 +85,7 @@ Other scripts:
 | `npm test` | Vitest unit tests (client, auth, privileges, async jobs, spec index) |
 | `npm run test:e2e` | Playwright end-to-end tests against the demo build |
 | `npm run smoke` | walks the main screens in headless Chromium and refreshes `docs/screenshots/` |
+| `npm run verify:live` | conformance check of a real instance (`IRIS_URL`, `IRIS_USER`, `IRIS_PASSWORD`), saves JSON evidence |
 | `npm run gen:api` | regenerate `src/api/schema.d.ts` and the operation index from `spec/mainspec_v2.json` |
 
 ### Requirements on the IRIS side
@@ -98,14 +99,17 @@ Other scripts:
 | Area | Screens | Notable |
 | --- | --- | --- |
 | **Dashboard** | live stats, sparklines, global refs/s and disk I/O charts, health, alerts, upcoming tasks, busy processes, resource seizes | polls `/v2/monitor/*` every 3 s, keeps history while you navigate |
-| **Job Center** | every `202 Accepted` response, with console output, progress, pause / resume / cancel | fed automatically by the API client; toasts on completion |
+| **Job Center** | every `202 Accepted` response, with console output, progress, pause / resume / cancel | fed automatically by the API client (Location header or body GUID); toasts on completion |
+| **Activity** | every change this tab sent and what the server answered, exportable as JSON | recorded by the client middleware |
+| **Host monitor** | CPU, memory, disk, licence and alerts.log from the native `/api/monitor` service | OpenMetrics parsed in the browser; degrades to "unavailable" honestly |
 | **Databases** | configuration + local file view, metrics (async), mount/dismount, compact, defragment, integrity check, truncate, expand, volumes, create, delete | dangerous actions require typing the name |
 | **Namespaces** | create, delete, enable interoperability, copy mappings, global/package/routine mappings | |
 | **Processes** | live list, detail with variables and roles, suspend/resume/terminate, broadcast | |
 | **Locks, Journals, Tasks, Web sessions, License** | lock removal with transaction check, journal files/records/settings/switching, task schedules + history + task manager, session ending, license key/usage/servers | |
 | **Security** | users, roles, resources, services, web applications (JWT, CORS), audit events + log + purge, TLS/SSL configs + test, SQL privileges | |
 | **API Explorer** | every one of the 273 operations rendered from the OpenAPI document: parameters, request body form or JSON, privileges, documented responses, response as table / fields / JSON | reachable from the command palette |
-| **Everywhere** | ⌘K command palette, privilege badges, raw JSON of every response, dark mode, responsive layout, multiple saved connections, escalation-role login | |
+| **Everywhere** | ⌘K command palette, privilege badges, raw JSON of every response, dark mode, responsive layout, multiple saved connections, escalation-role login, LIVE / OFFLINE / DEMO indicator | |
+| **Change review** | every edit form shows old → new per field, re-reads the object to detect concurrent edits, and only then applies | `reviewChanges()` in `src/components/ReviewChanges.tsx` |
 
 <details>
 <summary>More screenshots</summary>
@@ -163,15 +167,25 @@ browser ──HTTPS──▶ nginx (dist/) ──/api/admin──▶ IRIS privat
 | [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md) | demo video storyboard |
 | [docs/prototype/](docs/prototype/) | the original single-file prototype this repository started from (archived) |
 
+## Verified against real IRIS
+
+The CI job `verify-iris` boots `intersystemsdc/iris-community:latest`, applies the init script and runs
+`scripts/live-check.mjs`: JWT login and refresh, `/info`, list shapes, the error envelope and a full `202` round trip,
+plus a check that the portal is served at `/aperture/`. Run the same against your own instance with
+`npm run verify:live`; results are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md).
+
 ## Spec findings
 
-Things noticed while implementing the whole specification (reported for the API team):
+Things noticed while implementing the whole specification (reported for the API team). The specification is
+vendored at commit `f764aea427e5c0b1dd08a4c18a0457e0ff7b3b34` of
+[intersystems-community/sysadmin-api-specification](https://github.com/intersystems-community/sysadmin-api-specification).
 
 1. `LocalDatabaseList` is declared as an object, but `GET /v2/database-dirs` returns an array. Aperture accepts both.
 2. `GET /info` returns the `Info` object without the standard `{status, console, result}` envelope; every other endpoint uses the envelope.
 3. `POST /v2/database-dir/integrity-check` takes its targets in the body (`Databases[]`) while its siblings (`compact`, `defragment`, …) use the `dir` query parameter.
 4. `POST /v2/journal/switch-dir` documents no body, so the target directory can only be the configured alternate directory.
-5. The `Location` header example uses `/v1/async-result`; the v2 endpoint is `/v2/async-result`. Aperture only relies on the `id` query parameter.
+5. The `Location` header example uses `/v1/async-result`; the v2 endpoint is `/v2/async-result`. Aperture only relies on the `id` query parameter, and falls back to the `GUID` in the body when the header is not exposed.
+6. Real instances have been observed to answer errors as `status.errors` (objects with a `code`) instead of the documented `status.Errors` strings, and IRIS 2026.2 accepts `ServerDefinition` where the spec names the OAuth client field `OAuth2ServerDefinition` (both reported in the IRIS Workbench verification record). Aperture normalizes the envelopes and adapts the field; see `src/lib/quirks.ts`.
 
 ## Tech stack
 

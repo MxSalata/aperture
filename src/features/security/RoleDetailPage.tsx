@@ -12,6 +12,7 @@ import { KeyValueList, renderValue } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { JsonViewer } from '@/components/JsonViewer';
 import { confirmDanger } from '@/components/ConfirmDanger';
+import { reviewChanges } from '@/components/ReviewChanges';
 import { secKeys } from './keys';
 import { useResourceNames } from './RolesPage';
 import { useRoleNames } from './UsersPage';
@@ -48,7 +49,7 @@ export default function RoleDetailPage() {
         <Grid.Col span={{ base: 12, md: 5 }}><Paper p="md"><JsonViewer value={{ role: r, owners: o }} /></Paper></Grid.Col>
       </Grid>
       <Modal opened={opened} onClose={close} title={`Edit ${name}`} centered size="lg">
-        <form onSubmit={form.onSubmit((v) => save.mutate(v))}>
+        <form onSubmit={form.onSubmit((v) => reviewChanges({ title: `Review changes to ${name}`, before: q.data as Record<string, unknown>, after: v as Record<string, unknown>, refetch: () => result(api().GET('/v2/security/role', params)) as Promise<Record<string, unknown>>, onConfirm: () => save.mutateAsync(v) }))}>
           <Stack gap="sm">
             <TextInput label="Description" {...form.getInputProps('Description')} />
             <TagsInput label="Resources with permissions" data={resources.map((x) => `${x}:U`)} splitChars={[',', ' ']} {...form.getInputProps('Resources')} />

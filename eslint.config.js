@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'dist-demo', 'public/mockServiceWorker.js', 'src/api/schema.d.ts', 'coverage', 'playwright-report', 'test-results'] },
+  { ignores: ['dist', 'dist-demo', 'www', 'public/mockServiceWorker.js', 'src/api/schema.d.ts', 'coverage', 'playwright-report', 'test-results'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx,mjs}'],

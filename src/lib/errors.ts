@@ -1,10 +1,10 @@
 /**
  * Error model for the SysAdmin API.
  *
- * Every non-2xx response carries the standard envelope
- * `{ status: { Errors: string[], summary: string }, console: string[] }`,
- * so we surface `summary` (or the first error) as the message and keep the
- * rest for the details panel.
+ * The documented envelope is `{ status: { Errors: string[], summary }, console: string[] }`.
+ * Real instances have also been observed to answer with `status.errors` as an array of
+ * objects (`{ code, error, domain, id, params }`), and classic %CSP.REST errors use a
+ * top-level `errors` array. `normalizeErrors` accepts all three.
  */
 export interface ApiErrorInit {
   status: number;
@@ -68,6 +68,40 @@ export function httpStatusText(status: number): string {
     default:
       return `HTTP ${status}`;
   }
+}
+
+interface RawEnvelope {
+  status?: { Errors?: unknown; errors?: unknown; summary?: string } | string;
+  errors?: unknown;
+  summary?: string;
+  console?: unknown;
+}
+
+function errorText(e: unknown): string {
+  if (typeof e === 'string') return e;
+  if (e && typeof e === 'object') {
+    const o = e as Record<string, unknown>;
+    const msg = [o.error, o.message, o.summary, o.text].find((v) => typeof v === 'string' && v) as string | undefined;
+    const code = o.code;
+    if (msg) return code !== undefined && code !== '' ? `${msg} (${code})` : msg;
+    if (code !== undefined) return `Error code ${code}`;
+    return JSON.stringify(e);
+  }
+  return e === undefined || e === null ? '' : String(e);
+}
+
+/** Extract messages, summary and console lines from any of the observed envelope shapes. */
+export function normalizeErrors(body: unknown): { errors: string[]; summary?: string; console: string[] } {
+  if (typeof body === 'string') return { errors: body.trim() ? [body.trim()] : [], console: [] };
+  const b = (body && typeof body === 'object' ? body : {}) as RawEnvelope;
+  const status = typeof b.status === 'object' && b.status ? b.status : undefined;
+  const raw = status?.Errors ?? status?.errors ?? b.errors ?? [];
+  const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  return {
+    errors: list.map(errorText).filter(Boolean),
+    summary: status?.summary || b.summary || undefined,
+    console: Array.isArray(b.console) ? b.console.map(String) : [],
+  };
 }
 
 /** Human readable one-liner for any thrown value. */

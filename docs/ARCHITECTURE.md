@@ -94,7 +94,34 @@ database metrics, audit-log queries, journal record listings. They answer
 - Progress: results derived from `AsyncTaskResultSysBGTask` carry `ProgressCurrent/ProgressTotal/ProgressUnits`;
   the Job Center renders them as a progress bar.
 
-### 2.5 Privileges
+### 2.5 Activity log and reachability
+
+The same middleware records every non-GET call (method, path, status, the server's summary,
+duration, job id) in the `activity` store, shown on the Activity screen and exportable as JSON.
+`call()` also feeds the `health` store: a network failure flips the header pill to OFFLINE with
+the error, the next successful response flips it back to LIVE. The dashboard adds a PARTIAL DATA
+badge when some of its polls fail, so a broken source is never hidden behind stale numbers.
+
+### 2.6 Change review
+
+`reviewChanges()` (`components/ReviewChanges.tsx`) wraps every edit form: it diffs the loaded
+object against the form values, lists old → new per field, re-reads the object from the server to
+detect concurrent edits (an "Apply anyway" checkbox overrides), and only then runs the mutation.
+No dialog is shown when nothing changed.
+
+### 2.7 Native monitor API
+
+`api/monitor.ts` reads `/api/monitor/metrics` (OpenMetrics text, parsed by `parsePrometheus`) and
+`/api/monitor/alerts` for host-level signals the SysAdmin API lacks. JWT tokens are scoped to
+`/api/admin`, so only Basic credentials are forwarded; an unauthenticated or missing monitor app
+is reported as unavailable rather than failing the screen.
+
+### 2.8 Spec quirks
+
+`lib/quirks.ts` lists known differences between the specification and running instances with their
+source; the Explorer shows them beside the affected operation and applies body adapters before sending.
+
+### 2.9 Privileges
 
 `GET /info` returns `privileges: { Operate: {use}, Manage: {use}, Secure: {use}, … }`.
 `api/privileges.ts#checkPrivileges(info, ['%Admin_Manage:U', '%Admin_Operate:U'])` returns
@@ -111,6 +138,8 @@ and the Explorer all use it.
 | `jobs` | sessionStorage | followed async tasks |
 | `metrics` | memory | ring buffer of dashboard samples (120 × 3 s) |
 | `demo` | sessionStorage | whether the in-browser mock is active |
+| `activity` | sessionStorage | changes sent from this tab |
+| `health` | memory | reachability of the instance |
 
 Server state is entirely TanStack Query: `staleTime` 10 s, one retry after a `401`, no retry on other
 4xx. Mutations go through `useApiMutation`, which toasts the envelope summary, toasts `ApiError`s

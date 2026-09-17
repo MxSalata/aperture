@@ -12,6 +12,7 @@ import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { JsonViewer } from '@/components/JsonViewer';
 import { confirmDanger } from '@/components/ConfirmDanger';
+import { reviewChanges } from '@/components/ReviewChanges';
 import { BoolBadge } from '@/components/StatusBadge';
 import { useSession } from '@/stores/session';
 import { secKeys } from './keys';
@@ -64,7 +65,7 @@ export default function UserDetailPage() {
         <Grid.Col span={{ base: 12, md: 5 }}><Paper p="md"><JsonViewer value={u} /></Paper></Grid.Col>
       </Grid>
       <Modal opened={editOpen} onClose={closeEdit} title={`Edit ${name}`} centered size="lg">
-        <form onSubmit={form.onSubmit((v) => save.mutate(v))}>
+        <form onSubmit={form.onSubmit((v) => reviewChanges({ title: `Review changes to ${name}`, before: q.data as Record<string, unknown>, after: v as Record<string, unknown>, refetch: () => result(api().GET('/v2/security/user', params)) as Promise<Record<string, unknown>>, onConfirm: () => save.mutateAsync(v) }))}>
           <Stack gap="sm">
             <TextInput label="Full name" {...form.getInputProps('FullName')} />
             <MultiSelect label="Roles" data={roles} searchable {...form.getInputProps('Roles')} />

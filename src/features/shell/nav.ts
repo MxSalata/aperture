@@ -10,6 +10,8 @@ import {
   IconDatabase,
   IconFileText,
   IconGauge,
+  IconHistory,
+  IconHeartRateMonitor,
   IconKey,
   IconLayoutGrid,
   IconLicense,
@@ -46,6 +48,7 @@ export const NAV: NavSection[] = [
     items: [
       { label: 'Dashboard', to: '/', icon: IconGauge, privileges: ['%Admin_Operate:U'], description: 'Live system health, performance and license usage', keywords: ['home', 'monitor', 'stats'] },
       { label: 'Job Center', to: '/jobs', icon: IconClipboardList, privileges: ['%Admin_Operate:U'], description: 'Long-running operations queued through the API', keywords: ['async', 'tasks', 'background'] },
+      { label: 'Activity', to: '/activity', icon: IconHistory, privileges: [], description: 'Changes sent from this tab and what the server answered', keywords: ['history', 'log', 'changes'] },
     ],
   },
   {
@@ -59,6 +62,7 @@ export const NAV: NavSection[] = [
       { label: 'Tasks', to: '/tasks', icon: IconActivity, privileges: ['%Admin_Operate:U', '%Admin_Task:U'], description: 'Task manager schedules and history', keywords: ['schedule', 'cron'] },
       { label: 'Web sessions', to: '/web-sessions', icon: IconWorld, privileges: ['%Admin_Operate:U'], description: 'Active CSP/REST sessions' },
       { label: 'License', to: '/license', icon: IconLicense, privileges: ['%Admin_Manage:U', '%Admin_Operate:U'], description: 'License key, usage and license servers' },
+      { label: 'Host monitor', to: '/monitor', icon: IconHeartRateMonitor, privileges: [], description: 'CPU, memory, disk and alerts from /api/monitor', keywords: ['metrics', 'prometheus', 'cpu', 'memory', 'disk', 'alerts'] },
     ],
   },
   {

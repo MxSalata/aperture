@@ -2,8 +2,10 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { safeSessionStorage } from './storage';
 import type { Info } from '@/api/types';
-import { ApiError } from '@/lib/errors';
+import { ApiError, normalizeErrors } from '@/lib/errors';
 import { apiBase, decodeJwtPayload } from '@/api/base';
+import { useJobs } from '@/stores/jobs';
+import { useMetrics } from '@/stores/metrics';
 
 /**
  * Session store: who we are, on which instance, and how we authenticate.
@@ -25,6 +27,8 @@ export interface LoginArgs {
   password: string;
   role?: string;
   auth?: 'auto' | 'jwt' | 'basic';
+  /** Persist tokens in sessionStorage so a reload keeps the session (default true). */
+  persist?: boolean;
 }
 
 interface JwtTokens {
@@ -49,6 +53,8 @@ export interface SessionState {
   lastError: string | null;
   /** Set when the session was ended by the app (expired token, server 401, …). */
   endedReason: string | null;
+  /** When false, credentials stay in memory only and a reload signs you out. */
+  persistTokens: boolean;
 
   login(args: LoginArgs): Promise<void>;
   refresh(): Promise<boolean>;
@@ -75,15 +81,8 @@ async function readJson(res: Response): Promise<Record<string, unknown> | null> 
 }
 
 function errorFromBody(res: Response, body: Record<string, unknown> | null, fallback?: string): ApiError {
-  const status = (body?.status ?? {}) as { Errors?: string[]; summary?: string };
-  return new ApiError({
-    status: res.status,
-    url: res.url,
-    method: 'POST',
-    errors: status.Errors,
-    summary: status.summary || fallback,
-    console: body?.console as string[] | undefined,
-  });
+  const n = normalizeErrors(body);
+  return new ApiError({ status: res.status, url: res.url, method: 'POST', errors: n.errors, summary: n.summary || fallback, console: n.console });
 }
 
 function tokensFromLoginBody(body: Record<string, unknown> | null): JwtTokens | null {
@@ -163,6 +162,7 @@ export const useSession = create<SessionState>()(
       connectionId: null,
       lastError: null,
       endedReason: null,
+      persistTokens: true,
 
       apiBase: () => apiBase(get().baseUrl),
 
@@ -175,7 +175,7 @@ export const useSession = create<SessionState>()(
 
       login: async (args) => {
         const base = apiBase(args.baseUrl);
-        set({ status: 'authenticating', lastError: null, endedReason: null, baseUrl: args.baseUrl, connectionId: args.connectionId });
+        set({ status: 'authenticating', lastError: null, endedReason: null, baseUrl: args.baseUrl, connectionId: args.connectionId, persistTokens: args.persist !== false });
         try {
           const preferred = args.auth ?? 'auto';
           let outcome: LoginOutcome = 'unsupported';
@@ -268,7 +268,6 @@ export const useSession = create<SessionState>()(
         }
         set({ ...anonymous, endedReason: opts?.reason ?? null });
         // Jobs and metric history belong to the user/instance that just ended.
-        const [{ useJobs }, { useMetrics }] = await Promise.all([import('@/stores/jobs'), import('@/stores/metrics')]);
         useJobs.getState().clearAll();
         useMetrics.getState().clear();
       },
@@ -288,17 +287,18 @@ export const useSession = create<SessionState>()(
       storage: createJSONStorage(() => safeSessionStorage),
       partialize: (s) =>
         ({
-          status: s.status === 'authenticated' ? 'authenticated' : 'anonymous',
+          status: s.status === 'authenticated' && s.persistTokens ? 'authenticated' : 'anonymous',
           mode: s.mode,
           baseUrl: s.baseUrl,
           connectionId: s.connectionId,
           username: s.username,
           role: s.role,
-          accessToken: s.accessToken,
-          refreshToken: s.refreshToken,
-          basicCredentials: s.basicCredentials,
-          expiresAt: s.expiresAt,
-          info: s.info,
+          persistTokens: s.persistTokens,
+          accessToken: s.persistTokens ? s.accessToken : null,
+          refreshToken: s.persistTokens ? s.refreshToken : null,
+          basicCredentials: s.persistTokens ? s.basicCredentials : null,
+          expiresAt: s.persistTokens ? s.expiresAt : null,
+          info: s.persistTokens ? s.info : null,
         }) as SessionState,
     },
   ),

@@ -22,7 +22,8 @@
     "test:e2e": "playwright test",
     "gen:api": "openapi-typescript spec/mainspec_v2.json -o src/api/schema.d.ts && node scripts/build-spec-index.mjs",
     "build:www": "vite build --mode iris --outDir www",
-    "smoke": "node scripts/smoke-demo.mjs"
+    "smoke": "node scripts/smoke-demo.mjs",
+    "verify:live": "node scripts/live-check.mjs --save docs/verification/latest.json"
   },
   "dependencies": {
     "@mantine/charts": "^8.3.18",

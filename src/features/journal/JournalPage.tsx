@@ -10,6 +10,7 @@ import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { confirmDanger } from '@/components/ConfirmDanger';
+import { reviewChanges } from '@/components/ReviewChanges';
 import { formatBytes, formatDateTime } from '@/lib/format';
 import { useJobs } from '@/stores/jobs';
 
@@ -93,7 +94,7 @@ export default function JournalPage() {
           <Paper p="md" maw={720}>
             <Title order={5} mb="sm">Journal settings</Title>
             {settings.isError ? <ErrorAlert error={settings.error} /> : null}
-            <form onSubmit={form.onSubmit((v) => save.mutate(v))}>
+            <form onSubmit={form.onSubmit((v) => reviewChanges({ title: 'Review journal settings', before: settings.data as Record<string, unknown>, after: v as Record<string, unknown>, refetch: () => result(api().GET('/v2/journal/settings')) as Promise<Record<string, unknown>>, onConfirm: () => save.mutateAsync(v) }))}>
               <Stack gap="sm">
                 <TextInput label="Current directory" {...form.getInputProps('CurrentDirectory')} />
                 <TextInput label="Alternate directory" {...form.getInputProps('AlternateDirectory')} />

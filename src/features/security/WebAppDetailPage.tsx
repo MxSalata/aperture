@@ -12,6 +12,7 @@ import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { JsonViewer } from '@/components/JsonViewer';
 import { confirmDanger } from '@/components/ConfirmDanger';
+import { reviewChanges } from '@/components/ReviewChanges';
 import { BoolBadge } from '@/components/StatusBadge';
 import { useSession } from '@/stores/session';
 import { AUTHE_FLAGS, bitsToFlags, flagsToBits, secKeys } from './keys';
@@ -26,7 +27,8 @@ export default function WebAppDetailPage() {
   const q = useQuery({ queryKey: secKeys.webApp(name), enabled: !!name, queryFn: () => result(api().GET('/v2/web-app', { params: { query: { name } } })) });
   const p = { params: { query: { name } } } as const;
   const [opened, { open, close }] = useDisclosure(false);
-  const save = useApiMutation((v: FormValues) => { const { flags, ...body } = v; return run(api().PUT('/v2/web-app', { ...p, body: { ...body, AutheEnabled: flagsToBits(flags.map(Number)) } }), 'PUT'); }, { invalidate: [secKeys.webApps, secKeys.webApp(name)], onSuccess: close });
+  const toBody = (v: FormValues): Application => { const { flags, ...body } = v; return { ...body, AutheEnabled: flagsToBits(flags.map(Number)) }; };
+  const save = useApiMutation((body: Application) => run(api().PUT('/v2/web-app', { ...p, body }), 'PUT'), { invalidate: [secKeys.webApps, secKeys.webApp(name)], onSuccess: close });
   const remove = useApiMutation(() => run(api().DELETE('/v2/web-app', p), 'DELETE'), { invalidate: [secKeys.webApps], onSuccess: () => navigate('/security/web-apps') });
   const form = useForm<FormValues>({ initialValues: { flags: [] } });
   // Populate the form once the record arrives; the form object itself is stable.
@@ -59,7 +61,7 @@ export default function WebAppDetailPage() {
         <Grid.Col span={{ base: 12, md: 5 }}><Paper p="md"><JsonViewer value={a} maxHeight={800} /></Paper></Grid.Col>
       </Grid>
       <Modal opened={opened} onClose={close} title={`Edit ${name}`} centered size="lg">
-        <form onSubmit={form.onSubmit((v) => save.mutate(v))}>
+        <form onSubmit={form.onSubmit((v) => reviewChanges({ title: `Review changes to ${name}`, before: q.data as Record<string, unknown>, after: toBody(v) as Record<string, unknown>, refetch: () => result(api().GET('/v2/web-app', p)) as Promise<Record<string, unknown>>, onConfirm: () => save.mutateAsync(toBody(v)) }))}>
           <Stack gap="sm">
             <TextInput label="Description" {...form.getInputProps('Description')} />
             <Group grow>

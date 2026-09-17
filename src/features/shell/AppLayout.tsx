@@ -28,6 +28,7 @@ import { CommandPalette } from './CommandPalette';
 import { useSession } from '@/stores/session';
 import { useConnections } from '@/stores/connections';
 import { useDemo } from '@/stores/demo';
+import { useHealth } from '@/stores/health';
 import { selectActiveJobs, useJobs } from '@/stores/jobs';
 import { canUse, heldPrivileges } from '@/api/privileges';
 import { APP_NAME } from '@/theme';
@@ -63,6 +64,8 @@ function ServerChip() {
   const baseUrl = useSession((s) => s.baseUrl);
   const profiles = useConnections((s) => s.profiles);
   const demo = useDemo((s) => s.enabled);
+  const reachable = useHealth((s) => s.reachable);
+  const lastError = useHealth((s) => s.lastError);
   const profile = profiles.find((p) => p.id === connectionId);
   const version = info?.serverVersion?.match(/\d{4}\.\d+(?:\.\d+)?/)?.[0];
   const product = info?.product === 'irisforhealth' ? 'IRIS for Health' : info?.product === 'healthconnect' ? 'Health Connect' : 'IRIS';
@@ -87,7 +90,15 @@ function ServerChip() {
           <Badge size="xs" variant="filled" color="grape" leftSection={<IconFlask size={10} />}>
             DEMO
           </Badge>
-        ) : null}
+        ) : reachable ? (
+          <Badge size="xs" variant="dot" color="teal" title="The last request to the instance succeeded">
+            LIVE
+          </Badge>
+        ) : (
+          <Badge size="xs" variant="filled" color="red" title={lastError ?? 'The instance cannot be reached'}>
+            OFFLINE
+          </Badge>
+        )}
       </Group>
     </Tooltip>
   );

@@ -1,5 +1,6 @@
 import { mockDb } from '../db';
-import { drift, ok, fmtDate, inMinutes } from '../util';
+import { drift, ok, fmtDate, inMinutes, hoursAgo } from '../util';
+import { http, HttpResponse } from 'msw';
 import { route, OPERATE } from '../secure';
 
 function uptime(): string {
@@ -62,6 +63,58 @@ function mainDashboard() {
       .map((t) => ({ Task: t.Name, Time: t.NextScheduled, Status: t.Suspended ? 'Suspended' : 'Scheduled' })),
   };
 }
+
+function prometheusText(): string {
+  const cpu = drift(23, 12, 90, 2).toFixed(2);
+  const mem = drift(64, 6, 200, 3).toFixed(2);
+  const dbs = mockDb.localDbs.map((d) => ({ dir: d.Directory, size: d.Size, free: Math.round(d.AvailableSpace), full: Math.min(99, Math.round(100 - (d.AvailableSpace / Math.max(1, d.Size)) * 100)) }));
+  const lines = [
+    '# HELP iris_cpu_usage Percentage of CPU used by the instance',
+    '# TYPE iris_cpu_usage gauge',
+    `iris_cpu_usage ${cpu}`,
+    '# HELP iris_phys_mem_percent_used Percentage of physical memory in use',
+    '# TYPE iris_phys_mem_percent_used gauge',
+    `iris_phys_mem_percent_used ${mem}`,
+    '# HELP iris_license_percent_used Percentage of licence units in use',
+    '# TYPE iris_license_percent_used gauge',
+    `iris_license_percent_used ${Math.round(drift(45, 15, 120))}`,
+    '# HELP iris_process_count Number of IRIS processes',
+    '# TYPE iris_process_count gauge',
+    `iris_process_count ${mockDb.processes.length}`,
+    '# HELP iris_system_alerts Number of alerts in alerts.log',
+    '# TYPE iris_system_alerts gauge',
+    'iris_system_alerts 2',
+    '# HELP iris_glorefs_per_sec Global references per second',
+    '# TYPE iris_glorefs_per_sec gauge',
+    `iris_glorefs_per_sec ${Math.round(drift(18_500, 6_000, 45))}`,
+    '# HELP iris_jrn_free_space Free space in the journal directory (MB)',
+    '# TYPE iris_jrn_free_space gauge',
+    `iris_jrn_free_space{id="primary"} ${Math.round(drift(41_200, 200, 300))}`,
+    '# HELP iris_db_size_mb Database size in MB',
+    '# TYPE iris_db_size_mb gauge',
+    ...dbs.map((d) => `iris_db_size_mb{id="${d.dir}"} ${d.size}`),
+    '# HELP iris_db_free_space Free space available to the database (MB)',
+    '# TYPE iris_db_free_space gauge',
+    ...dbs.map((d) => `iris_db_free_space{id="${d.dir}"} ${d.free}`),
+    '# HELP iris_disk_percent_full Percentage of the volume holding the database that is in use',
+    '# TYPE iris_disk_percent_full gauge',
+    ...dbs.map((d) => `iris_disk_percent_full{id="${d.dir}"} ${d.full}`),
+    '# HELP iris_wd_cycle_time Write daemon cycle time in ms',
+    '# TYPE iris_wd_cycle_time gauge',
+    `iris_wd_cycle_time ${Math.round(drift(12, 6, 30))}`,
+  ];
+  return lines.join('\n') + '\n';
+}
+
+export const nativeMonitorHandlers = [
+  http.get('*/api/monitor/metrics', () => new HttpResponse(prometheusText(), { status: 200, headers: { 'Content-Type': 'text/plain; version=0.0.4' } })),
+  http.get('*/api/monitor/alerts', () =>
+    HttpResponse.json([
+      { time: hoursAgo(20), severity: 2, process: '5471', message: 'ERROR #5002: SFTP connection refused (task Nightly HL7 archive export)' },
+      { time: hoursAgo(31), severity: 1, process: 'JRNDMN', message: 'Journal file /usr/irissys/mgr/journal/20260915.002 switched: file size limit reached' },
+    ]),
+  ),
+];
 
 export const monitorHandlers = [
   route('get', '/v2/monitor/dashboard/main', OPERATE, () => ok(mainDashboard())),

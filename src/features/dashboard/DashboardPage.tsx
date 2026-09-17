@@ -14,6 +14,9 @@ import { formatCompact, formatDateTime, formatNumber, formatPercent, formatRelat
 import { useMetrics, type MetricSample } from '@/stores/metrics';
 import { useSession } from '@/stores/session';
 import { useSeriesColors } from './useSeriesColors';
+import { useHostMetrics } from '@/features/monitor/MonitorPage';
+import { metric } from '@/api/monitor';
+import { describeError } from '@/lib/errors';
 
 const POLL_MS = 3000;
 
@@ -58,6 +61,16 @@ export default function DashboardPage() {
     refetchInterval: paused ? false : POLL_MS,
   });
 
+  const host = useHostMetrics(POLL_MS * 3);
+  const failed = [
+    ['dashboard', main],
+    ['system resources', resources],
+    ['globals and routines', globals],
+  ].filter(([, q]) => (q as { isError: boolean }).isError) as [string, unknown][];
+  const cpu = host.data ? metric(host.data, 'iris_cpu_usage')?.value : undefined;
+  const mem = host.data ? metric(host.data, 'iris_phys_mem_percent_used')?.value : undefined;
+  const diskFull = host.data ? host.data.filter((s) => s.name === 'iris_disk_percent_full').reduce((a, s) => Math.max(a, s.value), 0) : undefined;
+
   useEffect(() => {
     const d = main.data;
     if (!d) return;
@@ -100,6 +113,11 @@ export default function DashboardPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           <>
+            {failed.length ? (
+              <Tooltip label={`Failing: ${failed.map(([n]) => n).join(', ')}`}>
+                <Badge color="yellow" variant="filled">PARTIAL DATA</Badge>
+              </Tooltip>
+            ) : null}
             <Button size="xs" variant={paused ? 'filled' : 'default'} leftSection={<IconRefresh size={14} />} onClick={() => setPaused((p) => !p)}>
               {paused ? 'Resume polling' : 'Pause polling'}
             </Button>
@@ -141,6 +159,24 @@ export default function DashboardPage() {
           footer={licenseLimit ? `limit ${formatNumber(licenseLimit)} · peak ${licenseHigh ?? '-'}%` : 'no license limit'}
         />
       </SimpleGrid>
+
+      <Paper p="sm" mb="md">
+        <Group justify="space-between" wrap="wrap" gap="sm">
+          <Group gap="lg" wrap="wrap">
+            <Text size="xs" c="dimmed" fw={600} tt="uppercase" style={{ letterSpacing: 0.4 }}>Host</Text>
+            {host.isError ? (
+              <Text size="xs" c="dimmed">metrics unavailable - {describeError(host.error)}</Text>
+            ) : (
+              <>
+                <Text size="sm">CPU <b className="tabular">{cpu === undefined ? '-' : formatPercent(cpu, 0)}</b></Text>
+                <Text size="sm">Memory <b className="tabular">{mem === undefined ? '-' : formatPercent(mem, 0)}</b></Text>
+                <Text size="sm">Fullest DB disk <b className="tabular">{diskFull === undefined || !host.data?.length ? '-' : formatPercent(diskFull, 0)}</b></Text>
+              </>
+            )}
+          </Group>
+          <Button component={Link} to="/monitor" size="compact-xs" variant="subtle">Host monitor</Button>
+        </Group>
+      </Paper>
 
       <Grid gutter="md" mb="md">
         <Grid.Col span={{ base: 12, lg: 7 }}>

@@ -86,7 +86,8 @@ export const processHandlers = [
     const p = findProcess(request);
     if (!p) return notFound('Process');
     if (p.State !== 'SUSP') return fail(409, 'Process is not suspended');
-    p.State = 'RUNW';
+    // Real IRIS reports a resumed process as HANG (waiting) until it runs again.
+    p.State = 'HANG';
     return ok({}, { summary: `Process ${p.Pid} resumed` });
   }),
 

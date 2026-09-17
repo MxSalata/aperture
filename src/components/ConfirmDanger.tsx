@@ -64,6 +64,7 @@ export function confirmDanger(opts: Options) {
     modalId: id,
     title: opts.title,
     centered: true,
+    zIndex: 1100,
     children: <Body {...opts} id={id} />,
   });
 }

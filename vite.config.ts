@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       strictPort: true,
       proxy: {
+        '/api/monitor': { target: irisUrl, changeOrigin: true, secure: false },
         // Avoids CORS during development: the browser talks to Vite, Vite talks to IRIS.
         '/api/admin': {
           target: irisUrl,

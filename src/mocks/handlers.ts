@@ -1,5 +1,5 @@
 import { generalHandlers } from './handlers/general';
-import { monitorHandlers } from './handlers/monitor';
+import { monitorHandlers, nativeMonitorHandlers } from './handlers/monitor';
 import { asyncHandlers } from './handlers/asyncResult';
 import { databaseHandlers } from './handlers/databases';
 import { namespaceHandlers } from './handlers/namespaces';
@@ -15,6 +15,7 @@ import { genericHandler } from './handlers/generic';
 export const handlers = [
   ...generalHandlers,
   ...monitorHandlers,
+  ...nativeMonitorHandlers,
   ...asyncHandlers,
   ...databaseHandlers,
   ...namespaceHandlers,

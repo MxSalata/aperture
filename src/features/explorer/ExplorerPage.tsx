@@ -1,4 +1,4 @@
-import { Accordion, Badge, Box, Button, Checkbox, Code, Grid, Group, NavLink, NumberInput, Paper, ScrollArea, Select, Stack, Tabs, Text, Textarea, TextInput, Title } from '@mantine/core';
+import { Accordion, Alert, Badge, Box, Button, Checkbox, Code, Grid, Group, NavLink, NumberInput, Paper, ScrollArea, Select, Stack, Tabs, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { IconPlayerPlay, IconAlertTriangle } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
@@ -14,7 +14,9 @@ import { confirmDanger } from '@/components/ConfirmDanger';
 import { exampleFromSchema, groupLabel, index, loadSpec, operationsByGroup, requestBodySchema, resolveSchema, subGroup, type IndexedOperation, type JsonSchema, type OpenApiDoc } from '@/lib/openapi';
 import { useSession } from '@/stores/session';
 import { canUse } from '@/api/privileges';
-import { useJobs, jobIdFromLocation } from '@/stores/jobs';
+import { useJobs } from '@/stores/jobs';
+import { jobIdFromResponse } from '@/api/client';
+import { applyQuirks, quirksFor } from '@/lib/quirks';
 import { humanize } from '@/components/KeyValueList';
 
 const METHOD_COLOR: Record<string, string> = { GET: 'teal', POST: 'indigo', PUT: 'orange', DELETE: 'red', PATCH: 'grape' };
@@ -123,6 +125,7 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
       for (const p of op.params) { const v = query[p.name]; if (v === undefined || v === '') continue; q[p.name] = p.type === 'boolean' ? v === 'true' : p.type === 'number' || p.type === 'integer' ? Number(v) : v; }
       let parsedBody: unknown = undefined;
       if (op.body && body.trim()) parsedBody = JSON.parse(body);
+      if (parsedBody && typeof parsedBody === 'object' && !Array.isArray(parsedBody)) parsedBody = applyQuirks(op, parsedBody as Record<string, unknown>);
       // openapi-fetch has already parsed the body; use data/error rather than re-reading the stream.
       let fetched: { data?: unknown; error?: unknown; response: Response };
       try {
@@ -134,7 +137,7 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
       const parsed: unknown = fetched.data ?? fetched.error ?? null;
       const headers: Record<string, string> = {};
       response.headers.forEach((v, k) => { headers[k] = v; });
-      const jobId = response.status === 202 ? jobIdFromLocation(response.headers.get('Location')) : null;
+      const jobId = response.status === 202 ? await jobIdFromResponse(response, fetched.data) : null;
       if (jobId) { track({ id: jobId, name: `${op.method} ${op.path}` }); openDrawer(true); }
       setRes({ status: response.status, ok: response.ok, headers, body: parsed, ms: Math.round(performance.now() - started), jobId });
     } catch (e) {
@@ -144,6 +147,7 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
     }
   };
 
+  const quirks = quirksFor(op);
   const dangerous = op.method === 'DELETE' || /terminate|purge|truncate|dismount|revoke|delete|stop/i.test(op.path);
   const run = () => (dangerous ? confirmDanger({ title: `Execute ${op.method} ${op.path}`, message: 'This operation modifies or removes something on the server. Continue?', confirmLabel: 'Execute', color: 'red', onConfirm: execute }) : execute());
 
@@ -157,6 +161,12 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
           <Group gap="xs"><PrivilegeBadge resources={op.privileges} size="xs" />{op.async ? <Badge size="xs" color="indigo" variant="light">async (202)</Badge> : null}{op.result ? <Badge size="xs" color="gray" variant="outline" style={{ textTransform: 'none' }}>result: {op.result}</Badge> : null}</Group>
         </Stack>
       </Group>
+      {quirks.map((q) => (
+        <Alert key={q.id} color="yellow" variant="light" icon={<IconAlertTriangle size={16} />} title="Spec vs. reality">
+          <Text size="sm">{q.note}</Text>
+          <Text size="xs" c="dimmed">Source: {q.source}</Text>
+        </Alert>
+      ))}
       {op.params.length ? (
         <Paper p="sm" withBorder>
           <Text size="sm" fw={500} mb="xs">Query parameters</Text>

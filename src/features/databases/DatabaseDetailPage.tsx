@@ -13,6 +13,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { JsonViewer } from '@/components/JsonViewer';
 import { confirmDanger } from '@/components/ConfirmDanger';
+import { reviewChanges } from '@/components/ReviewChanges';
 import { formatDateTime, formatMB, formatNumber } from '@/lib/format';
 import { useJobs } from '@/stores/jobs';
 import { dbKeys } from './useDatabases';
@@ -232,7 +233,7 @@ export default function DatabaseDetailPage() {
       <NumberModal opened={sizeOpen} onClose={closeSize} title="Expand database" label="New size (MB)" description="Must be larger than the current size." initial={(m?.Size ?? local.data?.MaxSize ?? 0) + 100} min={1} loading={startJob.isPending} onSubmit={(v) => startJob.mutate({ size: v })} />
 
       <Modal opened={editOpen} onClose={closeEdit} title="Edit database settings" centered>
-        <form onSubmit={editForm.onSubmit((v) => editLocal.mutate(v))}>
+        <form onSubmit={editForm.onSubmit((v) => reviewChanges({ title: 'Review database settings', before: local.data as Record<string, unknown>, after: v as Record<string, unknown>, refetch: () => result(api().GET('/v2/database-dir', q)) as Promise<Record<string, unknown>>, onConfirm: () => editLocal.mutateAsync(v) }))}>
           <Stack gap="sm">
             <NumberInput label="Max size (MB, 0 = unlimited)" min={0} {...editForm.getInputProps('MaxSize')} />
             <NumberInput label="Expansion size (MB, 0 = system default)" min={0} {...editForm.getInputProps('ExpansionSize')} />
@@ -247,7 +248,7 @@ export default function DatabaseDetailPage() {
       </Modal>
 
       <Modal opened={configOpen} onClose={closeConfig} title={`Edit configuration: ${name}`} centered>
-        <form onSubmit={configForm.onSubmit((v) => editConfig.mutate({ ...v, Directory: v.Directory ?? dir }))}>
+        <form onSubmit={configForm.onSubmit((v) => reviewChanges({ title: `Review configuration of ${name}`, before: config.data as Record<string, unknown>, after: { ...v, Directory: v.Directory ?? dir } as Record<string, unknown>, refetch: () => result(api().GET('/v2/database', { params: { query: { name } } })) as Promise<Record<string, unknown>>, onConfirm: () => editConfig.mutateAsync({ ...v, Directory: v.Directory ?? dir }) }))}>
           <Stack gap="sm">
             <TextInput label="Directory" {...configForm.getInputProps('Directory')} />
             <TextInput label="Server (ECP data server, blank = local)" {...configForm.getInputProps('Server')} />

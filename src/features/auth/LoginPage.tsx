@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Center,
+  Checkbox,
   Container,
   Divider,
   Group,
@@ -56,6 +57,7 @@ export default function LoginPage() {
       password: '',
       role: '',
       auth: initial.auth as 'auto' | 'jwt' | 'basic',
+      persist: true,
     },
     validate: {
       username: (v) => (v.trim() ? null : 'Username is required'),
@@ -96,6 +98,7 @@ export default function LoginPage() {
         password: values.password,
         role: values.role.trim() || undefined,
         auth: values.auth,
+        persist: values.persist,
       });
       navigate(from, { replace: true });
     } catch (e) {
@@ -206,6 +209,8 @@ export default function LoginPage() {
                   Auto tries <code>POST /login</code> for a JWT and falls back to HTTP Basic on older versions.
                 </Text>
               </Stack>
+
+              <Checkbox size="xs" label="Keep me signed in for this browser tab" description="Off: credentials stay in memory only and a reload signs you out" {...form.getInputProps('persist', { type: 'checkbox' })} />
 
               <Button type="submit" leftSection={<IconLogin size={16} />} loading={busy} fullWidth mt="xs">
                 Sign in

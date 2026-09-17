@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { api, call, envelope, result } from './client';
+import { api, call, envelope, result, jobIdFromResponse } from './client';
 import { notifyError, notifySuccess } from '@/lib/notify';
-import { isTerminal, jobIdFromLocation } from '@/stores/jobs';
+import { isTerminal } from '@/stores/jobs';
 import type { AsyncTask } from './types';
 
 interface MutationOptions<TVars, TData> {
@@ -60,13 +60,13 @@ export function useAsyncResult<TResult = unknown>(opts: { queryKey: QueryKey; si
   });
 
   const start = useCallback(
-    async (starter: () => Promise<{ response: Response }>) => {
+    async (starter: () => Promise<{ data?: unknown; response: Response }>) => {
       setStartError(null);
       setJobId(null);
       try {
-        const { response } = await starter();
-        const id = jobIdFromLocation(response.headers.get('Location'));
-        if (!id) throw new Error('The server accepted the request but did not return a task Location header.');
+        const { data, response } = await starter();
+        const id = await jobIdFromResponse(response, data);
+        if (!id) throw new Error('The server accepted the request but returned neither a Location header nor a task GUID.');
         setJobId(id);
         return id;
       } catch (e) {

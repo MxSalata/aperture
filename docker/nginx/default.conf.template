@@ -35,6 +35,15 @@ server {
     proxy_redirect off;
   }
 
+  # Native monitor API (OpenMetrics + alerts.log), used by the Host monitor screen.
+  location /api/monitor/ {
+    proxy_pass ${IRIS_UPSTREAM}/api/monitor/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header Authorization $http_authorization;
+    proxy_hide_header WWW-Authenticate;
+  }
+
   # Static assets are content-hashed: cache hard.
   location /assets/ {
     add_header Cache-Control "public, max-age=31536000, immutable";

@@ -45,6 +45,43 @@ jobs:
         with:
           path: dist-demo
 
+  # Boots a real IRIS Community instance, applies the init script and checks the
+  # SysAdmin API behaves as Aperture assumes (JWT, shapes, 202 flow, portal served).
+  verify-iris:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Start IRIS with the Aperture init script
+        run: docker compose up -d iris
+      - name: Wait for the SysAdmin API
+        run: |
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -u _SYSTEM:SYS http://localhost:52773/api/admin/info || true)
+            if [ "$code" = "200" ]; then echo "API up after $((i*5))s"; exit 0; fi
+            sleep 5
+          done
+          echo "SysAdmin API did not come up"; docker compose logs iris | tail -100; exit 1
+      - name: Live conformance check
+        run: node scripts/live-check.mjs --save docs/verification/ci-latest.json
+        env:
+          IRIS_URL: http://localhost:52773
+          IRIS_USER: _SYSTEM
+          IRIS_PASSWORD: SYS
+          PORTAL_URL: http://localhost:52773/aperture/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iris-verification
+          path: docs/verification/ci-latest.json
+      - name: IRIS logs
+        if: always()
+        run: docker compose logs iris | tail -60; docker compose down -v
+
   deploy-demo:
     if: github.event_name != 'pull_request'
     needs: verify

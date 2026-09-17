@@ -79,6 +79,29 @@ test.describe('Aperture (demo mode)', () => {
     await expect(page.getByRole('heading', { name: 'Locks' })).toBeVisible();
   });
 
+  test('edits are reviewed field by field before they are applied', async ({ page }) => {
+    await loginDemo(page);
+    await go(page, '/security/users/jdoe');
+    await page.getByRole('button', { name: 'Edit' }).click();
+    await page.getByLabel('Comment').fill('Reviewed by Playwright');
+    await page.getByRole('button', { name: 'Save' }).click();
+    const review = page.getByRole('dialog', { name: /Review changes/ });
+    await expect(review.getByText('Reviewed by Playwright')).toBeVisible();
+    await expect(review.getByText(/still matches/)).toBeVisible();
+    await review.getByRole('button', { name: 'Apply changes' }).click();
+    await expect(page.getByText('User jdoe updated')).toBeVisible();
+    await go(page, '/activity');
+    await expect(page.getByRole('cell', { name: /\/v2\/security\/user/ }).first()).toBeVisible();
+  });
+
+  test('host monitor reads native metrics and the header shows LIVE', async ({ page }) => {
+    await loginDemo(page);
+    await expect(page.getByRole('banner').getByText('DEMO', { exact: true })).toBeVisible();
+    await go(page, '/monitor');
+    await expect(page.getByText('CPU usage')).toBeVisible();
+    await expect(page.getByRole('cell', { name: 'iris_cpu_usage' }).first()).toBeVisible();
+  });
+
   test('session survives a reload', async ({ page }) => {
     await loginDemo(page);
     await page.reload();
