@@ -3,9 +3,9 @@
   <Document name="iris-aperture.ZPM">
     <Module>
       <Name>iris-aperture</Name>
-      <Version>0.1.0</Version>
-      <Description>Aperture: a modern management portal for InterSystems IRIS built on the SysAdmin REST API (/api/admin v2). Dashboard, databases, namespaces, processes, journals, tasks, security, and a spec-driven explorer for all 273 API operations.</Description>
-      <Keywords>management portal,sysadmin,rest,admin,dashboard,contest,react</Keywords>
+      <Version>0.2.0</Version>
+      <Description>Aperture: a modern management portal for InterSystems IRIS built on the SysAdmin REST API (/api/admin v2). Dashboard, databases, namespaces, processes, journals, tasks, security, a Job Center for asynchronous operations and a spec-driven explorer for all 273 API operations.</Description>
+      <Keywords>management portal,sysadmin,rest,admin,dashboard,contest,react,embedded python</Keywords>
       <Author>
         <Person>MxSalata</Person>
         <CopyrightDate>2026</CopyrightDate>
@@ -13,21 +13,38 @@
       </Author>
       <Packaging>module</Packaging>
       <SourcesRoot>ipm</SourcesRoot>
+      <!-- The SysAdmin API exists from 2025.1; the installer's Embedded Python needs 2021.2+ -->
+      <SystemRequirements Version=">=2025.1"/>
+
+      <!-- Post-install hook and readiness report, written in Embedded Python
+           (ipm/cls/Aperture/Installer.cls) -->
       <Resource Name="Aperture.Installer.CLS"/>
-      <!-- The built SPA (www/, produced by `npm run build:www`) is served by IRIS at /aperture -->
-      <CSPApplication
-        Url="/aperture"
-        DeployPath="${cspdir}aperture"
-        SourcePath="www"
+
+      <!-- The built portal (www/, from `npm run build:www`) is copied under the instance's
+           csp directory ... -->
+      <FileCopy Name="www/" Target="{$cspdir}aperture/"/>
+
+      <!-- ... and served by IRIS as a static web application. Every attribute is a
+           Security.Applications property (IPM validates them). AutheEnabled 64 =
+           unauthenticated: the files are public, the API calls carry their own JWT or
+           Basic credentials. -->
+      <WebApplication
+        Name="/aperture"
+        NameSpace="%SYS"
+        Description="Aperture management portal (static SPA)"
+        Path="{$cspdir}aperture/"
+        Enabled="1"
         ServeFiles="1"
         Recurse="1"
         AutheEnabled="64"
         UseCookies="2"
         CookiePath="/aperture/"
-        Description="Aperture management portal (static SPA)"
+        CSPZENEnabled="0"
       />
+
+      <!-- Enable /api/admin with password + JWT authentication, then print the readiness report -->
       <Invoke Class="Aperture.Installer" Method="Configure" Phase="Configure" When="After"/>
-      <SystemRequirements Version=">=2025.1"/>
+      <Invoke Class="Aperture.Installer" Method="Doctor" Phase="Activate" When="After"/>
     </Module>
   </Document>
 </Export>

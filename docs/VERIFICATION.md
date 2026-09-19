@@ -3,11 +3,13 @@
 Aperture's build sandbox had no Docker daemon, so every claim about real instances is
 verified by two mechanisms instead of by hand:
 
-1. **CI job `verify-iris`** (`.github/workflows/ci.yml`) boots `intersystemsdc/iris-community:latest`
-   with `docker compose`, runs `docker/iris/init.script` through the container's `-a` hook, waits
-   for `GET /api/admin/info` to answer 200, then runs the conformance script below and checks that
-   the portal is served at `/aperture/`. The JSON report is uploaded as the `iris-verification`
-   artifact on every run.
+1. **CI job `verify-iris`** (`.github/workflows/ci.yml`) builds the `iris` image from
+   `docker/iris/Dockerfile` (IRIS Community 2026.2 with IPM): at build time `docker/iris/init.script`
+   installs Aperture through `zpm "load"` of `module.xml`, which runs the Embedded Python installer,
+   and prints its readiness report. The job then starts the container, waits for `GET /api/admin/info`
+   to answer 200, runs the conformance script below, checks that the portal is served at `/aperture/`
+   and prints the readiness report again from inside the running container. The JSON report is
+   uploaded as the `iris-verification` artifact on every run.
 2. **`npm run verify:live`** (`scripts/live-check.mjs`) runs the same checks against any instance
    you point it at and saves `docs/verification/latest.json` as evidence.
 

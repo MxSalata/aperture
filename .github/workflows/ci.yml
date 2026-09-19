@@ -45,8 +45,10 @@ jobs:
         with:
           path: dist-demo
 
-  # Boots a real IRIS Community instance, applies the init script and checks the
-  # SysAdmin API behaves as Aperture assumes (JWT, shapes, 202 flow, portal served).
+  # Builds the IRIS image (IRIS Community 2026.2 + IPM), which installs Aperture through
+  # its own module.xml (zpm "load") and runs the Embedded Python installer at build time;
+  # then starts it and checks the SysAdmin API behaves as Aperture assumes
+  # (JWT, shapes, 202 flow, portal served).
   verify-iris:
     needs: verify
     runs-on: ubuntu-latest
@@ -56,16 +58,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Start IRIS with the Aperture init script
-        run: docker compose up -d iris
+      - name: Build the IRIS image (zpm "load" of the package, Embedded Python installer)
+        run: docker compose --progress plain build iris
+      - name: Start IRIS
+        run: docker compose up -d --no-build iris
       - name: Wait for the SysAdmin API
         run: |
-          for i in $(seq 1 90); do
+          code=
+          for i in $(seq 1 60); do
             code=$(curl -s -o /dev/null -w '%{http_code}' -u _SYSTEM:SYS http://localhost:52773/api/admin/info || true)
             if [ "$code" = "200" ]; then echo "API up after $((i*5))s"; exit 0; fi
             sleep 5
           done
-          echo "SysAdmin API did not come up"; docker compose logs iris | tail -100; exit 1
+          echo "SysAdmin API did not come up (last HTTP status: '$code')"
+          docker compose ps -a
+          docker inspect --format 'state={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' aperture-iris || true
+          docker logs aperture-iris 2>&1 | tail -150 || true
+          exit 1
       - name: Live conformance check
         run: node scripts/live-check.mjs --save docs/verification/ci-latest.json
         env:
@@ -73,6 +82,9 @@ jobs:
           IRIS_USER: _SYSTEM
           IRIS_PASSWORD: SYS
           PORTAL_URL: http://localhost:52773/aperture/
+      - name: Readiness report (Embedded Python, inside the running container)
+        if: always()
+        run: docker exec aperture-iris iris session IRIS -U USER "##class(Aperture.Installer).Doctor()" || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -80,7 +92,7 @@ jobs:
           path: docs/verification/ci-latest.json
       - name: IRIS logs
         if: always()
-        run: docker compose logs iris | tail -60; docker compose down -v
+        run: docker logs aperture-iris 2>&1 | tail -80 || true; docker compose down -v
 
   deploy-demo:
     if: github.event_name != 'pull_request'
@@ -90,5 +102,11 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Enables Pages (source: GitHub Actions) on the first run where the token may do so;
+      # otherwise enable it once under Settings → Pages → Source: GitHub Actions.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+        continue-on-error: true
       - id: deployment
         uses: actions/deploy-pages@v4

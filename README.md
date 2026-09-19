@@ -49,13 +49,21 @@ docker compose up --build
 ```
 
 - http://localhost:8080 - Aperture behind nginx (proxies `/api/admin` to IRIS, no CORS, no Basic-auth pop-ups)
-- http://localhost:52773/aperture/ - Aperture served by IRIS itself (after `npm run build:www`, see below)
+- http://localhost:52773/aperture/ - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`)
 - Sign in with `_SYSTEM` / `SYS`
 
-The `iris` service runs `intersystemsdc/iris-community:latest`; set `IRIS_IMAGE=intersystemsdc/irishealth-community:latest` in a `.env` file next to the compose file for IRIS for Health Community.
-On first start [`docker/iris/init.script`](docker/iris/init.script) enables the `/api/admin` web
-application with password + JWT authentication and, if `www/` exists, registers the portal as the
-`/aperture` web application.
+The `iris` service is built from [`docker/iris/Dockerfile`](docker/iris/Dockerfile) on top of
+`intersystemsdc/iris-community:2026.2-zpm` (put `IRIS_IMAGE=intersystemsdc/irishealth-community:2026.2-zpm`
+in a `.env` file next to the compose file for IRIS for Health Community). At build time
+[`docker/iris/init.script`](docker/iris/init.script) installs Aperture through its own IPM package
+(`zpm "load"` of [`module.xml`](module.xml)): the built portal is copied under the instance's `csp/`
+directory, the `/aperture` web application is created, and [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls),
+written in Embedded Python, enables `/api/admin` with password + JWT authentication. The build log
+ends with the installer's readiness report; you can print it again at any time:
+
+```bash
+docker exec aperture-iris iris session IRIS -U USER "##class(Aperture.Installer).Doctor()"
+```
 
 ### 2. IPM (ZPM) package
 
@@ -63,9 +71,12 @@ application with password + JWT authentication and, if `www/` exists, registers 
 zpm "install iris-aperture"
 ```
 
-installs the pre-built portal as the `/aperture` web application on the instance and runs
-[`Aperture.Installer`](ipm/cls/Aperture/Installer.cls), which enables `/api/admin` with password and
-JWT authentication. Then open `http://<host>:52773/aperture/`.
+copies the pre-built portal (`www/`) under the instance's `csp/` directory, creates the `/aperture`
+web application and runs [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls), an Embedded Python
+class that enables `/api/admin` with password and JWT authentication and prints a readiness report
+(IRIS version, JWT availability, the API's authentication settings, the portal's files). Then open
+`http://<host>:52773/aperture/`. From a checkout, `zpm "load /path/to/intersystems-frontend-contest"`
+installs the same package; `##class(Aperture.Installer).Doctor()` prints the report again.
 
 ### 3. Development
 
@@ -160,17 +171,19 @@ browser ──HTTPS──▶ nginx (dist/) ──/api/admin──▶ IRIS privat
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | how the layers fit: typed client, auth, async jobs, privileges, mock, deployment |
 | [docs/ARCHITECTURE_OVERVIEW.mmd](docs/ARCHITECTURE_OVERVIEW.mmd) | the same as a Mermaid diagram |
 | [docs/CONTEST_PLAN.md](docs/CONTEST_PLAN.md) | contest requirements, judging, bonuses, plan |
+| [docs/BONUSES.md](docs/BONUSES.md) | technology bonuses: criteria, evidence, what remains |
 | [docs/OPENEXCHANGE_SUBMISSION.md](docs/OPENEXCHANGE_SUBMISSION.md) | paste-ready Open Exchange listing |
 | [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md) | everything to tick before the deadline |
 | [docs/DEMO_ASSETS_CHECKLIST.md](docs/DEMO_ASSETS_CHECKLIST.md) | screenshots (generated) and video assets |
 | [docs/ARTICLE.md](docs/ARTICLE.md) | Developer Community article draft |
-| [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md) | demo video storyboard |
+| [docs/ARTICLE_2.md](docs/ARTICLE_2.md) | second article draft: what the specification does not tell you |
+| [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md) | three demo video storyboards |
 | [docs/prototype/](docs/prototype/) | the original single-file prototype this repository started from (archived) |
 
 ## Verified against real IRIS
 
-The CI job `verify-iris` boots `intersystemsdc/iris-community:latest`, applies the init script and runs
-`scripts/live-check.mjs`: JWT login and refresh, `/info`, list shapes, the error envelope and a full `202` round trip,
+The CI job `verify-iris` builds the IRIS image (IRIS Community 2026.2, Aperture installed through
+`zpm "load"` of its `module.xml`, Embedded Python installer), starts it and runs `scripts/live-check.mjs`: JWT login and refresh, `/info`, list shapes, the error envelope and a full `202` round trip,
 plus a check that the portal is served at `/aperture/`. Run the same against your own instance with
 `npm run verify:live`; results are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md).
 
@@ -189,7 +202,7 @@ vendored at commit `f764aea427e5c0b1dd08a4c18a0457e0ff7b3b34` of
 
 ## Tech stack
 
-React 19 · TypeScript 5.9 · Vite 7 · Mantine 8 (+ charts, spotlight, notifications, modals) · TanStack Query 5 · TanStack Table 8 · React Router 7 · zustand · openapi-typescript / openapi-fetch · Mock Service Worker 2 · Vitest 3 · Playwright · nginx · IPM
+React 19 · TypeScript 5.9 · Vite 7 · Mantine 8 (+ charts, spotlight, notifications, modals) · TanStack Query 5 · TanStack Table 8 · React Router 7 · zustand · openapi-typescript / openapi-fetch · Mock Service Worker 2 · Vitest 3 · Playwright · nginx · IPM · Embedded Python (installer)
 
 ## License
 
