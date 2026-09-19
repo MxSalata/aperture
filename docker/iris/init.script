@@ -14,6 +14,8 @@ If 'hasIPM Set req=##class(%Net.HttpRequest).%New(),req.Server="pm.community.int
 If 'hasIPM,sc,req.HttpResponse.StatusCode'=200 Set sc=$system.Status.Error(5001,"IPM installer download answered HTTP "_req.HttpResponse.StatusCode)
 If 'hasIPM,sc Set sc=$system.OBJ.LoadStream(req.HttpResponse.Data,"ck")
 If 'sc Write "IPM installer failed: ",$system.Status.GetErrorText(sc),! Do $system.Process.Terminate($job,1)
+// a fresh IPM lives in %SYS only; map it into every namespace (idempotent on the -zpm images)
+zpm "enable -map -globally":1
 zn "USER"
 // ":1" terminates the session with exit code 1 on any error, which fails the docker build
 zpm "load /home/irisowner/aperture -v":1
