@@ -170,10 +170,13 @@ fields or JSON.
 
 Hash routing is used wherever there is no server to rewrite deep links to `index.html`.
 
-The IRIS init script (`docker/iris/init.script`) and the IPM installer
-(`ipm/cls/Aperture/Installer.cls`) do the same two things with `Security.Applications`:
-set `Enabled=1`, add password authentication to `AutheEnabled` (bit 32) and set `JWTAuthEnabled=1`
-on `/api/admin`.
+There is one installation path. `module.xml` copies `www/` to `{$cspdir}aperture/`, creates the
+`/aperture` web application and invokes `Aperture.Installer` (`ipm/cls/Aperture/Installer.cls`),
+whose Embedded Python `Configure` sets `Enabled=1`, adds password authentication to `AutheEnabled`
+(bit 32) and sets `JWTAuthEnabled=1` on `/api/admin` through `Security.Applications`; its `Doctor`
+prints a readiness report. The Docker image (`docker/iris/Dockerfile`) runs that same package with
+`zpm "load"` at build time (`docker/iris/init.script`), so a `docker compose build` is also an
+install test of the IPM package.
 
 ## 6. Mock instance (demo + tests)
 
