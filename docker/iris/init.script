@@ -1,26 +1,21 @@
 // Runs once, at image build time (docker/iris/Dockerfile), inside `iris session`.
 // Installs Aperture through its own IPM package so the Docker image and
 // `zpm "install iris-aperture"` share one installation path: module.xml.
+// One statement per line: `iris session` reads stdin line by line, so { } blocks cannot span lines.
 zn "%SYS"
 Write "IRIS version: ",$zversion,!
 // Community images ship development accounts with expired passwords
 Do ##class(Security.Users).UnExpireUserPasswords("*")
 zn "USER"
-If '##class(%Dictionary.CompiledClass).%ExistsId("%IPM.Main") {
-  // plain (non -zpm) image tag: fetch the package manager from the community registry
-  Write "IPM not present in this image, downloading the installer ...",!
-  Set req=##class(%Net.HttpRequest).%New()
-  Set req.Server="pm.community.intersystems.com",req.Https=1,req.SSLConfiguration="ISC.FeatureTracker.SSL.Config"
-  Set sc=req.Get("/packages/zpm/latest/installer")
-  If sc,req.HttpResponse.StatusCode=200 { Set sc=$system.OBJ.LoadStream(req.HttpResponse.Data,"c") }
-  If 'sc { Write "IPM installer failed: ",$system.Status.GetErrorText(sc),! Do $system.Process.Terminate($job,1) }
-}
+// plain (non -zpm) image tag: fetch the package manager from the community registry
+Set hasIPM=##class(%Dictionary.CompiledClass).%ExistsId("%IPM.Main"),sc=1
+If 'hasIPM Write "IPM not present in this image, downloading the installer ...",!
+If 'hasIPM Set req=##class(%Net.HttpRequest).%New(),req.Server="pm.community.intersystems.com",req.Https=1,req.SSLConfiguration="ISC.FeatureTracker.SSL.Config",sc=req.Get("/packages/zpm/latest/installer")
+If 'hasIPM,sc,req.HttpResponse.StatusCode=200 Set sc=$system.OBJ.LoadStream(req.HttpResponse.Data,"c")
+If 'hasIPM,'sc Write "IPM installer failed: ",$system.Status.GetErrorText(sc),! Do $system.Process.Terminate($job,1)
 // ":1" terminates the session with exit code 1 on any error, which fails the docker build
 zpm "load /home/irisowner/aperture -v":1
-If '##class(%Dictionary.CompiledClass).%ExistsId("Aperture.Installer") {
-  Write "Aperture was not installed",!
-  Do $system.Process.Terminate($job,1)
-}
+If '##class(%Dictionary.CompiledClass).%ExistsId("Aperture.Installer") Write "Aperture was not installed",! Do $system.Process.Terminate($job,1)
 // Embedded Python readiness report (module.xml also runs it; repeated here for the build log)
 Do ##class(Aperture.Installer).Doctor()
 halt

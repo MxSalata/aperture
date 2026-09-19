@@ -54,7 +54,7 @@ ClassMethod ConfigurePython(api As %String) As %Status [ Language = python ]
     try:
         applications = iris.cls("Security.Applications")
         if not applications.Exists(api):
-            print("\nAperture: web application " + api + " not found; the portal needs IRIS 2025.1+ with the SysAdmin API")
+            print("Aperture: web application " + api + " not found; the portal needs IRIS 2025.1+ with the SysAdmin API")
             return 1
 
         app_id = None
@@ -74,8 +74,8 @@ ClassMethod ConfigurePython(api As %String) As %Status [ Language = python ]
             raise RuntimeError(iris.cls("%SYSTEM.Status").GetErrorText(status))
 
         jwt_text = "on" if has_jwt else "not available before IRIS 2026.2, the portal falls back to HTTP Basic"
-        print("\nAperture: " + api + " enabled; AutheEnabled " + str(before) + " -> " + str(before | password_bit) + "; JWT " + jwt_text)
-        print("\nAperture: open http://<host>:52773/aperture/ and sign in with an account holding %Admin_* privileges")
+        print("Aperture: " + api + " enabled; AutheEnabled " + str(before) + " -> " + str(before | password_bit) + "; JWT " + jwt_text)
+        print("Aperture: open http://<host>:52773/aperture/ and sign in with an account holding %Admin_* privileges")
         return 1
     finally:
         process.SetNamespace(previous)
@@ -136,8 +136,8 @@ ClassMethod DoctorPython(api As %String, portal As %String) As %Status [ Languag
             line = "  " + mark + "  " + label
             if detail:
                 line = line + "  (" + detail + ")"
-            print("\n" + line)
-        print("\n")
+            print(line)
+        print("")
         return 1
     finally:
         process.SetNamespace(previous)
