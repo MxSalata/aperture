@@ -184,7 +184,7 @@ browser ──HTTPS──▶ nginx (dist/) ──/api/admin──▶ IRIS privat
 
 The CI job `verify-iris` builds the IRIS image (IRIS Community 2026.2, Aperture installed through
 `zpm "load"` of its `module.xml`, Embedded Python installer), starts it and runs `scripts/live-check.mjs`: JWT login and refresh, `/info`, list shapes, the error envelope and a full `202` round trip,
-plus a check that the portal is served at `/aperture/`. Run the same against your own instance with
+plus a check that the portal is served at `/aperture/index.html` (22/22 on IRIS 2026.2, Build 221U). Run the same against your own instance with
 `npm run verify:live`; results are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md).
 
 ## Spec findings
