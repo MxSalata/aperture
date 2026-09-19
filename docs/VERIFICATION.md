@@ -15,7 +15,7 @@ verified by two mechanisms instead of by hand:
 
 ```bash
 IRIS_URL=http://iris.lan:52773 IRIS_USER=_SYSTEM IRIS_PASSWORD=SYS \
-PORTAL_URL=http://iris.lan:52773/aperture/ npm run verify:live
+PORTAL_URL=http://iris.lan:52773/aperture/index.html npm run verify:live
 ```
 
 ## What is checked
@@ -37,7 +37,8 @@ and commit the JSON report next to this file.
 
 | Date | IRIS version | Auth | Result | Report |
 | --- | --- | --- | --- | --- |
-| _(pending)_ | | | | |
+| 2026-09-19 | IRIS for UNIX 2026.2 (Build 221U), `intersystems/iris-community:2026.2`, CI run 35467740679 | JWT (login + refresh) | 21/22: everything passed including the full `202` round trip to `Finished`; the one failure was the bare `/aperture/` directory URL (404), the built-in web server needs `/aperture/index.html`, which the check now uses | `iris-verification` artifact of the run |
+| 2026-09-19 | same image, same run, inside the container | - | `Aperture.Installer.Doctor()` (Embedded Python): 7/7 ok (version, JWT available, `/api/admin` enabled + password + JWT, `/aperture` web app, files on disk) | job log, step "Readiness report" |
 
 ## Known differences between spec and instances
 

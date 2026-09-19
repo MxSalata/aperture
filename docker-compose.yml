@@ -1,7 +1,7 @@
 # One command to try Aperture against a real IRIS:
 #   docker compose up --build
 # then open http://localhost:8080 (nginx, browser routing) or
-#           http://localhost:52773/aperture/ (served by IRIS itself, hash routing).
+#           http://localhost:52773/aperture/index.html (served by IRIS itself, hash routing).
 # Login: _SYSTEM / SYS  (or SuperUser / SYS)
 
 services:

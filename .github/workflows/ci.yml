@@ -81,7 +81,7 @@ jobs:
           IRIS_URL: http://localhost:52773
           IRIS_USER: _SYSTEM
           IRIS_PASSWORD: SYS
-          PORTAL_URL: http://localhost:52773/aperture/
+          PORTAL_URL: http://localhost:52773/aperture/index.html
       - name: Readiness report (Embedded Python, inside the running container)
         if: always()
         run: docker exec aperture-iris iris session IRIS -U USER "##class(Aperture.Installer).Doctor()" || true

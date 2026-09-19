@@ -137,9 +137,18 @@ try {
 
   // 6. Optional: the portal itself
   if (PORTAL_URL) {
-    const res = await fetch(PORTAL_URL);
-    const html = await res.text();
-    hardFailure |= !record(`Portal served at ${PORTAL_URL}`, res.status === 200 && /Aperture/.test(html), `HTTP ${res.status}, ${html.length} bytes`);
+    // IRIS's built-in web server does not map a directory URL to index.html, so the
+    // portal is opened as .../aperture/index.html; record what the directory URL does too.
+    let res = await fetch(PORTAL_URL);
+    let html = await res.text();
+    let detail = `HTTP ${res.status}, ${html.length} bytes`;
+    if (!(res.status === 200 && /Aperture/.test(html)) && PORTAL_URL.endsWith('/')) {
+      const dirStatus = res.status;
+      res = await fetch(PORTAL_URL + 'index.html');
+      html = await res.text();
+      detail = `directory URL HTTP ${dirStatus}; index.html HTTP ${res.status}, ${html.length} bytes`;
+    }
+    hardFailure |= !record(`Portal served at ${PORTAL_URL}`, res.status === 200 && /Aperture/.test(html), detail);
   }
 } catch (e) {
   hardFailure = true;

@@ -49,7 +49,7 @@ docker compose up --build
 ```
 
 - http://localhost:8080 - Aperture behind nginx (proxies `/api/admin` to IRIS, no CORS, no Basic-auth pop-ups)
-- http://localhost:52773/aperture/ - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`)
+- http://localhost:52773/aperture/index.html - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`; the built-in web server needs the file name, a bare `/aperture/` answers 404)
 - Sign in with `_SYSTEM` / `SYS`
 
 The `iris` service is built from [`docker/iris/Dockerfile`](docker/iris/Dockerfile) on top of
@@ -75,7 +75,7 @@ copies the pre-built portal (`www/`) under the instance's `csp/` directory, crea
 web application and runs [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls), an Embedded Python
 class that enables `/api/admin` with password and JWT authentication and prints a readiness report
 (IRIS version, JWT availability, the API's authentication settings, the portal's files). Then open
-`http://<host>:52773/aperture/`. From a checkout, `zpm "load /path/to/intersystems-frontend-contest"`
+`http://<host>:52773/aperture/index.html`. From a checkout, `zpm "load /path/to/intersystems-frontend-contest"`
 installs the same package; `##class(Aperture.Installer).Doctor()` prints the report again.
 
 ### 3. Development
@@ -194,11 +194,12 @@ vendored at commit `f764aea427e5c0b1dd08a4c18a0457e0ff7b3b34` of
 [intersystems-community/sysadmin-api-specification](https://github.com/intersystems-community/sysadmin-api-specification).
 
 1. `LocalDatabaseList` is declared as an object, but `GET /v2/database-dirs` returns an array. Aperture accepts both.
-2. `GET /info` returns the `Info` object without the standard `{status, console, result}` envelope; every other endpoint uses the envelope.
+2. The specification documents `GET /info` as returning the `Info` object without the standard `{status, console, result}` envelope; IRIS 2026.2 (Build 221U) wraps it like every other endpoint. Aperture accepts both.
 3. `POST /v2/database-dir/integrity-check` takes its targets in the body (`Databases[]`) while its siblings (`compact`, `defragment`, …) use the `dir` query parameter.
 4. `POST /v2/journal/switch-dir` documents no body, so the target directory can only be the configured alternate directory.
-5. The `Location` header example uses `/v1/async-result`; the v2 endpoint is `/v2/async-result`. Aperture only relies on the `id` query parameter, and falls back to the `GUID` in the body when the header is not exposed.
+5. The `Location` header points at `/v1/async-result?id=…` (on 2026.2 as in the spec example) while the documented endpoint is `/v2/async-result`; the id works on both. Aperture only relies on the `id` query parameter, and falls back to the `GUID` in the body when the header is not exposed (2026.2 sends no GUID in the body).
 6. Real instances have been observed to answer errors as `status.errors` (objects with a `code`) instead of the documented `status.Errors` strings, and IRIS 2026.2 accepts `ServerDefinition` where the spec names the OAuth client field `OAuth2ServerDefinition` (both reported in the IRIS Workbench verification record). Aperture normalizes the envelopes and adapts the field; see `src/lib/quirks.ts`.
+7. Error text is localized by the server from the request's `Accept-Language`; a client that sends none gets the messages in Arabic (`خطأ #420: Namespace … does not exist`, observed in CI). Browsers always send the header, and Aperture shows the numeric `code` and `id` next to the text, which are stable.
 
 ## Tech stack
 

@@ -75,7 +75,7 @@ ClassMethod ConfigurePython(api As %String) As %Status [ Language = python ]
 
         jwt_text = "on" if has_jwt else "not available before IRIS 2026.2, the portal falls back to HTTP Basic"
         print("Aperture: " + api + " enabled; AutheEnabled " + str(before) + " -> " + str(before | password_bit) + "; JWT " + jwt_text)
-        print("Aperture: open http://<host>:52773/aperture/ and sign in with an account holding %Admin_* privileges")
+        print("Aperture: open http://<host>:52773/aperture/index.html and sign in with an account holding %Admin_* privileges")
         return 1
     finally:
         process.SetNamespace(previous)
