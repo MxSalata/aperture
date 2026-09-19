@@ -8,12 +8,12 @@ services:
   iris:
     # IRIS Community 2026.2 with Aperture pre-installed through its IPM package
     # (docker/iris/Dockerfile). Override the base image in a .env file, e.g.
-    #   IRIS_IMAGE=intersystemsdc/irishealth-community:2026.2-zpm
+    #   IRIS_IMAGE=intersystems/irishealth-community:2026.2
     build:
       context: .
       dockerfile: docker/iris/Dockerfile
       args:
-        IRIS_IMAGE: ${IRIS_IMAGE:-intersystemsdc/iris-community:2026.2-zpm}
+        IRIS_IMAGE: ${IRIS_IMAGE:-intersystems/iris-community:2026.2}
     image: aperture-iris:local
     container_name: aperture-iris
     command: --check-caps false --ISCAgent false

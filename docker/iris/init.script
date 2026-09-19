@@ -6,13 +6,15 @@ zn "%SYS"
 Write "IRIS version: ",$zversion,!
 // Community images ship development accounts with expired passwords
 Do ##class(Security.Users).UnExpireUserPasswords("*")
-zn "USER"
-// plain (non -zpm) image tag: fetch the package manager from the community registry
+// IPM is preinstalled in the intersystemsdc "-zpm" tags; the official image needs the
+// installer from the community registry (the same step the InterSystems templates use)
 Set hasIPM=##class(%Dictionary.CompiledClass).%ExistsId("%IPM.Main"),sc=1
-If 'hasIPM Write "IPM not present in this image, downloading the installer ...",!
+If 'hasIPM Write "IPM not present in this image, downloading the installer from pm.community.intersystems.com ...",!
 If 'hasIPM Set req=##class(%Net.HttpRequest).%New(),req.Server="pm.community.intersystems.com",req.Https=1,req.SSLConfiguration="ISC.FeatureTracker.SSL.Config",sc=req.Get("/packages/zpm/latest/installer")
-If 'hasIPM,sc,req.HttpResponse.StatusCode=200 Set sc=$system.OBJ.LoadStream(req.HttpResponse.Data,"c")
-If 'hasIPM,'sc Write "IPM installer failed: ",$system.Status.GetErrorText(sc),! Do $system.Process.Terminate($job,1)
+If 'hasIPM,sc,req.HttpResponse.StatusCode'=200 Set sc=$system.Status.Error(5001,"IPM installer download answered HTTP "_req.HttpResponse.StatusCode)
+If 'hasIPM,sc Set sc=$system.OBJ.LoadStream(req.HttpResponse.Data,"ck")
+If 'sc Write "IPM installer failed: ",$system.Status.GetErrorText(sc),! Do $system.Process.Terminate($job,1)
+zn "USER"
 // ":1" terminates the session with exit code 1 on any error, which fails the docker build
 zpm "load /home/irisowner/aperture -v":1
 If '##class(%Dictionary.CompiledClass).%ExistsId("Aperture.Installer") Write "Aperture was not installed",! Do $system.Process.Terminate($job,1)

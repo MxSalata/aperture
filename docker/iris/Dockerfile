@@ -4,9 +4,10 @@
 # needs is copied in: the manifest, the installer class, the built portal (www/, produced
 # by `npm run build:www`) and the build-time script.
 #
-# The -zpm image tags ship the InterSystems Package Manager; init.script downloads it
-# when a plain tag is used instead (e.g. IRIS_IMAGE=intersystemsdc/iris-community:2026.2).
-ARG IRIS_IMAGE=intersystemsdc/iris-community:2026.2-zpm
+# Default base: the official Community Edition image (no custom entrypoint). init.script
+# fetches the InterSystems Package Manager from the community registry at build time; the
+# script skips that download when the base image already has it (IRIS_IMAGE build arg).
+ARG IRIS_IMAGE=intersystems/iris-community:2026.2
 FROM ${IRIS_IMAGE}
 
 # The base image runs as irisowner (uid 51773); create the module root as that user so

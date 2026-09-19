@@ -4,8 +4,8 @@ Aperture's build sandbox had no Docker daemon, so every claim about real instanc
 verified by two mechanisms instead of by hand:
 
 1. **CI job `verify-iris`** (`.github/workflows/ci.yml`) builds the `iris` image from
-   `docker/iris/Dockerfile` (IRIS Community 2026.2 with IPM): at build time `docker/iris/init.script`
-   installs Aperture through `zpm "load"` of `module.xml`, which runs the Embedded Python installer,
+   `docker/iris/Dockerfile` (official IRIS Community 2026.2 image): at build time `docker/iris/init.script`
+   fetches the package manager and installs Aperture through `zpm "load"` of `module.xml`, which runs the Embedded Python installer,
    and prints its readiness report. The job then starts the container, waits for `GET /api/admin/info`
    to answer 200, runs the conformance script below, checks that the portal is served at `/aperture/`
    and prints the readiness report again from inside the running container. The JSON report is

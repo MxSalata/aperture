@@ -53,10 +53,10 @@ docker compose up --build
 - Sign in with `_SYSTEM` / `SYS`
 
 The `iris` service is built from [`docker/iris/Dockerfile`](docker/iris/Dockerfile) on top of
-`intersystemsdc/iris-community:2026.2-zpm` (put `IRIS_IMAGE=intersystemsdc/irishealth-community:2026.2-zpm`
+`intersystems/iris-community:2026.2` (put `IRIS_IMAGE=intersystems/irishealth-community:2026.2`
 in a `.env` file next to the compose file for IRIS for Health Community). At build time
-[`docker/iris/init.script`](docker/iris/init.script) installs Aperture through its own IPM package
-(`zpm "load"` of [`module.xml`](module.xml)): the built portal is copied under the instance's `csp/`
+[`docker/iris/init.script`](docker/iris/init.script) fetches the InterSystems Package Manager from the
+community registry and installs Aperture through its own IPM package (`zpm "load"` of [`module.xml`](module.xml)): the built portal is copied under the instance's `csp/`
 directory, the `/aperture` web application is created, and [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls),
 written in Embedded Python, enables `/api/admin` with password + JWT authentication. The build log
 ends with the installer's readiness report; you can print it again at any time:
