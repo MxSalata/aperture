@@ -5,7 +5,7 @@
  * a container: five namespaces, nine databases, ~30 processes, system tasks,
  * journals, users/roles/resources, web applications and audit events.
  */
-import { daysAgo, hoursAgo, minutesAgo, seeded, pick, inMinutes } from './util';
+import { daysAgo, hoursAgo, minutesAgo, seeded, pick, inMinutes, inDays } from './util';
 import { resetAsyncTasks } from './async';
 
 export const MGR = '/usr/irissys/mgr/';
@@ -274,6 +274,30 @@ export interface SslRec {
   Ciphersuites: string[];
 }
 
+export interface X509Rec {
+  Alias: string;
+  HasPrivateKey: boolean;
+  OwnerList: string[];
+  PeerNames: string[];
+  CAFile: string;
+  SerialNumber: string;
+  IssuerDN: string;
+  SubjectDN: string;
+  ValidityNotBefore: string;
+  ValidityNotAfter: string;
+}
+
+/** One row of the audit log written by a mutation in the mock (real IRIS writes these itself). */
+export type AuditRecordRec = Record<string, unknown> & {
+  AuditIndex: number;
+  TimeStamp: string;
+  EventSource: string;
+  EventType: string;
+  Event: string;
+  Username: string;
+  Description: string;
+};
+
 export interface MockDb {
   namespaces: NamespaceRec[];
   configDbs: DbConfig[];
@@ -294,6 +318,9 @@ export interface MockDb {
   auditEvents: AuditEventRec[];
   webSessions: WebSessionRec[];
   sslConfigs: SslRec[];
+  x509: X509Rec[];
+  /** Audit records produced by writes made through the mock, newest first. */
+  auditLog: AuditRecordRec[];
   startedAt: number;
   broadcasts: string[];
 }
@@ -1444,6 +1471,72 @@ function seedWebSessions(): WebSessionRec[] {
   ];
 }
 
+function seedX509(): X509Rec[] {
+  const ca = 'CN=Example Hospital Internal CA,O=Example Hospital NHS Trust,C=GB';
+  return [
+    {
+      Alias: 'WebServerCert',
+      HasPrivateKey: true,
+      OwnerList: ['_SYSTEM'],
+      PeerNames: [],
+      CAFile: '/usr/irissys/mgr/certs/ca.pem',
+      SerialNumber: '4A:1F:9C:02:7B:33:E1:90',
+      IssuerDN: ca,
+      SubjectDN: 'CN=iris.example.org,O=Example Hospital NHS Trust,C=GB',
+      ValidityNotBefore: daysAgo(200),
+      ValidityNotAfter: inDays(530),
+    },
+    {
+      Alias: 'MirrorMemberCert',
+      HasPrivateKey: true,
+      OwnerList: ['_SYSTEM'],
+      PeerNames: ['iris-mirror-a.example.org'],
+      CAFile: '/usr/irissys/mgr/certs/ca.pem',
+      SerialNumber: '4A:1F:9C:02:7B:33:E1:91',
+      IssuerDN: ca,
+      SubjectDN: 'CN=iris-mirror-b.example.org,O=Example Hospital NHS Trust,C=GB',
+      ValidityNotBefore: daysAgo(353),
+      ValidityNotAfter: inDays(12),
+    },
+    {
+      Alias: 'HL7GatewayTLS',
+      HasPrivateKey: true,
+      OwnerList: ['_SYSTEM', 'ops'],
+      PeerNames: ['hl7-gw.hospital.local'],
+      CAFile: '/usr/irissys/mgr/certs/ca.pem',
+      SerialNumber: '4A:1F:9C:02:7B:33:E1:A4',
+      IssuerDN: ca,
+      SubjectDN: 'CN=hl7-gw.hospital.local,OU=Integration,O=Example Hospital NHS Trust,C=GB',
+      ValidityNotBefore: daysAgo(30),
+      ValidityNotAfter: inDays(400),
+    },
+    {
+      Alias: 'OAuthIssuerPublic',
+      HasPrivateKey: false,
+      OwnerList: [],
+      PeerNames: ['login.example.org'],
+      CAFile: '',
+      SerialNumber: '03:9F:11:8C:0D:E2:77:4B:AA:10',
+      IssuerDN: "CN=Let's Encrypt R11,O=Let's Encrypt,C=US",
+      SubjectDN: 'CN=login.example.org',
+      ValidityNotBefore: daysAgo(29),
+      ValidityNotAfter: inDays(61),
+    },
+    {
+      Alias: 'LDAPClient2024',
+      HasPrivateKey: true,
+      OwnerList: ['_SYSTEM'],
+      PeerNames: ['ldap.example.org'],
+      CAFile: '/usr/irissys/mgr/certs/ca.pem',
+      SerialNumber: '4A:1F:9C:02:7B:33:D0:07',
+      IssuerDN: ca,
+      SubjectDN: 'CN=iris-ldap-client,O=Example Hospital NHS Trust,C=GB',
+      ValidityNotBefore: daysAgo(405),
+      ValidityNotAfter: daysAgo(40),
+    },
+  ];
+}
+
 function seedSsl(): SslRec[] {
   return [
     {
@@ -1543,6 +1636,8 @@ export function createDb(): MockDb {
     auditEvents: seedAuditEvents(),
     webSessions: seedWebSessions(),
     sslConfigs: seedSsl(),
+    x509: seedX509(),
+    auditLog: [],
     startedAt: Date.now() - 3 * 86_400_000 - 4 * 3_600_000 - 17 * 60_000,
     broadcasts: [],
   };

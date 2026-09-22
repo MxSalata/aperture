@@ -123,6 +123,20 @@ await step('audit log query (async)', async () => {
     .waitFor({ timeout: 20000 });
   await shot('09-audit');
 });
+await step('certificates', async () => {
+  await page.goto(url(`/security/ssl`));
+  await page.getByRole('tab', { name: 'X.509 credentials' }).click();
+  await page.getByRole('cell', { name: 'MirrorMemberCert' }).first().waitFor({ timeout: 15000 });
+  await page.getByText(/expired 40 days ago/).waitFor({ timeout: 15000 });
+  await shot('20-certificates');
+});
+await step('logs hub', async () => {
+  await page.goto(url(`/logs`));
+  await page.getByText('Records written').waitFor({ timeout: 15000 });
+  await page.getByText('Runs, last 24 h').waitFor({ timeout: 15000 });
+  await page.waitForTimeout(800);
+  await shot('21-logs');
+});
 await step('tasks', async () => {
   await page.goto(url(`/tasks`));
   await page.getByRole('cell', { name: 'Purge Journal Files' }).first().waitFor({ timeout: 15000 });
@@ -156,6 +170,11 @@ await step('activity log', async () => {
     .first()
     .waitFor({ timeout: 15000 });
   await shot('18-activity');
+  await page.getByRole('button', { name: 'Find audit record' }).first().click();
+  await page.getByText('Recorded by IRIS').waitFor({ timeout: 20000 });
+  await page.waitForTimeout(400);
+  await shot('22-audit-evidence');
+  await page.keyboard.press('Escape');
 });
 await step('explorer executes GET', async () => {
   await page.goto(

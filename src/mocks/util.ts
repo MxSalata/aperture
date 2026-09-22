@@ -80,6 +80,10 @@ export function daysAgo(d: number): string {
   return hoursAgo(d * 24);
 }
 
+export function inDays(d: number): string {
+  return fmtDate(new Date(Date.now() + d * 86_400_000));
+}
+
 export function inMinutes(m: number): string {
   return fmtDate(new Date(Date.now() + m * 60_000), false);
 }

@@ -7,6 +7,7 @@ import {
   NumberInput,
   Select,
   Stack,
+  Tabs,
   TextInput,
   Tooltip,
 } from '@mantine/core';
@@ -23,6 +24,7 @@ import { BoolBadge } from '@/components/StatusBadge';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { reviewChanges } from '@/components/ReviewChanges';
 import { secKeys } from './keys';
+import { X509Tab } from './X509Tab';
 
 type Row = SSLConfigurationList[number];
 const TLS = [
@@ -198,8 +200,8 @@ export default function SslPage() {
   return (
     <>
       <PageHeader
-        title="TLS / SSL configurations"
-        description="Client and server TLS configurations used by the superserver, mirroring, LDAP, HTTP outbound and interoperability adapters."
+        title="TLS & certificates"
+        description="Client and server TLS configurations used by the superserver, mirroring, LDAP, HTTP outbound and interoperability adapters, and the X.509 credentials with the expiry of each certificate."
         privileges={['%Admin_Secure:U']}
         actions={
           <>
@@ -226,17 +228,28 @@ export default function SslPage() {
           </>
         }
       />
-      <DataTable
-        stateKey="ssl"
-        exportName="ssl"
-        data={list.data}
-        columns={columns}
-        loading={list.isPending}
-        error={list.error}
-        getRowId={(r) => r.Name ?? ''}
-        initialSorting={[{ id: 'Name', desc: false }]}
-        dense
-      />
+      <Tabs defaultValue="tls" keepMounted={false}>
+        <Tabs.List mb="sm">
+          <Tabs.Tab value="tls">TLS configurations</Tabs.Tab>
+          <Tabs.Tab value="x509">X.509 credentials</Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="tls">
+          <DataTable
+            stateKey="ssl"
+            exportName="ssl"
+            data={list.data}
+            columns={columns}
+            loading={list.isPending}
+            error={list.error}
+            getRowId={(r) => r.Name ?? ''}
+            initialSorting={[{ id: 'Name', desc: false }]}
+            dense
+          />
+        </Tabs.Panel>
+        <Tabs.Panel value="x509">
+          <X509Tab />
+        </Tabs.Panel>
+      </Tabs>
       <Modal
         opened={opened}
         onClose={close}

@@ -29,6 +29,7 @@ import { ApiError } from '@/lib/errors';
 import { PageHeader } from '@/components/PageHeader';
 import { PrivilegeBadge } from '@/components/PrivilegeBadge';
 import { JsonViewer } from '@/components/JsonViewer';
+import { redactDeep } from '@/lib/redact';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -298,7 +299,12 @@ function ResultView({ res }: { res: ExecResult }) {
         </Tabs.List>
         {isTable ? (
           <Tabs.Panel value="table" pt="xs">
-            <DataTable data={result as Record<string, unknown>[]} columns={columns} dense pageSize={20} />
+            <DataTable
+              data={redactDeep(result).value as Record<string, unknown>[]}
+              columns={columns}
+              dense
+              pageSize={20}
+            />
           </Tabs.Panel>
         ) : null}
         {result && typeof result === 'object' && !Array.isArray(result) ? (

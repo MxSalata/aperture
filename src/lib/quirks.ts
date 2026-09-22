@@ -56,6 +56,13 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
     source: 'IRIS Workbench verification record',
   },
   {
+    id: 'task-suspended-lag',
+    appliesTo: (op) => op.path === '/v2/task/suspend' || op.path === '/v2/task/resume',
+    note: 'After a successful suspend, GET /v2/tasks and /v2/task/info can keep reporting Suspended=false for a while although %SYS.Task.Suspended changed. Aperture re-reads the task after each change and says when the two disagree.',
+    source:
+      'IRIS Fieldwork verification report (IRIS Community 2026.2 Build 221U); `npm run verify:live -- --mutate` records what your instance does',
+  },
+  {
     id: 'process-resume-state',
     appliesTo: (op) => op.path === '/v2/process/resume',
     note: 'A resumed process reports state HANG (waiting) rather than RUNW until it runs again.',

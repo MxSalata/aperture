@@ -8,6 +8,9 @@
 //   IRIS_URL=http://localhost:52773 IRIS_USER=_SYSTEM IRIS_PASSWORD=SYS node scripts/live-check.mjs [--save docs/verification/latest.json]
 //   PORTAL_URL=http://localhost:52773/aperture/   (optional: also check the portal is served)
 //   IRIS_API_PREFIX=/api/admin                    (or /iris/api/admin behind a web gateway)
+//   --mutate                                      (opt-in: suspend and resume one task to check
+//                                                  that the read-back reflects the change; CI passes it,
+//                                                  a production instance should not)
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -16,6 +19,7 @@ const PREFIX = process.env.IRIS_API_PREFIX ?? '/api/admin';
 const USER = process.env.IRIS_USER ?? '_SYSTEM';
 const PASSWORD = process.env.IRIS_PASSWORD ?? 'SYS';
 const PORTAL_URL = process.env.PORTAL_URL;
+const MUTATE = process.argv.includes('--mutate');
 const saveIdx = process.argv.indexOf('--save');
 const SAVE = saveIdx > 0 ? process.argv[saveIdx + 1] : null;
 const base = `${IRIS_URL}${PREFIX}`;
@@ -214,6 +218,52 @@ try {
     }
   } else {
     record('202 pattern', false, 'no database directory available to probe');
+  }
+
+  // 5b. Opt-in: is a task suspend visible on the next read? Another entry's verification
+  // saw /v2/tasks keep reporting Suspended=false after a successful suspend on 2026.2.
+  // Aperture re-reads and reports a disagreement; this records what this instance does.
+  if (MUTATE) {
+    const tasks = await http('GET', '/v2/tasks');
+    const list = Array.isArray(tasks.json?.result) ? tasks.json.result : [];
+    const candidate =
+      list.find((t) => t.Suspended === false && /purge/i.test(t.Name ?? '')) ??
+      list.find((t) => t.Suspended === false);
+    if (!candidate) {
+      record('Task suspend/resume round trip', false, 'no unsuspended task to probe (skipped)');
+    } else {
+      const id = candidate.Id;
+      const readBack = async () => {
+        const one = await http('GET', `/v2/task/info?id=${id}`);
+        const all = await http('GET', '/v2/tasks');
+        const row = (Array.isArray(all.json?.result) ? all.json.result : []).find((t) => t.Id === id);
+        return { info: one.json?.result?.Suspended, list: row?.Suspended };
+      };
+      try {
+        const sus = await http('POST', `/v2/task/suspend?id=${id}`);
+        hardFailure |= !record(
+          `POST /v2/task/suspend (${candidate.Name})`,
+          sus.status === 200,
+          `HTTP ${sus.status}`,
+        );
+        const after = await readBack();
+        report.quirks.taskSuspendReflected = { info: after.info ?? null, list: after.list ?? null };
+        const reflected = after.info === true && after.list === true;
+        record(
+          'Suspended state readable right after suspend',
+          reflected,
+          `/v2/task/info says ${after.info}, /v2/tasks says ${after.list}${reflected ? '' : ' - Aperture re-reads and shows the disagreement'}`,
+        );
+      } finally {
+        const res = await http('POST', `/v2/task/resume?id=${id}`);
+        const after = await readBack();
+        hardFailure |= !record(
+          `POST /v2/task/resume (${candidate.Name})`,
+          res.status === 200 && after.info !== true,
+          `HTTP ${res.status}, /v2/task/info says Suspended=${after.info}`,
+        );
+      }
+    }
   }
 
   // 6. Optional: the portal itself

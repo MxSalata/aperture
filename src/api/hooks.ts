@@ -110,6 +110,29 @@ export function useAsyncResult<TResult = unknown>(
   };
 }
 
+/**
+ * Wait for a `202` job outside React state: for lookups started from an event handler that
+ * want the result as a value (the Activity screen's audit evidence). Polls quietly, so the
+ * job stays out of the Job Center.
+ */
+export async function awaitAsyncResult<T>(
+  jobId: string,
+  opts: { intervalMs?: number; timeoutMs?: number } = {},
+): Promise<T> {
+  const started = Date.now();
+  for (;;) {
+    const task = await result(
+      api().GET('/v2/async-result', { params: { query: { id: jobId } }, headers: SILENT }),
+    );
+    if (task.State === 'Finished') return task.Result as T;
+    if (task.State === 'Failed' || task.State === 'Canceled')
+      throw new Error(task.FailureReason || `Task ${task.State}`);
+    if (Date.now() - started > (opts.timeoutMs ?? 60_000))
+      throw new Error(`Task ${jobId} did not finish within ${(opts.timeoutMs ?? 60_000) / 1000} s`);
+    await new Promise((r) => setTimeout(r, opts.intervalMs ?? 1000));
+  }
+}
+
 /** Headers that make a 202 job show up in the Job Center with a readable name. */
 export function jobHeaders(name: string, subject?: string): Record<string, string> {
   const h: Record<string, string> = { 'x-aperture-job': name };

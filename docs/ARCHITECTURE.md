@@ -205,6 +205,26 @@ resolved JSON schema (flat fields) with a JSON tab for nested ones, pre-fills ex
 executes through the same client (so 202s land in the Job Center) and shows the result as a table,
 fields or JSON.
 
+Three rules sit at the render boundary rather than in individual screens:
+
+- **Secrets never become UI content.** `lib/redact.ts` replaces string values under a secret key
+  (`Password`, `ClientSecret`, `PrivateKeyPassword`, `InitialAccessToken`, `KeyValueSecret`, …)
+  with a placeholder. `JsonViewer` applies it before the text exists (so the clipboard never holds a
+  secret, and a badge says how many values were hidden), `objectToItems` applies it to every detail
+  page and the Explorer's field view, and `DataTable` applies it to CSV export. Configuration keys
+  that merely mention a secret word (`PasswordNeverExpires`, `PrivateKeyFile`, `AccessTokenInterval`)
+  pass through; the rule is unit-tested against the specification's vocabulary.
+- **A change is only as real as the read-back.** After a task suspend or resume the detail page
+  re-reads `/v2/task/info` and says when IRIS still reports the previous state (see
+  `lib/quirks.ts`, `task-suspended-lag`). The Activity screen can match a security write to the
+  `%System/%Security/<Event>` audit record that proves it: `lib/auditEvents.ts` maps the request
+  path to the event, the audit log is queried as an asynchronous task around the request time, and
+  the closest matching record is shown next to the HTTP result.
+- **Every log the API exposes has one door.** The **Logs** hub (`features/logs`) lists the audit
+  database, journal files, `alerts.log` from the native monitor service, task history and this tab's
+  changes with counts and the latest entry, gates each card on the privilege it needs, and says
+  which logs (`messages.log`, `^ERRORS`, SQL diagnostics) have no API route.
+
 ## 5. Deployment topologies
 
 | Mode | Build | Router | Origin of `/api/admin` |

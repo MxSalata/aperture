@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.3.0 - what the other entries taught us
+
+A scan of the other contest entries (IRIS Ops Studio, IRIS Fieldwork, Meridian, IRIS
+Multi-Manager, OcuPilot, Ops Canvas) turned up six things worth having before the deadline.
+
+- **Secrets are redacted at the render boundary.** Passwords, client secrets, tokens and private
+  keys are replaced before raw JSON is rendered or copied, before detail pages list fields and
+  before a CSV is written; a badge says how many values were hidden. Configuration keys that only
+  mention a secret word are left alone. (`src/lib/redact.ts`, unit-tested.)
+- **TLS & certificates.** The TLS page gained an X.509 credentials tab: subject and issuer, the
+  certificate's validity read per credential, a countdown badge (expired, expiring within 30
+  days, ok), private-key presence, owners and peer names, and a type-the-alias delete.
+- **Task state is verified, not assumed.** After a suspend or resume the task is re-read and the
+  page says when IRIS still reports the previous state, a behaviour another entry observed on
+  2026.2. `npm run verify:live -- --mutate` (used by CI) records what your instance does.
+- **Audit evidence for security writes.** On the Activity screen a security change can be matched
+  to the `%System/%Security/<Event>` audit record that proves it; the record is shown next to
+  the HTTP result and the row keeps the audit index. The demo instance writes audit records for
+  its own mutations so the flow works without an IRIS.
+- **Logs hub.** One screen for the contest's sixth area: audit log, journal, `alerts.log`, task
+  history and this tab's changes, each with counts and the latest entry, plus an honest list of
+  the logs no API route reaches.
+- **README maps the six contest areas** to screens and states each area's boundary.
+
 ## 0.2.0 - release candidate for the contest submission
 
 Built from an external architecture review of 0.1.0 (F/G/U/A/M-series findings, 60 items).

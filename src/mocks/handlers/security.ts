@@ -1,4 +1,5 @@
-import { mockDb, type UserRec, type RoleRec } from '../db';
+import { mockDb, type AuditRecordRec, type UserRec, type RoleRec } from '../db';
+import { recordAudit } from '../audit';
 import {
   ok,
   created,
@@ -31,6 +32,8 @@ const userDetailShape = (u: UserRec) => {
 };
 const findUser = (name: string | null) =>
   name ? mockDb.users.find((u) => u.Name.toLowerCase() === name.toLowerCase()) : undefined;
+const findX509 = (alias: string | null) =>
+  alias ? mockDb.x509.find((c) => c.Alias.toLowerCase() === alias.toLowerCase()) : undefined;
 const findRole = (name: string | null) =>
   name ? mockDb.roles.find((r) => r.Name.toLowerCase() === name.toLowerCase()) : undefined;
 
@@ -77,14 +80,20 @@ function auditRecords(request: Request) {
       StartupClientIPAddress: pick(rnd, ips),
     });
   }
-  let rows = out;
+  // Writes made through the mock come first (newest first), then the synthetic history;
+  // the time window and the filters apply to both, as they do on a real instance.
+  let rows: AuditRecordRec[] = [...mockDb.auditLog, ...(out as unknown as AuditRecordRec[])];
+  const begin = q.get('beginDateTime');
+  if (begin) rows = rows.filter((r) => r.TimeStamp >= begin);
+  const end = q.get('endDateTime');
+  if (end) rows = rows.filter((r) => r.TimeStamp <= end);
   const filterUser = q.get('usernames');
   if (filterUser) rows = rows.filter((r) => filterUser.split(',').includes(r.Username));
   const types = q.get('eventTypes');
   if (types) rows = rows.filter((r) => types.split(',').includes(r.EventType));
   const names = q.get('events');
   if (names) rows = rows.filter((r) => names.split(',').includes(r.Event));
-  return rows;
+  return rows.slice(0, max);
 }
 
 export const securityHandlers = [
@@ -98,7 +107,7 @@ export const securityHandlers = [
     return u ? ok(userDetailShape(u)) : notFound('User');
   }),
 
-  route('post', '/v2/security/user', SECURE, async ({ request }) => {
+  route('post', '/v2/security/user', SECURE, async ({ request, account }) => {
     const body = await jsonBody<{
       User?: Record<string, unknown> & { Name?: string };
       Password?: string;
@@ -130,30 +139,33 @@ export const securityHandlers = [
       HOTPKeyDisplay: false,
       password: body.Password,
     });
+    recordAudit(account, 'UserChange', `User ${name} created`);
     return created({}, [`User ${name} created`]);
   }),
 
-  route('put', '/v2/security/user', SECURE, async ({ request }) => {
+  route('put', '/v2/security/user', SECURE, async ({ request, account }) => {
     const u = findUser(requireParam(request, 'name'));
     if (!u) return notFound('User');
     const body = await jsonBody<Record<string, unknown>>(request);
     const { Name: _n, NameSpace, ...rest } = body;
     Object.assign(u, rest);
     if (NameSpace) u.Namespace = String(NameSpace);
+    recordAudit(account, 'UserChange', `User ${u.Name} modified`, Object.keys(body).join(', '));
     return ok({}, { summary: `User ${u.Name} updated` });
   }),
 
-  route('delete', '/v2/security/user', SECURE, ({ request }) => {
+  route('delete', '/v2/security/user', SECURE, ({ request, account }) => {
     const name = requireParam(request, 'name');
     const u = findUser(name);
     if (!u) return notFound('User');
     if (u.Name.startsWith('_') || u.Name === 'SuperUser')
       return fail(400, `System user ${u.Name} cannot be deleted`);
     mockDb.users = mockDb.users.filter((x) => x !== u);
+    recordAudit(account, 'UserChange', `User ${u.Name} deleted`);
     return ok({}, { summary: `User ${u.Name} deleted` });
   }),
 
-  route('post', '/v2/security/user/password', SECURE, async ({ request }) => {
+  route('post', '/v2/security/user/password', SECURE, async ({ request, account }) => {
     const u = findUser(requireParam(request, 'name'));
     if (!u) return notFound('User');
     const body = await jsonBody<{ Password?: string; NewPassword?: string; password?: string }>(request);
@@ -163,6 +175,7 @@ export const securityHandlers = [
     u.password = pw;
     const acct = findAccount(u.Name);
     if (acct) acct.password = pw;
+    recordAudit(account, 'UserChange', `Password changed for user ${u.Name}`);
     return ok({}, { summary: `Password changed for ${u.Name}` });
   }),
 
@@ -202,6 +215,7 @@ export const securityHandlers = [
     const existing = findRole(name);
     if (existing) {
       Object.assign(existing, body);
+      recordAudit(account, 'RoleChange', `Role ${name} modified`, Object.keys(body).join(', '));
       return ok({}, { summary: `Role ${name} updated` });
     }
     mockDb.roles.push({
@@ -212,13 +226,15 @@ export const securityHandlers = [
       GrantedRoles: body.GrantedRoles ?? [],
       Resources: body.Resources ?? [],
     });
+    recordAudit(account, 'RoleChange', `Role ${name} created`);
     return created({}, [`Role ${name} created`]);
   }),
-  route('delete', '/v2/security/role', SECURE, ({ request }) => {
+  route('delete', '/v2/security/role', SECURE, ({ request, account }) => {
     const r = findRole(requireParam(request, 'name'));
     if (!r) return notFound('Role');
     if (r.Name.startsWith('%')) return fail(400, `System role ${r.Name} cannot be deleted`);
     mockDb.roles = mockDb.roles.filter((x) => x !== r);
+    recordAudit(account, 'RoleChange', `Role ${r.Name} deleted`);
     return ok({}, { summary: `Role ${r.Name} deleted` });
   }),
 
@@ -232,13 +248,14 @@ export const securityHandlers = [
       ? ok({ Description: r.Description, PublicPermission: r.PublicPermission })
       : notFound('Resource');
   }),
-  route('put', '/v2/security/resource', SECURE, async ({ request }) => {
+  route('put', '/v2/security/resource', SECURE, async ({ request, account }) => {
     const name = requireParam(request, 'name');
     if (!name) return badRequest('Missing name');
     const body = await jsonBody<{ Description?: string; PublicPermission?: string }>(request);
     const existing = mockDb.resources.find((x) => x.Name === name);
     if (existing) {
       Object.assign(existing, body);
+      recordAudit(account, 'ResourceChange', `Resource ${name} modified`);
       return ok({}, { summary: `Resource ${name} updated` });
     }
     mockDb.resources.push({
@@ -248,13 +265,15 @@ export const securityHandlers = [
       ResourceType: name.startsWith('%DB_') ? 'Database' : 'Application',
       AllowDelete: true,
     });
+    recordAudit(account, 'ResourceChange', `Resource ${name} created`);
     return created({}, [`Resource ${name} created`]);
   }),
-  route('delete', '/v2/security/resource', SECURE, ({ request }) => {
+  route('delete', '/v2/security/resource', SECURE, ({ request, account }) => {
     const r = mockDb.resources.find((x) => x.Name === requireParam(request, 'name'));
     if (!r) return notFound('Resource');
     if (!r.AllowDelete) return fail(400, `System resource ${r.Name} cannot be deleted`);
     mockDb.resources = mockDb.resources.filter((x) => x !== r);
+    recordAudit(account, 'ResourceChange', `Resource ${r.Name} deleted`);
     return ok({}, { summary: `Resource ${r.Name} deleted` });
   }),
 
@@ -273,7 +292,7 @@ export const securityHandlers = [
         })
       : notFound('Service');
   }),
-  route('put', '/v2/security/service', SECURE, async ({ request }) => {
+  route('put', '/v2/security/service', SECURE, async ({ request, account }) => {
     const s = mockDb.services.find((x) => x.Name === requireParam(request, 'name'));
     if (!s) return notFound('Service');
     const body = await jsonBody<{
@@ -289,14 +308,16 @@ export const securityHandlers = [
     if (body.Description !== undefined) s.Description = body.Description;
     if (body.AutheEnabled !== undefined) s.AutheEnabled = body.AutheEnabled;
     if (body.ClientSystems !== undefined) s.AllowedConnections = body.ClientSystems;
+    recordAudit(account, 'ServiceChange', `Service ${s.Name} modified`, Object.keys(body).join(', '));
     return ok({}, { summary: `Service ${s.Name} updated` });
   }),
 
   // ---- audit --------------------------------------------------------------
   route('get', '/v2/security/audit/enabled', SECURE, () => ok({ Enabled: mockDb.auditEnabled })),
-  route('put', '/v2/security/audit/enabled', SECURE, async ({ request }) => {
+  route('put', '/v2/security/audit/enabled', SECURE, async ({ request, account }) => {
     const body = await jsonBody<{ Enabled?: boolean }>(request);
     mockDb.auditEnabled = !!body.Enabled;
+    recordAudit(account, 'AuditChange', `Auditing ${mockDb.auditEnabled ? 'enabled' : 'disabled'}`);
     return ok({}, { summary: `Auditing ${mockDb.auditEnabled ? 'enabled' : 'disabled'}` });
   }),
   route('get', '/v2/security/audit/events', SECURE, ({ request }) =>
@@ -399,6 +420,70 @@ export const securityHandlers = [
     return ok({ Copied: 4_210 }, { summary: `Copied audit records to ${body.Namespace ?? 'USER'}` });
   }),
 
+  // ---- OAuth 2.0 server clients (explicit so the demo carries a secret to redact) ------
+  route('get', '/v2/security/oauth2/server/clients', SECURE, ({ request }) =>
+    ok(
+      filterRows(
+        [
+          {
+            Name: 'aperture-portal',
+            ClientId: 'aperture-portal',
+            ClientSecret: 'k9T2xq7VwPZm3LcH1nRb8sYd0uFa5GeJ',
+            ClientType: 'confidential',
+            RedirectURL: ['https://iris.example.org/aperture/'],
+            Description: 'Aperture management portal',
+            Enabled: true,
+          },
+          {
+            Name: 'hl7-router',
+            ClientId: 'hl7-router',
+            ClientSecret: 'Q4vB7nM2xR9tL0kP6sW3yE8uC1hZ5aGd',
+            ClientType: 'confidential',
+            RedirectURL: ['https://hl7-gw.hospital.local/callback'],
+            Description: 'Interoperability HL7 router',
+            Enabled: true,
+          },
+        ],
+        request,
+      ),
+    ),
+  ),
+
+  // ---- X.509 credentials --------------------------------------------------
+  route('get', '/v2/security/x509-credentials', SECURE, ({ request }) =>
+    ok(
+      filterRows(
+        mockDb.x509.map(({ Alias, HasPrivateKey, OwnerList, PeerNames, CAFile }) => ({
+          Alias,
+          HasPrivateKey,
+          OwnerList,
+          PeerNames,
+          CAFile,
+        })),
+        request,
+      ),
+    ),
+  ),
+  route('get', '/v2/security/x509-credential', SECURE, ({ request }) => {
+    const c = findX509(requireParam(request, 'alias'));
+    return c
+      ? ok({ OwnerList: c.OwnerList, CAFile: c.CAFile, PeerNames: c.PeerNames })
+      : notFound('X.509 credential');
+  }),
+  route('get', '/v2/security/x509-credential/certificate', SECURE, ({ request }) => {
+    const c = findX509(requireParam(request, 'alias'));
+    if (!c) return notFound('X.509 credential');
+    const { HasPrivateKey, SerialNumber, IssuerDN, SubjectDN, ValidityNotBefore, ValidityNotAfter } = c;
+    return ok({ HasPrivateKey, SerialNumber, IssuerDN, SubjectDN, ValidityNotBefore, ValidityNotAfter });
+  }),
+  route('delete', '/v2/security/x509-credential', SECURE, ({ request, account }) => {
+    const c = findX509(requireParam(request, 'alias'));
+    if (!c) return notFound('X.509 credential');
+    mockDb.x509 = mockDb.x509.filter((x) => x !== c);
+    recordAudit(account, 'X509CredentialChange', `X.509 credential ${c.Alias} deleted`);
+    return ok({}, { summary: `X.509 credential ${c.Alias} deleted` });
+  }),
+
   // ---- SSL ----------------------------------------------------------------
   route('get', '/v2/security/ssl-configurations', SECURE, ({ request }) =>
     ok(
@@ -432,7 +517,7 @@ export const securityHandlers = [
       VerifyDepth: 9,
     });
   }),
-  route('put', '/v2/security/ssl-configuration', SECURE, async ({ request }) => {
+  route('put', '/v2/security/ssl-configuration', SECURE, async ({ request, account }) => {
     const name = requireParam(request, 'name');
     if (!name) return badRequest('Missing name');
     const body = await jsonBody<Record<string, unknown>>(request);
@@ -453,15 +538,17 @@ export const securityHandlers = [
     };
     if (existing) Object.assign(existing, rec);
     else mockDb.sslConfigs.push(rec);
+    recordAudit(account, 'SSLConfigChange', `SSL configuration ${name} ${existing ? 'modified' : 'created'}`);
     return existing
       ? ok({}, { summary: `SSL configuration ${name} updated` })
       : created({}, [`SSL configuration ${name} created`]);
   }),
-  route('delete', '/v2/security/ssl-configuration', SECURE, ({ request }) => {
+  route('delete', '/v2/security/ssl-configuration', SECURE, ({ request, account }) => {
     const s = mockDb.sslConfigs.find((x) => x.Name === requireParam(request, 'name'));
     if (!s) return notFound('SSL configuration');
     if (s.Name.startsWith('%')) return fail(400, 'System SSL configurations cannot be deleted');
     mockDb.sslConfigs = mockDb.sslConfigs.filter((x) => x !== s);
+    recordAudit(account, 'SSLConfigChange', `SSL configuration ${s.Name} deleted`);
     return ok({}, { summary: `SSL configuration ${s.Name} deleted` });
   }),
   route('post', '/v2/security/ssl-configuration/test', SECURE, async ({ request }) => {

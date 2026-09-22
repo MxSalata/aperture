@@ -18,6 +18,8 @@ export interface ActivityEntry {
   summary: string;
   durationMs: number;
   jobId?: string | null;
+  /** The audit record found for this change, once the user asked for it. */
+  audit?: { index: string; event: string };
 }
 
 const MAX = 300;
@@ -25,6 +27,7 @@ const MAX = 300;
 interface ActivityState {
   entries: ActivityEntry[];
   record(entry: Omit<ActivityEntry, 'id'>): void;
+  bind(id: string, audit: ActivityEntry['audit']): void;
   clear(): void;
 }
 
@@ -40,6 +43,8 @@ export const useActivity = create<ActivityState>()(
           ];
           return { entries: next.length > MAX ? next.slice(0, MAX) : next };
         }),
+      bind: (id, audit) =>
+        set((s) => ({ entries: s.entries.map((e) => (e.id === id ? { ...e, audit } : e)) })),
       clear: () => set({ entries: [] }),
     }),
     { name: 'aperture.activity', storage: createJSONStorage(() => safeSessionStorage) },

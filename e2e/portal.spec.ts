@@ -110,6 +110,58 @@ test.describe('Aperture (demo mode)', () => {
     await expect(page.getByRole('cell', { name: /\/v2\/security\/user/ }).first()).toBeVisible();
   });
 
+  test('a security change can be matched to the audit record that proves it', async ({ page }) => {
+    await loginDemo(page);
+    await go(page, '/security/users/jdoe');
+    await page.getByRole('button', { name: 'Edit' }).click();
+    await page.getByLabel('Comment').fill('Audited by Playwright');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page
+      .getByRole('dialog', { name: /Review changes/ })
+      .getByRole('button', { name: 'Apply changes' })
+      .click();
+    await expect(page.getByText('User jdoe updated')).toBeVisible();
+    await go(page, '/activity');
+    await page.getByRole('button', { name: 'Find audit record' }).first().click();
+    const drawer = page.getByRole('dialog');
+    await expect(drawer.getByText('Recorded by IRIS')).toBeVisible({ timeout: 20_000 });
+    await expect(drawer.getByText(/UserChange/).first()).toBeVisible();
+  });
+
+  test('certificates tab reads each X.509 credential and flags expiry', async ({ page }) => {
+    await loginDemo(page);
+    await go(page, '/security/ssl');
+    await page.getByRole('tab', { name: 'X.509 credentials' }).click();
+    await expect(page.getByRole('cell', { name: 'MirrorMemberCert' })).toBeVisible();
+    await expect(page.getByText(/1 expired/)).toBeVisible();
+    await expect(page.getByText(/expiring within 30 days/)).toBeVisible();
+    await expect(page.getByText(/expired 40 days ago/)).toBeVisible();
+  });
+
+  test('logs hub lists every log source with counts', async ({ page }) => {
+    await loginDemo(page);
+    await go(page, '/logs');
+    await expect(page.getByRole('heading', { name: 'Logs' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Audit log' })).toBeVisible();
+    await expect(page.getByText('Records written')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Journal' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'alerts.log' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Task history' })).toBeVisible();
+    await expect(page.getByText('Not reachable through the API')).toBeVisible();
+  });
+
+  test('secrets are redacted in raw JSON panels', async ({ page }) => {
+    await loginDemo(page);
+    await go(
+      page,
+      `/explorer/${encodeURIComponent('/v2/security/oauth2/server/client')}?op=${encodeURIComponent('GET /v2/security/oauth2/server/clients')}`,
+    );
+    await page.getByRole('button', { name: 'Execute' }).click();
+    await expect(page.getByText('HTTP 200')).toBeVisible();
+    await page.getByRole('tab', { name: 'JSON' }).click();
+    await expect(page.getByText(/\d+ hidden/).first()).toBeVisible();
+  });
+
   test('host monitor reads native metrics and the header shows LIVE', async ({ page }) => {
     await loginDemo(page);
     await expect(page.getByRole('banner').getByText('DEMO', { exact: true })).toBeVisible();

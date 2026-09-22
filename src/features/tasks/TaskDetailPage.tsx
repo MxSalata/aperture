@@ -1,8 +1,15 @@
-import { Button, Grid, Group, Menu, Modal, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Button, Grid, Group, Menu, Modal, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconArrowLeft, IconChevronDown, IconPlayerPlay, IconTrash } from '@tabler/icons-react';
+import {
+  IconAlertTriangle,
+  IconArrowLeft,
+  IconChevronDown,
+  IconPlayerPlay,
+  IconTrash,
+} from '@tabler/icons-react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { PageHeader } from '@/components/PageHeader';
@@ -56,8 +63,25 @@ export default function TaskDetailPage() {
     (Datetime: string) => run(api().POST('/v2/task/run', { ...params, body: { RunNow: false, Datetime } })),
     { invalidate, onSuccess: () => closeAt() },
   );
-  const suspend = useApiMutation(() => run(api().POST('/v2/task/suspend', params)), { invalidate });
-  const resume = useApiMutation(() => run(api().POST('/v2/task/resume', params)), { invalidate });
+  // A suspend or resume is only as real as what the server reports afterwards: re-read the
+  // task and keep a note when the read-back disagrees with the accepted request (on IRIS
+  // 2026.2 the task list can lag behind %SYS.Task.Suspended; see lib/quirks.ts).
+  const [lastChange, setLastChange] = useState<{ expected: boolean; at: number } | null>(null);
+  const verify = async (expected: boolean) => {
+    const fresh = await info.refetch();
+    const reported = fresh.data?.Suspended;
+    setLastChange(reported !== undefined && !!reported !== expected ? { expected, at: Date.now() } : null);
+  };
+  // Shown only while the latest read-back still disagrees with the accepted request.
+  const lag = lastChange && info.data && !!info.data.Suspended !== lastChange.expected ? lastChange : null;
+  const suspend = useApiMutation(() => run(api().POST('/v2/task/suspend', params)), {
+    invalidate,
+    onSuccess: () => void verify(true),
+  });
+  const resume = useApiMutation(() => run(api().POST('/v2/task/resume', params)), {
+    invalidate,
+    onSuccess: () => void verify(false),
+  });
   const remove = useApiMutation(() => run(api().DELETE('/v2/task', params), 'DELETE'), {
     invalidate: [taskKeys.list],
     onSuccess: () => navigate('/tasks'),
@@ -149,6 +173,21 @@ export default function TaskDetailPage() {
             <Title order={5} mb="xs">
               Status
             </Title>
+            {lag ? (
+              <Alert
+                color="yellow"
+                variant="light"
+                icon={<IconAlertTriangle size={16} />}
+                title={`The ${lag.expected ? 'suspend' : 'resume'} was accepted, but IRIS still reports the task as ${lag.expected ? 'active' : 'suspended'}`}
+                mb="sm"
+              >
+                <Text size="sm">
+                  GET /v2/task/info re-read at {formatDateTime(lag.at)} disagrees with the request. On IRIS
+                  2026.2 the task list can lag behind the task object. This page re-reads every 10 seconds and
+                  shows what the server reports, never what was requested.
+                </Text>
+              </Alert>
+            ) : null}
             {i ? (
               <KeyValueList
                 cols={3}

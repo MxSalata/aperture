@@ -11,6 +11,8 @@ export const secKeys = {
   auditEvents: ['security', 'audit', 'events'] as const,
   ssl: ['security', 'ssl'] as const,
   sslOne: (n: string) => ['security', 'ssl', n] as const,
+  x509: ['security', 'x509'] as const,
+  x509Cert: (alias: string) => ['security', 'x509', alias, 'certificate'] as const,
   sqlPrivs: (ns: string, grantee: string) => ['security', 'sql', ns, grantee] as const,
 };
 

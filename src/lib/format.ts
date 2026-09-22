@@ -82,6 +82,16 @@ export function parseIrisDate(s: string | null | undefined): dayjs.Dayjs | null 
   return d.isValid() ? d : null;
 }
 
+/**
+ * An epoch in milliseconds as the instance would write it (`YYYY-MM-DD HH:mm:ss` in the
+ * instance's zone when the connection sets one, otherwise in the browser's), for query
+ * parameters such as the audit log's `beginDateTime`.
+ */
+export function toIrisDateTime(ms: number): string {
+  const d = instanceZone ? dayjs(ms).tz(instanceZone) : dayjs(ms);
+  return d.format('YYYY-MM-DD HH:mm:ss');
+}
+
 /** Absolute wall-clock rendering of an IRIS timestamp, or of an epoch in milliseconds. */
 export function formatDateTime(s: string | number | null | undefined): string {
   if (typeof s === 'number') return Number.isFinite(s) ? dayjs(s).format('YYYY-MM-DD HH:mm:ss') : '-';

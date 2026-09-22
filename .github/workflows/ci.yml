@@ -93,7 +93,7 @@ jobs:
           docker logs aperture-iris 2>&1 | tail -150 || true
           exit 1
       - name: Live conformance check
-        run: node scripts/live-check.mjs --save docs/verification/ci-latest.json
+        run: node scripts/live-check.mjs --save docs/verification/ci-latest.json --mutate
         env:
           IRIS_URL: http://localhost:52773
           IRIS_USER: _SYSTEM

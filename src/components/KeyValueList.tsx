@@ -1,5 +1,6 @@
 import { Badge, Group, SimpleGrid, Stack, Text } from '@mantine/core';
 import type { ReactNode } from 'react';
+import { redactDeep, redactField } from '@/lib/redact';
 
 export interface KeyValue {
   label: string;
@@ -80,7 +81,10 @@ export function KeyValueList({ items, cols = 2 }: Props) {
   );
 }
 
-/** Turn an arbitrary object into KeyValue items (used by detail pages and the Explorer). */
+/**
+ * Turn an arbitrary object into KeyValue items (used by detail pages and the Explorer).
+ * Secret fields are redacted here, so every detail page inherits the rule.
+ */
 export function objectToItems(
   obj: Record<string, unknown> | null | undefined,
   opts: { omit?: string[]; labels?: Record<string, string> } = {},
@@ -88,7 +92,10 @@ export function objectToItems(
   if (!obj) return [];
   return Object.entries(obj)
     .filter(([k]) => !opts.omit?.includes(k))
-    .map(([k, v]) => ({ label: opts.labels?.[k] ?? humanize(k), value: renderValue(v) }));
+    .map(([k, v]) => ({
+      label: opts.labels?.[k] ?? humanize(k),
+      value: renderValue(typeof v === 'string' ? redactField(k, v) : redactDeep(v).value),
+    }));
 }
 
 export function humanize(key: string): string {

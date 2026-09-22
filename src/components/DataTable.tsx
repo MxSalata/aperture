@@ -44,6 +44,7 @@ import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { toCsv } from '@/lib/csv';
+import { redactDeep, redactField } from '@/lib/redact';
 import { downloadText } from '@/lib/download';
 
 export type { ColumnDef };
@@ -264,7 +265,12 @@ export function DataTable<T>({
   const exportCsv = () => {
     const cols = table.getVisibleLeafColumns().filter((c) => c.accessorFn);
     const headers = cols.map((c) => (typeof c.columnDef.header === 'string' ? c.columnDef.header : c.id));
-    const body = table.getPrePaginationRowModel().rows.map((r) => cols.map((c) => r.getValue(c.id)));
+    const body = table.getPrePaginationRowModel().rows.map((r) =>
+      cols.map((c) => {
+        const v = r.getValue(c.id);
+        return typeof v === 'string' ? redactField(c.id, v) : redactDeep(v).value;
+      }),
+    );
     downloadText(
       `${exportName}-${dayjs().format('YYYYMMDD-HHmmss')}.csv`,
       toCsv(headers, body),

@@ -17,6 +17,7 @@ import {
   IconLicense,
   IconListSearch,
   IconLock,
+  IconLogs,
   IconServer,
   IconShieldLock,
   IconTable,
@@ -111,6 +112,14 @@ export const NAV: NavSection[] = [
         description: 'Journal files, records, settings and switching',
       },
       {
+        label: 'Logs',
+        to: '/logs',
+        icon: IconLogs,
+        privileges: [],
+        description: 'Audit log, journal records, alerts.log and task history: every log the API exposes',
+        keywords: ['messages', 'alerts', 'audit', 'journal', 'errors', 'history', 'events'],
+      },
+      {
         label: 'Tasks',
         to: '/tasks',
         icon: IconActivity,
@@ -188,11 +197,12 @@ export const NAV: NavSection[] = [
         description: 'Audit events and the audit log',
       },
       {
-        label: 'TLS / SSL',
+        label: 'TLS & certificates',
         to: '/security/ssl',
         icon: IconCertificate,
         privileges: ['%Admin_Secure:U'],
-        description: 'SSL/TLS configurations',
+        description: 'SSL/TLS configurations and X.509 credentials with certificate expiry',
+        keywords: ['ssl', 'x509', 'certificate', 'expiry', 'expired'],
       },
       {
         label: 'SQL privileges',

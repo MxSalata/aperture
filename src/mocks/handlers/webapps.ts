@@ -1,4 +1,5 @@
 import { mockDb, type WebAppRec } from '../db';
+import { recordAudit } from '../audit';
 import { ok, created, notFound, badRequest, requireParam, jsonBody, filterRows, fail } from '../util';
 import { route, SECURE } from '../secure';
 
@@ -60,7 +61,7 @@ export const webAppHandlers = [
     });
   }),
 
-  route('put', '/v2/web-app', SECURE, async ({ request }) => {
+  route('put', '/v2/web-app', SECURE, async ({ request, account }) => {
     const name = requireParam(request, 'name');
     if (!name) return badRequest('Missing name');
     if (!name.startsWith('/')) return badRequest('Web application names must start with /');
@@ -78,6 +79,12 @@ export const webAppHandlers = [
       if (NameSpace) existing.Namespace = String(NameSpace);
       if (IsNameSpaceDefault !== undefined) existing.NamespaceDefault = !!IsNameSpaceDefault;
       existing.AuthenticationMethods = methods;
+      recordAudit(
+        account,
+        'ApplicationChange',
+        `Web application ${name} modified`,
+        Object.keys(body).join(', '),
+      );
       return ok({}, { summary: `Web application ${name} updated` });
     }
     const ns = String(body.NameSpace ?? 'USER');
@@ -97,14 +104,16 @@ export const webAppHandlers = [
       Resource: String(body.Resource ?? ''),
       Path: String(body.Path ?? ''),
     });
+    recordAudit(account, 'ApplicationChange', `Web application ${name} created`);
     return created({}, [`Web application ${name} created`]);
   }),
 
-  route('delete', '/v2/web-app', SECURE, ({ request }) => {
+  route('delete', '/v2/web-app', SECURE, ({ request, account }) => {
     const w = find(requireParam(request, 'name'));
     if (!w) return notFound('Web application');
     if (w.IsSystemApp) return fail(400, `System application ${w.Name} cannot be deleted`);
     mockDb.webApps = mockDb.webApps.filter((x) => x !== w);
+    recordAudit(account, 'ApplicationChange', `Web application ${w.Name} deleted`);
     return ok({}, { summary: `Web application ${w.Name} deleted` });
   }),
 
