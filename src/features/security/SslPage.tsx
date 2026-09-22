@@ -127,7 +127,7 @@ export default function SslPage() {
       run(
         api().POST('/v2/security/ssl-configuration/test', {
           params: { query: { name: testing } },
-          body: { Host: v.Host, Port: v.Port } as never,
+          body: { Host: v.Host, Port: v.Port },
         }),
       ),
     {

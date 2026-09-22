@@ -79,7 +79,7 @@ export default function ActivityPage() {
         maxRows: 500,
       };
       const { data, response } = await call(
-        api().POST('/v2/security/audit/records', { params: { query } as never, headers: SILENT }),
+        api().POST('/v2/security/audit/records', { params: { query }, headers: SILENT }),
         'POST',
       );
       const id = await jobIdFromResponse(response, data);

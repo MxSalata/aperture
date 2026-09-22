@@ -72,7 +72,7 @@ export default function UsersPage() {
     (v: typeof form.values) =>
       run(
         api().POST('/v2/security/user', {
-          params: { query: { name: v.Name } } as never,
+          params: { query: { name: v.Name } },
           body: {
             Password: v.Password,
             User: {
@@ -84,7 +84,7 @@ export default function UsersPage() {
               Enabled: v.Enabled,
               ChangePassword: v.ChangePassword,
               Name: v.Name,
-            } as never,
+            },
           },
         }),
       ),

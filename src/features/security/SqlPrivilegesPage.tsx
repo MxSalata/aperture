@@ -18,7 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { IconPlus, IconSearch, IconTrash } from '@tabler/icons-react';
 import { useSearchParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
-import type { SQLPrivilegeList, Schemas } from '@/api/types';
+import type { Paths, SQLPrivilegeList, Schemas } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { BoolBadge } from '@/components/StatusBadge';
@@ -27,8 +27,11 @@ import { useSession } from '@/stores/session';
 import { secKeys } from './keys';
 
 type Row = SQLPrivilegeList[number];
+type GrantQuery = NonNullable<Paths['/v2/security/sql-privilege/grant']['post']['parameters']['query']>;
+type ObjectType = GrantQuery['type'];
+type Action = GrantQuery['action'];
 type AdminRow = Schemas['SQLAdminPrivilegeList'][number];
-const ACTIONS = [
+const ACTIONS: Action[] = [
   'SELECT',
   'INSERT',
   'UPDATE',
@@ -40,7 +43,15 @@ const ACTIONS = [
   '%ALTER',
   '*',
 ];
-const TYPES = ['TABLE', 'VIEW', 'STORED PROCEDURE', 'SCHEMA', 'CUBES', 'ML CONFIGURATION', 'FOREIGN SERVER'];
+const TYPES: ObjectType[] = [
+  'TABLE',
+  'VIEW',
+  'STORED PROCEDURE',
+  'SCHEMA',
+  'CUBES',
+  'ML CONFIGURATION',
+  'FOREIGN SERVER',
+];
 const ADMIN_PRIVS = [
   '%CREATE_TABLE',
   '%ALTER_TABLE',
@@ -79,9 +90,7 @@ export default function SqlPrivilegesPage() {
     queryKey: secKeys.sqlPrivs(namespace, grantee),
     enabled: !!grantee,
     queryFn: () =>
-      result(
-        api().GET('/v2/security/sql-privileges', { params: { query: { namespace, grantee } } as never }),
-      ),
+      result(api().GET('/v2/security/sql-privileges', { params: { query: { namespace, grantee } } })),
   });
   const admin = useQuery({
     queryKey: [...secKeys.sqlPrivs(namespace, grantee), 'admin'],
@@ -89,7 +98,7 @@ export default function SqlPrivilegesPage() {
     queryFn: () =>
       result(
         api().GET('/v2/security/sql-admin-privileges', {
-          params: { query: { namespace, grantee } } as never,
+          params: { query: { namespace, grantee } },
         }),
       ),
   });
@@ -109,12 +118,13 @@ export default function SqlPrivilegesPage() {
             query: {
               namespace,
               grantee,
-              type: v.type,
+              type: v.type as ObjectType,
               object: v.object,
-              action: v.action,
-              withGrant: v.withGrant,
+              action: v.action as Action,
+              // The spec declares an integer: a boolean would travel as "true", which is 0 as a number.
+              withGrant: v.withGrant ? 1 : 0,
             },
-          } as never,
+          },
         }),
       ),
     { invalidate, onSuccess: () => close() },
@@ -127,11 +137,11 @@ export default function SqlPrivilegesPage() {
             query: {
               namespace,
               grantee,
-              type: r.Type ?? 'TABLE',
+              type: (r.Type ?? 'TABLE') as ObjectType,
               object: r.Name ?? '',
-              action: r.Privilege ?? 'SELECT',
+              action: (r.Privilege ?? 'SELECT') as Action,
             },
-          } as never,
+          },
         }),
       ),
     { invalidate },
@@ -140,7 +150,7 @@ export default function SqlPrivilegesPage() {
     (v: typeof adminForm.values) =>
       run(
         api().POST('/v2/security/sql-admin-privilege/grant', {
-          params: { query: { namespace, grantee, privilege: v.privilege, withGrant: v.withGrant } } as never,
+          params: { query: { namespace, grantee, privilege: v.privilege, withGrant: v.withGrant ? 1 : 0 } },
         }),
       ),
     { invalidate, onSuccess: () => closeAdmin() },
@@ -149,7 +159,7 @@ export default function SqlPrivilegesPage() {
     (p: string) =>
       run(
         api().POST('/v2/security/sql-admin-privilege/revoke', {
-          params: { query: { namespace, grantee, privilege: p } } as never,
+          params: { query: { namespace, grantee, privilege: p } },
         }),
       ),
     { invalidate },

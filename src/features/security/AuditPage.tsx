@@ -220,10 +220,7 @@ function LogTab() {
     if (v.events.length) query.eventTypes = v.events.join(',');
     void search
       .start(() =>
-        call(
-          api().POST('/v2/security/audit/records', { params: { query } as never, headers: SILENT }),
-          'POST',
-        ),
+        call(api().POST('/v2/security/audit/records', { params: { query }, headers: SILENT }), 'POST'),
       )
       .catch(() => undefined);
   });
