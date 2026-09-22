@@ -65,10 +65,7 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
     enabled: !!file,
     queryFn: () => result(api().GET('/v2/journal/file', { params: { query: { file: file! } } })),
   });
-  const records = useAsyncResult<Record<string, unknown>[]>({
-    queryKey: keys.file(file ?? ''),
-    silent: true,
-  });
+  const records = useAsyncResult<Record<string, unknown>[]>({ queryKey: keys.file(file ?? '') });
   const openDrawer = useJobs((s) => s.setDrawerOpen);
   const check = useApiMutation(
     () =>

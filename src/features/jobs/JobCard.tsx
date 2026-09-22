@@ -23,7 +23,7 @@ import { api, envelope } from '@/api/client';
 import { notifyError } from '@/lib/notify';
 import { statusColor } from '@/components/StatusBadge';
 import { JsonViewer } from '@/components/JsonViewer';
-import { formatDurationMs } from '@/lib/format';
+import { formatDurationMs, parseIrisDate } from '@/lib/format';
 import { isTerminal, useJobs, type Job } from '@/stores/jobs';
 
 /** Ticking clock for live durations; frozen when `active` is false. */
@@ -43,7 +43,15 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
   const update = useJobs((s) => s.update);
   const terminal = isTerminal(job.state);
   const now = useNow(!terminal);
-  const duration = (terminal ? job.updatedAt : now) - job.createdAt;
+  // Once the server has timed the task, its own clock is used for both ends (a task followed
+  // from the server list may have started and ended long before it was followed here).
+  const started = parseIrisDate(job.task?.TimeStarted ?? job.task?.TimeQueued)?.valueOf();
+  const finished = parseIrisDate(job.task?.TimeFinished)?.valueOf();
+  const duration =
+    terminal && started !== undefined && finished !== undefined
+      ? finished - started
+      : (terminal ? job.updatedAt : now) - job.createdAt;
+  const toggle = () => setOpen((o) => !o);
 
   const control = async (action: 'pause' | 'resume' | 'cancel') => {
     try {
@@ -73,8 +81,17 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
             gap={6}
             wrap="nowrap"
             style={{ minWidth: 0, flex: 1 }}
-            onClick={() => setOpen((o) => !o)}
+            onClick={toggle}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+              }
+            }}
             role="button"
+            tabIndex={0}
+            aria-expanded={open}
+            aria-label={`${open ? 'Hide' : 'Show'} console and result of ${job.name}`}
           >
             {open ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
             <Stack gap={0} style={{ minWidth: 0 }}>

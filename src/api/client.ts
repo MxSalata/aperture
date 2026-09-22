@@ -73,8 +73,18 @@ export async function jobIdFromResponse(response: Response, parsedBody?: unknown
  * reachability, Job Center registration of a 202, and the activity record of a write.
  * Runs for the normal response and for the retry after a token refresh alike.
  */
+/**
+ * What a reverse proxy or the Web Gateway answers when the instance behind it does not:
+ * the request reached the proxy, not IRIS, so the instance counts as unreachable.
+ */
+const GATEWAY_DOWN = new Set([502, 503, 504]);
+
 async function finalize(request: Request, response: Response, entry: Inflight | undefined): Promise<void> {
-  useHealth.getState().markOk();
+  if (GATEWAY_DOWN.has(response.status))
+    useHealth
+      .getState()
+      .markFail(`HTTP ${response.status}: the gateway in front of the instance got no answer`);
+  else useHealth.getState().markOk();
 
   // Long-running operations: the API queues a task and tells us where to poll.
   let jobId: string | null = null;

@@ -62,13 +62,15 @@ export function JobPoller() {
           });
         }
       } else if (q.isError) {
-        const gone = isApiError(q.error) && (q.error.isNotFound || q.error.isForbidden);
+        const forbidden = isApiError(q.error) && q.error.isForbidden;
+        const gone = isApiError(q.error) && (q.error.isNotFound || forbidden);
         if (gone)
           update(job.id, {
             state: 'Missing',
             notified: true,
-            error:
-              'The server no longer reports this task (it may belong to another user or the instance restarted).',
+            error: forbidden
+              ? 'Reading task results (GET /v2/async-result) needs %Admin_Operate, which this account does not hold. The task itself may still run.'
+              : 'The server no longer reports this task (it may belong to another user or the instance restarted).',
           });
         else if (job.state === 'Unknown')
           update(job.id, { error: q.error instanceof Error ? q.error.message : 'Polling failed' });

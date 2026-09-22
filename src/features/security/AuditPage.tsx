@@ -171,7 +171,7 @@ function LogTab() {
     queryKey: secKeys.auditEvents,
     queryFn: () => result(api().GET('/v2/security/audit/events')),
   });
-  const search = useAsyncResult<Record_[]>({ queryKey: ['audit', 'records'], silent: true });
+  const search = useAsyncResult<Record_[]>({ queryKey: ['audit', 'records'] });
   const [selected, setSelected] = useState<Record_ | null>(null);
   const form = useForm({
     initialValues: {

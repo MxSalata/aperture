@@ -29,7 +29,7 @@ const columns: ColumnDef<Row, unknown>[] = [
 
 export default function JobsPage() {
   const local = useJobs(useShallow(selectAllJobs));
-  const track = useJobs((s) => s.track);
+  const follow = useJobs((s) => s.follow);
   const clearFinished = useJobs((s) => s.clearFinished);
   const serverJobs = useQuery({
     queryKey: ['async-results'],
@@ -96,8 +96,7 @@ export default function JobsPage() {
               error={serverJobs.error}
               initialSorting={[{ id: 'TimeQueued', desc: true }]}
               onRowClick={(row) =>
-                row.GUID &&
-                track({ id: row.GUID, name: row.TaskName ?? row.GUID, state: row.State ?? 'Unknown' })
+                row.GUID && follow({ id: row.GUID, name: row.TaskName ?? row.GUID, state: row.State })
               }
               emptyMessage="No async tasks on the server"
               dense

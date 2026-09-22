@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { api, call, envelope, result, jobIdFromResponse } from './client';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { isTerminal } from '@/stores/jobs';
+import { isApiError } from '@/lib/errors';
 import type { AsyncTask } from './types';
 
 interface MutationOptions<TVars, TData> {
@@ -48,10 +49,11 @@ export { api, call, result };
  * Start an async operation (any endpoint that answers `202 Accepted`) and follow
  * it to completion. Returns the final `Result` once the task is `Finished`.
  *
- * Set `silent` to keep the job out of the global Job Center (e.g. metric lookups).
+ * To keep the job out of the global Job Center, send the starting request with the
+ * `SILENT` headers (the middleware decides when it sees the 202).
  */
 export function useAsyncResult<TResult = unknown>(
-  opts: { queryKey: QueryKey; silent?: boolean } = { queryKey: ['async-local'] },
+  opts: { queryKey: QueryKey } = { queryKey: ['async-local'] },
 ) {
   const [jobId, setJobId] = useState<string | null>(null);
   const [startError, setStartError] = useState<unknown>(null);
@@ -66,7 +68,13 @@ export function useAsyncResult<TResult = unknown>(
           headers: { 'x-aperture-silent': '1' },
         }),
       ),
-    refetchInterval: (q) => (isTerminal(q.state.data?.State) ? false : 1000),
+    // A 4xx is final (403: reading task results needs %Admin_Operate, 404: the task is gone):
+    // polling on would repeat it every second for as long as the screen is open.
+    refetchInterval: (q) =>
+      isTerminal(q.state.data?.State) ||
+      (isApiError(q.state.error) && q.state.error.status >= 400 && q.state.error.status < 500)
+        ? false
+        : 1000,
     staleTime: 0,
   });
 

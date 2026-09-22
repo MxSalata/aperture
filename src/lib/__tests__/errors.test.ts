@@ -27,3 +27,17 @@ describe('normalizeErrors', () => {
     expect(new ApiError({ status: 500, url: '', errors: ['boom'] }).summary).toBe('boom');
   });
 });
+
+describe('non-JSON error bodies', () => {
+  it('turn a proxy error page into its title', async () => {
+    const { normalizeErrors, textFromBody } = await import('../errors');
+    const page =
+      '<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body><center><h1>502 Bad Gateway</h1></center><hr><center>nginx</center></body></html>';
+    expect(normalizeErrors(page).errors).toEqual(['502 Bad Gateway']);
+    expect(textFromBody('<!DOCTYPE html><html><body><p>Service <b>unavailable</b></p></body></html>')).toBe(
+      'Service unavailable',
+    );
+    expect(textFromBody('x'.repeat(1000))).toHaveLength(300);
+    expect(textFromBody('plain text')).toBe('plain text');
+  });
+});

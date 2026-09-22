@@ -35,6 +35,12 @@ interface JobsState {
   order: string[];
   drawerOpen: boolean;
   track(job: Pick<Job, 'id' | 'name'> & Partial<Job>): void;
+  /**
+   * Follow a task picked from the server's list. It is polled once even when it already
+   * ended, so its console and result arrive; a task that ended before it was followed
+   * raises no completion toast.
+   */
+  follow(task: { id: string; name: string; state?: string }): void;
   update(id: string, patch: Partial<Job>): void;
   remove(id: string): void;
   clearFinished(): void;
@@ -59,6 +65,20 @@ export const useJobs = create<JobsState>()(
             },
             order: [job.id, ...s.order],
           };
+        }),
+      follow: ({ id, name, state }) =>
+        set((s) => {
+          if (s.jobs[id]) return s;
+          const now = Date.now();
+          const job: Job = {
+            id,
+            name,
+            state: 'Unknown',
+            createdAt: now,
+            updatedAt: now,
+            notified: isTerminal(state),
+          };
+          return { jobs: { ...s.jobs, [id]: job }, order: [id, ...s.order] };
         }),
       update: (id, patch) =>
         set((s) => {

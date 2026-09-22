@@ -91,9 +91,34 @@ function errorText(e: unknown): string {
   return e === undefined || e === null ? '' : String(e);
 }
 
+const MAX_TEXT = 300;
+
+/**
+ * A non-JSON error body as one readable line. Proxies and the Web Gateway answer with an
+ * HTML page (nginx: `<title>502 Bad Gateway</title>…`); its title, or its text without the
+ * markup, is what a person needs, not the page source.
+ */
+export function textFromBody(body: string): string {
+  let text = body.trim();
+  if (/^<(!doctype|html|head|body|\?xml)/i.test(text)) {
+    const title = /<title[^>]*>([^<]*)<\/title>/i.exec(text)?.[1]?.trim();
+    text =
+      title ||
+      text
+        .replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+  }
+  return text.length > MAX_TEXT ? `${text.slice(0, MAX_TEXT - 1)}…` : text;
+}
+
 /** Extract messages, summary and console lines from any of the observed envelope shapes. */
 export function normalizeErrors(body: unknown): { errors: string[]; summary?: string; console: string[] } {
-  if (typeof body === 'string') return { errors: body.trim() ? [body.trim()] : [], console: [] };
+  if (typeof body === 'string') {
+    const text = textFromBody(body);
+    return { errors: text ? [text] : [], console: [] };
+  }
   const b = (body && typeof body === 'object' ? body : {}) as RawEnvelope;
   const status = typeof b.status === 'object' && b.status ? b.status : undefined;
   const raw = status?.Errors ?? status?.errors ?? b.errors ?? [];

@@ -107,7 +107,7 @@ export default function DatabaseDetailPage() {
     queryFn: () => result(api().GET('/v2/database-dir/volumes', { params: { query: { dir } } })),
     retry: false,
   });
-  const metrics = useAsyncResult<Metrics>({ queryKey: dbKeys.localOne(dir), silent: true });
+  const metrics = useAsyncResult<Metrics>({ queryKey: dbKeys.localOne(dir) });
   const { start: loadMetrics } = metrics;
 
   useEffect(() => {
