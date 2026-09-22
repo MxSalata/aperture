@@ -69,6 +69,12 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
       'Reproduced by Aperture CI (IRIS Community 2026.2 Build 221U, run 35719716417), first reported in the IRIS Fieldwork verification record; `npm run verify:live -- --mutate` records what your instance does',
   },
   {
+    id: 'resource-create-empty-public',
+    appliesTo: (op) => op.path === '/v2/security/resource' && op.method === 'PUT',
+    note: 'Creating a resource with an empty PublicPermission was rejected by IRIS 2026.2, although the spec allows any combination of R, W and U. Editing an existing resource to "none" is not affected.',
+    source: 'iris-fieldwork verification record (IRIS 2026.2, runtime/extended-validation.json)',
+  },
+  {
     id: 'process-resume-state',
     appliesTo: (op) => op.path === '/v2/process/resume',
     note: 'A resumed process reports state HANG (waiting) rather than RUNW until it runs again.',

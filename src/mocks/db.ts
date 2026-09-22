@@ -185,7 +185,8 @@ export interface RoleRec {
   CreatedBy: string;
   EscalationOnly: boolean;
   GrantedRoles: string[];
-  Resources: string[];
+  /** The spec's shape: `{ Name, Permissions }` per grant. */
+  Resources: { Name: string; Permissions: string }[];
 }
 
 export interface ResourceRec {
@@ -234,7 +235,8 @@ export interface WebAppRec {
   ServeFiles: string;
   Recurse: boolean;
   MatchRoles: string[];
-  UseCookies: number;
+  /** The spec's enum: Never / AutoDetect / Always. */
+  UseCookies: string;
 }
 
 export interface AuditEventRec {
@@ -1054,14 +1056,18 @@ function seedUsers(): UserRec[] {
   ];
 }
 
-function role(Name: string, Description: string, Resources: string[], extra: Partial<RoleRec> = {}): RoleRec {
+/** Seeds grants as `Resource:Permissions` shorthand; the record holds the API's object shape. */
+function role(Name: string, Description: string, grants: string[], extra: Partial<RoleRec> = {}): RoleRec {
   return {
     Name,
     Description,
     CreatedBy: '_SYSTEM',
     EscalationOnly: false,
     GrantedRoles: [],
-    Resources,
+    Resources: grants.map((g) => {
+      const i = g.lastIndexOf(':');
+      return { Name: g.slice(0, i), Permissions: g.slice(i + 1) };
+    }),
     ...extra,
   };
 }
@@ -1264,7 +1270,7 @@ function webApp(Name: string, Namespace: string, Type: string, extra: Partial<We
     ServeFiles: 'Always',
     Recurse: true,
     MatchRoles: [],
-    UseCookies: 2,
+    UseCookies: 'Always',
     ...extra,
   };
 }

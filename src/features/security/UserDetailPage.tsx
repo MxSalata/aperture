@@ -57,7 +57,8 @@ export default function UserDetailPage() {
     onSuccess: () => navigate('/security/users'),
   });
   const [editOpen, { open: openEdit, close: closeEdit }] = useDisclosure(false);
-  const [pwOpen, { open: openPw, close: closePw }] = useDisclosure(false);
+  // The typed password is forgotten whenever the dialog closes (after a change or a cancel).
+  const [pwOpen, { open: openPw, close: closePw }] = useDisclosure(false, { onClose: () => pwForm.reset() });
   const form = useForm<User>({ initialValues: {} });
   const pwForm = useForm({
     initialValues: { Password: '', Confirm: '' },
@@ -68,9 +69,10 @@ export default function UserDetailPage() {
   });
   // Populate the form once the record arrives; the form object itself is stable.
   useEffect(() => {
-    if (q.data) form.setValues(q.data);
+    // Not while the dialog is open: a background refetch must not overwrite what is being typed.
+    if (q.data && !editOpen) form.setValues(q.data);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q.data]);
+  }, [q.data, editOpen]);
   const u = q.data;
 
   return (

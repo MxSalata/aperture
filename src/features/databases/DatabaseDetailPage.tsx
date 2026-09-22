@@ -208,14 +208,16 @@ export default function DatabaseDetailPage() {
   const configForm = useForm<Schemas['ConfigDatabase']>({ initialValues: {} });
   // Populate the form once the record arrives; the form object itself is stable.
   useEffect(() => {
-    if (local.data) editForm.setValues(local.data);
+    // Not while the dialog is open: a background refetch must not overwrite what is being typed.
+    if (local.data && !editOpen) editForm.setValues(local.data);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [local.data]);
+  }, [local.data, editOpen]);
   // Populate the form once the record arrives; the form object itself is stable.
   useEffect(() => {
-    if (config.data) configForm.setValues(config.data);
+    // Not while the dialog is open: a background refetch must not overwrite what is being typed.
+    if (config.data && !configOpen) configForm.setValues(config.data);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.data]);
+  }, [config.data, configOpen]);
 
   const m = metrics.result;
   const mounted =

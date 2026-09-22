@@ -151,6 +151,11 @@ export function exampleFromSchema(
   const depth = opts.depth ?? 0;
   if (!schema || depth > 8) return null;
   const s = resolveSchema(doc, schema);
+  // An enum bounds the value: vary which member is chosen, never its text ("Normal2").
+  if (s.enum?.length)
+    return seed === 0 && s.example !== undefined && s.enum.includes(s.example)
+      ? s.example
+      : s.enum[seed % s.enum.length];
   if (s.example !== undefined && !(s.type === 'object' && s.properties)) {
     return varyExample(s.example, seed);
   }
@@ -159,7 +164,6 @@ export function exampleFromSchema(
     return exampleFromSchema(doc, options[seed % options.length], { seed, depth: depth + 1 });
   }
   const type = Array.isArray(s.type) ? s.type[0] : s.type;
-  if (s.enum) return s.enum[seed % s.enum.length];
   switch (type) {
     case 'string':
       if (s.format === 'date-time') return '2026-09-16 12:00:00';

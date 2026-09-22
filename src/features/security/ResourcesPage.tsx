@@ -13,13 +13,10 @@ import { reviewChanges } from '@/components/ReviewChanges';
 import { secKeys } from './keys';
 
 type Row = ResourceList[number];
+/** Every combination of Read, Write and Use, in the order IRIS writes them. */
 const PERMS = [
   { value: '', label: 'none' },
-  { value: 'R', label: 'R' },
-  { value: 'W', label: 'W' },
-  { value: 'U', label: 'U' },
-  { value: 'RW', label: 'RW' },
-  { value: 'RWU', label: 'RWU' },
+  ...['R', 'W', 'U', 'RW', 'RU', 'WU', 'RWU'].map((p) => ({ value: p, label: p })),
 ];
 
 export default function ResourcesPage() {
@@ -187,7 +184,16 @@ export default function ResourcesPage() {
           <Stack gap="sm">
             <TextInput label="Name" disabled={!!editing} data-autofocus {...form.getInputProps('Name')} />
             <TextInput label="Description" {...form.getInputProps('Description')} />
-            <Select label="Public permission" data={PERMS} {...form.getInputProps('PublicPermission')} />
+            <Select
+              label="Public permission"
+              description={
+                editing
+                  ? undefined
+                  : 'IRIS 2026.2 has been seen to refuse creating a resource with no public permission (quirk resource-create-empty-public).'
+              }
+              data={PERMS}
+              {...form.getInputProps('PublicPermission')}
+            />
             <Group justify="flex-end">
               <Button variant="default" onClick={close}>
                 Cancel

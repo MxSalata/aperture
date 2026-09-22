@@ -1,5 +1,5 @@
 import { mockDb } from '../db';
-import { drift, ok, fmtDate, inMinutes } from '../util';
+import { drift, ok, fmtDate } from '../util';
 import { http, HttpResponse } from 'msw';
 import { route, OPERATE } from '../secure';
 
@@ -269,50 +269,50 @@ export const monitorHandlers = [
     ),
   ),
 
+  // Shapes exactly as the spec's LicenseUsage declares them (src/mocks/__tests__/contract.test.ts checks them).
   route('get', '/v2/monitor/license-usage', OPERATE, () => {
     const users = mockDb.processes.filter((p) => p.Username && p.IPAddress);
-    const byUser = new Map<string, number>();
-    for (const p of users)
-      byUser.set(
-        `${p.Username}@${p.IPAddress || 'local'}`,
-        (byUser.get(`${p.Username}@${p.IPAddress || 'local'}`) ?? 0) + 1,
-      );
+    const byUser = new Map<string, typeof users>();
+    for (const p of users) {
+      const id = `${p.Username}@${p.IPAddress}`;
+      byUser.set(id, [...(byUser.get(id) ?? []), p]);
+    }
+    const used = String(byUser.size);
     return ok({
       Summary: [
-        { Type: 'Local', CurrentUsed: byUser.size, MaxUsed: 13, Available: 20 - byUser.size, Enforced: 20 },
-        {
-          Type: 'Distributed',
-          CurrentUsed: byUser.size,
-          MaxUsed: 13,
-          Available: 20 - byUser.size,
-          Enforced: 20,
-        },
+        { LicenseUnitUse: 'Current License Units Used', Local: used, Distributed: used },
+        { LicenseUnitUse: 'Maximum License Units Used', Local: '13', Distributed: '13' },
+        { LicenseUnitUse: 'License Units Enforced', Local: '20', Distributed: '20' },
+        { LicenseUnitUse: 'License Units Authorized', Local: '20', Distributed: '20' },
       ],
-      UsageByUser: [...byUser.entries()].map(([id, n]) => ({
+      UsageByUser: [...byUser.entries()].map(([id, ps]) => ({
         UserId: id,
-        Connections: n,
-        Units: 1,
-        Type: 'Local',
-        Active: true,
+        Type: 'User',
+        Connects: ps.length,
+        MaxCon: ps.length,
+        CSPCon: 0,
+        LU: 1,
+        Active: 3_600,
         Grace: 0,
       })),
       UsageByProcess: users.map((p) => ({
-        Pid: p.Pid,
-        UserId: `${p.Username}@${p.IPAddress || 'local'}`,
-        Type: 'Local',
-        Units: 1,
-        ClientIP: p.IPAddress,
-        EXEName: p.EXEName,
-        Connections: 1,
-        LicenseCheck: 'OK',
+        PID: Number(p.Pid),
+        Process: 'User',
+        LID: `${p.Username}@${p.IPAddress}`,
+        Type: 'User',
+        Con: 1,
+        MaxCon: 1,
+        CSPCon: 0,
+        LU: 1,
+        Active: 3_600,
+        Grace: 0,
       })),
-      ConnectionList: users.map((p) => ({
-        Pid: p.Pid,
-        UserId: p.Username,
-        ClientIP: p.IPAddress,
-        Connections: 1,
-        Type: 'Local',
-        Expires: inMinutes(30),
+      ConnectionList: [...byUser.entries()].map(([id, ps]) => ({
+        UserId: id,
+        LicenseUnits: '1',
+        Connections: String(ps.length),
+        ServerIP: '127.0.0.1',
+        Instance: 'IRIS',
       })),
     });
   }),

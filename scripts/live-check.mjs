@@ -172,6 +172,21 @@ try {
     if (!ok && r.status !== 403) hardFailure = true;
   }
 
+  // 3b. Role grants: the spec declares Resources as [{ Name, Permissions }] and the role
+  // editor writes that shape. Recorded, not fatal: a different answer is a finding to report.
+  const role = await http('GET', '/v2/security/role?name=%25Manager');
+  const grants = role.json?.result?.Resources;
+  report.quirks.roleResourcesShape = Array.isArray(grants)
+    ? grants.length === 0 || typeof grants[0] === 'object'
+      ? 'objects'
+      : typeof grants[0]
+    : shape(grants);
+  record(
+    'Role grants shape',
+    role.status !== 200 || report.quirks.roleResourcesShape === 'objects',
+    `HTTP ${role.status}, Resources as ${report.quirks.roleResourcesShape}${role.status === 200 && Array.isArray(grants) && grants[0] ? ` (e.g. ${JSON.stringify(grants[0])})` : ''}`,
+  );
+
   // 4. Error envelope shape
   const notFound = await http('GET', '/v2/namespace?name=APERTURE_DOES_NOT_EXIST');
   const errs = envelopeErrors(notFound.json);

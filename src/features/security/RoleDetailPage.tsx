@@ -29,6 +29,14 @@ import { reviewChanges } from '@/components/ReviewChanges';
 import { secKeys } from './keys';
 import { useResourceNames } from './RolesPage';
 import { useRoleNames } from './UsersPage';
+import { resourcesToTags, tagsToResources } from './roleResources';
+
+type FormValues = Omit<Role, 'Resources'> & { Resources: string[] };
+
+/** The API's role with its grants normalised the way the editor writes them, so an untouched form diffs empty. */
+function normalised(role: Role | undefined): Role | undefined {
+  return role ? { ...role, Resources: tagsToResources(resourcesToTags(role.Resources)) } : undefined;
+}
 
 export default function RoleDetailPage() {
   const { name = '' } = useParams();
@@ -53,12 +61,13 @@ export default function RoleDetailPage() {
     onSuccess: () => navigate('/security/roles'),
   });
   const [opened, { open, close }] = useDisclosure(false);
-  const form = useForm<Role>({ initialValues: {} });
+  const form = useForm<FormValues>({ initialValues: { Resources: [] } });
   // Populate the form once the record arrives; the form object itself is stable.
   useEffect(() => {
-    if (q.data) form.setValues(q.data);
+    // Not while the dialog is open: a background refetch must not overwrite what is being typed.
+    if (q.data && !opened) form.setValues({ ...q.data, Resources: resourcesToTags(q.data.Resources) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q.data]);
+  }, [q.data, opened]);
   const r = q.data;
   const o = owners.data as Record<string, unknown> | undefined;
 
@@ -121,7 +130,7 @@ export default function RoleDetailPage() {
                 items={[
                   { label: 'Description', value: r.Description || '-' },
                   { label: 'Escalation only', value: renderValue(!!r.EscalationOnly) },
-                  { label: 'Resources', value: renderValue(r.Resources) },
+                  { label: 'Resources', value: renderValue(resourcesToTags(r.Resources)) },
                   { label: 'Granted roles', value: renderValue(r.GrantedRoles) },
                 ]}
               />
@@ -157,16 +166,19 @@ export default function RoleDetailPage() {
       </Grid>
       <Modal opened={opened} onClose={close} title={`Edit ${name}`} centered size="lg">
         <form
-          onSubmit={form.onSubmit((v) =>
+          onSubmit={form.onSubmit((v) => {
+            const body = { ...v, Resources: tagsToResources(v.Resources) } satisfies Role;
             reviewChanges({
               title: `Review changes to ${name}`,
-              before: q.data as Record<string, unknown>,
-              after: v as Record<string, unknown>,
+              before: normalised(q.data) as Record<string, unknown>,
+              after: body as Record<string, unknown>,
               refetch: () =>
-                result(api().GET('/v2/security/role', params)) as Promise<Record<string, unknown>>,
-              onConfirm: () => save.mutateAsync(v),
-            }),
-          )}
+                result(api().GET('/v2/security/role', params)).then(normalised) as Promise<
+                  Record<string, unknown>
+                >,
+              onConfirm: () => save.mutateAsync(body),
+            });
+          })}
         >
           <Stack gap="sm">
             <TextInput label="Description" {...form.getInputProps('Description')} />

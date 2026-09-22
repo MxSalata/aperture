@@ -67,9 +67,10 @@ export default function WebAppDetailPage() {
   const form = useForm<FormValues>({ initialValues: { flags: [] } });
   // Populate the form once the record arrives; the form object itself is stable.
   useEffect(() => {
-    if (q.data) form.setValues({ ...q.data, flags: bitsToFlags(q.data.AutheEnabled).map(String) });
+    // Not while the dialog is open: a background refetch must not overwrite what is being typed.
+    if (q.data && !opened) form.setValues({ ...q.data, flags: bitsToFlags(q.data.AutheEnabled).map(String) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q.data]);
+  }, [q.data, opened]);
   const a = q.data;
 
   const groups: { title: string; keys: string[] }[] = [

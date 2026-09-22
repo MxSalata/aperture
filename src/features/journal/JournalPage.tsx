@@ -79,7 +79,7 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
     { success: 'Integrity check queued - see Job Center', onSuccess: () => openDrawer(true) },
   );
   const { reset } = records;
-  // Populate the form once the record arrives; the form object itself is stable.
+  // Another file was opened: forget the previous file's records.
   useEffect(() => {
     reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -190,9 +190,13 @@ export default function JournalPage() {
     { invalidate: [keys.settings] },
   );
   const form = useForm<JournalSettings>({ initialValues: {} });
-  // Populate the form once the record arrives; the form object itself is stable.
+  // Every read of the settings becomes the form's baseline; the fields follow it (e.g. after a
+  // switch of directory) unless someone is editing them, whose typing a refetch must not undo.
   useEffect(() => {
-    if (settings.data) form.setValues(settings.data);
+    if (!settings.data) return;
+    const editing = form.isDirty();
+    form.setInitialValues(settings.data);
+    if (!editing) form.setValues(settings.data);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.data]);
 

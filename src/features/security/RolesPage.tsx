@@ -5,11 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
-import type { RoleList } from '@/api/types';
+import type { Role, RoleList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { BoolBadge } from '@/components/StatusBadge';
 import { secKeys } from './keys';
+import { tagsToResources } from './roleResources';
 
 type Row = RoleList[number];
 const columns: ColumnDef<Row, unknown>[] = [
@@ -53,10 +54,10 @@ export default function RolesPage() {
           params: { query: { name: v.Name } },
           body: {
             Description: v.Description,
-            Resources: v.Resources,
+            Resources: tagsToResources(v.Resources),
             GrantedRoles: v.GrantedRoles,
             EscalationOnly: v.EscalationOnly,
-          },
+          } satisfies Role,
         }),
         'PUT',
       ),
