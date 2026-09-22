@@ -16,16 +16,24 @@ export const secKeys = {
   sqlPrivs: (ns: string, grantee: string) => ['security', 'sql', ns, grantee] as const,
 };
 
-/** AutheEnabled bit flags (Security.Applications / Security.Services). */
+/**
+ * AutheEnabled bit flags (Security.Applications / Security.Services), numbered as the
+ * specification's `Service.AutheEnabled` documents them: bit 4 OS, 5 password,
+ * 6 unauthenticated, 11 LDAP, 13 delegated, 14 login token. The field carries more bits
+ * than these (Kerberos variants, two-factor 20/21, mutual TLS 25, …); `applyFlags` keeps them.
+ */
 export const AUTHE_FLAGS: { bit: number; label: string; hint: string }[] = [
   { bit: 32, label: 'Password', hint: 'IRIS username/password' },
   { bit: 64, label: 'Unauthenticated', hint: 'Anonymous access as UnknownUser' },
   { bit: 16, label: 'OS', hint: 'Operating-system authentication' },
   { bit: 1, label: 'Kerberos (K5 cache)', hint: 'Kerberos credentials cache' },
-  { bit: 256, label: 'LDAP', hint: 'LDAP directory' },
-  { bit: 1024, label: 'Delegated', hint: 'ZAUTHENTICATE routine' },
-  { bit: 2048, label: 'Login token', hint: 'Login token (2FA flows)' },
+  { bit: 2048, label: 'LDAP', hint: 'LDAP directory' },
+  { bit: 8192, label: 'Delegated', hint: 'ZAUTHENTICATE routine' },
+  { bit: 16384, label: 'Login token', hint: 'Login token (2FA flows)' },
 ];
+
+/** Every bit the checkboxes above can show; the rest of an AutheEnabled value is not the form's to change. */
+const SHOWN_BITS = AUTHE_FLAGS.reduce((a, f) => a | f.bit, 0);
 
 export function flagsToBits(flags: number[]): number {
   return flags.reduce((a, b) => a | b, 0);
@@ -34,4 +42,13 @@ export function flagsToBits(flags: number[]): number {
 export function bitsToFlags(bits: number | undefined): number[] {
   const v = bits ?? 0;
   return AUTHE_FLAGS.map((f) => f.bit).filter((b) => (v & b) === b);
+}
+
+/**
+ * The AutheEnabled to send after an edit: the ticked flags, plus every bit of the original
+ * value the form does not show. Rebuilding the value from the checkboxes alone would silently
+ * switch off two-factor, Kerberos or mutual TLS on any save.
+ */
+export function applyFlags(original: number | undefined, flags: number[]): number {
+  return ((original ?? 0) & ~SHOWN_BITS) | flagsToBits(flags);
 }

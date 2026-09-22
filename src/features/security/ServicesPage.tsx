@@ -20,7 +20,7 @@ import type { ServiceList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { renderValue } from '@/components/KeyValueList';
-import { AUTHE_FLAGS, bitsToFlags, flagsToBits, secKeys } from './keys';
+import { AUTHE_FLAGS, applyFlags, bitsToFlags, secKeys } from './keys';
 import { reviewChanges } from '@/components/ReviewChanges';
 
 type Row = ServiceList[number];
@@ -39,7 +39,7 @@ export default function ServicesPage() {
   const toBody = (v: typeof form.values) => ({
     Description: v.Description,
     Enabled: v.Enabled,
-    AutheEnabled: flagsToBits(v.flags.map(Number)),
+    AutheEnabled: applyFlags(before?.AutheEnabled as number | undefined, v.flags.map(Number)),
     ClientSystems: v.ClientSystems,
   });
   const toggle = useApiMutation(

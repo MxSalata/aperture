@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Checkbox,
   Grid,
@@ -16,10 +17,11 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconArrowLeft, IconTrash } from '@tabler/icons-react';
+import { IconAlertTriangle, IconArrowLeft, IconTrash } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
+import { API_PREFIX } from '@/api/base';
 import type { Application } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
@@ -29,9 +31,12 @@ import { confirmDanger } from '@/components/ConfirmDanger';
 import { reviewChanges } from '@/components/ReviewChanges';
 import { BoolBadge } from '@/components/StatusBadge';
 import { useSession } from '@/stores/session';
-import { AUTHE_FLAGS, bitsToFlags, flagsToBits, secKeys } from './keys';
+import { AUTHE_FLAGS, applyFlags, bitsToFlags, secKeys } from './keys';
 
 type FormValues = Application & { flags: string[] };
+
+/** The spec's `Application.ServeFiles` enum; IRIS rejects any other value. */
+const SERVE_FILES = ['Never', 'Always', 'Always and cached', 'Use CSP security'];
 
 export default function WebAppDetailPage() {
   const [params] = useSearchParams();
@@ -44,10 +49,12 @@ export default function WebAppDetailPage() {
     queryFn: () => result(api().GET('/v2/web-app', { params: { query: { name } } })),
   });
   const p = { params: { query: { name } } } as const;
+  // Editing or deleting the API this portal talks through can lock every Aperture session out.
+  const selfApp = name === API_PREFIX;
   const [opened, { open, close }] = useDisclosure(false);
   const toBody = (v: FormValues): Application => {
     const { flags, ...body } = v;
-    return { ...body, AutheEnabled: flagsToBits(flags.map(Number)) };
+    return { ...body, AutheEnabled: applyFlags(q.data?.AutheEnabled, flags.map(Number)) };
   };
   const save = useApiMutation((body: Application) => run(api().PUT('/v2/web-app', { ...p, body }), 'PUT'), {
     invalidate: [secKeys.webApps, secKeys.webApp(name)],
@@ -157,6 +164,9 @@ export default function WebAppDetailPage() {
                   message: (
                     <>
                       Delete <b>{name}</b>?
+                      {selfApp
+                        ? ' This is the SysAdmin API Aperture itself uses: every session of this portal on this instance stops working.'
+                        : ''}
                     </>
                   ),
                   confirmText: name,
@@ -222,6 +232,12 @@ export default function WebAppDetailPage() {
           )}
         >
           <Stack gap="sm">
+            {selfApp ? (
+              <Alert color="orange" variant="light" icon={<IconAlertTriangle size={16} />}>
+                This is the SysAdmin API Aperture talks through. Disabling it, removing password or JWT
+                authentication, or narrowing its CORS list can lock this portal out of the instance.
+              </Alert>
+            ) : null}
             <TextInput label="Description" {...form.getInputProps('Description')} />
             <Group grow>
               <Select
@@ -238,11 +254,7 @@ export default function WebAppDetailPage() {
             </Group>
             <Group grow>
               <NumberInput label="Session timeout (s)" min={0} {...form.getInputProps('Timeout')} />
-              <Select
-                label="Serve files"
-                data={['Always', 'No', 'Always and cached', 'Use IRIS security']}
-                {...form.getInputProps('ServeFiles')}
-              />
+              <Select label="Serve files" data={SERVE_FILES} {...form.getInputProps('ServeFiles')} />
             </Group>
             <Checkbox.Group label="Authentication methods" {...form.getInputProps('flags')}>
               <Group gap="sm" mt={4}>
