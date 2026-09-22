@@ -100,6 +100,25 @@ export function newProfileId() {
   return `conn-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+/**
+ * Why a typed base URL cannot be used, or null. It must be an http(s) origin with an optional
+ * path: credentials in the URL would be sent (and logged) with every request, and a query or a
+ * fragment would be glued in front of every API path.
+ */
+export function baseUrlProblem(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url.trim());
+  } catch {
+    return 'Enter a URL such as http://iris.lan:52773';
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return 'Use an http:// or https:// URL';
+  if (parsed.username || parsed.password)
+    return 'Leave credentials out of the URL: they are asked for at sign-in';
+  if (parsed.search || parsed.hash) return 'The base URL cannot carry a query (?) or a fragment (#)';
+  return null;
+}
+
 export function normalizeBaseUrl(url: string): string {
   const trimmed = url.trim().replace(/\/+$/, '');
   return trimmed.replace(/\/api\/admin$/, '');

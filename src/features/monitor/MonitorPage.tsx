@@ -143,6 +143,7 @@ export default function MonitorPage() {
               </Text>
             </Group>
             <DataTable
+              serverLimit={0}
               stateKey="metrics"
               exportName="metrics"
               data={m}
@@ -171,6 +172,7 @@ export default function MonitorPage() {
                 </Text>
               </Group>
               <DataTable
+                serverLimit={0}
                 data={diskRows}
                 columns={metricColumns.slice(0, 3)}
                 searchable={false}
@@ -216,6 +218,7 @@ export default function MonitorPage() {
                 </Text>
               ) : (
                 <DataTable
+                  serverLimit={0}
                   data={alerts.data ?? []}
                   columns={alertColumns}
                   searchable={false}

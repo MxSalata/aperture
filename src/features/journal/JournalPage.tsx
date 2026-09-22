@@ -33,6 +33,8 @@ import { formatBytes, formatDateTime } from '@/lib/format';
 import { useJobs } from '@/stores/jobs';
 
 type FileRow = JournalFileList[number];
+/** Journal records read per request. */
+const RECORDS_PAGE = 200;
 const keys = {
   files: ['journal', 'files'] as const,
   file: (f: string) => ['journal', 'file', f] as const,
@@ -133,7 +135,7 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
               records.start(() =>
                 call(
                   api().POST('/v2/journal/file/records', {
-                    params: { query: { file, maxRows: 200 } },
+                    params: { query: { file, maxRows: RECORDS_PAGE } },
                     headers: SILENT,
                   }),
                   'POST',
@@ -141,7 +143,7 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
               )
             }
           >
-            Browse records (first 200)
+            Browse records (first {RECORDS_PAGE})
           </Button>
         </Group>
         {detail.isError ? (
@@ -165,7 +167,14 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
           </Text>
         ) : null}
         {rows.length ? (
-          <DataTable data={rows} columns={recColumns} dense pageSize={50} hideColumnMenu />
+          <DataTable
+            data={rows}
+            columns={recColumns}
+            dense
+            pageSize={50}
+            hideColumnMenu
+            serverLimit={RECORDS_PAGE}
+          />
         ) : null}
       </Stack>
     </Drawer>

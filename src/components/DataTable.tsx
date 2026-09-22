@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Badge,
   Box,
   Button,
   Center,
@@ -84,7 +85,16 @@ interface Props<T> {
   stateKey?: string;
   /** Adds an "Export CSV" button; the file gets this base name and contains the filtered, sorted, visible rows. */
   exportName?: string;
+  /**
+   * The most rows the server returns for this list. SysAdmin API lists stop at `maxRows`,
+   * 1000 unless the request says otherwise, without saying there were more; a result that
+   * reaches the limit is flagged. 0 turns the check off (data that is not a server list).
+   */
+  serverLimit?: number;
 }
+
+/** The spec's default `maxRows` for every SysAdmin API list. */
+export const SERVER_LIST_LIMIT = 1000;
 
 interface Prefs {
   columnVisibility?: VisibilityState;
@@ -199,6 +209,7 @@ export function DataTable<T>({
   hideColumnMenu,
   stateKey,
   exportName,
+  serverLimit = SERVER_LIST_LIMIT,
 }: Props<T>) {
   const nav = useTableNavigationState(stateKey !== undefined, initialSorting);
   const [filterInput, setFilterInput] = useState(nav.initialFilter);
@@ -315,6 +326,17 @@ export function DataTable<T>({
             <Text size="xs" c="dimmed" className="tabular" role="status">
               {loading ? 'Loading…' : `${total} row${total === 1 ? '' : 's'}`}
             </Text>
+            {serverLimit > 0 && rows.length === serverLimit ? (
+              <Tooltip
+                label={`The server returns at most ${serverLimit} rows for this list and returned exactly that many: the instance may hold more. Narrow the request (a filter) to see the rest.`}
+                multiline
+                w={300}
+              >
+                <Badge size="xs" color="yellow" variant="light" tabIndex={0}>
+                  server limit reached
+                </Badge>
+              </Tooltip>
+            ) : null}
             {exportName ? (
               <Tooltip label="Export the filtered rows as CSV">
                 <ActionIcon

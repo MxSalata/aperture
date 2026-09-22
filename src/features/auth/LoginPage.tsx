@@ -24,6 +24,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useSession } from '@/stores/session';
 import {
+  baseUrlProblem,
   normalizeBaseUrl,
   newProfileId,
   nextProfileColor,
@@ -70,10 +71,7 @@ export default function LoginPage() {
     validate: {
       username: (v) => (v.trim() ? null : 'Username is required'),
       password: (v) => (v ? null : 'Password is required'),
-      newBaseUrl: (v, values) =>
-        values.connectionId === NEW_ID && !/^https?:\/\//.test(v.trim())
-          ? 'Enter a URL such as http://iris.lan:52773'
-          : null,
+      newBaseUrl: (v, values) => (values.connectionId === NEW_ID ? baseUrlProblem(v) : null),
     },
   });
 

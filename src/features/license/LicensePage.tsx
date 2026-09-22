@@ -129,6 +129,7 @@ export default function LicensePage() {
             </Title>
             {u?.Summary ? (
               <DataTable
+                serverLimit={0}
                 data={u.Summary}
                 columns={cols(Object.keys(u.Summary[0] ?? {}))}
                 searchable={false}
@@ -149,6 +150,7 @@ export default function LicensePage() {
             </Title>
             {u?.UsageByUser ? (
               <DataTable
+                serverLimit={0}
                 data={u.UsageByUser}
                 columns={cols(Object.keys(u.UsageByUser[0] ?? {}))}
                 searchable={false}
@@ -164,6 +166,7 @@ export default function LicensePage() {
             </Title>
             {u?.UsageByProcess ? (
               <DataTable
+                serverLimit={0}
                 data={u.UsageByProcess}
                 columns={cols(Object.keys(u.UsageByProcess[0] ?? {}))}
                 hideColumnMenu

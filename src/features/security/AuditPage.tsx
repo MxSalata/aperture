@@ -173,6 +173,8 @@ function LogTab() {
   });
   const search = useAsyncResult<Record_[]>({ queryKey: ['audit', 'records'] });
   const [selected, setSelected] = useState<Record_ | null>(null);
+  // The row limit of the query whose result is on screen, to tell a full page from a complete answer.
+  const [queriedMax, setQueriedMax] = useState(0);
   const form = useForm({
     initialValues: {
       beginDateTime: '',
@@ -214,6 +216,7 @@ function LogTab() {
   ];
   const submit = form.onSubmit((v) => {
     const query: Record<string, string | number> = { maxRows: v.maxRows };
+    setQueriedMax(Number(v.maxRows) || 0);
     if (v.beginDateTime) query.beginDateTime = v.beginDateTime;
     if (v.endDateTime) query.endDateTime = v.endDateTime;
     if (v.usernames) query.usernames = v.usernames;
@@ -273,6 +276,7 @@ function LogTab() {
       ) : null}
       {search.finished ? (
         <DataTable
+          serverLimit={queriedMax}
           exportName="audit-records"
           data={rows}
           columns={columns}

@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { PageHeader } from '@/components/PageHeader';
 import {
+  baseUrlProblem,
   newProfileId,
   nextProfileColor,
   normalizeBaseUrl,
@@ -64,10 +65,7 @@ export default function ConnectionsPage() {
     },
     validate: {
       name: (v) => (v.trim() ? null : 'Required'),
-      baseUrl: (v) =>
-        editing?.id === SAME_ORIGIN_ID || /^https?:\/\//.test(v)
-          ? null
-          : 'Enter a URL such as http://iris.lan:52773',
+      baseUrl: (v) => (editing?.id === SAME_ORIGIN_ID ? null : baseUrlProblem(v)),
       timezone: (v) => (!v || isValidTimezone(v) ? null : 'Unknown IANA time zone'),
     },
   });

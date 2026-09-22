@@ -249,6 +249,7 @@ export default function ActivityPage() {
         }
       />
       <DataTable
+        serverLimit={0}
         stateKey="activity"
         exportName="activity"
         data={entries}
