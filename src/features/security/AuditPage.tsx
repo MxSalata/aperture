@@ -17,7 +17,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { IconEraser, IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { api, call, result, run, useApiMutation, useAsyncResult, SILENT } from '@/api/hooks';
@@ -280,7 +280,7 @@ function LogTab() {
           data={rows}
           columns={columns}
           onRowClick={setSelected}
-          getRowId={(r) => String(r.AuditIndex ?? Math.random())}
+          getRowId={(r, i) => String(r.AuditIndex ?? `row-${i}`)}
           initialSorting={[{ id: 'TimeStamp', desc: true }]}
           dense
           pageSize={50}
@@ -384,6 +384,7 @@ function SettingsTab() {
 }
 
 export default function AuditPage() {
+  const queryClient = useQueryClient();
   return (
     <>
       <PageHeader
@@ -395,9 +396,11 @@ export default function AuditPage() {
             size="xs"
             variant="default"
             leftSection={<IconRefresh size={14} />}
-            onClick={() => window.location.reload()}
+            // Re-read the audit settings and events; a page reload would sign out a session that
+            // is kept in memory only ("Keep me signed in" off) and drop the log query's result.
+            onClick={() => void queryClient.invalidateQueries({ queryKey: ['security', 'audit'] })}
           >
-            Reload
+            Refresh
           </Button>
         }
       />

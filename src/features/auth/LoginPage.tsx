@@ -52,6 +52,8 @@ export default function LoginPage() {
   const disableDemo = useDemo((s) => s.disable);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // A retried sign-in to a new connection updates the profile the first attempt saved.
+  const [pendingProfileId, setPendingProfileId] = useState<string | null>(null);
 
   const initial = profiles.find((p) => p.id === lastUsedId) ?? profiles[0];
   const form = useForm({
@@ -85,13 +87,15 @@ export default function LoginPage() {
     try {
       let profile = profiles.find((p) => p.id === values.connectionId);
       if (values.connectionId === NEW_ID) {
+        const id = pendingProfileId ?? newProfileId();
+        setPendingProfileId(id);
         profile = {
-          id: newProfileId(),
+          id,
           name: values.newName.trim() || normalizeBaseUrl(values.newBaseUrl),
           baseUrl: normalizeBaseUrl(values.newBaseUrl),
           auth: values.auth,
           username: values.username,
-          color: nextProfileColor(profiles.length),
+          color: profiles.find((p) => p.id === id)?.color ?? nextProfileColor(profiles.length),
         };
         upsert(profile);
       } else if (profile) {

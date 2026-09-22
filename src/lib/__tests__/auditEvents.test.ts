@@ -55,4 +55,18 @@ describe('matchAuditRecords', () => {
   it('accepts any event when the expectation lists none', () => {
     expect(matchAuditRecords(records, { events: [], eventType: '%Security' }, 'jdoe')).toHaveLength(2);
   });
+  it('matches the subject as a whole name, not as a substring', () => {
+    const recs = [
+      { Event: 'UserChange', Description: 'User devops modified' },
+      { Event: 'UserChange', Description: 'User ops modified.' },
+      { Event: 'UserChange', Description: 'User john.doe modified' },
+      { Event: 'RoleChange', Description: 'Role %Manager modified' },
+    ];
+    const any = { events: [], eventType: '%Security' };
+    expect(matchAuditRecords(recs, any, 'ops').map((r) => r.Description)).toEqual(['User ops modified.']);
+    expect(matchAuditRecords(recs, any, 'john')).toEqual([]);
+    expect(matchAuditRecords(recs, any, 'john.doe')).toHaveLength(1);
+    expect(matchAuditRecords(recs, any, 'a')).toEqual([]);
+    expect(matchAuditRecords(recs, any, '%Manager')).toHaveLength(1);
+  });
 });

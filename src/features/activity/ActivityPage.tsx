@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { IconDownload, IconListSearch, IconShieldCheck, IconTrash } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 import dayjs from 'dayjs';
@@ -62,10 +62,13 @@ export default function ActivityPage() {
   const clear = useActivity((s) => s.clear);
   const bind = useActivity((s) => s.bind);
   const [evidence, setEvidence] = useState<Evidence | null>(null);
+  // Lookups take seconds; only the latest one may write to the drawer.
+  const lookup = useRef(0);
 
   const find = async (entry: ActivityEntry) => {
     const expect = auditExpectation(entry.method, entry.path);
     if (!expect) return;
+    const token = ++lookup.current;
     const subject = auditSubject(entry.query);
     setEvidence({ entry, expect, subject, status: 'running', returned: 0, matches: [], best: null });
     try {
@@ -85,8 +88,10 @@ export default function ActivityPage() {
       const matches = matchAuditRecords(records, expect, subject);
       const best = closest(matches, entry.at);
       if (best) bind(entry.id, { index: String(best.AuditIndex), event: best.Event ?? '' });
+      if (token !== lookup.current) return;
       setEvidence({ entry, expect, subject, status: 'done', returned: records.length, matches, best });
     } catch (error) {
+      if (token !== lookup.current) return;
       setEvidence((e) => (e ? { ...e, status: 'error', error } : e));
     }
   };
@@ -259,7 +264,10 @@ export default function ActivityPage() {
       />
       <Drawer
         opened={!!ev}
-        onClose={() => setEvidence(null)}
+        onClose={() => {
+          lookup.current += 1;
+          setEvidence(null);
+        }}
         position="right"
         size="lg"
         title={ev ? `Audit evidence for ${ev.entry.method} ${ev.entry.path}` : ''}

@@ -60,17 +60,21 @@ interface RecordLike {
 
 /**
  * Records that plausibly belong to a change: the expected event, and the subject named in
- * the description or the event data when the request named one.
+ * the description or the event data when the request named one. The subject must appear as
+ * a whole name: user "a" is not in "Role %Manager modified", and "ops" not in "devops".
  */
 export function matchAuditRecords<T extends RecordLike>(
   records: T[],
   expect: AuditExpectation,
   subject: string | null,
 ): T[] {
-  const needle = subject?.toLowerCase() ?? '';
+  const escaped = subject?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Names may hold %, _, / and . (%Manager, /api/admin, john.doe): other characters, or a full
+  // stop that ends the sentence, delimit one.
+  const named = escaped ? new RegExp(`(^|[^\\w%./-])${escaped}($|[^\\w%./-]|\\.(?=\\s|$))`, 'i') : null;
   return records.filter(
     (r) =>
       (expect.events.length === 0 || expect.events.includes(r.Event ?? '')) &&
-      (!needle || `${r.Description ?? ''}\n${r.EventData ?? ''}`.toLowerCase().includes(needle)),
+      (!named || named.test(`${r.Description ?? ''}\n${r.EventData ?? ''}`)),
   );
 }
