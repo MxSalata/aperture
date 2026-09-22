@@ -20,7 +20,19 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { spotlight } from '@mantine/spotlight';
-import { IconClipboardList, IconContrast, IconDeviceDesktop, IconLogout, IconMoon, IconSearch, IconServer, IconSun, IconUserCircle, IconShieldCheck, IconFlask } from '@tabler/icons-react';
+import {
+  IconClipboardList,
+  IconContrast,
+  IconDeviceDesktop,
+  IconLogout,
+  IconMoon,
+  IconSearch,
+  IconServer,
+  IconSun,
+  IconUserCircle,
+  IconShieldCheck,
+  IconFlask,
+} from '@tabler/icons-react';
 import { Suspense, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -70,45 +82,57 @@ function ServerChip() {
   const lastError = useHealth((s) => s.lastError);
   const instance = useInstanceLabel();
   const version = info?.serverVersion?.match(/\d{4}\.\d+(?:\.\d+)?/)?.[0];
-  const product = info?.product === 'irisforhealth' ? 'IRIS for Health' : info?.product === 'healthconnect' ? 'Health Connect' : 'IRIS';
-  const zoneNote = instance.timezone ? `times shown in ${instance.timezone}` : 'times shown as the instance reports them';
+  const product =
+    info?.product === 'irisforhealth'
+      ? 'IRIS for Health'
+      : info?.product === 'healthconnect'
+        ? 'Health Connect'
+        : 'IRIS';
+  const zoneNote = instance.timezone
+    ? `times shown in ${instance.timezone}`
+    : 'times shown as the instance reports them';
   return (
-      <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-        <ColorSwatch color={`var(--mantine-color-${instance.color}-6)`} size={10} aria-hidden />
-        <IconServer size={16} stroke={1.6} />
-        <Tooltip label={`${info?.serverVersion ?? baseUrl ?? 'this server'} · ${zoneNote}`} multiline maw={420}>
-          <Text size="sm" fw={500} truncate tabIndex={0} style={{ outlineOffset: 2 }}>
-            {instance.name}
-          </Text>
+    <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
+      <ColorSwatch color={`var(--mantine-color-${instance.color}-6)`} size={10} aria-hidden />
+      <IconServer size={16} stroke={1.6} />
+      <Tooltip label={`${info?.serverVersion ?? baseUrl ?? 'this server'} · ${zoneNote}`} multiline maw={420}>
+        <Text size="sm" fw={500} truncate tabIndex={0} style={{ outlineOffset: 2 }}>
+          {instance.name}
+        </Text>
+      </Tooltip>
+      {version ? (
+        <Badge size="xs" variant="light" color="gray" style={{ textTransform: 'none' }}>
+          {product} {version}
+        </Badge>
+      ) : null}
+      {info?.systemMode ? (
+        <Badge
+          size="xs"
+          variant="outline"
+          color={info.systemMode === 'LIVE' ? 'red' : 'gray'}
+          style={{ textTransform: 'none' }}
+        >
+          {info.systemMode}
+        </Badge>
+      ) : null}
+      {demo ? (
+        <Badge size="xs" variant="filled" color="grape" leftSection={<IconFlask size={10} />}>
+          DEMO
+        </Badge>
+      ) : reachable ? (
+        <Tooltip label="The last request to the instance succeeded">
+          <Badge size="xs" variant="dot" color="teal" tabIndex={0} aria-label="Instance reachable">
+            LIVE
+          </Badge>
         </Tooltip>
-        {version ? (
-          <Badge size="xs" variant="light" color="gray" style={{ textTransform: 'none' }}>
-            {product} {version}
+      ) : (
+        <Tooltip label={lastError ?? 'The instance cannot be reached'}>
+          <Badge size="xs" variant="filled" color="red" tabIndex={0} aria-label="Instance unreachable">
+            OFFLINE
           </Badge>
-        ) : null}
-        {info?.systemMode ? (
-          <Badge size="xs" variant="outline" color={info.systemMode === 'LIVE' ? 'red' : 'gray'} style={{ textTransform: 'none' }}>
-            {info.systemMode}
-          </Badge>
-        ) : null}
-        {demo ? (
-          <Badge size="xs" variant="filled" color="grape" leftSection={<IconFlask size={10} />}>
-            DEMO
-          </Badge>
-        ) : reachable ? (
-          <Tooltip label="The last request to the instance succeeded">
-            <Badge size="xs" variant="dot" color="teal" tabIndex={0} aria-label="Instance reachable">
-              LIVE
-            </Badge>
-          </Tooltip>
-        ) : (
-          <Tooltip label={lastError ?? 'The instance cannot be reached'}>
-            <Badge size="xs" variant="filled" color="red" tabIndex={0} aria-label="Instance unreachable">
-              OFFLINE
-            </Badge>
-          </Tooltip>
-        )}
-      </Group>
+        </Tooltip>
+      )}
+    </Group>
   );
 }
 
@@ -199,21 +223,39 @@ function AppearanceMenu() {
       <Menu.Target>
         <Tooltip label="Appearance">
           <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Appearance">
-            {resolved === 'high' ? <IconContrast size={18} /> : computed === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+            {resolved === 'high' ? (
+              <IconContrast size={18} />
+            ) : computed === 'dark' ? (
+              <IconSun size={18} />
+            ) : (
+              <IconMoon size={18} />
+            )}
           </ActionIcon>
         </Tooltip>
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>Theme</Menu.Label>
         {schemes.map((s) => (
-          <Menu.Item key={s.value} leftSection={s.icon} onClick={() => setColorScheme(s.value)} aria-label={`${s.label}${colorScheme === s.value ? ' (current theme)' : ''}`} rightSection={colorScheme === s.value ? '●' : undefined}>
+          <Menu.Item
+            key={s.value}
+            leftSection={s.icon}
+            onClick={() => setColorScheme(s.value)}
+            aria-label={`${s.label}${colorScheme === s.value ? ' (current theme)' : ''}`}
+            rightSection={colorScheme === s.value ? '●' : undefined}
+          >
             {s.label}
           </Menu.Item>
         ))}
         <Menu.Divider />
         <Menu.Label>Contrast</Menu.Label>
         {contrasts.map((c) => (
-          <Menu.Item key={c.value} leftSection={<IconContrast size={16} />} onClick={() => setContrast(c.value)} aria-label={`${c.label}${contrast === c.value ? ' (current contrast)' : ''}`} rightSection={contrast === c.value ? '●' : undefined}>
+          <Menu.Item
+            key={c.value}
+            leftSection={<IconContrast size={16} />}
+            onClick={() => setContrast(c.value)}
+            aria-label={`${c.label}${contrast === c.value ? ' (current contrast)' : ''}`}
+            rightSection={contrast === c.value ? '●' : undefined}
+          >
             {c.label}
           </Menu.Item>
         ))}
@@ -226,9 +268,17 @@ function JobsButton() {
   const active = useJobs(useShallow(selectActiveJobs));
   const setOpen = useJobs((s) => s.setDrawerOpen);
   return (
-    <Tooltip label={active.length ? `${active.length} running job${active.length === 1 ? '' : 's'}` : 'Job Center'}>
+    <Tooltip
+      label={active.length ? `${active.length} running job${active.length === 1 ? '' : 's'}` : 'Job Center'}
+    >
       <Indicator disabled={!active.length} processing color="indigo" size={8} offset={4}>
-        <ActionIcon variant="subtle" color="gray" size="lg" onClick={() => setOpen(true)} aria-label="Open Job Center">
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          size="lg"
+          onClick={() => setOpen(true)}
+          aria-label="Open Job Center"
+        >
           <IconClipboardList size={18} />
         </ActionIcon>
       </Indicator>
@@ -257,7 +307,13 @@ export function AppLayout() {
       <AppShell.Header style={{ boxShadow: `inset 0 3px 0 0 var(--mantine-color-${instance.color}-6)` }}>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="md" size="sm" aria-label="Toggle navigation" />
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="md"
+              size="sm"
+              aria-label="Toggle navigation"
+            />
             <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Logo />
             </Link>
@@ -267,8 +323,17 @@ export function AppLayout() {
           </Group>
           <Group gap={4} wrap="nowrap">
             <Tooltip label="Command palette">
-              <UnstyledButton onClick={() => spotlight.open()} aria-label="Open command palette" visibleFrom="sm">
-                <Group gap={6} px="sm" py={4} style={{ border: '1px solid var(--mantine-color-default-border)', borderRadius: 8 }}>
+              <UnstyledButton
+                onClick={() => spotlight.open()}
+                aria-label="Open command palette"
+                visibleFrom="sm"
+              >
+                <Group
+                  gap={6}
+                  px="sm"
+                  py={4}
+                  style={{ border: '1px solid var(--mantine-color-default-border)', borderRadius: 8 }}
+                >
                   <IconSearch size={14} />
                   <Text size="xs" c="dimmed">
                     Search
@@ -277,7 +342,14 @@ export function AppLayout() {
                 </Group>
               </UnstyledButton>
             </Tooltip>
-            <ActionIcon variant="subtle" color="gray" size="lg" onClick={() => spotlight.open()} hiddenFrom="sm" aria-label="Search">
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="lg"
+              onClick={() => spotlight.open()}
+              hiddenFrom="sm"
+              aria-label="Search"
+            >
               <IconSearch size={18} />
             </ActionIcon>
             <JobsButton />
@@ -299,7 +371,8 @@ export function AppLayout() {
                     {section.label}
                   </Text>
                   {items.map((item) => {
-                    const active = item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to);
+                    const active =
+                      item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to);
                     return (
                       <NavLink
                         key={item.to}

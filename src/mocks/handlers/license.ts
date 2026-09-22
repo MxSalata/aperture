@@ -36,8 +36,12 @@ export const licenseHandlers = [
   route('post', '/v2/license/key/validate', MANAGE, async ({ request }) => {
     const body = await jsonBody<{ Key?: string }>(request);
     if (!body.Key) return badRequest('Key is required');
-    if (!/FileType=InterSystems/i.test(body.Key)) return ok({ Valid: false }, { summary: 'Key is not valid: header missing' });
-    return ok({ Valid: true, Product: 'Server', LicenseUnits: 1024, ExpirationDate: '2027-12-31 23:59:59' }, { summary: 'Key is valid' });
+    if (!/FileType=InterSystems/i.test(body.Key))
+      return ok({ Valid: false }, { summary: 'Key is not valid: header missing' });
+    return ok(
+      { Valid: true, Product: 'Server', LicenseUnits: 1024, ExpirationDate: '2027-12-31 23:59:59' },
+      { summary: 'Key is valid' },
+    );
   }),
   route('get', '/v2/license/servers', MANAGE, () => ok(licenseServers)),
   route('get', '/v2/license/server', MANAGE, ({ request }) => {
@@ -53,7 +57,12 @@ export const licenseHandlers = [
       Object.assign(existing, body);
       return ok({}, { summary: `License server ${name} updated` });
     }
-    licenseServers.push({ Name: name, Address: body.Address ?? '', Port: body.Port ?? 4002, Description: body.Description ?? '' });
+    licenseServers.push({
+      Name: name,
+      Address: body.Address ?? '',
+      Port: body.Port ?? 4002,
+      Description: body.Description ?? '',
+    });
     return created({}, [`License server ${name} created`]);
   }),
   route('delete', '/v2/license/server', MANAGE, ({ request }) => {

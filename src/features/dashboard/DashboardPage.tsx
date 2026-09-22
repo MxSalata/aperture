@@ -1,7 +1,29 @@
-import { Badge, Button, Grid, Group, Paper, Progress, SimpleGrid, Stack, Table, Text, Tooltip } from '@mantine/core';
+import {
+  Badge,
+  Button,
+  Grid,
+  Group,
+  Paper,
+  Progress,
+  SimpleGrid,
+  Stack,
+  Table,
+  Text,
+  Tooltip,
+} from '@mantine/core';
 import { AreaChart, LineChart, Sparkline } from '@mantine/charts';
 import { useQuery } from '@tanstack/react-query';
-import { IconActivity, IconAlertTriangle, IconClock, IconCpu, IconDatabase, IconDeviceFloppy, IconLicense, IconRefresh, IconWorld } from '@tabler/icons-react';
+import {
+  IconActivity,
+  IconAlertTriangle,
+  IconClock,
+  IconCpu,
+  IconDatabase,
+  IconDeviceFloppy,
+  IconLicense,
+  IconRefresh,
+  IconWorld,
+} from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import dayjs from 'dayjs';
@@ -74,7 +96,9 @@ export default function DashboardPage() {
   ].filter(([, q]) => (q as { isError: boolean }).isError) as [string, unknown][];
   const cpu = host.data ? metric(host.data, 'iris_cpu_usage')?.value : undefined;
   const mem = host.data ? metric(host.data, 'iris_phys_mem_percent_used')?.value : undefined;
-  const diskFull = host.data ? host.data.filter((s) => s.name === 'iris_disk_percent_full').reduce((a, s) => Math.max(a, s.value), 0) : undefined;
+  const diskFull = host.data
+    ? host.data.filter((s) => s.name === 'iris_disk_percent_full').reduce((a, s) => Math.max(a, s.value), 0)
+    : undefined;
 
   useEffect(() => {
     const d = main.data;
@@ -120,10 +144,17 @@ export default function DashboardPage() {
           <>
             {failed.length ? (
               <Tooltip label={`Failing: ${failed.map(([n]) => n).join(', ')}`}>
-                <Badge color="yellow" variant="filled">PARTIAL DATA</Badge>
+                <Badge color="yellow" variant="filled">
+                  PARTIAL DATA
+                </Badge>
               </Tooltip>
             ) : null}
-            <Button size="xs" variant={paused ? 'filled' : 'default'} leftSection={<IconRefresh size={14} />} onClick={() => setPaused((p) => !p)}>
+            <Button
+              size="xs"
+              variant={paused ? 'filled' : 'default'}
+              leftSection={<IconRefresh size={14} />}
+              onClick={() => setPaused((p) => !p)}
+            >
               {paused ? 'Resume polling' : 'Pause polling'}
             </Button>
           </>
@@ -138,14 +169,44 @@ export default function DashboardPage() {
           value={formatCompact(last?.globalRefsPerSec)}
           hint="Performance.GlobalRefsPerSecond"
           footer={`${formatCompact(last?.logicalRequests)} logical requests/s`}
-          aside={samples.length > 1 ? <Sparkline w={110} h={44} data={spark('globalRefsPerSec')} color={colors[0]} curveType="monotone" strokeWidth={1.5} fillOpacity={0.12} areaProps={{ isAnimationActive: false }} /> : <IconActivity size={22} />}
+          aside={
+            samples.length > 1 ? (
+              <Sparkline
+                w={110}
+                h={44}
+                data={spark('globalRefsPerSec')}
+                color={colors[0]}
+                curveType="monotone"
+                strokeWidth={1.5}
+                fillOpacity={0.12}
+                areaProps={{ isAnimationActive: false }}
+              />
+            ) : (
+              <IconActivity size={22} />
+            )
+          }
         />
         <StatTile
           label="Cache efficiency"
           value={last ? formatPercent(last.cacheEfficiency, 1) : '-'}
           hint="Logical block requests satisfied from the global buffer pool"
           footer={`${formatCompact(last?.diskReads)} reads/s · ${formatCompact(last?.diskWrites)} writes/s`}
-          aside={samples.length > 1 ? <Sparkline w={110} h={44} data={spark('cacheEfficiency')} color={colors[1]} curveType="monotone" strokeWidth={1.5} fillOpacity={0.12} areaProps={{ isAnimationActive: false }} /> : <IconDeviceFloppy size={22} />}
+          aside={
+            samples.length > 1 ? (
+              <Sparkline
+                w={110}
+                h={44}
+                data={spark('cacheEfficiency')}
+                color={colors[1]}
+                curveType="monotone"
+                strokeWidth={1.5}
+                fillOpacity={0.12}
+                areaProps={{ isAnimationActive: false }}
+              />
+            ) : (
+              <IconDeviceFloppy size={22} />
+            )
+          }
         />
         <StatTile
           label="Processes"
@@ -160,26 +221,51 @@ export default function DashboardPage() {
           value={licenseUse === null ? 'unlimited' : `${licenseUse}%`}
           hint="Licensing.LicenseUse (percentage of the license limit)"
           icon={<IconLicense size={20} />}
-          color={licenseUse !== null && licenseUse > 85 ? 'red' : licenseUse !== null && licenseUse > 70 ? 'yellow' : 'indigo'}
-          footer={licenseLimit ? `limit ${formatNumber(licenseLimit)} · peak ${licenseHigh ?? '-'}%` : 'no license limit'}
+          color={
+            licenseUse !== null && licenseUse > 85
+              ? 'red'
+              : licenseUse !== null && licenseUse > 70
+                ? 'yellow'
+                : 'indigo'
+          }
+          footer={
+            licenseLimit
+              ? `limit ${formatNumber(licenseLimit)} · peak ${licenseHigh ?? '-'}%`
+              : 'no license limit'
+          }
         />
       </SimpleGrid>
 
       <Paper p="sm" mb="md">
         <Group justify="space-between" wrap="wrap" gap="sm">
           <Group gap="lg" wrap="wrap">
-            <Text size="xs" c="dimmed" fw={600} tt="uppercase" style={{ letterSpacing: 0.4 }}>Host</Text>
+            <Text size="xs" c="dimmed" fw={600} tt="uppercase" style={{ letterSpacing: 0.4 }}>
+              Host
+            </Text>
             {host.isError ? (
-              <Text size="xs" c="dimmed">metrics unavailable - {describeError(host.error)}</Text>
+              <Text size="xs" c="dimmed">
+                metrics unavailable - {describeError(host.error)}
+              </Text>
             ) : (
               <>
-                <Text size="sm">CPU <b className="tabular">{cpu === undefined ? '-' : formatPercent(cpu, 0)}</b></Text>
-                <Text size="sm">Memory <b className="tabular">{mem === undefined ? '-' : formatPercent(mem, 0)}</b></Text>
-                <Text size="sm">Fullest DB disk <b className="tabular">{diskFull === undefined || !host.data?.length ? '-' : formatPercent(diskFull, 0)}</b></Text>
+                <Text size="sm">
+                  CPU <b className="tabular">{cpu === undefined ? '-' : formatPercent(cpu, 0)}</b>
+                </Text>
+                <Text size="sm">
+                  Memory <b className="tabular">{mem === undefined ? '-' : formatPercent(mem, 0)}</b>
+                </Text>
+                <Text size="sm">
+                  Fullest DB disk{' '}
+                  <b className="tabular">
+                    {diskFull === undefined || !host.data?.length ? '-' : formatPercent(diskFull, 0)}
+                  </b>
+                </Text>
               </>
             )}
           </Group>
-          <Button component={Link} to="/monitor" size="compact-xs" variant="subtle">Host monitor</Button>
+          <Button component={Link} to="/monitor" size="compact-xs" variant="subtle">
+            Host monitor
+          </Button>
         </Group>
       </Paper>
 
@@ -279,7 +365,12 @@ export default function DashboardPage() {
                 return (
                   <Group key={label} justify="space-between">
                     <Text size="sm">{label}</Text>
-                    <Badge size="sm" variant="light" color={h === 'good' ? 'teal' : h === 'warning' ? 'yellow' : 'red'} style={{ textTransform: 'none' }}>
+                    <Badge
+                      size="sm"
+                      variant="light"
+                      color={h === 'good' ? 'teal' : h === 'warning' ? 'yellow' : 'red'}
+                      style={{ textTransform: 'none' }}
+                    >
                       {value ?? '-'}
                     </Badge>
                   </Group>
@@ -302,7 +393,11 @@ export default function DashboardPage() {
               </Group>
               <Group justify="space-between">
                 <Text size="sm">Application errors</Text>
-                <Badge size="sm" variant="light" color={num(d?.Alerts?.ApplicationErrors) ? 'yellow' : 'teal'}>
+                <Badge
+                  size="sm"
+                  variant="light"
+                  color={num(d?.Alerts?.ApplicationErrors) ? 'yellow' : 'teal'}
+                >
                   {formatNumber(d?.Alerts?.ApplicationErrors)}
                 </Badge>
               </Group>
@@ -320,7 +415,13 @@ export default function DashboardPage() {
                   <IconDatabase size={14} />
                   <Text size="sm">Last backup</Text>
                 </Group>
-                <Text size="sm">{d?.Status?.LastBackup ? <Timestamp value={d.Status.LastBackup} mode="relative" className="" /> : 'never'}</Text>
+                <Text size="sm">
+                  {d?.Status?.LastBackup ? (
+                    <Timestamp value={d.Status.LastBackup} mode="relative" className="" />
+                  ) : (
+                    'never'
+                  )}
+                </Text>
               </Group>
               <Group justify="space-between">
                 <Group gap={6}>
@@ -391,7 +492,13 @@ export default function DashboardPage() {
                   {(d.SystemUsage.BusyProcesses as Record<string, unknown>[]).slice(0, 8).map((p, i) => (
                     <Table.Tr key={i}>
                       <Table.Td>
-                        <Text size="sm" className="mono" component={Link} to={`/processes/${p.Pid}`} c="indigo">
+                        <Text
+                          size="sm"
+                          className="mono"
+                          component={Link}
+                          to={`/processes/${p.Pid}`}
+                          c="indigo"
+                        >
                           {String(p.Pid ?? '')}
                         </Text>
                       </Table.Td>
@@ -482,7 +589,11 @@ export default function DashboardPage() {
                           {formatCompact(seize)} seizes · {ratio.toFixed(2)}% waits
                         </Text>
                       </Group>
-                      <Progress size="xs" value={Math.max(ratio, 0.5)} color={ratio > 5 ? 'red' : ratio > 1 ? 'yellow' : 'indigo'} />
+                      <Progress
+                        size="xs"
+                        value={Math.max(ratio, 0.5)}
+                        color={ratio > 5 ? 'red' : ratio > 1 ? 'yellow' : 'indigo'}
+                      />
                     </div>
                   );
                 })}

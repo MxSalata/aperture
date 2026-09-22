@@ -2,7 +2,11 @@ import { http, type HttpResponseResolver, type PathParams } from 'msw';
 import { authenticate, holds, type MockAccount } from './auth';
 import { forbidden, unauthorized } from './util';
 
-export type SecuredResolver = (ctx: { account: MockAccount; request: Request; params: PathParams }) => Response | Promise<Response>;
+export type SecuredResolver = (ctx: {
+  account: MockAccount;
+  request: Request;
+  params: PathParams;
+}) => Response | Promise<Response>;
 
 /** Authenticate the caller and enforce the `%Admin_*` resources the spec requires. */
 export function secured(resources: string[], resolver: SecuredResolver): HttpResponseResolver {

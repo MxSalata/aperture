@@ -24,10 +24,25 @@ export interface ConnectionProfile {
 }
 
 /** Vetted Mantine colour keys (shade 6 keeps ≥3:1 against both header surfaces). */
-export const PROFILE_COLORS = ['indigo', 'cyan', 'teal', 'green', 'orange', 'red', 'pink', 'grape', 'violet', 'blue', 'yellow', 'gray'] as const;
+export const PROFILE_COLORS = [
+  'indigo',
+  'cyan',
+  'teal',
+  'green',
+  'orange',
+  'red',
+  'pink',
+  'grape',
+  'violet',
+  'blue',
+  'yellow',
+  'gray',
+] as const;
 
 export function profileColor(profile: ConnectionProfile | undefined): string {
-  return profile?.color && (PROFILE_COLORS as readonly string[]).includes(profile.color) ? profile.color : 'indigo';
+  return profile?.color && (PROFILE_COLORS as readonly string[]).includes(profile.color)
+    ? profile.color
+    : 'indigo';
 }
 
 /** A colour for the n-th saved profile, so new connections do not all look the same. */
@@ -65,7 +80,9 @@ export const useConnections = create<ConnectionsState>()(
         set((s) => {
           const exists = s.profiles.some((p) => p.id === profile.id);
           return {
-            profiles: exists ? s.profiles.map((p) => (p.id === profile.id ? profile : p)) : [...s.profiles, profile],
+            profiles: exists
+              ? s.profiles.map((p) => (p.id === profile.id ? profile : p))
+              : [...s.profiles, profile],
           };
         }),
       remove: (id) =>

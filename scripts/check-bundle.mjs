@@ -17,7 +17,8 @@ const file = join(dir, entry);
 const text = readFileSync(file, 'utf8');
 const size = statSync(file).size;
 const problems = [];
-if (text.includes('/v2/security/audit/events')) problems.push('the OpenAPI operation index is bundled into the entry chunk');
+if (text.includes('/v2/security/audit/events'))
+  problems.push('the OpenAPI operation index is bundled into the entry chunk');
 if (size > BUDGET) problems.push(`entry chunk is ${size} bytes, budget is ${BUDGET}`);
 console.log(`check-bundle: ${entry} ${size} bytes${problems.length ? '' : ' - ok'}`);
 for (const p of problems) console.error(`check-bundle: ${p}`);

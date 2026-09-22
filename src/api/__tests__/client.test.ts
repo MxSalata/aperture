@@ -12,7 +12,9 @@ beforeEach(async () => {
   resetClients();
   sessionStorage.clear();
   useJobs.setState({ jobs: {}, order: [] });
-  await useSession.getState().login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+  await useSession
+    .getState()
+    .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
 });
 
 describe('typed client', () => {
@@ -22,18 +24,29 @@ describe('typed client', () => {
   });
 
   it('turns HTTP errors into ApiError with the server summary', async () => {
-    await expect(result(api().GET('/v2/namespace', { params: { query: { name: 'NOPE' } } }))).rejects.toSatisfy(
+    await expect(
+      result(api().GET('/v2/namespace', { params: { query: { name: 'NOPE' } } })),
+    ).rejects.toSatisfy(
       (e: unknown) => e instanceof ApiError && e.status === 404 && /not found/i.test(e.summary),
     );
   });
 
   it('reports 403 when the account lacks the privilege', async () => {
-    await useSession.getState().login({ connectionId: 't', baseUrl: BASE, username: 'operator', password: 'SYS' });
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: 'operator', password: 'SYS' });
     await expect(result(api().GET('/v2/security/users'))).rejects.toMatchObject({ status: 403 });
   });
 
   it('registers 202 responses in the Job Center using the Location header', async () => {
-    const { response } = await call(api().POST('/v2/database-dir/compact', { params: { query: { dir: '/usr/irissys/mgr/user/' } }, body: { TargetFreeSpace: 10 }, headers: { 'x-aperture-job': 'Compact USER' } }), 'POST');
+    const { response } = await call(
+      api().POST('/v2/database-dir/compact', {
+        params: { query: { dir: '/usr/irissys/mgr/user/' } },
+        body: { TargetFreeSpace: 10 },
+        headers: { 'x-aperture-job': 'Compact USER' },
+      }),
+      'POST',
+    );
     expect(response.status).toBe(202);
     const jobs = Object.values(useJobs.getState().jobs);
     expect(jobs).toHaveLength(1);
@@ -42,7 +55,13 @@ describe('typed client', () => {
   });
 
   it('keeps silent jobs out of the Job Center', async () => {
-    await call(api().POST('/v2/database-dir/info', { params: { query: { dir: '/usr/irissys/mgr/user/' } }, headers: { 'x-aperture-silent': '1' } }), 'POST');
+    await call(
+      api().POST('/v2/database-dir/info', {
+        params: { query: { dir: '/usr/irissys/mgr/user/' } },
+        headers: { 'x-aperture-silent': '1' },
+      }),
+      'POST',
+    );
     expect(Object.keys(useJobs.getState().jobs)).toHaveLength(0);
   });
 

@@ -76,7 +76,9 @@ let specPromise: Promise<OpenApiDoc> | null = null;
 
 export function loadSpec(): Promise<OpenApiDoc> {
   if (!specPromise) {
-    specPromise = import('../../spec/mainspec_v2.json').then((m) => (m.default ?? m) as unknown as OpenApiDoc);
+    specPromise = import('../../spec/mainspec_v2.json').then(
+      (m) => (m.default ?? m) as unknown as OpenApiDoc,
+    );
   }
   return specPromise;
 }
@@ -116,7 +118,8 @@ export function resultSchema(doc: OpenApiDoc, method: string, path: string): Jso
   const op = doc.paths[path]?.[method.toLowerCase()] as { responses?: Record<string, unknown> } | undefined;
   if (!op) return undefined;
   for (const code of ['200', '201', '202']) {
-    const res = deref(doc, op.responses?.[code]) as { content?: Record<string, { schema?: JsonSchema }> } | undefined;
+    const res = deref(doc, op.responses?.[code]) as
+      { content?: Record<string, { schema?: JsonSchema }> } | undefined;
     const schema = res?.content?.['application/json']?.schema;
     if (!schema) continue;
     const resolved = resolveSchema(doc, schema);
@@ -128,8 +131,7 @@ export function resultSchema(doc: OpenApiDoc, method: string, path: string): Jso
 
 export function requestBodySchema(doc: OpenApiDoc, method: string, path: string): JsonSchema | undefined {
   const op = doc.paths[path]?.[method.toLowerCase()] as
-    | { requestBody?: { content?: Record<string, { schema?: JsonSchema }> } }
-    | undefined;
+    { requestBody?: { content?: Record<string, { schema?: JsonSchema }> } } | undefined;
   return op?.requestBody?.content?.['application/json']?.schema;
 }
 
@@ -140,7 +142,11 @@ interface ExampleOptions {
 }
 
 /** Produce a plausible value for a schema, preferring the spec's own `example`s. */
-export function exampleFromSchema(doc: OpenApiDoc, schema: JsonSchema | undefined, opts: ExampleOptions = {}): unknown {
+export function exampleFromSchema(
+  doc: OpenApiDoc,
+  schema: JsonSchema | undefined,
+  opts: ExampleOptions = {},
+): unknown {
   const seed = opts.seed ?? 0;
   const depth = opts.depth ?? 0;
   if (!schema || depth > 8) return null;
@@ -166,7 +172,9 @@ export function exampleFromSchema(doc: OpenApiDoc, schema: JsonSchema | undefine
       return s.default !== undefined ? Boolean(s.default) : seed % 2 === 0;
     case 'array': {
       const n = depth === 0 ? 3 : 2;
-      return Array.from({ length: n }, (_, i) => exampleFromSchema(doc, s.items, { seed: seed + i, depth: depth + 1 }));
+      return Array.from({ length: n }, (_, i) =>
+        exampleFromSchema(doc, s.items, { seed: seed + i, depth: depth + 1 }),
+      );
     }
     case 'object':
     default: {
@@ -184,7 +192,8 @@ export function exampleFromSchema(doc: OpenApiDoc, schema: JsonSchema | undefine
 function varyExample(example: unknown, seed: number): unknown {
   if (seed === 0) return example;
   if (typeof example === 'number') return example + seed;
-  if (typeof example === 'string' && example && !/[/:]/.test(example) && example.length < 40) return `${example}${seed + 1}`;
+  if (typeof example === 'string' && example && !/[/:]/.test(example) && example.length < 40)
+    return `${example}${seed + 1}`;
   return example;
 }
 

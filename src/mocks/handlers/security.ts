@@ -1,16 +1,38 @@
 import { mockDb, type UserRec, type RoleRec } from '../db';
-import { ok, created, notFound, badRequest, requireParam, jsonBody, filterRows, fail, accepted, hoursAgo, seeded, pick } from '../util';
+import {
+  ok,
+  created,
+  notFound,
+  badRequest,
+  requireParam,
+  jsonBody,
+  filterRows,
+  fail,
+  accepted,
+  hoursAgo,
+  seeded,
+  pick,
+} from '../util';
 import { route, SECURE, apiBasePath } from '../secure';
 import { startAsyncTask } from '../async';
 import { findAccount } from '../auth';
 
-const userListShape = (u: UserRec) => ({ Name: u.Name, FullName: u.FullName, Enabled: u.Enabled, Type: u.Type, Namespace: u.Namespace, Routine: u.Routine });
+const userListShape = (u: UserRec) => ({
+  Name: u.Name,
+  FullName: u.FullName,
+  Enabled: u.Enabled,
+  Type: u.Type,
+  Namespace: u.Namespace,
+  Routine: u.Routine,
+});
 const userDetailShape = (u: UserRec) => {
   const { Name: _n, Type: _t, password: _p, ...rest } = u;
   return { ...rest, NameSpace: u.Namespace };
 };
-const findUser = (name: string | null) => (name ? mockDb.users.find((u) => u.Name.toLowerCase() === name.toLowerCase()) : undefined);
-const findRole = (name: string | null) => (name ? mockDb.roles.find((r) => r.Name.toLowerCase() === name.toLowerCase()) : undefined);
+const findUser = (name: string | null) =>
+  name ? mockDb.users.find((u) => u.Name.toLowerCase() === name.toLowerCase()) : undefined;
+const findRole = (name: string | null) =>
+  name ? mockDb.roles.find((r) => r.Name.toLowerCase() === name.toLowerCase()) : undefined;
 
 function auditRecords(request: Request) {
   const q = new URL(request.url).searchParams;
@@ -41,7 +63,11 @@ function auditRecords(request: Request) {
       Authentication: pick(rnd, ['Password', 'JWT', 'OS', 'Unauthenticated']),
       ClientExecutableName: pick(rnd, ['CSPa24.so', 'irissession', 'java', 'python3', 'code']),
       ClientIPAddress: pick(rnd, ips),
-      EventData: failed ? `Resource: %Admin_Secure:U\nUser: ${user}` : e.EventType === '%SQL' ? 'SELECT TOP 100 * FROM DICOM.Study WHERE Modality = ?' : '',
+      EventData: failed
+        ? `Resource: %Admin_Secure:U\nUser: ${user}`
+        : e.EventType === '%SQL'
+          ? 'SELECT TOP 100 * FROM DICOM.Study WHERE Modality = ?'
+          : '',
       Namespace: pick(rnd, ['%SYS', 'USER', 'IRISAPP', 'INTEROP', 'CLINICAL']),
       Roles: pick(rnd, ['%All', '%Developer,%DB_IRISAPP', '%Operator', '%SQL,%DB_CLINICAL']),
       RoutineSpec: e.EventSource === '%Ensemble' ? 'Ens.Director.1' : '%SYS.REST.1',
@@ -63,7 +89,9 @@ function auditRecords(request: Request) {
 
 export const securityHandlers = [
   // ---- users ------------------------------------------------------------
-  route('get', '/v2/security/users', SECURE, ({ request }) => ok(filterRows(mockDb.users.map(userListShape) as unknown as Record<string, unknown>[], request))),
+  route('get', '/v2/security/users', SECURE, ({ request }) =>
+    ok(filterRows(mockDb.users.map(userListShape) as unknown as Record<string, unknown>[], request)),
+  ),
 
   route('get', '/v2/security/user', SECURE, ({ request }) => {
     const u = findUser(requireParam(request, 'name'));
@@ -71,7 +99,11 @@ export const securityHandlers = [
   }),
 
   route('post', '/v2/security/user', SECURE, async ({ request }) => {
-    const body = await jsonBody<{ User?: Record<string, unknown> & { Name?: string }; Password?: string; Name?: string }>(request);
+    const body = await jsonBody<{
+      User?: Record<string, unknown> & { Name?: string };
+      Password?: string;
+      Name?: string;
+    }>(request);
     const name = String(body.User?.Name ?? body.Name ?? new URL(request.url).searchParams.get('name') ?? '');
     if (!name) return badRequest('User.Name is required');
     if (!body.Password) return badRequest('Password is required');
@@ -115,7 +147,8 @@ export const securityHandlers = [
     const name = requireParam(request, 'name');
     const u = findUser(name);
     if (!u) return notFound('User');
-    if (u.Name.startsWith('_') || u.Name === 'SuperUser') return fail(400, `System user ${u.Name} cannot be deleted`);
+    if (u.Name.startsWith('_') || u.Name === 'SuperUser')
+      return fail(400, `System user ${u.Name} cannot be deleted`);
     mockDb.users = mockDb.users.filter((x) => x !== u);
     return ok({}, { summary: `User ${u.Name} deleted` });
   }),
@@ -135,7 +168,17 @@ export const securityHandlers = [
 
   // ---- roles ------------------------------------------------------------
   route('get', '/v2/security/roles', SECURE, ({ request }) =>
-    ok(filterRows(mockDb.roles.map(({ Name, Description, CreatedBy, EscalationOnly }) => ({ Name, Description, CreatedBy, EscalationOnly })), request)),
+    ok(
+      filterRows(
+        mockDb.roles.map(({ Name, Description, CreatedBy, EscalationOnly }) => ({
+          Name,
+          Description,
+          CreatedBy,
+          EscalationOnly,
+        })),
+        request,
+      ),
+    ),
   ),
   route('get', '/v2/security/role', SECURE, ({ request }) => {
     const r = findRole(requireParam(request, 'name'));
@@ -161,7 +204,14 @@ export const securityHandlers = [
       Object.assign(existing, body);
       return ok({}, { summary: `Role ${name} updated` });
     }
-    mockDb.roles.push({ Name: name, Description: body.Description ?? '', CreatedBy: account.username, EscalationOnly: !!body.EscalationOnly, GrantedRoles: body.GrantedRoles ?? [], Resources: body.Resources ?? [] });
+    mockDb.roles.push({
+      Name: name,
+      Description: body.Description ?? '',
+      CreatedBy: account.username,
+      EscalationOnly: !!body.EscalationOnly,
+      GrantedRoles: body.GrantedRoles ?? [],
+      Resources: body.Resources ?? [],
+    });
     return created({}, [`Role ${name} created`]);
   }),
   route('delete', '/v2/security/role', SECURE, ({ request }) => {
@@ -173,10 +223,14 @@ export const securityHandlers = [
   }),
 
   // ---- resources ----------------------------------------------------------
-  route('get', '/v2/security/resources', SECURE, ({ request }) => ok(filterRows(mockDb.resources as unknown as Record<string, unknown>[], request))),
+  route('get', '/v2/security/resources', SECURE, ({ request }) =>
+    ok(filterRows(mockDb.resources as unknown as Record<string, unknown>[], request)),
+  ),
   route('get', '/v2/security/resource', SECURE, ({ request }) => {
     const r = mockDb.resources.find((x) => x.Name === requireParam(request, 'name'));
-    return r ? ok({ Description: r.Description, PublicPermission: r.PublicPermission }) : notFound('Resource');
+    return r
+      ? ok({ Description: r.Description, PublicPermission: r.PublicPermission })
+      : notFound('Resource');
   }),
   route('put', '/v2/security/resource', SECURE, async ({ request }) => {
     const name = requireParam(request, 'name');
@@ -187,7 +241,13 @@ export const securityHandlers = [
       Object.assign(existing, body);
       return ok({}, { summary: `Resource ${name} updated` });
     }
-    mockDb.resources.push({ Name: name, Description: body.Description ?? '', PublicPermission: body.PublicPermission ?? '', ResourceType: name.startsWith('%DB_') ? 'Database' : 'Application', AllowDelete: true });
+    mockDb.resources.push({
+      Name: name,
+      Description: body.Description ?? '',
+      PublicPermission: body.PublicPermission ?? '',
+      ResourceType: name.startsWith('%DB_') ? 'Database' : 'Application',
+      AllowDelete: true,
+    });
     return created({}, [`Resource ${name} created`]);
   }),
   route('delete', '/v2/security/resource', SECURE, ({ request }) => {
@@ -199,15 +259,29 @@ export const securityHandlers = [
   }),
 
   // ---- services -----------------------------------------------------------
-  route('get', '/v2/security/services', SECURE, ({ request }) => ok(filterRows(mockDb.services as unknown as Record<string, unknown>[], request))),
+  route('get', '/v2/security/services', SECURE, ({ request }) =>
+    ok(filterRows(mockDb.services as unknown as Record<string, unknown>[], request)),
+  ),
   route('get', '/v2/security/service', SECURE, ({ request }) => {
     const s = mockDb.services.find((x) => x.Name === requireParam(request, 'name'));
-    return s ? ok({ AutheEnabled: s.AutheEnabled, ClientSystems: s.ClientSystems, Description: s.Description, Enabled: s.EnabledBoolean }) : notFound('Service');
+    return s
+      ? ok({
+          AutheEnabled: s.AutheEnabled,
+          ClientSystems: s.ClientSystems,
+          Description: s.Description,
+          Enabled: s.EnabledBoolean,
+        })
+      : notFound('Service');
   }),
   route('put', '/v2/security/service', SECURE, async ({ request }) => {
     const s = mockDb.services.find((x) => x.Name === requireParam(request, 'name'));
     if (!s) return notFound('Service');
-    const body = await jsonBody<{ Enabled?: boolean; Description?: string; AutheEnabled?: number; ClientSystems?: string[] }>(request);
+    const body = await jsonBody<{
+      Enabled?: boolean;
+      Description?: string;
+      AutheEnabled?: number;
+      ClientSystems?: string[];
+    }>(request);
     if (body.Enabled !== undefined) {
       s.EnabledBoolean = !!body.Enabled;
       s.Enabled = body.Enabled ? 'Yes' : 'No';
@@ -226,36 +300,69 @@ export const securityHandlers = [
     return ok({}, { summary: `Auditing ${mockDb.auditEnabled ? 'enabled' : 'disabled'}` });
   }),
   route('get', '/v2/security/audit/events', SECURE, ({ request }) =>
-    ok(filterRows(mockDb.auditEvents.map((e) => ({ EventName: `${e.EventSource}/${e.EventType}/${e.EventName}`, Enabled: e.Enabled, Total: e.Total, Written: e.Written, Lost: e.Lost })), request)),
+    ok(
+      filterRows(
+        mockDb.auditEvents.map((e) => ({
+          EventName: `${e.EventSource}/${e.EventType}/${e.EventName}`,
+          Enabled: e.Enabled,
+          Total: e.Total,
+          Written: e.Written,
+          Lost: e.Lost,
+        })),
+        request,
+      ),
+    ),
   ),
   route('get', '/v2/security/audit/event', SECURE, ({ request }) => {
     const q = new URL(request.url).searchParams;
-    const e = mockDb.auditEvents.find((x) => x.EventSource === q.get('source') && x.EventType === q.get('type') && x.EventName === q.get('name'));
+    const e = mockDb.auditEvents.find(
+      (x) =>
+        x.EventSource === q.get('source') && x.EventType === q.get('type') && x.EventName === q.get('name'),
+    );
     return e ? ok({ Description: e.Description, Enabled: e.Enabled }) : notFound('Audit event');
   }),
   route('put', '/v2/security/audit/event', SECURE, async ({ request }) => {
     const q = new URL(request.url).searchParams;
     const body = await jsonBody<{ Description?: string; Enabled?: boolean }>(request);
-    const e = mockDb.auditEvents.find((x) => x.EventSource === q.get('source') && x.EventType === q.get('type') && x.EventName === q.get('name'));
+    const e = mockDb.auditEvents.find(
+      (x) =>
+        x.EventSource === q.get('source') && x.EventType === q.get('type') && x.EventName === q.get('name'),
+    );
     if (e) {
       if (body.Enabled !== undefined) e.Enabled = body.Enabled;
       if (body.Description !== undefined) e.Description = body.Description;
       return ok({}, { summary: 'Audit event updated' });
     }
-    mockDb.auditEvents.push({ EventSource: q.get('source')!, EventType: q.get('type')!, EventName: q.get('name')!, Description: body.Description ?? '', Enabled: body.Enabled ?? true, Total: 0, Written: 0, Lost: 0 });
+    mockDb.auditEvents.push({
+      EventSource: q.get('source')!,
+      EventType: q.get('type')!,
+      EventName: q.get('name')!,
+      Description: body.Description ?? '',
+      Enabled: body.Enabled ?? true,
+      Total: 0,
+      Written: 0,
+      Lost: 0,
+    });
     return created({}, ['Audit event created']);
   }),
   route('delete', '/v2/security/audit/event', SECURE, ({ request }) => {
     const q = new URL(request.url).searchParams;
-    const i = mockDb.auditEvents.findIndex((x) => x.EventSource === q.get('source') && x.EventType === q.get('type') && x.EventName === q.get('name'));
+    const i = mockDb.auditEvents.findIndex(
+      (x) =>
+        x.EventSource === q.get('source') && x.EventType === q.get('type') && x.EventName === q.get('name'),
+    );
     if (i < 0) return notFound('Audit event');
-    if (mockDb.auditEvents[i].EventSource === '%System') return fail(400, 'System audit events cannot be deleted');
+    if (mockDb.auditEvents[i].EventSource === '%System')
+      return fail(400, 'System audit events cannot be deleted');
     mockDb.auditEvents.splice(i, 1);
     return ok({}, { summary: 'Audit event deleted' });
   }),
   route('post', '/v2/security/audit/event/clear-count', SECURE, ({ request }) => {
     const q = new URL(request.url).searchParams;
-    const e = mockDb.auditEvents.find((x) => x.EventSource === q.get('source') && x.EventType === q.get('type') && x.EventName === q.get('name'));
+    const e = mockDb.auditEvents.find(
+      (x) =>
+        x.EventSource === q.get('source') && x.EventType === q.get('type') && x.EventName === q.get('name'),
+    );
     if (!e) return notFound('Audit event');
     e.Total = 0;
     e.Written = 0;
@@ -264,7 +371,13 @@ export const securityHandlers = [
   }),
   route('post', '/v2/security/audit/records', SECURE, ({ request, account }) => {
     const rows = auditRecords(request);
-    const id = startAsyncTask({ name: 'POST /v2/security/audit/records', owner: account.username, console: [`Querying audit log (${rows.length} records)`], result: rows, tickMs: 500 });
+    const id = startAsyncTask({
+      name: 'POST /v2/security/audit/records',
+      owner: account.username,
+      console: [`Querying audit log (${rows.length} records)`],
+      result: rows,
+      tickMs: 500,
+    });
     return accepted(id, apiBasePath(request));
   }),
   route('get', '/v2/security/audit/record', SECURE, ({ request }) => {
@@ -274,7 +387,12 @@ export const securityHandlers = [
   }),
   route('post', '/v2/security/audit/record/purge', SECURE, async ({ request }) => {
     const body = await jsonBody<{ BeginDateTime?: string; EndDateTime?: string }>(request);
-    return ok({ Purged: 12_403 }, { summary: `Purged audit records from ${body.BeginDateTime || 'the first record'} to ${body.EndDateTime || 'the last record'}` });
+    return ok(
+      { Purged: 12_403 },
+      {
+        summary: `Purged audit records from ${body.BeginDateTime || 'the first record'} to ${body.EndDateTime || 'the last record'}`,
+      },
+    );
   }),
   route('post', '/v2/security/audit/record/copy', SECURE, async ({ request }) => {
     const body = await jsonBody<{ Namespace?: string }>(request);
@@ -283,13 +401,36 @@ export const securityHandlers = [
 
   // ---- SSL ----------------------------------------------------------------
   route('get', '/v2/security/ssl-configurations', SECURE, ({ request }) =>
-    ok(filterRows(mockDb.sslConfigs.map(({ Name, Description, Enabled, Type }) => ({ Name, Description, Enabled, Type })), request)),
+    ok(
+      filterRows(
+        mockDb.sslConfigs.map(({ Name, Description, Enabled, Type }) => ({
+          Name,
+          Description,
+          Enabled,
+          Type,
+        })),
+        request,
+      ),
+    ),
   ),
   route('get', '/v2/security/ssl-configuration', SECURE, ({ request }) => {
     const s = mockDb.sslConfigs.find((x) => x.Name === requireParam(request, 'name'));
     if (!s) return notFound('SSL configuration');
     const { Name: _n, Type, ...rest } = s;
-    return ok({ ...rest, Type: Type === 'Server' ? 1 : 0, AuthorizeCN: false, CAPath: '', DiffieHellmanBits: 2048, OCSP: 0, OCSPIssuerCert: '', OCSPResponseFile: '', OCSPTimeout: 0, OCSPURL: '', PrivateKeyType: 2, VerifyDepth: 9 });
+    return ok({
+      ...rest,
+      Type: Type === 'Server' ? 1 : 0,
+      AuthorizeCN: false,
+      CAPath: '',
+      DiffieHellmanBits: 2048,
+      OCSP: 0,
+      OCSPIssuerCert: '',
+      OCSPResponseFile: '',
+      OCSPTimeout: 0,
+      OCSPURL: '',
+      PrivateKeyType: 2,
+      VerifyDepth: 9,
+    });
   }),
   route('put', '/v2/security/ssl-configuration', SECURE, async ({ request }) => {
     const name = requireParam(request, 'name');
@@ -312,7 +453,9 @@ export const securityHandlers = [
     };
     if (existing) Object.assign(existing, rec);
     else mockDb.sslConfigs.push(rec);
-    return existing ? ok({}, { summary: `SSL configuration ${name} updated` }) : created({}, [`SSL configuration ${name} created`]);
+    return existing
+      ? ok({}, { summary: `SSL configuration ${name} updated` })
+      : created({}, [`SSL configuration ${name} created`]);
   }),
   route('delete', '/v2/security/ssl-configuration', SECURE, ({ request }) => {
     const s = mockDb.sslConfigs.find((x) => x.Name === requireParam(request, 'name'));
@@ -327,7 +470,15 @@ export const securityHandlers = [
     const body = await jsonBody<{ Host?: string; Port?: number; host?: string; port?: number }>(request);
     const host = body.Host ?? body.host ?? 'localhost';
     if (!s.Enabled) return fail(400, `SSL configuration ${s.Name} is disabled`);
-    return ok({ Result: `Connected to ${host}:${body.Port ?? body.port ?? 443} using TLSv1.3 (TLS_AES_256_GCM_SHA384)` }, { summary: 'Connection succeeded', console: ['Resolving host…', 'TLS handshake…', 'Peer certificate verified'] });
+    return ok(
+      {
+        Result: `Connected to ${host}:${body.Port ?? body.port ?? 443} using TLSv1.3 (TLS_AES_256_GCM_SHA384)`,
+      },
+      {
+        summary: 'Connection succeeded',
+        console: ['Resolving host…', 'TLS handshake…', 'Peer certificate verified'],
+      },
+    );
   }),
 
   // ---- SQL privileges -----------------------------------------------------
@@ -336,21 +487,73 @@ export const securityHandlers = [
     const grantee = q.get('grantee') ?? '';
     const ns = q.get('namespace') ?? 'USER';
     const base = [
-      { Type: 'TABLE', Name: 'SQLUser.Person', Privilege: 'SELECT', GrantedBy: '_SYSTEM', GrantOption: false, GrantedVia: grantee, HasColumnPriv: false },
-      { Type: 'TABLE', Name: 'SQLUser.Person', Privilege: 'INSERT', GrantedBy: '_SYSTEM', GrantOption: false, GrantedVia: grantee, HasColumnPriv: true },
-      { Type: 'TABLE', Name: 'DICOM.Study', Privilege: 'SELECT', GrantedBy: 'Admin', GrantOption: true, GrantedVia: '%SQL', HasColumnPriv: false },
-      { Type: 'VIEW', Name: 'HL7.Archive_View', Privilege: 'SELECT', GrantedBy: 'Admin', GrantOption: false, GrantedVia: grantee, HasColumnPriv: false },
-      { Type: 'STORED PROCEDURE', Name: 'dc.Reports_Nightly', Privilege: 'EXECUTE', GrantedBy: '_SYSTEM', GrantOption: false, GrantedVia: grantee, HasColumnPriv: false },
+      {
+        Type: 'TABLE',
+        Name: 'SQLUser.Person',
+        Privilege: 'SELECT',
+        GrantedBy: '_SYSTEM',
+        GrantOption: false,
+        GrantedVia: grantee,
+        HasColumnPriv: false,
+      },
+      {
+        Type: 'TABLE',
+        Name: 'SQLUser.Person',
+        Privilege: 'INSERT',
+        GrantedBy: '_SYSTEM',
+        GrantOption: false,
+        GrantedVia: grantee,
+        HasColumnPriv: true,
+      },
+      {
+        Type: 'TABLE',
+        Name: 'DICOM.Study',
+        Privilege: 'SELECT',
+        GrantedBy: 'Admin',
+        GrantOption: true,
+        GrantedVia: '%SQL',
+        HasColumnPriv: false,
+      },
+      {
+        Type: 'VIEW',
+        Name: 'HL7.Archive_View',
+        Privilege: 'SELECT',
+        GrantedBy: 'Admin',
+        GrantOption: false,
+        GrantedVia: grantee,
+        HasColumnPriv: false,
+      },
+      {
+        Type: 'STORED PROCEDURE',
+        Name: 'dc.Reports_Nightly',
+        Privilege: 'EXECUTE',
+        GrantedBy: '_SYSTEM',
+        GrantOption: false,
+        GrantedVia: grantee,
+        HasColumnPriv: false,
+      },
     ];
-    return ok(ns === 'CLINICAL' ? base.filter((b) => b.Name.startsWith('DICOM') || b.Name.startsWith('HL7')) : base);
+    return ok(
+      ns === 'CLINICAL' ? base.filter((b) => b.Name.startsWith('DICOM') || b.Name.startsWith('HL7')) : base,
+    );
   }),
   route('post', '/v2/security/sql-privilege/grant', SECURE, ({ request }) => {
     const q = new URL(request.url).searchParams;
-    return ok({}, { summary: `Granted ${q.get('action')} on ${q.get('object')} to ${q.get('grantee')} in ${q.get('namespace')}` });
+    return ok(
+      {},
+      {
+        summary: `Granted ${q.get('action')} on ${q.get('object')} to ${q.get('grantee')} in ${q.get('namespace')}`,
+      },
+    );
   }),
   route('post', '/v2/security/sql-privilege/revoke', SECURE, ({ request }) => {
     const q = new URL(request.url).searchParams;
-    return ok({}, { summary: `Revoked ${q.get('action')} on ${q.get('object')} from ${q.get('grantee')} in ${q.get('namespace')}` });
+    return ok(
+      {},
+      {
+        summary: `Revoked ${q.get('action')} on ${q.get('object')} from ${q.get('grantee')} in ${q.get('namespace')}`,
+      },
+    );
   }),
   route('get', '/v2/security/sql-admin-privileges', SECURE, () =>
     ok([
@@ -359,15 +562,40 @@ export const securityHandlers = [
       { Privilege: '%CREATE_VIEW', GrantOption: true, GrantedVia: '%Developer' },
     ]),
   ),
-  route('post', '/v2/security/sql-admin-privilege/grant', SECURE, ({ request }) => ok({}, { summary: `Granted ${new URL(request.url).searchParams.get('privilege')}` })),
-  route('post', '/v2/security/sql-admin-privilege/revoke', SECURE, ({ request }) => ok({}, { summary: `Revoked ${new URL(request.url).searchParams.get('privilege')}` })),
+  route('post', '/v2/security/sql-admin-privilege/grant', SECURE, ({ request }) =>
+    ok({}, { summary: `Granted ${new URL(request.url).searchParams.get('privilege')}` }),
+  ),
+  route('post', '/v2/security/sql-admin-privilege/revoke', SECURE, ({ request }) =>
+    ok({}, { summary: `Revoked ${new URL(request.url).searchParams.get('privilege')}` }),
+  ),
 
   // ---- web auth settings ---------------------------------------------------
   route('get', '/v2/security/web-auth', SECURE, () =>
     ok({
-      AutheUnauthenticated: false, AutheOS: true, AutheOSDelegated: false, AutheOSLDAP: false, AutheCache: true, AutheDelegated: false, AutheAlwaysTryDelegated: false, AutheKB: false, AutheLDAP: false, AutheLDAPCache: false, AutheOAuth2: false, AutheLoginToken: true, AutheTwoFactorSMS: false, AutheTwoFactorPW: false,
-      LoginCookieTimeout: 900, SMTPServer: '', SMTPUsername: '', TwoFactorFrom: '', TwoFactorTimeout: 300, JWTIssuer: 'iris-demo/IRIS', JWTSigAlg: 'ES256',
+      AutheUnauthenticated: false,
+      AutheOS: true,
+      AutheOSDelegated: false,
+      AutheOSLDAP: false,
+      AutheCache: true,
+      AutheDelegated: false,
+      AutheAlwaysTryDelegated: false,
+      AutheKB: false,
+      AutheLDAP: false,
+      AutheLDAPCache: false,
+      AutheOAuth2: false,
+      AutheLoginToken: true,
+      AutheTwoFactorSMS: false,
+      AutheTwoFactorPW: false,
+      LoginCookieTimeout: 900,
+      SMTPServer: '',
+      SMTPUsername: '',
+      TwoFactorFrom: '',
+      TwoFactorTimeout: 300,
+      JWTIssuer: 'iris-demo/IRIS',
+      JWTSigAlg: 'ES256',
     }),
   ),
-  route('put', '/v2/security/web-auth', SECURE, () => ok({}, { summary: 'Web authentication settings updated' })),
+  route('put', '/v2/security/web-auth', SECURE, () =>
+    ok({}, { summary: 'Web authentication settings updated' }),
+  ),
 ];

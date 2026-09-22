@@ -44,7 +44,8 @@ export function findAccount(username: string, password?: string): MockAccount | 
 }
 
 /** Access tokens: header.payload.signature with a fake signature - the mock only checks structure and expiry. */
-const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+const b64 = (o: unknown) =>
+  btoa(JSON.stringify(o)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
 
 export interface TokenPayload {
   sub: string;
@@ -54,7 +55,12 @@ export interface TokenPayload {
   sid: string;
 }
 
-export function issueToken(username: string, typ: 'access' | 'refresh', ttlSeconds: number, sid: string): string {
+export function issueToken(
+  username: string,
+  typ: 'access' | 'refresh',
+  ttlSeconds: number,
+  sid: string,
+): string {
   const iat = Date.now() / 1000;
   const payload: TokenPayload = { sub: username, iat, exp: Math.floor(iat + ttlSeconds), typ, sid };
   return `${b64({ alg: 'ES256', typ: 'JWT' })}.${b64(payload)}.${b64('mock-signature-' + sid)}`;
@@ -109,7 +115,8 @@ export function infoFor(account: MockAccount, namespaces: string[]): Info {
   return {
     apiVersion: 2,
     username: account.username,
-    serverVersion: 'IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2.0 (Build 142U) Fri Sep 4 2026 10:22:01 EDT',
+    serverVersion:
+      'IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2.0 (Build 142U) Fri Sep 4 2026 10:22:01 EDT',
     systemMode: 'DEVELOPMENT',
     product: 'iris',
     namespaces: namespaces.map((name) => ({ name })),

@@ -35,7 +35,7 @@ describe('DataTable', () => {
     expect(await screen.findByText('alpha')).toBeInTheDocument();
   });
 
-  it('shows the caller\'s empty message when the server returned nothing', () => {
+  it("shows the caller's empty message when the server returned nothing", () => {
     mount(<DataTable data={[]} columns={columns} emptyMessage="No locks held on this instance" />);
     expect(screen.getByText('No locks held on this instance')).toBeInTheDocument();
   });
@@ -48,7 +48,9 @@ describe('DataTable', () => {
   });
 
   it('exposes clickable rows as buttons with an accessible name', () => {
-    mount(<DataTable data={rows} columns={columns} onRowClick={() => {}} getRowLabel={(r) => `Open ${r.name}`} />);
+    mount(
+      <DataTable data={rows} columns={columns} onRowClick={() => {}} getRowLabel={(r) => `Open ${r.name}`} />,
+    );
     expect(screen.getByRole('button', { name: 'Open alpha' })).toHaveAttribute('tabindex', '0');
   });
 });

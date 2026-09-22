@@ -18,7 +18,8 @@ export interface MetricSample {
   type?: string;
 }
 
-const LINE = /^([a-zA-Z_:][a-zA-Z0-9_:]*)(\{[^}]*\})?\s+([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?|NaN|[-+]?Inf)\s*(?:\d+)?$/;
+const LINE =
+  /^([a-zA-Z_:][a-zA-Z0-9_:]*)(\{[^}]*\})?\s+([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?|NaN|[-+]?Inf)\s*(?:\d+)?$/;
 
 export function parseLabels(raw: string | undefined): Record<string, string> {
   const labels: Record<string, string> = {};
@@ -26,7 +27,8 @@ export function parseLabels(raw: string | undefined): Record<string, string> {
   const inner = raw.slice(1, -1);
   const re = /([a-zA-Z_][a-zA-Z0-9_]*)="((?:[^"\\]|\\.)*)"/g;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(inner))) labels[m[1]] = m[2].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+  while ((m = re.exec(inner)))
+    labels[m[1]] = m[2].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
   return labels;
 }
 
@@ -45,10 +47,23 @@ export function parsePrometheus(text: string): MetricSample[] {
     }
     const m = line.match(LINE);
     if (!m) continue;
-    const value = m[3] === 'NaN' ? NaN : m[3].endsWith('Inf') ? (m[3].startsWith('-') ? -Infinity : Infinity) : Number(m[3]);
+    const value =
+      m[3] === 'NaN'
+        ? NaN
+        : m[3].endsWith('Inf')
+          ? m[3].startsWith('-')
+            ? -Infinity
+            : Infinity
+          : Number(m[3]);
     const name = m[1];
     const base = name.replace(/_(total|sum|count|bucket)$/, '');
-    out.push({ name, labels: parseLabels(m[2]), value, help: help[name] ?? help[base], type: type[name] ?? type[base] });
+    out.push({
+      name,
+      labels: parseLabels(m[2]),
+      value,
+      help: help[name] ?? help[base],
+      type: type[name] ?? type[base],
+    });
   }
   return out;
 }
@@ -120,12 +135,25 @@ export async function fetchAlerts(): Promise<AlertRow[]> {
       : [];
   return list.map((a) => {
     const o = (a && typeof a === 'object' ? a : { message: String(a) }) as Record<string, unknown>;
-    const pick = (...keys: string[]) => String(keys.map((k) => o[k]).find((v) => v !== undefined && v !== null && v !== '') ?? '');
-    return { time: pick('time', 'Time', 'timestamp', 'date'), severity: pick('severity', 'Severity', 'level'), process: pick('process', 'pid', 'Process', 'source'), message: pick('message', 'Message', 'text', 'alert'), raw: a };
+    const pick = (...keys: string[]) =>
+      String(keys.map((k) => o[k]).find((v) => v !== undefined && v !== null && v !== '') ?? '');
+    return {
+      time: pick('time', 'Time', 'timestamp', 'date'),
+      severity: pick('severity', 'Severity', 'level'),
+      process: pick('process', 'pid', 'Process', 'source'),
+      message: pick('message', 'Message', 'text', 'alert'),
+      raw: a,
+    };
   });
 }
 
 /** Pick the first sample with a given name (optionally matching labels). */
-export function metric(samples: MetricSample[], name: string, labels?: Record<string, string>): MetricSample | undefined {
-  return samples.find((s) => s.name === name && (!labels || Object.entries(labels).every(([k, v]) => s.labels[k] === v)));
+export function metric(
+  samples: MetricSample[],
+  name: string,
+  labels?: Record<string, string>,
+): MetricSample | undefined {
+  return samples.find(
+    (s) => s.name === name && (!labels || Object.entries(labels).every(([k, v]) => s.labels[k] === v)),
+  );
 }

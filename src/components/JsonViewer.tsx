@@ -19,7 +19,13 @@ export function JsonViewer({ value, title = 'Raw response', maxHeight = 420 }: P
         <CopyButton value={text}>
           {({ copied, copy }) => (
             <Tooltip label={copied ? 'Copied' : 'Copy JSON'}>
-              <ActionIcon size="sm" variant="subtle" color={copied ? 'teal' : 'gray'} onClick={copy} aria-label="Copy JSON">
+              <ActionIcon
+                size="sm"
+                variant="subtle"
+                color={copied ? 'teal' : 'gray'}
+                onClick={copy}
+                aria-label="Copy JSON"
+              >
                 {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
               </ActionIcon>
             </Tooltip>

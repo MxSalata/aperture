@@ -81,7 +81,8 @@ function errorText(e: unknown): string {
   if (typeof e === 'string') return e;
   if (e && typeof e === 'object') {
     const o = e as Record<string, unknown>;
-    const msg = [o.error, o.message, o.summary, o.text].find((v) => typeof v === 'string' && v) as string | undefined;
+    const msg = [o.error, o.message, o.summary, o.text].find((v) => typeof v === 'string' && v) as
+      string | undefined;
     const code = o.code;
     if (msg) return code !== undefined && code !== '' ? `${msg} (${code})` : msg;
     if (code !== undefined) return `Error code ${code}`;

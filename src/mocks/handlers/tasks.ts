@@ -1,5 +1,16 @@
 import { mockDb, type TaskRec } from '../db';
-import { ok, created, notFound, badRequest, requireParam, jsonBody, filterRows, fail, now, inMinutes } from '../util';
+import {
+  ok,
+  created,
+  notFound,
+  badRequest,
+  requireParam,
+  jsonBody,
+  filterRows,
+  fail,
+  now,
+  inMinutes,
+} from '../util';
 import { route, OPERATE, OPERATE_OR_TASK, TASK } from '../secure';
 
 function findTask(request: Request) {
@@ -20,11 +31,31 @@ const listShape = (t: TaskRec) => ({
 
 const detailShape = (t: TaskRec) => {
   const { Id: _i, Type: _t, Status: _s, Error: _e, LastFinished: _l, NextScheduled: _n, ...rest } = t;
-  return { ...rest, NameSpace: t.Namespace, IsBatch: false, EmailOnCompletion: [], EmailOnError: t.Id === 12 ? ['ops@example.org'] : [], EmailOnExpiration: [], EmailOutput: false, OpenOutputFile: false, OutputFileIsBinary: false, SuspendTerminated: false, MirrorStatus: 'Any', TimePeriodDay: '', DailyFrequencyTime: '', DailyIncrement: '', RunAfterGUID: '', ExpiresHours: 0, ExpiresMinutes: 0 };
+  return {
+    ...rest,
+    NameSpace: t.Namespace,
+    IsBatch: false,
+    EmailOnCompletion: [],
+    EmailOnError: t.Id === 12 ? ['ops@example.org'] : [],
+    EmailOnExpiration: [],
+    EmailOutput: false,
+    OpenOutputFile: false,
+    OutputFileIsBinary: false,
+    SuspendTerminated: false,
+    MirrorStatus: 'Any',
+    TimePeriodDay: '',
+    DailyFrequencyTime: '',
+    DailyIncrement: '',
+    RunAfterGUID: '',
+    ExpiresHours: 0,
+    ExpiresMinutes: 0,
+  };
 };
 
 export const taskHandlers = [
-  route('get', '/v2/tasks', OPERATE_OR_TASK, ({ request }) => ok(filterRows(mockDb.tasks.map(listShape) as unknown as Record<string, unknown>[], request))),
+  route('get', '/v2/tasks', OPERATE_OR_TASK, ({ request }) =>
+    ok(filterRows(mockDb.tasks.map(listShape) as unknown as Record<string, unknown>[], request)),
+  ),
 
   route('get', '/v2/task', OPERATE_OR_TASK, ({ request }) => {
     const t = findTask(request);
@@ -108,7 +139,21 @@ export const taskHandlers = [
       t.LastFinished = now();
       t.Status = 'Success';
       t.Error = '';
-      mockDb.taskHistory.unshift({ LastStart: now(), Completed: now(), Name: t.Name, Status: 'Success', Result: '', TaskId: t.Id, Namespace: t.Namespace, Routine: t.TaskClass, Pid: '7001', ErrDate: '', ErrNumber: 0, Username: t.RunAsUser, LogDatetime: now() });
+      mockDb.taskHistory.unshift({
+        LastStart: now(),
+        Completed: now(),
+        Name: t.Name,
+        Status: 'Success',
+        Result: '',
+        TaskId: t.Id,
+        Namespace: t.Namespace,
+        Routine: t.TaskClass,
+        Pid: '7001',
+        ErrDate: '',
+        ErrNumber: 0,
+        Username: t.RunAsUser,
+        LogDatetime: now(),
+      });
       return ok({}, { summary: `Task ${t.Name} queued to run now` });
     }
     if (!body.Datetime) return badRequest('Datetime is required unless RunNow is true');
@@ -141,7 +186,17 @@ export const taskHandlers = [
   }),
 
   route('get', '/v2/task/upcoming', OPERATE, () =>
-    ok(mockDb.tasks.filter((t) => t.NextScheduled).map((t) => ({ Id: t.Id, Name: t.Name, Namespace: t.Namespace, Datetime: t.NextScheduled, Suspended: t.Suspended }))),
+    ok(
+      mockDb.tasks
+        .filter((t) => t.NextScheduled)
+        .map((t) => ({
+          Id: t.Id,
+          Name: t.Name,
+          Namespace: t.Namespace,
+          Datetime: t.NextScheduled,
+          Suspended: t.Suspended,
+        })),
+    ),
   ),
 
   route('get', '/v2/task/manager', OPERATE_OR_TASK, () => ok({ Status: mockDb.taskManager })),

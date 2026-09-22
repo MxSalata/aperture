@@ -14,24 +14,81 @@ type Row = LockList[number];
 
 export default function LocksPage() {
   const [checkTxn, setCheckTxn] = useState(true);
-  const { query: list, control: liveControl } = useLiveQuery({ queryKey: ['locks'], queryFn: () => result(api().GET('/v2/locks')) });
-  const del = useApiMutation((id: string) => run(api().DELETE('/v2/lock', { params: { query: { id, checkTxn: checkTxn ? 1 : 0 } } }), 'DELETE'), { invalidate: [['locks']] });
+  const { query: list, control: liveControl } = useLiveQuery({
+    queryKey: ['locks'],
+    queryFn: () => result(api().GET('/v2/locks')),
+  });
+  const del = useApiMutation(
+    (id: string) =>
+      run(api().DELETE('/v2/lock', { params: { query: { id, checkTxn: checkTxn ? 1 : 0 } } }), 'DELETE'),
+    { invalidate: [['locks']] },
+  );
 
   const columns: ColumnDef<Row, unknown>[] = [
-    { accessorKey: 'Pid', header: 'PID', cell: (c) => <Link to={`/processes/${c.getValue()}`} className="mono" onClick={stop}>{String(c.getValue())}</Link> },
-    { accessorKey: 'Reference', header: 'Reference', cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span> },
+    {
+      accessorKey: 'Pid',
+      header: 'PID',
+      cell: (c) => (
+        <Link to={`/processes/${c.getValue()}`} className="mono" onClick={stop}>
+          {String(c.getValue())}
+        </Link>
+      ),
+    },
+    {
+      accessorKey: 'Reference',
+      header: 'Reference',
+      cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span>,
+    },
     { accessorKey: 'ModeCount', header: 'Mode' },
-    { accessorKey: 'Directory', header: 'Database', cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span> },
-    { accessorKey: 'RoutineInfo', header: 'Routine', cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span> },
+    {
+      accessorKey: 'Directory',
+      header: 'Database',
+      cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span>,
+    },
+    {
+      accessorKey: 'RoutineInfo',
+      header: 'Routine',
+      cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span>,
+    },
     { accessorKey: 'OSUserName', header: 'OS user' },
     { accessorKey: 'System', header: 'System' },
-    { accessorKey: 'RemoteOwner', header: 'Remote', cell: (c) => <BoolBadge value={c.getValue() as boolean} /> },
-    { accessorKey: 'Removable', header: 'Removable', cell: (c) => <BoolBadge value={c.getValue() as boolean} /> },
     {
-      id: 'actions', header: '', enableSorting: false,
+      accessorKey: 'RemoteOwner',
+      header: 'Remote',
+      cell: (c) => <BoolBadge value={c.getValue() as boolean} />,
+    },
+    {
+      accessorKey: 'Removable',
+      header: 'Removable',
+      cell: (c) => <BoolBadge value={c.getValue() as boolean} />,
+    },
+    {
+      id: 'actions',
+      header: '',
+      enableSorting: false,
       cell: ({ row }) => (
         <Tooltip label={row.original.Removable ? 'Remove lock' : 'Not removable'}>
-          <ActionIcon size="sm" variant="subtle" color="red" disabled={!row.original.Removable} aria-label="Remove lock" onClick={(e) => { stop(e); confirmDanger({ title: 'Remove lock', message: <>Remove the lock on <code>{row.original.Reference}</code> held by process {row.original.Pid}? The owning process may fail with an error.</>, confirmLabel: 'Remove', onConfirm: () => del.mutateAsync(row.original.DeleteID ?? '') }); }}>
+          <ActionIcon
+            size="sm"
+            variant="subtle"
+            color="red"
+            disabled={!row.original.Removable}
+            aria-label="Remove lock"
+            onClick={(e) => {
+              stop(e);
+              confirmDanger({
+                title: 'Remove lock',
+                message: (
+                  <>
+                    Remove the lock on <code>{row.original.Reference}</code> held by process{' '}
+                    {row.original.Pid}? The owning process may fail with an error.
+                  </>
+                ),
+                confirmLabel: 'Remove',
+                onConfirm: () => del.mutateAsync(row.original.DeleteID ?? ''),
+              });
+            }}
+          >
             <IconTrash size={14} />
           </ActionIcon>
         </Tooltip>
@@ -48,7 +105,15 @@ export default function LocksPage() {
         actions={
           <>
             {liveControl}
-            <Button size="xs" variant="default" leftSection={<IconRefresh size={14} />} onClick={() => list.refetch()} loading={list.isFetching}>Refresh</Button>
+            <Button
+              size="xs"
+              variant="default"
+              leftSection={<IconRefresh size={14} />}
+              onClick={() => list.refetch()}
+              loading={list.isFetching}
+            >
+              Refresh
+            </Button>
           </>
         }
       />
@@ -63,8 +128,15 @@ export default function LocksPage() {
         dense
         toolbar={
           <Group gap="xs">
-            <Checkbox size="xs" label="Check transactions before removing (checkTxn)" checked={checkTxn} onChange={(e) => setCheckTxn(e.currentTarget.checked)} />
-            <Text size="xs" c="dimmed">{list.data?.length ?? 0} locks</Text>
+            <Checkbox
+              size="xs"
+              label="Check transactions before removing (checkTxn)"
+              checked={checkTxn}
+              onChange={(e) => setCheckTxn(e.currentTarget.checked)}
+            />
+            <Text size="xs" c="dimmed">
+              {list.data?.length ?? 0} locks
+            </Text>
           </Group>
         }
         emptyMessage="The lock table is empty"

@@ -119,7 +119,12 @@ const middleware: Middleware = {
     const session = useSession.getState();
 
     // Proactive refresh shortly before the access token expires.
-    if (session.mode === 'jwt' && session.refreshToken && session.expiresAt && session.expiresAt - Date.now() < 20_000) {
+    if (
+      session.mode === 'jwt' &&
+      session.refreshToken &&
+      session.expiresAt &&
+      session.expiresAt - Date.now() < 20_000
+    ) {
       await session.refresh();
     }
 
@@ -164,7 +169,12 @@ const middleware: Middleware = {
           const headers = new Headers(request.headers);
           headers.set('Authorization', useSession.getState().authorizationHeader() ?? '');
           const retried = await fetch(
-            new Request(request.url, { method: request.method, headers, body: entry?.body, credentials: 'omit' }),
+            new Request(request.url, {
+              method: request.method,
+              headers,
+              body: entry?.body,
+              credentials: 'omit',
+            }),
           );
           await finalize(request, retried, entry);
           return retried;

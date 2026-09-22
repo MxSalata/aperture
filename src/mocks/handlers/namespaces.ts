@@ -8,12 +8,24 @@ function find(name: string | null) {
 
 export const namespaceHandlers = [
   route('get', '/v2/namespaces', MANAGE, () =>
-    ok(mockDb.namespaces.map(({ Name, Globals, Routines, SysGlobals, SysRoutines, Library, TempGlobals }) => ({ Name, Globals, Routines, SysGlobals, SysRoutines, Library, TempGlobals }))),
+    ok(
+      mockDb.namespaces.map(({ Name, Globals, Routines, SysGlobals, SysRoutines, Library, TempGlobals }) => ({
+        Name,
+        Globals,
+        Routines,
+        SysGlobals,
+        SysRoutines,
+        Library,
+        TempGlobals,
+      })),
+    ),
   ),
 
   route('get', '/v2/namespace', MANAGE, ({ request }) => {
     const n = find(requireParam(request, 'name'));
-    return n ? ok({ Globals: n.Globals, Routines: n.Routines, TempGlobals: n.TempGlobals }) : notFound('Namespace');
+    return n
+      ? ok({ Globals: n.Globals, Routines: n.Routines, TempGlobals: n.TempGlobals })
+      : notFound('Namespace');
   }),
 
   route('put', '/v2/namespace', MANAGE, async ({ request }) => {
@@ -28,7 +40,8 @@ export const namespaceHandlers = [
       return ok({}, { summary: `Namespace ${name} updated` });
     }
     if (!body.Globals) return badRequest('Globals database is required');
-    if (!mockDb.configDbs.some((d) => d.Name === body.Globals)) return fail(400, `Database ${body.Globals} does not exist`);
+    if (!mockDb.configDbs.some((d) => d.Name === body.Globals))
+      return fail(400, `Database ${body.Globals} does not exist`);
     mockDb.namespaces.push({
       Name: name.toUpperCase(),
       Globals: body.Globals,
@@ -49,7 +62,10 @@ export const namespaceHandlers = [
       NamespaceDefault: true,
       Description: `${name.toUpperCase()} default web app`,
     });
-    return created({}, [`Namespace ${name.toUpperCase()} created`, `Web application /csp/${name.toLowerCase()} created`]);
+    return created({}, [
+      `Namespace ${name.toUpperCase()} created`,
+      `Web application /csp/${name.toLowerCase()} created`,
+    ]);
   }),
 
   route('delete', '/v2/namespace', MANAGE, ({ request }) => {
@@ -68,8 +84,20 @@ export const namespaceHandlers = [
     if (n.interop) return fail(409, 'Interoperability is already enabled');
     n.interop = true;
     n.packageMappings.push({ Name: 'Ens', Database: 'ENSLIB' }, { Name: 'EnsLib', Database: 'ENSLIB' });
-    n.globalMappings.push({ Name: 'Ens.*', Subscript: '', Database: 'ENSLIB', Collation: 'IRIS standard', LockDatabase: 'ENSLIB' });
-    return ok({}, { summary: `Interoperability enabled in ${n.Name}`, console: ['Mapping Ens* packages…', 'Creating %Ens_* resources…', 'Done'] });
+    n.globalMappings.push({
+      Name: 'Ens.*',
+      Subscript: '',
+      Database: 'ENSLIB',
+      Collation: 'IRIS standard',
+      LockDatabase: 'ENSLIB',
+    });
+    return ok(
+      {},
+      {
+        summary: `Interoperability enabled in ${n.Name}`,
+        console: ['Mapping Ens* packages…', 'Creating %Ens_* resources…', 'Done'],
+      },
+    );
   }),
 
   route('post', '/v2/namespace/copy-mappings', MANAGE, async ({ request }) => {
@@ -91,7 +119,9 @@ export const namespaceHandlers = [
   route('get', '/v2/namespace/global-mapping', MANAGE, ({ request }) => {
     const n = find(requireParam(request, 'namespace'));
     const m = n?.globalMappings.find((g) => g.Name === requireParam(request, 'name'));
-    return m ? ok({ Collation: 5, Database: m.Database, LockDatabase: m.LockDatabase }) : notFound('Global mapping');
+    return m
+      ? ok({ Collation: 5, Database: m.Database, LockDatabase: m.LockDatabase })
+      : notFound('Global mapping');
   }),
   route('put', '/v2/namespace/global-mapping', MANAGE, async ({ request }) => {
     const n = find(requireParam(request, 'namespace'));
@@ -100,7 +130,13 @@ export const namespaceHandlers = [
     const body = await jsonBody<{ Database?: string; LockDatabase?: string; Collation?: number }>(request);
     if (!body.Database) return badRequest('Database is required');
     const existing = n.globalMappings.find((g) => g.Name === name);
-    const rec = { Name: name, Subscript: '', Database: body.Database, Collation: 'IRIS standard', LockDatabase: body.LockDatabase || body.Database };
+    const rec = {
+      Name: name,
+      Subscript: '',
+      Database: body.Database,
+      Collation: 'IRIS standard',
+      LockDatabase: body.LockDatabase || body.Database,
+    };
     if (existing) Object.assign(existing, rec);
     else n.globalMappings.push(rec);
     return existing ? ok({}, { summary: 'Mapping updated' }) : created({}, ['Mapping created']);

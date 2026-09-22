@@ -23,7 +23,8 @@ export function JobPoller() {
       queryKey: ['async-result', job.id],
       queryFn: () => result(api().GET('/v2/async-result', { params: { query: { id: job.id } } })),
       refetchInterval: 1500,
-      retry: (count: number, err: unknown) => !(isApiError(err) && (err.isNotFound || err.isForbidden)) && count < 2,
+      retry: (count: number, err: unknown) =>
+        !(isApiError(err) && (err.isNotFound || err.isForbidden)) && count < 2,
       staleTime: 0,
     })),
   });
@@ -31,7 +32,10 @@ export function JobPoller() {
   // One primitive that only changes when something observable about a job changed, so the
   // reconciliation below does not re-run (and re-render) on every poll tick.
   const signature = queries
-    .map((q, i) => `${active[i]?.id}:${q.data?.State ?? ''}:${q.data?.Console?.length ?? 0}:${q.isError ? 'E' : ''}`)
+    .map(
+      (q, i) =>
+        `${active[i]?.id}:${q.data?.State ?? ''}:${q.data?.Console?.length ?? 0}:${q.isError ? 'E' : ''}`,
+    )
     .join('|');
 
   useEffect(() => {
@@ -53,7 +57,9 @@ export function JobPoller() {
           });
           // Data may have changed on the server (compact, truncate, purge…); the session
           // validation and the other job polls are not data and stay untouched.
-          void queryClient.invalidateQueries({ predicate: (query) => !UNTOUCHED_BY_JOBS.has(String(query.queryKey[0])) });
+          void queryClient.invalidateQueries({
+            predicate: (query) => !UNTOUCHED_BY_JOBS.has(String(query.queryKey[0])),
+          });
         }
       } else if (q.isError) {
         const gone = isApiError(q.error) && (q.error.isNotFound || q.error.isForbidden);
@@ -61,9 +67,11 @@ export function JobPoller() {
           update(job.id, {
             state: 'Missing',
             notified: true,
-            error: 'The server no longer reports this task (it may belong to another user or the instance restarted).',
+            error:
+              'The server no longer reports this task (it may belong to another user or the instance restarted).',
           });
-        else if (job.state === 'Unknown') update(job.id, { error: q.error instanceof Error ? q.error.message : 'Polling failed' });
+        else if (job.state === 'Unknown')
+          update(job.id, { error: q.error instanceof Error ? q.error.message : 'Polling failed' });
       }
     });
     // `signature` captures every input the body reads from `queries`/`active`; keying on it

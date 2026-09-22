@@ -36,7 +36,13 @@ export type Contrast = 'normal' | 'high';
 
 export function seriesColor(i: number, scheme: Scheme, contrast: Contrast = 'normal'): string {
   const palette =
-    scheme === 'dark' ? (contrast === 'high' ? CATEGORICAL_DARK_HC : CATEGORICAL_DARK) : contrast === 'high' ? CATEGORICAL_LIGHT_HC : CATEGORICAL_LIGHT;
+    scheme === 'dark'
+      ? contrast === 'high'
+        ? CATEGORICAL_DARK_HC
+        : CATEGORICAL_DARK
+      : contrast === 'high'
+        ? CATEGORICAL_LIGHT_HC
+        : CATEGORICAL_LIGHT;
   return palette[i % palette.length];
 }
 

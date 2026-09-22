@@ -48,7 +48,9 @@ export function requireParam(request: Request, name: string): string | null {
   return v === null || v === '' ? null : v;
 }
 
-export async function jsonBody<T extends DefaultBodyType = Record<string, unknown>>(request: Request): Promise<T> {
+export async function jsonBody<T extends DefaultBodyType = Record<string, unknown>>(
+  request: Request,
+): Promise<T> {
   try {
     return (await request.json()) as T;
   } catch {

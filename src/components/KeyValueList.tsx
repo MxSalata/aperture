@@ -14,7 +14,12 @@ interface Props {
 }
 
 export function renderValue(v: unknown): ReactNode {
-  if (v === null || v === undefined || v === '') return <Text c="dimmed" size="sm">-</Text>;
+  if (v === null || v === undefined || v === '')
+    return (
+      <Text c="dimmed" size="sm">
+        -
+      </Text>
+    );
   if (typeof v === 'boolean')
     return (
       <Badge size="sm" color={v ? 'teal' : 'gray'} variant="light">
@@ -22,7 +27,12 @@ export function renderValue(v: unknown): ReactNode {
       </Badge>
     );
   if (Array.isArray(v)) {
-    if (!v.length) return <Text c="dimmed" size="sm">-</Text>;
+    if (!v.length)
+      return (
+        <Text c="dimmed" size="sm">
+          -
+        </Text>
+      );
     if (v.every((x) => typeof x !== 'object'))
       return (
         <Group gap={4} wrap="wrap">
@@ -33,9 +43,18 @@ export function renderValue(v: unknown): ReactNode {
           ))}
         </Group>
       );
-    return <Text size="sm" className="mono">{JSON.stringify(v)}</Text>;
+    return (
+      <Text size="sm" className="mono">
+        {JSON.stringify(v)}
+      </Text>
+    );
   }
-  if (typeof v === 'object') return <Text size="sm" className="mono">{JSON.stringify(v)}</Text>;
+  if (typeof v === 'object')
+    return (
+      <Text size="sm" className="mono">
+        {JSON.stringify(v)}
+      </Text>
+    );
   return <Text size="sm">{String(v)}</Text>;
 }
 
@@ -48,7 +67,13 @@ export function KeyValueList({ items, cols = 2 }: Props) {
           <Text size="xs" c="dimmed" fw={500} tt="uppercase" style={{ letterSpacing: 0.3 }}>
             {it.label}
           </Text>
-          <div className={it.mono ? 'mono' : undefined}>{typeof it.value === 'string' || typeof it.value === 'number' ? <Text size="sm">{it.value}</Text> : it.value}</div>
+          <div className={it.mono ? 'mono' : undefined}>
+            {typeof it.value === 'string' || typeof it.value === 'number' ? (
+              <Text size="sm">{it.value}</Text>
+            ) : (
+              it.value
+            )}
+          </div>
         </Stack>
       ))}
     </SimpleGrid>
@@ -56,7 +81,10 @@ export function KeyValueList({ items, cols = 2 }: Props) {
 }
 
 /** Turn an arbitrary object into KeyValue items (used by detail pages and the Explorer). */
-export function objectToItems(obj: Record<string, unknown> | null | undefined, opts: { omit?: string[]; labels?: Record<string, string> } = {}): KeyValue[] {
+export function objectToItems(
+  obj: Record<string, unknown> | null | undefined,
+  opts: { omit?: string[]; labels?: Record<string, string> } = {},
+): KeyValue[] {
   if (!obj) return [];
   return Object.entries(obj)
     .filter(([k]) => !opts.omit?.includes(k))

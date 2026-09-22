@@ -85,14 +85,22 @@ async function readJson(res: Response): Promise<Record<string, unknown> | null> 
 
 function errorFromBody(res: Response, body: Record<string, unknown> | null, fallback?: string): ApiError {
   const n = normalizeErrors(body);
-  return new ApiError({ status: res.status, url: res.url, method: 'POST', errors: n.errors, summary: n.summary || fallback, console: n.console });
+  return new ApiError({
+    status: res.status,
+    url: res.url,
+    method: 'POST',
+    errors: n.errors,
+    summary: n.summary || fallback,
+    console: n.console,
+  });
 }
 
 function tokensFromLoginBody(body: Record<string, unknown> | null): JwtTokens | null {
   const result = (body?.result ?? body) as Record<string, unknown> | undefined;
   const accessToken = result?.access_token;
   if (typeof accessToken !== 'string' || !accessToken) return null;
-  const exp = typeof result?.exp === 'number' ? result.exp : (decodeJwtPayload(accessToken)?.exp as number | undefined);
+  const exp =
+    typeof result?.exp === 'number' ? result.exp : (decodeJwtPayload(accessToken)?.exp as number | undefined);
   return {
     accessToken,
     refreshToken: typeof result?.refresh_token === 'string' ? result.refresh_token : null,
@@ -109,12 +117,22 @@ async function jwtLogin(base: string, args: LoginArgs): Promise<LoginOutcome> {
       method: 'POST',
       headers: jsonHeaders(),
       credentials: 'omit',
-      body: JSON.stringify({ user: args.username, password: args.password, ...(args.role ? { role: args.role } : {}) }),
+      body: JSON.stringify({
+        user: args.username,
+        password: args.password,
+        ...(args.role ? { role: args.role } : {}),
+      }),
     });
   } catch {
-    throw new ApiError({ status: 0, url, method: 'POST', summary: 'Cannot reach the server. Check the URL and that IRIS is running.' });
+    throw new ApiError({
+      status: 0,
+      url,
+      method: 'POST',
+      summary: 'Cannot reach the server. Check the URL and that IRIS is running.',
+    });
   }
-  if (res.status === 401) throw new ApiError({ status: 401, url, method: 'POST', summary: 'Invalid username or password.' });
+  if (res.status === 401)
+    throw new ApiError({ status: 401, url, method: 'POST', summary: 'Invalid username or password.' });
   if (res.status === 404 || res.status === 405 || res.status === 501) return 'unsupported';
   const body = await readJson(res);
   if (!res.ok) throw errorFromBody(res, body, `Login failed (HTTP ${res.status})`);
@@ -131,13 +149,25 @@ async function basicProbe(base: string, credentials: string): Promise<Info> {
       credentials: 'omit',
     });
   } catch {
-    throw new ApiError({ status: 0, url, summary: 'Cannot reach the server. Check the URL and that IRIS is running.' });
+    throw new ApiError({
+      status: 0,
+      url,
+      summary: 'Cannot reach the server. Check the URL and that IRIS is running.',
+    });
   }
   if (res.status === 401) throw new ApiError({ status: 401, url, summary: 'Invalid username or password.' });
   if (res.status === 403)
-    throw new ApiError({ status: 403, url, summary: 'This user holds none of the %Admin_* privileges required to use the API.' });
+    throw new ApiError({
+      status: 403,
+      url,
+      summary: 'This user holds none of the %Admin_* privileges required to use the API.',
+    });
   if (res.status === 404)
-    throw new ApiError({ status: 404, url, summary: 'The /api/admin web application was not found on this server. Is it enabled?' });
+    throw new ApiError({
+      status: 404,
+      url,
+      summary: 'The /api/admin web application was not found on this server. Is it enabled?',
+    });
   const body = await readJson(res);
   if (!res.ok) throw errorFromBody(res, body, `Login failed (HTTP ${res.status})`);
   return (body?.result ?? body) as Info;
@@ -192,10 +222,21 @@ export const useSession = create<SessionState>()(
       login: async (args) => {
         const base = apiBase(args.baseUrl);
         const previous = get();
-        if (previous.status === 'authenticated' || previous.connectionId !== args.connectionId || previous.baseUrl !== args.baseUrl) {
+        if (
+          previous.status === 'authenticated' ||
+          previous.connectionId !== args.connectionId ||
+          previous.baseUrl !== args.baseUrl
+        ) {
           resetInstanceState();
         }
-        set({ status: 'authenticating', lastError: null, endedReason: null, baseUrl: args.baseUrl, connectionId: args.connectionId, persistTokens: args.persist !== false });
+        set({
+          status: 'authenticating',
+          lastError: null,
+          endedReason: null,
+          baseUrl: args.baseUrl,
+          connectionId: args.connectionId,
+          persistTokens: args.persist !== false,
+        });
         try {
           const preferred = args.auth ?? 'auto';
           let outcome: LoginOutcome = 'unsupported';
@@ -206,7 +247,8 @@ export const useSession = create<SessionState>()(
               throw new ApiError({
                 status: 404,
                 url: `${base}/login`,
-                summary: 'JWT login is not available on this server (requires IRIS 2026.2+). Try Basic authentication.',
+                summary:
+                  'JWT login is not available on this server (requires IRIS 2026.2+). Try Basic authentication.',
               });
             }
             const credentials = btoa(`${args.username}:${args.password}`);

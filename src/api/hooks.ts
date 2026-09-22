@@ -27,7 +27,10 @@ export function useApiMutation<TVars, TData extends { summary?: string } = { sum
     mutationFn: fn,
     onSuccess: (data, vars) => {
       if (!opts.silent) {
-        const msg = typeof opts.success === 'function' ? opts.success(data, vars) : (opts.success ?? data?.summary ?? 'Done');
+        const msg =
+          typeof opts.success === 'function'
+            ? opts.success(data, vars)
+            : (opts.success ?? data?.summary ?? 'Done');
         notifySuccess(msg);
       }
       for (const key of opts.invalidate ?? []) void qc.invalidateQueries({ queryKey: key });
@@ -47,35 +50,43 @@ export { api, call, result };
  *
  * Set `silent` to keep the job out of the global Job Center (e.g. metric lookups).
  */
-export function useAsyncResult<TResult = unknown>(opts: { queryKey: QueryKey; silent?: boolean } = { queryKey: ['async-local'] }) {
+export function useAsyncResult<TResult = unknown>(
+  opts: { queryKey: QueryKey; silent?: boolean } = { queryKey: ['async-local'] },
+) {
   const [jobId, setJobId] = useState<string | null>(null);
   const [startError, setStartError] = useState<unknown>(null);
 
   const poll = useQuery({
     queryKey: [...opts.queryKey, 'async-result', jobId],
     enabled: !!jobId,
-    queryFn: () => result(api().GET('/v2/async-result', { params: { query: { id: jobId! } }, headers: { 'x-aperture-silent': '1' } })),
+    queryFn: () =>
+      result(
+        api().GET('/v2/async-result', {
+          params: { query: { id: jobId! } },
+          headers: { 'x-aperture-silent': '1' },
+        }),
+      ),
     refetchInterval: (q) => (isTerminal(q.state.data?.State) ? false : 1000),
     staleTime: 0,
   });
 
-  const start = useCallback(
-    async (starter: () => Promise<{ data?: unknown; response: Response }>) => {
-      setStartError(null);
-      setJobId(null);
-      try {
-        const { data, response } = await starter();
-        const id = await jobIdFromResponse(response, data);
-        if (!id) throw new Error('The server accepted the request but returned neither a Location header nor a task GUID.');
-        setJobId(id);
-        return id;
-      } catch (e) {
-        setStartError(e);
-        throw e;
-      }
-    },
-    [],
-  );
+  const start = useCallback(async (starter: () => Promise<{ data?: unknown; response: Response }>) => {
+    setStartError(null);
+    setJobId(null);
+    try {
+      const { data, response } = await starter();
+      const id = await jobIdFromResponse(response, data);
+      if (!id)
+        throw new Error(
+          'The server accepted the request but returned neither a Location header nor a task GUID.',
+        );
+      setJobId(id);
+      return id;
+    } catch (e) {
+      setStartError(e);
+      throw e;
+    }
+  }, []);
 
   const task: AsyncTask | undefined = poll.data;
   const state = task?.State;
@@ -92,7 +103,10 @@ export function useAsyncResult<TResult = unknown>(opts: { queryKey: QueryKey; si
     finished: state === 'Finished',
     failed: state === 'Failed' || state === 'Canceled',
     result: (state === 'Finished' ? (task?.Result as TResult) : undefined) as TResult | undefined,
-    error: startError ?? poll.error ?? (state === 'Failed' ? new Error(task?.FailureReason || 'Task failed') : null),
+    error:
+      startError ??
+      poll.error ??
+      (state === 'Failed' ? new Error(task?.FailureReason || 'Task failed') : null),
   };
 }
 

@@ -17,7 +17,14 @@ export const genericHandler = http.all('*/api/admin/v2/*', async ({ request }) =
   const path = url.pathname.slice(i + '/api/admin'.length).replace(/\/+$/, '');
   const op = findIndexedOperation(request.method, path);
   if (!op) {
-    return HttpResponse.json({ status: { Errors: [`No such endpoint: ${request.method} ${path}`], summary: 'Not found' }, console: [], result: {} }, { status: 404 });
+    return HttpResponse.json(
+      {
+        status: { Errors: [`No such endpoint: ${request.method} ${path}`], summary: 'Not found' },
+        console: [],
+        result: {},
+      },
+      { status: 404 },
+    );
   }
   const account = authenticate(request);
   if (!account) return unauthorized();
@@ -28,7 +35,13 @@ export const genericHandler = http.all('*/api/admin/v2/*', async ({ request }) =
   const result = schema ? exampleFromSchema(doc, schema) : {};
 
   if (op.async) {
-    const id = startAsyncTask({ name: `${op.method} ${op.path}`, owner: account.username, console: [`${op.summary} (simulated)`], result, tickMs: 500 });
+    const id = startAsyncTask({
+      name: `${op.method} ${op.path}`,
+      owner: account.username,
+      console: [`${op.summary} (simulated)`],
+      result,
+      tickMs: 500,
+    });
     return accepted(id, apiBasePath(request));
   }
 

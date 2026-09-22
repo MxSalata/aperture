@@ -18,7 +18,15 @@ export function StatTile({ label, value, hint, icon, color = 'indigo', footer, a
       <Group justify="space-between" align="flex-start" wrap="nowrap">
         <Stack gap={2} style={{ minWidth: 0 }}>
           <Tooltip label={hint} disabled={!hint}>
-            <Text size="xs" c="dimmed" fw={500} tt="uppercase" style={{ letterSpacing: 0.4 }} tabIndex={hint ? 0 : undefined} aria-label={hint ? `${label} (${hint})` : undefined}>
+            <Text
+              size="xs"
+              c="dimmed"
+              fw={500}
+              tt="uppercase"
+              style={{ letterSpacing: 0.4 }}
+              tabIndex={hint ? 0 : undefined}
+              aria-label={hint ? `${label} (${hint})` : undefined}
+            >
               {label}
             </Text>
           </Tooltip>
@@ -31,11 +39,12 @@ export function StatTile({ label, value, hint, icon, color = 'indigo', footer, a
             </Text>
           ) : null}
         </Stack>
-        {aside ?? (icon ? (
-          <ThemeIcon variant="light" color={color} size={38} radius="md">
-            {icon}
-          </ThemeIcon>
-        ) : null)}
+        {aside ??
+          (icon ? (
+            <ThemeIcon variant="light" color={color} size={38} radius="md">
+              {icon}
+            </ThemeIcon>
+          ) : null)}
       </Group>
     </Paper>
   );

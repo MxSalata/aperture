@@ -9,7 +9,15 @@ function findFile(request: Request) {
 }
 
 function journalRecords(file: string, n: number) {
-  const globals = ['^Ens.MessageHeaderD', '^HL7.Archive', '^DICOM.StudyD', '^MyGlobal', '^%SYS("TaskManager")', '^dc.ConfigD', '^oddDEF'];
+  const globals = [
+    '^Ens.MessageHeaderD',
+    '^HL7.Archive',
+    '^DICOM.StudyD',
+    '^MyGlobal',
+    '^%SYS("TaskManager")',
+    '^dc.ConfigD',
+    '^oddDEF',
+  ];
   const types = ['SET', 'SET', 'SET', 'KILL', 'BEGTRANS', 'COMMIT', 'SET', 'BITSET'];
   const out = [];
   let address = 131072;
@@ -39,7 +47,9 @@ function journalRecords(file: string, n: number) {
 }
 
 export const journalHandlers = [
-  route('get', '/v2/journal/files', OPERATE, ({ request }) => ok(filterRows([...mockDb.journals].reverse() as unknown as Record<string, unknown>[], request))),
+  route('get', '/v2/journal/files', OPERATE, ({ request }) =>
+    ok(filterRows([...mockDb.journals].reverse() as unknown as Record<string, unknown>[], request)),
+  ),
 
   route('get', '/v2/journal/file', OPERATE, ({ request }) => {
     const f = findFile(request);
@@ -48,7 +58,12 @@ export const journalHandlers = [
     return ok({
       FirstRecordAddress: '131072',
       LastRecordAddress: String(f.DataSize),
-      Databases: ['/usr/irissys/mgr/', '/usr/irissys/mgr/user/', '/usr/irissys/mgr/interop/', '/usr/irissys/mgr/clinical/'],
+      Databases: [
+        '/usr/irissys/mgr/',
+        '/usr/irissys/mgr/user/',
+        '/usr/irissys/mgr/interop/',
+        '/usr/irissys/mgr/clinical/',
+      ],
       ClusterStartTime: '',
       End: f.DataSize,
       FileCount: mockDb.journals.length,

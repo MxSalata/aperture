@@ -17,7 +17,15 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
-import { IconArrowsSort, IconChevronDown, IconChevronUp, IconColumns, IconDownload, IconSearch, IconX } from '@tabler/icons-react';
+import {
+  IconArrowsSort,
+  IconChevronDown,
+  IconChevronUp,
+  IconColumns,
+  IconDownload,
+  IconSearch,
+  IconX,
+} from '@tabler/icons-react';
 import {
   flexRender,
   getCoreRowModel,
@@ -115,7 +123,10 @@ function encodeSort(sorting: SortingState): string | null {
 /** Sort and page live in the URL when `stateKey` is set, otherwise in component state. */
 function useTableNavigationState(fromUrl: boolean, initialSorting: SortingState) {
   const [params, setParams] = useSearchParams();
-  const [local, setLocal] = useState<{ sorting: SortingState; pageIndex: number }>({ sorting: initialSorting, pageIndex: 0 });
+  const [local, setLocal] = useState<{ sorting: SortingState; pageIndex: number }>({
+    sorting: initialSorting,
+    pageIndex: 0,
+  });
 
   const sorting = fromUrl ? (parseSort(params.get('sort')) ?? initialSorting) : local.sorting;
   const pageIndex = fromUrl ? Math.max(0, (Number(params.get('page')) || 1) - 1) : local.pageIndex;
@@ -210,7 +221,10 @@ export function DataTable<T>({
     writePrefs(stateKey, { columnVisibility, pageSize });
   }, [stateKey, columnVisibility, pageSize]);
 
-  const pagination = useMemo<PaginationState>(() => ({ pageIndex: nav.pageIndex, pageSize }), [nav.pageIndex, pageSize]);
+  const pagination = useMemo<PaginationState>(
+    () => ({ pageIndex: nav.pageIndex, pageSize }),
+    [nav.pageIndex, pageSize],
+  );
   const { setPageIndex } = nav;
   const onPaginationChange = useCallback(
     (updater: Updater<PaginationState>) => {
@@ -251,7 +265,11 @@ export function DataTable<T>({
     const cols = table.getVisibleLeafColumns().filter((c) => c.accessorFn);
     const headers = cols.map((c) => (typeof c.columnDef.header === 'string' ? c.columnDef.header : c.id));
     const body = table.getPrePaginationRowModel().rows.map((r) => cols.map((c) => r.getValue(c.id)));
-    downloadText(`${exportName}-${dayjs().format('YYYYMMDD-HHmmss')}.csv`, toCsv(headers, body), 'text/csv;charset=utf-8');
+    downloadText(
+      `${exportName}-${dayjs().format('YYYYMMDD-HHmmss')}.csv`,
+      toCsv(headers, body),
+      'text/csv;charset=utf-8',
+    );
   };
 
   const activate = (row: Row<T>) => onRowClick?.(row.original);
@@ -269,7 +287,13 @@ export function DataTable<T>({
                 leftSection={<IconSearch size={14} />}
                 rightSection={
                   filterInput ? (
-                    <ActionIcon size="xs" variant="subtle" color="gray" aria-label="Clear" onClick={() => setFilterInput('')}>
+                    <ActionIcon
+                      size="xs"
+                      variant="subtle"
+                      color="gray"
+                      aria-label="Clear"
+                      onClick={() => setFilterInput('')}
+                    >
                       <IconX size={12} />
                     </ActionIcon>
                   ) : null
@@ -287,7 +311,14 @@ export function DataTable<T>({
             </Text>
             {exportName ? (
               <Tooltip label="Export the filtered rows as CSV">
-                <ActionIcon variant="subtle" color="gray" size="sm" aria-label="Export CSV" onClick={exportCsv} disabled={!total}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="sm"
+                  aria-label="Export CSV"
+                  onClick={exportCsv}
+                  disabled={!total}
+                >
                   <IconDownload size={16} />
                 </ActionIcon>
               </Tooltip>
@@ -347,7 +378,9 @@ export function DataTable<T>({
                         userSelect: 'none',
                         width: header.getSize() !== 150 ? header.getSize() : undefined,
                       }}
-                      aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
+                      aria-sort={
+                        sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined
+                      }
                     >
                       <Group gap={4} wrap="nowrap">
                         <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
@@ -452,7 +485,12 @@ export function DataTable<T>({
             allowDeselect={false}
           />
           {pageCount > 1 ? (
-            <Pagination size="sm" total={pageCount} value={pageIndex + 1} onChange={(p) => table.setPageIndex(p - 1)} />
+            <Pagination
+              size="sm"
+              total={pageCount}
+              value={pageIndex + 1}
+              onChange={(p) => table.setPageIndex(p - 1)}
+            />
           ) : null}
         </Group>
       ) : null}

@@ -23,7 +23,15 @@ export function PrivilegeBadge({ resources, size = 'sm' }: Props) {
         : `Requires ${label} - not reported by this server`;
   return (
     <Tooltip label={hint}>
-      <Badge size={size} color={color} variant="light" leftSection={<Icon size={12} />} style={{ textTransform: 'none' }} tabIndex={0} aria-label={hint}>
+      <Badge
+        size={size}
+        color={color}
+        variant="light"
+        leftSection={<Icon size={12} />}
+        style={{ textTransform: 'none' }}
+        tabIndex={0}
+        aria-label={hint}
+      >
         {label}
       </Badge>
     </Tooltip>

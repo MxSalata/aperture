@@ -15,11 +15,15 @@ export interface SpecQuirk {
 export const SPEC_QUIRKS: SpecQuirk[] = [
   {
     id: 'oauth-client-server-definition',
-    appliesTo: (op) => op.path === '/v2/security/oauth2/client/client-configuration' && (op.method === 'PUT' || op.method === 'POST'),
+    appliesTo: (op) =>
+      op.path === '/v2/security/oauth2/client/client-configuration' &&
+      (op.method === 'PUT' || op.method === 'POST'),
     note: 'IRIS 2026.2 accepts the field `ServerDefinition`; the spec names it `OAuth2ServerDefinition`. Aperture sends both when you fill the spec field.',
     source: 'IRIS Workbench verification record, IRIS Community 2026.2.0.221',
     transformBody: (body) =>
-      body.OAuth2ServerDefinition !== undefined && body.ServerDefinition === undefined ? { ...body, ServerDefinition: body.OAuth2ServerDefinition } : body,
+      body.OAuth2ServerDefinition !== undefined && body.ServerDefinition === undefined
+        ? { ...body, ServerDefinition: body.OAuth2ServerDefinition }
+        : body,
   },
   {
     id: 'local-database-list-shape',
@@ -63,6 +67,9 @@ export function quirksFor(op: { method: string; path: string }): SpecQuirk[] {
   return SPEC_QUIRKS.filter((q) => q.appliesTo(op));
 }
 
-export function applyQuirks(op: { method: string; path: string }, body: Record<string, unknown>): Record<string, unknown> {
+export function applyQuirks(
+  op: { method: string; path: string },
+  body: Record<string, unknown>,
+): Record<string, unknown> {
   return quirksFor(op).reduce((b, q) => (q.transformBody ? q.transformBody(b) : b), body);
 }

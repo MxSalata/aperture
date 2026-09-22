@@ -1,5 +1,16 @@
 import { mockDb, MGR, type DbLocal } from '../db';
-import { ok, created, notFound, badRequest, requireParam, jsonBody, filterRows, accepted, fail, now } from '../util';
+import {
+  ok,
+  created,
+  notFound,
+  badRequest,
+  requireParam,
+  jsonBody,
+  filterRows,
+  accepted,
+  fail,
+  now,
+} from '../util';
 import { route, MANAGE, OPERATE, MANAGE_OR_OPERATE, apiBasePath } from '../secure';
 import { startAsyncTask } from '../async';
 
@@ -61,7 +72,9 @@ function metrics(d: DbLocal) {
 
 export const databaseHandlers = [
   // ---- Config.Databases ---------------------------------------------------
-  route('get', '/v2/databases', MANAGE_OR_OPERATE, ({ request }) => ok(filterRows(mockDb.configDbs as unknown as Record<string, unknown>[], request))),
+  route('get', '/v2/databases', MANAGE_OR_OPERATE, ({ request }) =>
+    ok(filterRows(mockDb.configDbs as unknown as Record<string, unknown>[], request)),
+  ),
 
   route('get', '/v2/database', MANAGE, ({ request }) => {
     const name = requireParam(request, 'name');
@@ -98,13 +111,16 @@ export const databaseHandlers = [
     const name = requireParam(request, 'name');
     const i = mockDb.configDbs.findIndex((d) => d.Name.toUpperCase() === name?.toUpperCase());
     if (i < 0) return notFound(`Database ${name}`);
-    if (mockDb.configDbs[i].Name.startsWith('IRIS')) return fail(400, `System database ${name} cannot be deleted`);
+    if (mockDb.configDbs[i].Name.startsWith('IRIS'))
+      return fail(400, `System database ${name} cannot be deleted`);
     mockDb.configDbs.splice(i, 1);
     return ok({}, { summary: `Database ${name} deleted` });
   }),
 
   // ---- Local databases (SYS.Database) ------------------------------------
-  route('get', '/v2/database-dirs', MANAGE_OR_OPERATE, ({ request }) => ok(filterRows(mockDb.localDbs.map(listShape) as unknown as Record<string, unknown>[], request))),
+  route('get', '/v2/database-dirs', MANAGE_OR_OPERATE, ({ request }) =>
+    ok(filterRows(mockDb.localDbs.map(listShape) as unknown as Record<string, unknown>[], request)),
+  ),
 
   route('get', '/v2/database-dir', MANAGE_OR_OPERATE, ({ request }) => {
     const d = findLocal(requireParam(request, 'dir'));
@@ -153,7 +169,8 @@ export const databaseHandlers = [
     const d = findLocal(requireParam(request, 'dir'));
     if (!d) return notFound('Local database');
     const body = await jsonBody<Record<string, unknown>>(request);
-    if (body.MaxSize !== undefined) d.MaxSize = Number(body.MaxSize) === 0 ? 'Unlimited' : String(body.MaxSize);
+    if (body.MaxSize !== undefined)
+      d.MaxSize = Number(body.MaxSize) === 0 ? 'Unlimited' : String(body.MaxSize);
     if (body.ExpansionSize !== undefined) d.ExpansionSize = Number(body.ExpansionSize);
     if (body.GlobalJournalState !== undefined) d.GlobalJournalState = !!body.GlobalJournalState;
     if (body.ReadOnly !== undefined) {
@@ -170,7 +187,9 @@ export const databaseHandlers = [
     const dir = requireParam(request, 'dir');
     const i = mockDb.localDbs.findIndex((d) => d.Directory === dir || d.Directory === `${dir}/`);
     if (i < 0) return notFound('Local database');
-    if (mockDb.configDbs.some((c) => c.Directory === mockDb.localDbs[i].Directory && c.Name.startsWith('IRIS'))) {
+    if (
+      mockDb.configDbs.some((c) => c.Directory === mockDb.localDbs[i].Directory && c.Name.startsWith('IRIS'))
+    ) {
       return fail(400, 'System databases cannot be deleted');
     }
     mockDb.localDbs.splice(i, 1);
@@ -180,7 +199,10 @@ export const databaseHandlers = [
   route('get', '/v2/database-dir/volumes', MANAGE, ({ request }) => {
     const d = findLocal(requireParam(request, 'dir'));
     if (!d) return notFound('Local database');
-    return ok({ Directory: d.Directory, Volumes: [{ Name: 'IRIS.DAT', Size: d.Size, Directory: d.Directory }] });
+    return ok({
+      Directory: d.Directory,
+      Volumes: [{ Name: 'IRIS.DAT', Size: d.Size, Directory: d.Directory }],
+    });
   }),
 
   route('post', '/v2/database-dir/info', MANAGE_OR_OPERATE, ({ request, account }) => {
@@ -244,22 +266,59 @@ export const databaseHandlers = [
 
   ...(['compact', 'defragment', 'integrity-check'] as const).map((action) =>
     route('post', `/v2/database-dir/${action}`, OPERATE, async ({ request, account }) => {
-      const body = await jsonBody<{ TargetFreeSpace?: number; Databases?: { Directory?: string; Globals?: string[] }[]; MaxProcesses?: number; PartialCheck?: boolean }>(request);
-      const d = action === 'integrity-check' ? findLocal(body.Databases?.[0]?.Directory ?? null) : findLocal(requireParam(request, 'dir'));
-      if (!d) return action === 'integrity-check' ? badRequest('Databases[0].Directory is required') : notFound('Local database');
+      const body = await jsonBody<{
+        TargetFreeSpace?: number;
+        Databases?: { Directory?: string; Globals?: string[] }[];
+        MaxProcesses?: number;
+        PartialCheck?: boolean;
+      }>(request);
+      const d =
+        action === 'integrity-check'
+          ? findLocal(body.Databases?.[0]?.Directory ?? null)
+          : findLocal(requireParam(request, 'dir'));
+      if (!d)
+        return action === 'integrity-check'
+          ? badRequest('Databases[0].Directory is required')
+          : notFound('Local database');
       const console =
         action === 'integrity-check'
-          ? ['Integrity check started', 'Checking directory blocks…', 'Checking global ^%SYS…', 'Checking global ^rOBJ…', 'Checking global ^oddDEF…', 'No errors found']
+          ? [
+              'Integrity check started',
+              'Checking directory blocks…',
+              'Checking global ^%SYS…',
+              'Checking global ^rOBJ…',
+              'Checking global ^oddDEF…',
+              'No errors found',
+            ]
           : action === 'compact'
-            ? [`Compacting ${d.Directory}`, `Target free space: ${body.TargetFreeSpace ?? 0} MB`, 'Scanning blocks…', 'Relocating big string blocks…', 'Compaction complete']
-            : [`Defragmenting ${d.Directory}`, 'Analyzing global layout…', 'Moving blocks…', 'Defragmentation complete'];
+            ? [
+                `Compacting ${d.Directory}`,
+                `Target free space: ${body.TargetFreeSpace ?? 0} MB`,
+                'Scanning blocks…',
+                'Relocating big string blocks…',
+                'Compaction complete',
+              ]
+            : [
+                `Defragmenting ${d.Directory}`,
+                'Analyzing global layout…',
+                'Moving blocks…',
+                'Defragmentation complete',
+              ];
       const result =
         action === 'integrity-check'
           ? { GlobalsChecked: 143, ErrorCount: 0, Status: 'Completed', PercentComplete: 100 }
           : action === 'compact'
             ? { Database: d.Directory, BlocksScanned: d.Blocks, Status: 'Completed', PercentComplete: 100 }
             : { Database: d.Directory, Status: 'Completed', PercentComplete: 100 };
-      const id = startAsyncTask({ name: `POST /v2/database-dir/${action} ${d.Directory}`, owner: account.username, console, result, tickMs: 1200, progressUnits: action === 'integrity-check' ? 'globals' : 'blocks', progressTotal: action === 'integrity-check' ? 143 : d.Blocks });
+      const id = startAsyncTask({
+        name: `POST /v2/database-dir/${action} ${d.Directory}`,
+        owner: account.username,
+        console,
+        result,
+        tickMs: 1200,
+        progressUnits: action === 'integrity-check' ? 'globals' : 'blocks',
+        progressTotal: action === 'integrity-check' ? 143 : d.Blocks,
+      });
       return accepted(id, apiBasePath(request));
     }),
   ),

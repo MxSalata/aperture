@@ -10,7 +10,18 @@ function findProcess(request: Request) {
 export const processHandlers = [
   route('get', '/v2/processes', OPERATE, ({ request }) => {
     const rows = mockDb.processes.map((p) => {
-      const { StartTimeUTC: _s, MemoryAllocated: _a, MemoryUsed: _u, MemoryPeak: _p, Roles: _r, OpenDevices: _d, InTransaction: _t, Location: _l, LastGlobalReference: _g, ...row } = p;
+      const {
+        StartTimeUTC: _s,
+        MemoryAllocated: _a,
+        MemoryUsed: _u,
+        MemoryPeak: _p,
+        Roles: _r,
+        OpenDevices: _d,
+        InTransaction: _t,
+        Location: _l,
+        LastGlobalReference: _g,
+        ...row
+      } = p;
       return row;
     });
     return ok(filterRows(rows as unknown as Record<string, unknown>[], request));
@@ -69,7 +80,12 @@ export const processHandlers = [
       CanBeSuspended: p.CanBeSuspended,
       CanBeTerminated: p.CanBeTerminated,
       CanReceiveBroadcast: p.CanReceiveBroadcast,
-      Variables: p.Username ? [{ Name: 'i', Value: '17' }, { Name: 'batch', Value: '"nightly"' }] : [],
+      Variables: p.Username
+        ? [
+            { Name: 'i', Value: '17' },
+            { Name: 'batch', Value: '"nightly"' },
+          ]
+        : [],
     });
   }),
 
@@ -105,13 +121,17 @@ export const processHandlers = [
     const msg = body.Message ?? body.message;
     if (!msg) return badRequest('Message is required');
     mockDb.broadcasts.push(msg);
-    const targets = body.PidList?.length ? mockDb.processes.filter((p) => body.PidList!.includes(p.Pid)) : mockDb.processes;
+    const targets = body.PidList?.length
+      ? mockDb.processes.filter((p) => body.PidList!.includes(p.Pid))
+      : mockDb.processes;
     const n = targets.filter((p) => p.CanReceiveBroadcast).length;
     return ok({ Sent: n }, { summary: `Message broadcast to ${n} processes` });
   }),
 
   // ---- locks --------------------------------------------------------------
-  route('get', '/v2/locks', OPERATE, ({ request }) => ok(filterRows(mockDb.locks as unknown as Record<string, unknown>[], request))),
+  route('get', '/v2/locks', OPERATE, ({ request }) =>
+    ok(filterRows(mockDb.locks as unknown as Record<string, unknown>[], request)),
+  ),
 
   route('delete', '/v2/lock', OPERATE, ({ request }) => {
     const id = requireParam(request, 'id');
@@ -121,14 +141,19 @@ export const processHandlers = [
     const checkTxn = requireParam(request, 'checkTxn') !== 'false';
     const owner = mockDb.processes.find((p) => String(p.Pid) === mockDb.locks[i].Pid);
     if (checkTxn && owner?.InTransaction) {
-      return fail(409, `Process ${owner.Pid} is in a transaction. Remove the lock with checkTxn=false to override.`);
+      return fail(
+        409,
+        `Process ${owner.Pid} is in a transaction. Remove the lock with checkTxn=false to override.`,
+      );
     }
     mockDb.locks.splice(i, 1);
     return ok({}, { summary: 'Lock removed' });
   }),
 
   // ---- web sessions --------------------------------------------------------
-  route('get', '/v2/web-sessions', OPERATE, ({ request }) => ok(filterRows(mockDb.webSessions as unknown as Record<string, unknown>[], request))),
+  route('get', '/v2/web-sessions', OPERATE, ({ request }) =>
+    ok(filterRows(mockDb.webSessions as unknown as Record<string, unknown>[], request)),
+  ),
 
   route('delete', '/v2/web-session', OPERATE, ({ request }) => {
     const id = requireParam(request, 'id');

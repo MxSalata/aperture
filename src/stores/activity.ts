@@ -34,7 +34,10 @@ export const useActivity = create<ActivityState>()(
       entries: [],
       record: (entry) =>
         set((s) => {
-          const next = [{ ...entry, id: `${entry.at}-${Math.random().toString(36).slice(2, 8)}` }, ...s.entries];
+          const next = [
+            { ...entry, id: `${entry.at}-${Math.random().toString(36).slice(2, 8)}` },
+            ...s.entries,
+          ];
           return { entries: next.length > MAX ? next.slice(0, MAX) : next };
         }),
       clear: () => set({ entries: [] }),

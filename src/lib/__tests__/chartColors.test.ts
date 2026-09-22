@@ -29,13 +29,20 @@ describe('chart palettes', () => {
     expect(contrastRatio('#ffffff', '#ffffff')).toBeCloseTo(1, 5);
   });
 
-  it.each(cases)('%s swatches keep the required contrast against their surface', (_name, palette, _shades, surface, floor) => {
-    for (const hex of palette) expect(contrastRatio(hex, surface), `${hex} on ${surface}`).toBeGreaterThanOrEqual(floor);
-  });
+  it.each(cases)(
+    '%s swatches keep the required contrast against their surface',
+    (_name, palette, _shades, surface, floor) => {
+      for (const hex of palette)
+        expect(contrastRatio(hex, surface), `${hex} on ${surface}`).toBeGreaterThanOrEqual(floor);
+    },
+  );
 
-  it.each(cases)('%s hex values are exactly the Mantine shades the charts request', (_name, palette, shades) => {
-    palette.forEach((hex, i) => expect(DEFAULT_THEME.colors[SERIES[i]][shades[i]].toLowerCase()).toBe(hex));
-  });
+  it.each(cases)(
+    '%s hex values are exactly the Mantine shades the charts request',
+    (_name, palette, shades) => {
+      palette.forEach((hex, i) => expect(DEFAULT_THEME.colors[SERIES[i]][shades[i]].toLowerCase()).toBe(hex));
+    },
+  );
 
   it('assigns a distinct dash pattern per slot for the line charts', async () => {
     const { SERIES_DASH } = await import('../chartColors');

@@ -63,19 +63,26 @@ test.describe('Aperture (demo mode)', () => {
     await page.getByLabel('Password', { exact: true }).fill('SYS');
     await page.getByRole('button', { name: /Sign in/ }).click();
     await expect(page.getByRole('heading', { name: 'Users' })).toBeVisible();
-    await expect(page.getByRole('navigation').getByRole('link', { name: 'Dashboard', exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole('navigation').getByRole('link', { name: 'Dashboard', exact: true }),
+    ).toHaveCount(0);
   });
 
   test('audit log query runs as an async task and renders records', async ({ page }) => {
     await loginDemo(page);
     await go(page, '/security/audit');
     await page.getByRole('button', { name: /Query audit log/ }).click();
-    await expect(page.getByRole('cell', { name: /Success|Failure/ }).first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('cell', { name: /Success|Failure/ }).first()).toBeVisible({
+      timeout: 20_000,
+    });
   });
 
   test('API explorer executes any operation from the spec', async ({ page }) => {
     await loginDemo(page);
-    await go(page, `/explorer/${encodeURIComponent('/v2/wqm-category')}?op=${encodeURIComponent('GET /v2/wqm-categories')}`);
+    await go(
+      page,
+      `/explorer/${encodeURIComponent('/v2/wqm-category')}?op=${encodeURIComponent('GET /v2/wqm-categories')}`,
+    );
     await page.getByRole('button', { name: 'Execute' }).click();
     await expect(page.getByText('HTTP 200')).toBeVisible();
   });

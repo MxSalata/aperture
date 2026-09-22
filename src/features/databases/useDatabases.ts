@@ -33,21 +33,47 @@ export function useConfigDatabases() {
 }
 
 export function useLocalDatabases() {
-  return useQuery({ queryKey: dbKeys.local, queryFn: async () => normalizeLocal(await result(api().GET('/v2/database-dirs'))) });
+  return useQuery({
+    queryKey: dbKeys.local,
+    queryFn: async () => normalizeLocal(await result(api().GET('/v2/database-dirs'))),
+  });
 }
 
-export function joinDatabases(config: ConfigDatabaseList | undefined, local: LocalRow[] | undefined): DatabaseRow[] {
+export function joinDatabases(
+  config: ConfigDatabaseList | undefined,
+  local: LocalRow[] | undefined,
+): DatabaseRow[] {
   const byDir = new Map<string, LocalRow>();
   for (const l of local ?? []) if (l.Directory) byDir.set(l.Directory.replace(/\/+$/, ''), l);
   const rows: DatabaseRow[] = (config ?? []).map((c) => {
     const l = c.Directory ? byDir.get(c.Directory.replace(/\/+$/, '')) : undefined;
-    return { ...c, local: l, SizeMB: l?.Size, MaxSize: l?.MaxSize, Resource: l?.Resource, Encrypted: l?.Encrypted, Mirrored: l?.Mirrored, Status: c.Status ?? l?.Status };
+    return {
+      ...c,
+      local: l,
+      SizeMB: l?.Size,
+      MaxSize: l?.MaxSize,
+      Resource: l?.Resource,
+      Encrypted: l?.Encrypted,
+      Mirrored: l?.Mirrored,
+      Status: c.Status ?? l?.Status,
+    };
   });
   // Local databases without a Config.Databases entry (e.g. dismounted or orphaned).
   const seen = new Set(rows.map((r) => r.Directory?.replace(/\/+$/, '')));
   for (const l of local ?? []) {
     const key = l.Directory?.replace(/\/+$/, '');
-    if (key && !seen.has(key)) rows.push({ Name: '', Directory: l.Directory, Status: l.Status, local: l, SizeMB: l.Size, MaxSize: l.MaxSize, Resource: l.Resource, Encrypted: l.Encrypted, Mirrored: l.Mirrored });
+    if (key && !seen.has(key))
+      rows.push({
+        Name: '',
+        Directory: l.Directory,
+        Status: l.Status,
+        local: l,
+        SizeMB: l.Size,
+        MaxSize: l.MaxSize,
+        Resource: l.Resource,
+        Encrypted: l.Encrypted,
+        Mirrored: l.Mirrored,
+      });
   }
   return rows;
 }

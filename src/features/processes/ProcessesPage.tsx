@@ -17,27 +17,73 @@ export const procKeys = { list: ['processes'] as const, one: (pid: string) => ['
 const columns: ColumnDef<Row, unknown>[] = [
   { accessorKey: 'Pid', header: 'PID', cell: (c) => <span className="mono">{String(c.getValue())}</span> },
   { accessorKey: 'Job', header: 'Job', cell: (c) => <span className="tabular">{String(c.getValue())}</span> },
-  { accessorKey: 'Username', header: 'User', cell: (c) => (c.getValue() ? <b>{String(c.getValue())}</b> : <span className="muted">system</span>) },
+  {
+    accessorKey: 'Username',
+    header: 'User',
+    cell: (c) => (c.getValue() ? <b>{String(c.getValue())}</b> : <span className="muted">system</span>),
+  },
   { accessorKey: 'Nspace', header: 'Namespace' },
-  { accessorKey: 'Routine', header: 'Routine', cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span> },
+  {
+    accessorKey: 'Routine',
+    header: 'Routine',
+    cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span>,
+  },
   { accessorKey: 'State', header: 'State', cell: (c) => <StatusBadge status={c.getValue() as string} /> },
-  { accessorKey: 'Device', header: 'Device', cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span> },
+  {
+    accessorKey: 'Device',
+    header: 'Device',
+    cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span>,
+  },
   { accessorKey: 'ClientName', header: 'Client' },
   { accessorKey: 'IPAddress', header: 'IP' },
   { accessorKey: 'EXEName', header: 'Executable' },
-  { accessorKey: 'Commands', header: 'Commands', cell: (c) => <span className="tabular">{formatCompact(c.getValue() as number)}</span> },
-  { accessorKey: 'Globals', header: 'Global refs', cell: (c) => <span className="tabular">{formatCompact(c.getValue() as number)}</span> },
-  { accessorKey: 'CPUTime', header: 'CPU (ms)', cell: (c) => <span className="tabular">{formatCompact(c.getValue() as number)}</span> },
+  {
+    accessorKey: 'Commands',
+    header: 'Commands',
+    cell: (c) => <span className="tabular">{formatCompact(c.getValue() as number)}</span>,
+  },
+  {
+    accessorKey: 'Globals',
+    header: 'Global refs',
+    cell: (c) => <span className="tabular">{formatCompact(c.getValue() as number)}</span>,
+  },
+  {
+    accessorKey: 'CPUTime',
+    header: 'CPU (ms)',
+    cell: (c) => <span className="tabular">{formatCompact(c.getValue() as number)}</span>,
+  },
   { accessorKey: 'ElapsedTime', header: 'Elapsed' },
   { accessorKey: 'OSUserName', header: 'OS user' },
 ];
 
 export default function ProcessesPage() {
   const navigate = useNavigate();
-  const { query: list, control: liveControl } = useLiveQuery({ queryKey: procKeys.list, queryFn: () => result(api().GET('/v2/processes')) }, { defaultLive: true });
+  const { query: list, control: liveControl } = useLiveQuery(
+    { queryKey: procKeys.list, queryFn: () => result(api().GET('/v2/processes')) },
+    { defaultLive: true },
+  );
   const [opened, { open, close }] = useDisclosure(false);
-  const form = useForm({ initialValues: { Message: '' }, validate: { Message: (v) => (v.trim() ? null : 'Required') } });
-  const broadcast = useApiMutation((v: typeof form.values) => run(api().POST('/v2/process/broadcast', { body: { Message: v.Message, PidList: (list.data ?? []).filter((p) => p.CanReceiveBroadcast).map((p) => p.Pid) } as never })), { onSuccess: () => { close(); form.reset(); } });
+  const form = useForm({
+    initialValues: { Message: '' },
+    validate: { Message: (v) => (v.trim() ? null : 'Required') },
+  });
+  const broadcast = useApiMutation(
+    (v: typeof form.values) =>
+      run(
+        api().POST('/v2/process/broadcast', {
+          body: {
+            Message: v.Message,
+            PidList: (list.data ?? []).filter((p) => p.CanReceiveBroadcast).map((p) => p.Pid),
+          } as never,
+        }),
+      ),
+    {
+      onSuccess: () => {
+        close();
+        form.reset();
+      },
+    },
+  );
   const users = new Set((list.data ?? []).filter((p) => p.Username).map((p) => p.Username));
 
   return (
@@ -49,8 +95,18 @@ export default function ProcessesPage() {
         actions={
           <>
             {liveControl}
-            <Button size="xs" variant="default" leftSection={<IconRefresh size={14} />} onClick={() => list.refetch()} loading={list.isFetching}>Refresh</Button>
-            <Button size="xs" variant="light" leftSection={<IconBroadcast size={14} />} onClick={open}>Broadcast message</Button>
+            <Button
+              size="xs"
+              variant="default"
+              leftSection={<IconRefresh size={14} />}
+              onClick={() => list.refetch()}
+              loading={list.isFetching}
+            >
+              Refresh
+            </Button>
+            <Button size="xs" variant="light" leftSection={<IconBroadcast size={14} />} onClick={open}>
+              Broadcast message
+            </Button>
           </>
         }
       />
@@ -67,13 +123,36 @@ export default function ProcessesPage() {
         initialSorting={[{ id: 'Pid', desc: false }]}
         pageSize={50}
         dense
-        toolbar={<span className="muted" style={{ fontSize: 12 }}>{list.data?.length ?? 0} processes · {users.size} distinct users</span>}
+        toolbar={
+          <span className="muted" style={{ fontSize: 12 }}>
+            {list.data?.length ?? 0} processes · {users.size} distinct users
+          </span>
+        }
       />
-      <Modal opened={opened} onClose={close} title="Broadcast a message to all interactive processes" centered>
+      <Modal
+        opened={opened}
+        onClose={close}
+        title="Broadcast a message to all interactive processes"
+        centered
+      >
         <form onSubmit={form.onSubmit((v) => broadcast.mutate(v))}>
           <Stack gap="sm">
-            <Textarea label="Message" placeholder="System going down for maintenance in 10 minutes." autosize minRows={3} data-autofocus {...form.getInputProps('Message')} />
-            <Group justify="flex-end"><Button variant="default" onClick={close}>Cancel</Button><Button type="submit" loading={broadcast.isPending}>Send</Button></Group>
+            <Textarea
+              label="Message"
+              placeholder="System going down for maintenance in 10 minutes."
+              autosize
+              minRows={3}
+              data-autofocus
+              {...form.getInputProps('Message')}
+            />
+            <Group justify="flex-end">
+              <Button variant="default" onClick={close}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={broadcast.isPending}>
+                Send
+              </Button>
+            </Group>
           </Stack>
         </form>
       </Modal>

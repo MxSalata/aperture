@@ -14,12 +14,22 @@ beforeEach(() => {
   resetDb();
   resetClients();
   sessionStorage.clear();
-  useSession.setState({ status: 'anonymous', mode: null, accessToken: null, refreshToken: null, basicCredentials: null, info: null, baseUrl: '' });
+  useSession.setState({
+    status: 'anonymous',
+    mode: null,
+    accessToken: null,
+    refreshToken: null,
+    basicCredentials: null,
+    info: null,
+    baseUrl: '',
+  });
 });
 
 describe('session', () => {
   it('logs in with JWT and loads /info', async () => {
-    await useSession.getState().login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
     const s = useSession.getState();
     expect(s.status).toBe('authenticated');
     expect(s.mode).toBe('jwt');
@@ -29,13 +39,19 @@ describe('session', () => {
   });
 
   it('rejects bad credentials', async () => {
-    await expect(useSession.getState().login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'nope' })).rejects.toThrow(/Invalid username or password/);
+    await expect(
+      useSession
+        .getState()
+        .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'nope' }),
+    ).rejects.toThrow(/Invalid username or password/);
     expect(useSession.getState().status).toBe('anonymous');
   });
 
   it('falls back to Basic auth when /login does not exist (IRIS < 2026.2)', async () => {
     server.use(http.post(`${BASE}/api/admin/login`, () => new HttpResponse('Not Found', { status: 404 })));
-    await useSession.getState().login({ connectionId: 't', baseUrl: BASE, username: 'operator', password: 'SYS' });
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: 'operator', password: 'SYS' });
     const s = useSession.getState();
     expect(s.mode).toBe('basic');
     expect(s.authorizationHeader()).toBe(`Basic ${btoa('operator:SYS')}`);
@@ -43,7 +59,9 @@ describe('session', () => {
   });
 
   it('refreshes an expired access token transparently', async () => {
-    await useSession.getState().login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
     // Simulate an expired/invalid access token: the middleware must refresh and retry once.
     useSession.setState({ accessToken: 'garbage', expiresAt: Date.now() + 60_000 });
     const dbs = await result(api().GET('/v2/databases'));
@@ -52,9 +70,20 @@ describe('session', () => {
   });
 
   it('forgets everything cached about the instance on logout', async () => {
-    await useSession.getState().login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
     queryClient.setQueryData(['processes'], [{ Pid: '1' }]);
-    useActivity.getState().record({ at: Date.now(), method: 'POST', path: '/v2/x', query: '', status: 200, ok: true, summary: '', durationMs: 1 });
+    useActivity.getState().record({
+      at: Date.now(),
+      method: 'POST',
+      path: '/v2/x',
+      query: '',
+      status: 200,
+      ok: true,
+      summary: '',
+      durationMs: 1,
+    });
     useHealth.getState().markFail('boom');
     await useSession.getState().logout({ remote: false });
     expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
@@ -63,14 +92,20 @@ describe('session', () => {
   });
 
   it('resets the cache when signing in to a different instance without signing out', async () => {
-    await useSession.getState().login({ connectionId: 'a', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+    await useSession
+      .getState()
+      .login({ connectionId: 'a', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
     queryClient.setQueryData(['processes'], [{ Pid: 'from-a' }]);
-    await useSession.getState().login({ connectionId: 'b', baseUrl: BASE, username: 'operator', password: 'SYS' });
+    await useSession
+      .getState()
+      .login({ connectionId: 'b', baseUrl: BASE, username: 'operator', password: 'SYS' });
     expect(queryClient.getQueryData(['processes'])).toBeUndefined();
   });
 
   it('logs out when the refresh token is invalid too', async () => {
-    await useSession.getState().login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
     useSession.setState({ accessToken: 'garbage', refreshToken: 'garbage', expiresAt: Date.now() + 60_000 });
     await expect(result(api().GET('/v2/databases'))).rejects.toMatchObject({ status: 401 });
     expect(useSession.getState().status).toBe('anonymous');

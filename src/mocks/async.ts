@@ -74,11 +74,14 @@ export function startAsyncTask(opts: StartOptions): string {
     totalSteps: opts.console.length,
   };
   tasks.set(id, task);
-  task.timer = setTimeout(() => {
-    task.State = 'Running';
-    task.TimeStarted = now();
-    schedule(task, opts.failWith);
-  }, Math.min(600, task.tickMs));
+  task.timer = setTimeout(
+    () => {
+      task.State = 'Running';
+      task.TimeStarted = now();
+      schedule(task, opts.failWith);
+    },
+    Math.min(600, task.tickMs),
+  );
   return id;
 }
 
@@ -90,7 +93,11 @@ function schedule(task: MockAsyncTask, failWith?: string) {
       task.Console = [...(task.Console ?? []), line];
       if (task.progressTotal) {
         const done = task.totalSteps - task.pending.length;
-        task.Result = { ProgressCurrent: Math.round((task.progressTotal * done) / task.totalSteps), ProgressTotal: task.progressTotal, ProgressUnits: task.progressUnits ?? '' } as AsyncTask['Result'];
+        task.Result = {
+          ProgressCurrent: Math.round((task.progressTotal * done) / task.totalSteps),
+          ProgressTotal: task.progressTotal,
+          ProgressUnits: task.progressUnits ?? '',
+        } as AsyncTask['Result'];
       }
       schedule(task, failWith);
       return;
@@ -106,7 +113,11 @@ function schedule(task: MockAsyncTask, failWith?: string) {
   }, task.tickMs);
 }
 
-export function controlAsyncTask(id: string, owner: string, action: 'pause' | 'resume' | 'cancel'): AsyncTask | null {
+export function controlAsyncTask(
+  id: string,
+  owner: string,
+  action: 'pause' | 'resume' | 'cancel',
+): AsyncTask | null {
   const t = tasks.get(id);
   if (!t || t.owner !== owner) return null;
   if (action === 'pause' && t.State === 'Running') {

@@ -14,7 +14,11 @@ import type { Schemas } from '@/api/types';
 type Row = Schemas['AsyncTaskBase'];
 
 const columns: ColumnDef<Row, unknown>[] = [
-  { accessorKey: 'GUID', header: 'Id', cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span> },
+  {
+    accessorKey: 'GUID',
+    header: 'Id',
+    cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span>,
+  },
   { accessorKey: 'TaskName', header: 'Task' },
   { accessorKey: 'State', header: 'State', cell: (c) => <StatusBadge status={c.getValue() as string} /> },
   { accessorKey: 'TimeQueued', header: 'Queued', cell: (c) => formatDateTime(c.getValue() as string) },
@@ -41,7 +45,13 @@ export default function JobsPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           <>
-            <Button variant="default" size="xs" leftSection={<IconRefresh size={14} />} onClick={() => serverJobs.refetch()} loading={serverJobs.isFetching}>
+            <Button
+              variant="default"
+              size="xs"
+              leftSection={<IconRefresh size={14} />}
+              onClick={() => serverJobs.refetch()}
+              loading={serverJobs.isFetching}
+            >
               Refresh
             </Button>
             <Button variant="subtle" size="xs" onClick={clearFinished}>
@@ -56,10 +66,13 @@ export default function JobsPage() {
             <Text fw={600} size="sm">
               Followed in this session
             </Text>
-            {local.length ? local.map((j) => <JobCard key={j.id} job={j} />) : (
+            {local.length ? (
+              local.map((j) => <JobCard key={j.id} job={j} />)
+            ) : (
               <Paper p="md">
                 <Text size="sm" c="dimmed">
-                  Nothing yet. Start a compaction or an integrity check from a database, or an audit query, and it will show up here.
+                  Nothing yet. Start a compaction or an integrity check from a database, or an audit query,
+                  and it will show up here.
                 </Text>
               </Paper>
             )}
@@ -82,7 +95,10 @@ export default function JobsPage() {
               loading={serverJobs.isPending}
               error={serverJobs.error}
               initialSorting={[{ id: 'TimeQueued', desc: true }]}
-              onRowClick={(row) => row.GUID && track({ id: row.GUID, name: row.TaskName ?? row.GUID, state: row.State ?? 'Unknown' })}
+              onRowClick={(row) =>
+                row.GUID &&
+                track({ id: row.GUID, name: row.TaskName ?? row.GUID, state: row.State ?? 'Unknown' })
+              }
               emptyMessage="No async tasks on the server"
               dense
             />

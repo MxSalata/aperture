@@ -44,7 +44,10 @@ export function CommandPalette() {
       leftSection: <IconApi size={18} stroke={1.6} />,
       onClick: () => navigate(`/explorer/${encodeURIComponent(op.group)}?op=${encodeURIComponent(op.id)}`),
     }));
-    return [{ group: 'Screens', actions: pages }, ...(ops.length ? [{ group: 'API operations', actions: ops }] : [])];
+    return [
+      { group: 'Screens', actions: pages },
+      ...(ops.length ? [{ group: 'API operations', actions: ops }] : []),
+    ];
   }, [info, navigate, operations]);
 
   return (
@@ -57,7 +60,10 @@ export function CommandPalette() {
       highlightQuery
       scrollable
       maxHeight={420}
-      searchProps={{ leftSection: <IconSearch size={18} stroke={1.5} />, placeholder: 'Jump to a screen or API operation…' }}
+      searchProps={{
+        leftSection: <IconSearch size={18} stroke={1.5} />,
+        placeholder: 'Jump to a screen or API operation…',
+      }}
     />
   );
 }

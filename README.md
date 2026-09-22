@@ -30,11 +30,11 @@ in-memory instance: create a namespace, compact a database, terminate a process,
 - GitHub Pages: https://mxsalata.github.io/intersystems-frontend-contest/ (published by the CI workflow once GitHub Pages is set to "GitHub Actions" in the repository settings)
 - Or locally: `npm run build:demo && npm run preview:demo` → http://localhost:4174
 
-| Demo account | Password | Privileges | What it shows |
-| --- | --- | --- | --- |
-| `_SYSTEM` | `SYS` | everything | full portal |
-| `operator` | `SYS` | `%Admin_Operate`, `%Admin_Task`, `%Admin_Journal` | security screens disappear, actions explain what they need |
-| `auditor` | `SYS` | `%Admin_Secure` only | only the security area is usable |
+| Demo account | Password | Privileges                                        | What it shows                                              |
+| ------------ | -------- | ------------------------------------------------- | ---------------------------------------------------------- |
+| `_SYSTEM`    | `SYS`    | everything                                        | full portal                                                |
+| `operator`   | `SYS`    | `%Admin_Operate`, `%Admin_Task`, `%Admin_Journal` | security screens disappear, actions explain what they need |
+| `auditor`    | `SYS`    | `%Admin_Secure` only                              | only the security area is usable                           |
 
 Every real deployment also has a **Try the demo** button on the login page.
 
@@ -88,52 +88,52 @@ npm run dev                    # http://localhost:5173, /api/admin proxied to IR
 
 Other scripts:
 
-| Script | What it does |
-| --- | --- |
-| `npm run build` | type-check + production build (`dist/`, browser routing, for nginx) |
-| `npm run build:www` | build for IRIS-hosted deployment (`www/`, relative URLs + hash routing) |
-| `npm run build:demo` | build the online demo (`dist-demo/`, in-browser mock) |
-| `npm test` | Vitest unit tests (client, auth, privileges, async jobs, spec index) |
-| `npm run test:e2e` | Playwright end-to-end tests against the demo build |
-| `npm run smoke` | walks the main screens in headless Chromium and refreshes `docs/screenshots/` |
+| Script                | What it does                                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `npm run build`       | type-check + production build (`dist/`, browser routing, for nginx)                                  |
+| `npm run build:www`   | build for IRIS-hosted deployment (`www/`, relative URLs + hash routing)                              |
+| `npm run build:demo`  | build the online demo (`dist-demo/`, in-browser mock)                                                |
+| `npm test`            | Vitest unit tests (client, auth, privileges, async jobs, spec index)                                 |
+| `npm run test:e2e`    | Playwright end-to-end tests against the demo build                                                   |
+| `npm run smoke`       | walks the main screens in headless Chromium and refreshes `docs/screenshots/`                        |
 | `npm run verify:live` | conformance check of a real instance (`IRIS_URL`, `IRIS_USER`, `IRIS_PASSWORD`), saves JSON evidence |
-| `npm run gen:api` | regenerate `src/api/schema.d.ts` and the operation index from `spec/mainspec_v2.json` |
+| `npm run gen:api`     | regenerate `src/api/schema.d.ts` and the operation index from `spec/mainspec_v2.json`                |
 
 ### Requirements on the IRIS side
 
 - IRIS or IRIS for Health **2025.1+** with the `/api/admin` web application (**2026.2+** for JWT login; older versions use HTTP Basic automatically).
 - The account needs at least one `%Admin_*` privilege (`GET /info` refuses everyone else).
-- If the portal is served from a different origin than IRIS, add that origin to the CORS allow-list of `/api/admin` (Aperture can do that itself under *Security → Web applications → /api/admin*).
+- If the portal is served from a different origin than IRIS, add that origin to the CORS allow-list of `/api/admin` (Aperture can do that itself under _Security → Web applications → /api/admin_).
 
 ## What you get
 
-| Area | Screens | Notable |
-| --- | --- | --- |
-| **Dashboard** | live stats, sparklines, global refs/s and disk I/O charts, health, alerts, upcoming tasks, busy processes, resource seizes | polls `/v2/monitor/*` every 3 s, keeps history while you navigate |
-| **Job Center** | every `202 Accepted` response, with console output, progress, pause / resume / cancel | fed automatically by the API client (Location header or body GUID); toasts on completion |
-| **Activity** | every change this tab sent and what the server answered, exportable as JSON | recorded by the client middleware |
-| **Host monitor** | CPU, memory, disk, licence and alerts.log from the native `/api/monitor` service | OpenMetrics parsed in the browser; degrades to "unavailable" honestly |
-| **Databases** | configuration + local file view, metrics (async), mount/dismount, compact, defragment, integrity check, truncate, expand, volumes, create, delete | dangerous actions require typing the name |
-| **Namespaces** | create, delete, enable interoperability, copy mappings, global/package/routine mappings | |
-| **Processes** | live list, detail with variables and roles, suspend/resume/terminate, broadcast | |
-| **Locks, Journals, Tasks, Web sessions, License** | lock removal with transaction check, journal files/records/settings/switching, task schedules + history + task manager, session ending, license key/usage/servers | |
-| **Security** | users, roles, resources, services, web applications (JWT, CORS), audit events + log + purge, TLS/SSL configs + test, SQL privileges | |
-| **API Explorer** | every one of the 273 operations rendered from the OpenAPI document: parameters, request body form or JSON, privileges, documented responses, response as table / fields / JSON | reachable from the command palette |
-| **Everywhere** | ⌘K command palette, privilege badges, raw JSON of every response, responsive layout, multiple saved connections, escalation-role login, LIVE / OFFLINE / DEMO indicator | |
-| **Tables** | filter, sort and page live in the URL (share a link to exactly what you see; Back restores it), column choices and page size are remembered per table, every table exports its filtered rows as CSV, "no rows" and "nothing matches your filter" are different messages | `stateKey` / `exportName` on `DataTable` |
-| **Instances** | each saved connection has a colour (a bar under the header, so production never looks like staging) and an optional time zone, browser-tab titles carry the instance name and its LIVE flag, and an account without `%Admin_Operate` lands on a screen it can use | `docs/ARCHITECTURE.md` §2.10 for the time policy |
-| **Appearance** | light / dark / system theme plus an independent contrast axis (system / normal / high), applied before the first paint; live regions, keyboard-reachable tooltips, reduced-motion and forced-colors support; chart palettes validated against their surfaces by a unit test | Appearance menu in the header |
-| **Change review** | every edit form shows old → new per field, re-reads the object to detect concurrent edits, and only then applies | `reviewChanges()` in `src/components/ReviewChanges.tsx` |
+| Area                                              | Screens                                                                                                                                                                                                                                                                     | Notable                                                                                  |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Dashboard**                                     | live stats, sparklines, global refs/s and disk I/O charts, health, alerts, upcoming tasks, busy processes, resource seizes                                                                                                                                                  | polls `/v2/monitor/*` every 3 s, keeps history while you navigate                        |
+| **Job Center**                                    | every `202 Accepted` response, with console output, progress, pause / resume / cancel                                                                                                                                                                                       | fed automatically by the API client (Location header or body GUID); toasts on completion |
+| **Activity**                                      | every change this tab sent and what the server answered, exportable as JSON                                                                                                                                                                                                 | recorded by the client middleware                                                        |
+| **Host monitor**                                  | CPU, memory, disk, licence and alerts.log from the native `/api/monitor` service                                                                                                                                                                                            | OpenMetrics parsed in the browser; degrades to "unavailable" honestly                    |
+| **Databases**                                     | configuration + local file view, metrics (async), mount/dismount, compact, defragment, integrity check, truncate, expand, volumes, create, delete                                                                                                                           | dangerous actions require typing the name                                                |
+| **Namespaces**                                    | create, delete, enable interoperability, copy mappings, global/package/routine mappings                                                                                                                                                                                     |                                                                                          |
+| **Processes**                                     | live list, detail with variables and roles, suspend/resume/terminate, broadcast                                                                                                                                                                                             |                                                                                          |
+| **Locks, Journals, Tasks, Web sessions, License** | lock removal with transaction check, journal files/records/settings/switching, task schedules + history + task manager, session ending, license key/usage/servers                                                                                                           |                                                                                          |
+| **Security**                                      | users, roles, resources, services, web applications (JWT, CORS), audit events + log + purge, TLS/SSL configs + test, SQL privileges                                                                                                                                         |                                                                                          |
+| **API Explorer**                                  | every one of the 273 operations rendered from the OpenAPI document: parameters, request body form or JSON, privileges, documented responses, response as table / fields / JSON                                                                                              | reachable from the command palette                                                       |
+| **Everywhere**                                    | ⌘K command palette, privilege badges, raw JSON of every response, responsive layout, multiple saved connections, escalation-role login, LIVE / OFFLINE / DEMO indicator                                                                                                     |                                                                                          |
+| **Tables**                                        | filter, sort and page live in the URL (share a link to exactly what you see; Back restores it), column choices and page size are remembered per table, every table exports its filtered rows as CSV, "no rows" and "nothing matches your filter" are different messages     | `stateKey` / `exportName` on `DataTable`                                                 |
+| **Instances**                                     | each saved connection has a colour (a bar under the header, so production never looks like staging) and an optional time zone, browser-tab titles carry the instance name and its LIVE flag, and an account without `%Admin_Operate` lands on a screen it can use           | `docs/ARCHITECTURE.md` §2.10 for the time policy                                         |
+| **Appearance**                                    | light / dark / system theme plus an independent contrast axis (system / normal / high), applied before the first paint; live regions, keyboard-reachable tooltips, reduced-motion and forced-colors support; chart palettes validated against their surfaces by a unit test | Appearance menu in the header                                                            |
+| **Change review**                                 | every edit form shows old → new per field, re-reads the object to detect concurrent edits, and only then applies                                                                                                                                                            | `reviewChanges()` in `src/components/ReviewChanges.tsx`                                  |
 
 <details>
 <summary>More screenshots</summary>
 
-| | |
-| --- | --- |
-| ![Databases](docs/screenshots/03-databases.png) | ![Database detail](docs/screenshots/04-database-detail.png) |
-| ![Job Center](docs/screenshots/05-job-center.png) | ![Processes](docs/screenshots/06-processes.png) |
-| ![Audit](docs/screenshots/09-audit.png) | ![Explorer](docs/screenshots/11-explorer.png) |
-| ![Dark mode](docs/screenshots/13-dark.png) | ![Mobile](docs/screenshots/15-mobile.png) |
+|                                                   |                                                             |
+| ------------------------------------------------- | ----------------------------------------------------------- |
+| ![Databases](docs/screenshots/03-databases.png)   | ![Database detail](docs/screenshots/04-database-detail.png) |
+| ![Job Center](docs/screenshots/05-job-center.png) | ![Processes](docs/screenshots/06-processes.png)             |
+| ![Audit](docs/screenshots/09-audit.png)           | ![Explorer](docs/screenshots/11-explorer.png)               |
+| ![Dark mode](docs/screenshots/13-dark.png)        | ![Mobile](docs/screenshots/15-mobile.png)                   |
 
 </details>
 
@@ -169,19 +169,19 @@ browser ──HTTPS──▶ nginx (dist/) ──/api/admin──▶ IRIS privat
 
 ## Documentation
 
-| File | Purpose |
-| --- | --- |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | how the layers fit: typed client, auth, async jobs, privileges, mock, deployment |
-| [docs/ARCHITECTURE_OVERVIEW.mmd](docs/ARCHITECTURE_OVERVIEW.mmd) | the same as a Mermaid diagram |
-| [docs/CONTEST_PLAN.md](docs/CONTEST_PLAN.md) | contest requirements, judging, bonuses, plan |
-| [docs/BONUSES.md](docs/BONUSES.md) | technology bonuses: criteria, evidence, what remains |
-| [docs/OPENEXCHANGE_SUBMISSION.md](docs/OPENEXCHANGE_SUBMISSION.md) | paste-ready Open Exchange listing |
-| [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md) | everything to tick before the deadline |
-| [docs/DEMO_ASSETS_CHECKLIST.md](docs/DEMO_ASSETS_CHECKLIST.md) | screenshots (generated) and video assets |
-| [docs/ARTICLE.md](docs/ARTICLE.md) | Developer Community article draft |
-| [docs/ARTICLE_2.md](docs/ARTICLE_2.md) | second article draft: what the specification does not tell you |
-| [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md) | three demo video storyboards |
-| [docs/prototype/](docs/prototype/) | the original single-file prototype this repository started from (archived) |
+| File                                                               | Purpose                                                                          |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                       | how the layers fit: typed client, auth, async jobs, privileges, mock, deployment |
+| [docs/ARCHITECTURE_OVERVIEW.mmd](docs/ARCHITECTURE_OVERVIEW.mmd)   | the same as a Mermaid diagram                                                    |
+| [docs/CONTEST_PLAN.md](docs/CONTEST_PLAN.md)                       | contest requirements, judging, bonuses, plan                                     |
+| [docs/BONUSES.md](docs/BONUSES.md)                                 | technology bonuses: criteria, evidence, what remains                             |
+| [docs/OPENEXCHANGE_SUBMISSION.md](docs/OPENEXCHANGE_SUBMISSION.md) | paste-ready Open Exchange listing                                                |
+| [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md)       | everything to tick before the deadline                                           |
+| [docs/DEMO_ASSETS_CHECKLIST.md](docs/DEMO_ASSETS_CHECKLIST.md)     | screenshots (generated) and video assets                                         |
+| [docs/ARTICLE.md](docs/ARTICLE.md)                                 | Developer Community article draft                                                |
+| [docs/ARTICLE_2.md](docs/ARTICLE_2.md)                             | second article draft: what the specification does not tell you                   |
+| [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md)                       | three demo video storyboards                                                     |
+| [docs/prototype/](docs/prototype/)                                 | the original single-file prototype this repository started from (archived)       |
 
 ## Verified against real IRIS
 

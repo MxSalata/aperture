@@ -61,7 +61,13 @@ export interface NamespaceRec {
   Library: string;
   TempGlobals: string;
   interop: boolean;
-  globalMappings: { Name: string; Subscript: string; Database: string; Collation: string; LockDatabase: string }[];
+  globalMappings: {
+    Name: string;
+    Subscript: string;
+    Database: string;
+    Collation: string;
+    LockDatabase: string;
+  }[];
   packageMappings: { Name: string; Database: string }[];
   routineMappings: { Name: string; Type: string; Database: string }[];
 }
@@ -295,7 +301,9 @@ export interface MockDb {
 function db(
   name: string,
   dir: string,
-  opts: Partial<DbLocal & DbConfig> & { size: number; max?: string; resource?: string; ro?: boolean } = { size: 1 },
+  opts: Partial<DbLocal & DbConfig> & { size: number; max?: string; resource?: string; ro?: boolean } = {
+    size: 1,
+  },
 ): { config: DbConfig; local: DbLocal } {
   const status = opts.ro ? 'Mounted/R' : 'Mounted/RW';
   return {
@@ -351,7 +359,12 @@ function seedDatabases() {
     db('USER', `${MGR}user/`, { size: 97, max: '4096', resource: '%DB_USER' }),
     db('IRISAPP', `${MGR}irisapp/`, { size: 512, resource: '%DB_IRISAPP' }),
     db('INTEROP', `${MGR}interop/`, { size: 1290, max: '8192', resource: '%DB_INTEROP' }),
-    db('CLINICAL', `${MGR}clinical/`, { size: 2048, max: '16384', resource: '%DB_CLINICAL', Encrypted: true }),
+    db('CLINICAL', `${MGR}clinical/`, {
+      size: 2048,
+      max: '16384',
+      resource: '%DB_CLINICAL',
+      Encrypted: true,
+    }),
   ];
   return { configDbs: list.map((d) => d.config), localDbs: list.map((d) => d.local) };
 }
@@ -384,7 +397,15 @@ function seedNamespaces(): NamespaceRec[] {
     ns('USER', 'USER'),
     ns('IRISAPP', 'IRISAPP', 'IRISAPP', {
       packageMappings: [{ Name: 'dc.Aperture', Database: 'IRISAPP' }],
-      globalMappings: [{ Name: 'dc.Config', Subscript: '', Database: 'IRISAPP', Collation: 'IRIS standard', LockDatabase: 'IRISAPP' }],
+      globalMappings: [
+        {
+          Name: 'dc.Config',
+          Subscript: '',
+          Database: 'IRISAPP',
+          Collation: 'IRIS standard',
+          LockDatabase: 'IRISAPP',
+        },
+      ],
     }),
     ns('INTEROP', 'INTEROP', 'INTEROP', {
       interop: true,
@@ -395,20 +416,54 @@ function seedNamespaces(): NamespaceRec[] {
         { Name: 'HS.Util', Database: 'CLINICAL' },
       ],
       globalMappings: [
-        { Name: 'Ens.*', Subscript: '', Database: 'ENSLIB', Collation: 'IRIS standard', LockDatabase: 'ENSLIB' },
-        { Name: 'HL7.Archive', Subscript: '', Database: 'CLINICAL', Collation: 'IRIS standard', LockDatabase: 'CLINICAL' },
+        {
+          Name: 'Ens.*',
+          Subscript: '',
+          Database: 'ENSLIB',
+          Collation: 'IRIS standard',
+          LockDatabase: 'ENSLIB',
+        },
+        {
+          Name: 'HL7.Archive',
+          Subscript: '',
+          Database: 'CLINICAL',
+          Collation: 'IRIS standard',
+          LockDatabase: 'CLINICAL',
+        },
       ],
       routineMappings: [{ Name: 'Ens*', Type: 'ALL', Database: 'ENSLIB' }],
     }),
     ns('CLINICAL', 'CLINICAL', 'CLINICAL', {
-      globalMappings: [{ Name: 'DICOM.Study', Subscript: '', Database: 'CLINICAL', Collation: 'IRIS standard', LockDatabase: 'CLINICAL' }],
+      globalMappings: [
+        {
+          Name: 'DICOM.Study',
+          Subscript: '',
+          Database: 'CLINICAL',
+          Collation: 'IRIS standard',
+          LockDatabase: 'CLINICAL',
+        },
+      ],
     }),
   ];
 }
 
 function seedProcesses(): ProcessRec[] {
   const rnd = seeded(42);
-  const daemons = ['CONTROL', 'WRTDMN', 'GARCOL', 'JRNDMN', 'EXPDMN', 'AUXWD', 'AUXWD', 'AUXWD', 'MONITOR', 'CLNDMN', 'RECEIVE', 'LMFMON', 'DBEXPDMN'];
+  const daemons = [
+    'CONTROL',
+    'WRTDMN',
+    'GARCOL',
+    'JRNDMN',
+    'EXPDMN',
+    'AUXWD',
+    'AUXWD',
+    'AUXWD',
+    'MONITOR',
+    'CLNDMN',
+    'RECEIVE',
+    'LMFMON',
+    'DBEXPDMN',
+  ];
   const list: ProcessRec[] = [];
   let pid = 5320;
   const mk = (p: Partial<ProcessRec>): ProcessRec => {
@@ -452,27 +507,183 @@ function seedProcesses(): ProcessRec[] {
     };
   };
   for (const d of daemons) {
-    list.push(mk({ Username: '', Routine: d, State: 'RUNW', CanBeSuspended: false, CanBeTerminated: false, Device: '' }));
+    list.push(
+      mk({
+        Username: '',
+        Routine: d,
+        State: 'RUNW',
+        CanBeSuspended: false,
+        CanBeTerminated: false,
+        Device: '',
+      }),
+    );
   }
-  list.push(mk({ Username: 'CSPSystem', Routine: '%SYS.TaskSuper.1', State: 'HANG', CanBeTerminated: false }));
-  list.push(mk({ Username: '_Ensemble', Nspace: 'INTEROP', Routine: 'Ens.Director.1', State: 'RUNW', Device: '|TCP|19110' }));
-  list.push(mk({ Username: '_Ensemble', Nspace: 'INTEROP', Routine: 'EnsLib.HL7.Service.TCPService.1', State: 'RUNW', Device: '|TCP|2575|4012', CanReceiveBroadcast: true, InTransaction: 1, LastGlobalReference: '^Ens.MessageHeaderD(4021339)' }));
-  list.push(mk({ Username: '_Ensemble', Nspace: 'INTEROP', Routine: 'EnsLib.DICOM.Service.TCP.1', State: 'RUNW', Device: '|TCP|4242' }));
-  list.push(mk({ Username: '_Ensemble', Nspace: 'INTEROP', Routine: 'EnsLib.HL7.Operation.TCPOperation.1', State: 'EVTW', Device: '|TCP|10.0.0.14:6661' }));
-  list.push(mk({ Username: '_Ensemble', Nspace: 'INTEROP', Routine: 'Ens.Alerting.AlertManager.1', State: 'EVTW' }));
-  list.push(mk({ Username: 'jdoe', Nspace: 'IRISAPP', Routine: '%SYS.REST.1', State: 'RUNW', Device: '|TCP|127.0.0.1:52773|54211', ClientName: 'devbox', EXEName: 'CSPa24.so', IPAddress: '10.0.0.41', CanReceiveBroadcast: true, OSUserName: 'jdoe', Roles: ['%Developer', '%DB_IRISAPP'] }));
-  list.push(mk({ Username: 'jdoe', Nspace: 'USER', Routine: '%Studio.General.1', State: 'RUNW', Device: '|TCP|1972|61023', ClientName: 'devbox', EXEName: 'code', IPAddress: '10.0.0.41', CanReceiveBroadcast: true, OSUserName: 'jdoe', Roles: ['%Developer'] }));
-  list.push(mk({ Username: 'analytics', Nspace: 'CLINICAL', Routine: '%SQL.StatementResult.1', State: 'RUNW', Device: '|TCP|1972|61102', ClientName: 'bi-server', EXEName: 'java', IPAddress: '10.0.0.77', CanReceiveBroadcast: true, OSUserName: 'tomcat', Roles: ['%SQL', '%DB_CLINICAL'], Globals: 4_812_003, InTransaction: 0, LastGlobalReference: '^DICOM.StudyD(88213)' }));
-  list.push(mk({ Username: 'analytics', Nspace: 'CLINICAL', Routine: '%SQL.StatementResult.1', State: 'RUNW', Device: '|TCP|1972|61105', ClientName: 'bi-server', EXEName: 'python3', IPAddress: '10.0.0.77', CanReceiveBroadcast: true, OSUserName: 'tomcat', Roles: ['%SQL', '%DB_CLINICAL'] }));
-  list.push(mk({ Username: '_SYSTEM', Nspace: '%SYS', Routine: '%SYS.REST.1', State: 'RUNW', Device: '|TCP|127.0.0.1:52773|54310', ClientName: 'localhost', EXEName: 'CSPa24.so', IPAddress: '127.0.0.1', CanReceiveBroadcast: true, OSUserName: 'irisowner' }));
-  list.push(mk({ Username: 'irisowner', Nspace: 'USER', Routine: '%SYS.TaskSuper.1', State: 'RUNW', Device: '/dev/pts/0', ClientName: 'container', EXEName: 'iris', IPAddress: '', CanReceiveBroadcast: true, OSUserName: 'irisowner' }));
-  list.push(mk({ Username: 'ops', Nspace: 'USER', Routine: 'MYREPORT', State: 'LOCK', Device: '/dev/pts/1', ClientName: 'container', EXEName: 'irissession', CanReceiveBroadcast: true, OSUserName: 'ops', Location: '+12^MYREPORT', InTransaction: 1, LastGlobalReference: '^MyGlobal("batch",17)' }));
+  list.push(
+    mk({ Username: 'CSPSystem', Routine: '%SYS.TaskSuper.1', State: 'HANG', CanBeTerminated: false }),
+  );
+  list.push(
+    mk({
+      Username: '_Ensemble',
+      Nspace: 'INTEROP',
+      Routine: 'Ens.Director.1',
+      State: 'RUNW',
+      Device: '|TCP|19110',
+    }),
+  );
+  list.push(
+    mk({
+      Username: '_Ensemble',
+      Nspace: 'INTEROP',
+      Routine: 'EnsLib.HL7.Service.TCPService.1',
+      State: 'RUNW',
+      Device: '|TCP|2575|4012',
+      CanReceiveBroadcast: true,
+      InTransaction: 1,
+      LastGlobalReference: '^Ens.MessageHeaderD(4021339)',
+    }),
+  );
+  list.push(
+    mk({
+      Username: '_Ensemble',
+      Nspace: 'INTEROP',
+      Routine: 'EnsLib.DICOM.Service.TCP.1',
+      State: 'RUNW',
+      Device: '|TCP|4242',
+    }),
+  );
+  list.push(
+    mk({
+      Username: '_Ensemble',
+      Nspace: 'INTEROP',
+      Routine: 'EnsLib.HL7.Operation.TCPOperation.1',
+      State: 'EVTW',
+      Device: '|TCP|10.0.0.14:6661',
+    }),
+  );
+  list.push(
+    mk({ Username: '_Ensemble', Nspace: 'INTEROP', Routine: 'Ens.Alerting.AlertManager.1', State: 'EVTW' }),
+  );
+  list.push(
+    mk({
+      Username: 'jdoe',
+      Nspace: 'IRISAPP',
+      Routine: '%SYS.REST.1',
+      State: 'RUNW',
+      Device: '|TCP|127.0.0.1:52773|54211',
+      ClientName: 'devbox',
+      EXEName: 'CSPa24.so',
+      IPAddress: '10.0.0.41',
+      CanReceiveBroadcast: true,
+      OSUserName: 'jdoe',
+      Roles: ['%Developer', '%DB_IRISAPP'],
+    }),
+  );
+  list.push(
+    mk({
+      Username: 'jdoe',
+      Nspace: 'USER',
+      Routine: '%Studio.General.1',
+      State: 'RUNW',
+      Device: '|TCP|1972|61023',
+      ClientName: 'devbox',
+      EXEName: 'code',
+      IPAddress: '10.0.0.41',
+      CanReceiveBroadcast: true,
+      OSUserName: 'jdoe',
+      Roles: ['%Developer'],
+    }),
+  );
+  list.push(
+    mk({
+      Username: 'analytics',
+      Nspace: 'CLINICAL',
+      Routine: '%SQL.StatementResult.1',
+      State: 'RUNW',
+      Device: '|TCP|1972|61102',
+      ClientName: 'bi-server',
+      EXEName: 'java',
+      IPAddress: '10.0.0.77',
+      CanReceiveBroadcast: true,
+      OSUserName: 'tomcat',
+      Roles: ['%SQL', '%DB_CLINICAL'],
+      Globals: 4_812_003,
+      InTransaction: 0,
+      LastGlobalReference: '^DICOM.StudyD(88213)',
+    }),
+  );
+  list.push(
+    mk({
+      Username: 'analytics',
+      Nspace: 'CLINICAL',
+      Routine: '%SQL.StatementResult.1',
+      State: 'RUNW',
+      Device: '|TCP|1972|61105',
+      ClientName: 'bi-server',
+      EXEName: 'python3',
+      IPAddress: '10.0.0.77',
+      CanReceiveBroadcast: true,
+      OSUserName: 'tomcat',
+      Roles: ['%SQL', '%DB_CLINICAL'],
+    }),
+  );
+  list.push(
+    mk({
+      Username: '_SYSTEM',
+      Nspace: '%SYS',
+      Routine: '%SYS.REST.1',
+      State: 'RUNW',
+      Device: '|TCP|127.0.0.1:52773|54310',
+      ClientName: 'localhost',
+      EXEName: 'CSPa24.so',
+      IPAddress: '127.0.0.1',
+      CanReceiveBroadcast: true,
+      OSUserName: 'irisowner',
+    }),
+  );
+  list.push(
+    mk({
+      Username: 'irisowner',
+      Nspace: 'USER',
+      Routine: '%SYS.TaskSuper.1',
+      State: 'RUNW',
+      Device: '/dev/pts/0',
+      ClientName: 'container',
+      EXEName: 'iris',
+      IPAddress: '',
+      CanReceiveBroadcast: true,
+      OSUserName: 'irisowner',
+    }),
+  );
+  list.push(
+    mk({
+      Username: 'ops',
+      Nspace: 'USER',
+      Routine: 'MYREPORT',
+      State: 'LOCK',
+      Device: '/dev/pts/1',
+      ClientName: 'container',
+      EXEName: 'irissession',
+      CanReceiveBroadcast: true,
+      OSUserName: 'ops',
+      Location: '+12^MYREPORT',
+      InTransaction: 1,
+      LastGlobalReference: '^MyGlobal("batch",17)',
+    }),
+  );
   return list;
 }
 
 function seedLocks(processes: ProcessRec[]): LockRec[] {
   const p = (routine: string) => processes.find((x) => x.Routine === routine)?.Pid ?? 1;
-  const mk = (Pid: number, ModeCount: string, Reference: string, Directory: string, RoutineInfo: string, OSUserName: string, Removable = true): LockRec => ({
+  const mk = (
+    Pid: number,
+    ModeCount: string,
+    Reference: string,
+    Directory: string,
+    RoutineInfo: string,
+    OSUserName: string,
+    Removable = true,
+  ): LockRec => ({
     Pid: String(Pid),
     ModeCount,
     Reference,
@@ -488,16 +699,51 @@ function seedLocks(processes: ProcessRec[]): LockRec[] {
   return [
     mk(p('MYREPORT'), 'Exclusive', '^MyGlobal("batch",17)', `${MGR}user/`, '+12^MYREPORT', 'ops'),
     mk(p('MYREPORT'), 'Exclusive', '^MyGlobal("batch")', `${MGR}user/`, '+8^MYREPORT', 'ops'),
-    mk(p('Ens.Director.1'), 'Exclusive', '^Ens.Runtime("Ens.Director")', `${MGR}interop/`, '+45^Ens.Director.1', 'irisowner', false),
-    mk(p('EnsLib.HL7.Service.TCPService.1'), 'Exclusive/1', '^Ens.MessageHeaderD(4021339)', `${MGR}interop/`, '+120^Ens.BusinessService.1', 'irisowner'),
-    mk(p('%SYS.TaskSuper.1'), 'Exclusive', '^%SYS("TaskManager")', MGR, '+3^%SYS.TaskSuper.1', 'irisowner', false),
-    mk(p('%SQL.StatementResult.1'), 'Shared/2', '^DICOM.StudyD(88213)', `${MGR}clinical/`, '+77^%SQL.StatementResult.1', 'tomcat'),
+    mk(
+      p('Ens.Director.1'),
+      'Exclusive',
+      '^Ens.Runtime("Ens.Director")',
+      `${MGR}interop/`,
+      '+45^Ens.Director.1',
+      'irisowner',
+      false,
+    ),
+    mk(
+      p('EnsLib.HL7.Service.TCPService.1'),
+      'Exclusive/1',
+      '^Ens.MessageHeaderD(4021339)',
+      `${MGR}interop/`,
+      '+120^Ens.BusinessService.1',
+      'irisowner',
+    ),
+    mk(
+      p('%SYS.TaskSuper.1'),
+      'Exclusive',
+      '^%SYS("TaskManager")',
+      MGR,
+      '+3^%SYS.TaskSuper.1',
+      'irisowner',
+      false,
+    ),
+    mk(
+      p('%SQL.StatementResult.1'),
+      'Shared/2',
+      '^DICOM.StudyD(88213)',
+      `${MGR}clinical/`,
+      '+77^%SQL.StatementResult.1',
+      'tomcat',
+    ),
   ];
 }
 
 function seedJournals(): JournalRec[] {
   const out: JournalRec[] = [];
-  const reasons = ['file size limit reached', 'file size limit reached', 'daily switch task', 'journal switch requested'];
+  const reasons = [
+    'file size limit reached',
+    'file size limit reached',
+    'daily switch task',
+    'journal switch requested',
+  ];
   const rnd = seeded(7);
   let idx = 0;
   for (let day = 4; day >= 0; day--) {
@@ -563,20 +809,121 @@ function task(
 
 function seedTasks(): TaskRec[] {
   return [
-    task(1, 'Purge Journal Files', 'System', '%SYS', 'Purge journal files that are no longer needed', '%SYS.Task.PurgeJournal'),
-    task(2, 'Purge Audit Database', 'System', '%SYS', 'Purge audit records older than 60 days', '%SYS.Task.PurgeAudit', { Settings: { DaysToKeep: 60 } }),
+    task(
+      1,
+      'Purge Journal Files',
+      'System',
+      '%SYS',
+      'Purge journal files that are no longer needed',
+      '%SYS.Task.PurgeJournal',
+    ),
+    task(
+      2,
+      'Purge Audit Database',
+      'System',
+      '%SYS',
+      'Purge audit records older than 60 days',
+      '%SYS.Task.PurgeAudit',
+      { Settings: { DaysToKeep: 60 } },
+    ),
     task(3, 'Purge Tasks', 'System', '%SYS', 'Purge task history', '%SYS.Task.PurgeTaskHistory'),
-    task(4, 'Switch Journal', 'System', '%SYS', 'Switch to a new journal file', '%SYS.Task.SwitchJournal', { DailyStartTime: '00:00:00' }),
-    task(5, 'Integrity Check', 'System', '%SYS', 'Weekly integrity check of all databases', '%SYS.Task.IntegrityCheck', { TimePeriod: 'Weekly', NextScheduled: inMinutes(60 * 30) }),
-    task(6, 'Purge Errors and Log Files', 'System', '%SYS', 'Purge error globals and log files', '%SYS.Task.PurgeErrorsAndLogs'),
-    task(7, 'Diagnostic Report', 'System', '%SYS', 'Generate a diagnostic report', '%SYS.Task.DiagnosticReport', { Suspended: true, Status: 'Suspended' }),
-    task(8, 'Update SQL query statistics', 'System', '%SYS', 'Update SQL statement statistics', '%SYS.Task.UpdateSQLStats'),
-    task(9, 'Inventory Scan', 'System', '%SYS', 'Scan the installation inventory', '%SYS.Task.InventoryScan', { TimePeriod: 'Weekly' }),
-    task(10, 'Security Scan', 'System', '%SYS', 'Check for expiring passwords and inactive accounts', '%SYS.Task.SecurityScan'),
-    task(11, 'Purge Interop Management Data', 'System', '%SYS', 'Purge old interoperability messages and logs', 'Ens.Util.Tasks.PurgeAll', { Namespace: 'INTEROP', Settings: { NumberOfDaysToKeep: 30, BodiesToo: true } }),
-    task(12, 'Nightly HL7 archive export', 'User', 'INTEROP', 'Export HL7 archive to the DMZ SFTP', 'dc.Tasks.ExportHL7', { RunAsUser: 'ops', DailyStartTime: '23:30:00', Settings: { Target: 'sftp://dmz/exports', Compress: true }, Status: 'Error', Error: 'ERROR #5002: SFTP connection refused', LastFinished: hoursAgo(20) }),
-    task(13, 'DICOM study index rebuild', 'User', 'CLINICAL', 'Rebuild the study search index', 'dc.Tasks.RebuildDicomIndex', { TimePeriod: 'Weekly', RunAsUser: 'analytics' }),
-    task(14, 'Warm cache', 'User', 'IRISAPP', 'Pre-load reference tables after restart', 'dc.Tasks.WarmCache', { TimePeriod: 'On Demand', NextScheduled: '', DailyFrequency: '' }),
+    task(4, 'Switch Journal', 'System', '%SYS', 'Switch to a new journal file', '%SYS.Task.SwitchJournal', {
+      DailyStartTime: '00:00:00',
+    }),
+    task(
+      5,
+      'Integrity Check',
+      'System',
+      '%SYS',
+      'Weekly integrity check of all databases',
+      '%SYS.Task.IntegrityCheck',
+      { TimePeriod: 'Weekly', NextScheduled: inMinutes(60 * 30) },
+    ),
+    task(
+      6,
+      'Purge Errors and Log Files',
+      'System',
+      '%SYS',
+      'Purge error globals and log files',
+      '%SYS.Task.PurgeErrorsAndLogs',
+    ),
+    task(
+      7,
+      'Diagnostic Report',
+      'System',
+      '%SYS',
+      'Generate a diagnostic report',
+      '%SYS.Task.DiagnosticReport',
+      { Suspended: true, Status: 'Suspended' },
+    ),
+    task(
+      8,
+      'Update SQL query statistics',
+      'System',
+      '%SYS',
+      'Update SQL statement statistics',
+      '%SYS.Task.UpdateSQLStats',
+    ),
+    task(
+      9,
+      'Inventory Scan',
+      'System',
+      '%SYS',
+      'Scan the installation inventory',
+      '%SYS.Task.InventoryScan',
+      { TimePeriod: 'Weekly' },
+    ),
+    task(
+      10,
+      'Security Scan',
+      'System',
+      '%SYS',
+      'Check for expiring passwords and inactive accounts',
+      '%SYS.Task.SecurityScan',
+    ),
+    task(
+      11,
+      'Purge Interop Management Data',
+      'System',
+      '%SYS',
+      'Purge old interoperability messages and logs',
+      'Ens.Util.Tasks.PurgeAll',
+      { Namespace: 'INTEROP', Settings: { NumberOfDaysToKeep: 30, BodiesToo: true } },
+    ),
+    task(
+      12,
+      'Nightly HL7 archive export',
+      'User',
+      'INTEROP',
+      'Export HL7 archive to the DMZ SFTP',
+      'dc.Tasks.ExportHL7',
+      {
+        RunAsUser: 'ops',
+        DailyStartTime: '23:30:00',
+        Settings: { Target: 'sftp://dmz/exports', Compress: true },
+        Status: 'Error',
+        Error: 'ERROR #5002: SFTP connection refused',
+        LastFinished: hoursAgo(20),
+      },
+    ),
+    task(
+      13,
+      'DICOM study index rebuild',
+      'User',
+      'CLINICAL',
+      'Rebuild the study search index',
+      'dc.Tasks.RebuildDicomIndex',
+      { TimePeriod: 'Weekly', RunAsUser: 'analytics' },
+    ),
+    task(
+      14,
+      'Warm cache',
+      'User',
+      'IRISAPP',
+      'Pre-load reference tables after restart',
+      'dc.Tasks.WarmCache',
+      { TimePeriod: 'On Demand', NextScheduled: '', DailyFrequency: '' },
+    ),
   ];
 }
 
@@ -632,47 +979,139 @@ function user(Name: string, FullName: string, Roles: string[], extra: Partial<Us
 
 function seedUsers(): UserRec[] {
   return [
-    user('_SYSTEM', 'SQL System Manager', ['%All'], { Namespace: '%SYS', Comment: 'Built-in super user', AccountNeverExpires: true, PasswordNeverExpires: true }),
-    user('SuperUser', 'Super User', ['%All'], { Namespace: '%SYS', AccountNeverExpires: true, PasswordNeverExpires: true }),
+    user('_SYSTEM', 'SQL System Manager', ['%All'], {
+      Namespace: '%SYS',
+      Comment: 'Built-in super user',
+      AccountNeverExpires: true,
+      PasswordNeverExpires: true,
+    }),
+    user('SuperUser', 'Super User', ['%All'], {
+      Namespace: '%SYS',
+      AccountNeverExpires: true,
+      PasswordNeverExpires: true,
+    }),
     user('Admin', 'System Administrator', ['%Manager', '%Operator'], { Namespace: '%SYS' }),
-    user('_PUBLIC', 'Public account', [], { Type: 'Password user', Comment: 'Roles held by everybody', Enabled: true }),
+    user('_PUBLIC', 'Public account', [], {
+      Type: 'Password user',
+      Comment: 'Roles held by everybody',
+      Enabled: true,
+    }),
     user('UnknownUser', 'Unauthenticated access', [], { Enabled: false }),
-    user('CSPSystem', 'CSP Gateway user', ['%DB_IRISSYS'], { Namespace: '%SYS', Comment: 'Used by the web gateway' }),
-    user('_Ensemble', 'Interoperability service account', ['%EnsRole_Administrator', '%DB_INTEROP'], { Namespace: 'INTEROP' }),
-    user('jdoe', 'Jane Doe', ['%Developer', '%DB_IRISAPP', '%DB_USER'], { EmailAddress: 'jdoe@example.org', Namespace: 'IRISAPP', EscalationRoles: ['%Manager'] }),
-    user('ops', 'Operations on-call', ['%Operator', '%DB_USER'], { EmailAddress: 'ops@example.org', ChangePassword: true }),
-    user('analytics', 'BI service account', ['%SQL', '%DB_CLINICAL'], { Comment: 'Read-only SQL for the BI cluster', Namespace: 'CLINICAL' }),
-    user('auditor', 'Compliance auditor', ['%Manager'], { EmailAddress: 'audit@example.org', ExpirationDate: '2026-12-31' }),
+    user('CSPSystem', 'CSP Gateway user', ['%DB_IRISSYS'], {
+      Namespace: '%SYS',
+      Comment: 'Used by the web gateway',
+    }),
+    user('_Ensemble', 'Interoperability service account', ['%EnsRole_Administrator', '%DB_INTEROP'], {
+      Namespace: 'INTEROP',
+    }),
+    user('jdoe', 'Jane Doe', ['%Developer', '%DB_IRISAPP', '%DB_USER'], {
+      EmailAddress: 'jdoe@example.org',
+      Namespace: 'IRISAPP',
+      EscalationRoles: ['%Manager'],
+    }),
+    user('ops', 'Operations on-call', ['%Operator', '%DB_USER'], {
+      EmailAddress: 'ops@example.org',
+      ChangePassword: true,
+    }),
+    user('analytics', 'BI service account', ['%SQL', '%DB_CLINICAL'], {
+      Comment: 'Read-only SQL for the BI cluster',
+      Namespace: 'CLINICAL',
+    }),
+    user('auditor', 'Compliance auditor', ['%Manager'], {
+      EmailAddress: 'audit@example.org',
+      ExpirationDate: '2026-12-31',
+    }),
     user('operator', 'Night operator', ['%Operator'], { Enabled: true }),
   ];
 }
 
 function role(Name: string, Description: string, Resources: string[], extra: Partial<RoleRec> = {}): RoleRec {
-  return { Name, Description, CreatedBy: '_SYSTEM', EscalationOnly: false, GrantedRoles: [], Resources, ...extra };
+  return {
+    Name,
+    Description,
+    CreatedBy: '_SYSTEM',
+    EscalationOnly: false,
+    GrantedRoles: [],
+    Resources,
+    ...extra,
+  };
 }
 
 function seedRoles(): RoleRec[] {
   return [
-    role('%All', 'The Super-User Role', ['%Admin_Manage:U', '%Admin_Operate:U', '%Admin_Secure:U', '%DB_%DEFAULT:RW']),
-    role('%Manager', 'System Manager', ['%Admin_Manage:U', '%Admin_Secure:U', '%Admin_Task:U', '%DB_IRISSYS:RW', '%Development:U', '%Service_Console:U', '%Service_Terminal:U']),
-    role('%Operator', 'System Operator', ['%Admin_Operate:U', '%Admin_Task:U', '%Admin_Journal:U', '%DB_IRISSYS:R', '%Service_Console:U', '%Service_Terminal:U']),
-    role('%Developer', 'Application Developer', ['%Development:U', '%DB_USER:RW', '%Service_Console:U', '%Service_Terminal:U', '%Service_Bindings:U']),
+    role('%All', 'The Super-User Role', [
+      '%Admin_Manage:U',
+      '%Admin_Operate:U',
+      '%Admin_Secure:U',
+      '%DB_%DEFAULT:RW',
+    ]),
+    role('%Manager', 'System Manager', [
+      '%Admin_Manage:U',
+      '%Admin_Secure:U',
+      '%Admin_Task:U',
+      '%DB_IRISSYS:RW',
+      '%Development:U',
+      '%Service_Console:U',
+      '%Service_Terminal:U',
+    ]),
+    role('%Operator', 'System Operator', [
+      '%Admin_Operate:U',
+      '%Admin_Task:U',
+      '%Admin_Journal:U',
+      '%DB_IRISSYS:R',
+      '%Service_Console:U',
+      '%Service_Terminal:U',
+    ]),
+    role('%Developer', 'Application Developer', [
+      '%Development:U',
+      '%DB_USER:RW',
+      '%Service_Console:U',
+      '%Service_Terminal:U',
+      '%Service_Bindings:U',
+    ]),
     role('%SQL', 'SQL user', ['%Service_Bindings:U', '%SQL:U']),
     role('%DB_USER', 'R/W access to USER', ['%DB_USER:RW']),
     role('%DB_IRISSYS', 'R/W access to IRISSYS', ['%DB_IRISSYS:RW']),
     role('%DB_IRISAPP', 'R/W access to IRISAPP', ['%DB_IRISAPP:RW']),
     role('%DB_INTEROP', 'R/W access to INTEROP', ['%DB_INTEROP:RW']),
     role('%DB_CLINICAL', 'R/W access to CLINICAL', ['%DB_CLINICAL:RW']),
-    role('%EnsRole_Administrator', 'Interoperability administrator', ['%Ens_Portal:U', '%Ens_Rules:RW', '%Ens_Code:RW'], { GrantedRoles: ['%EnsRole_Operator'] }),
+    role(
+      '%EnsRole_Administrator',
+      'Interoperability administrator',
+      ['%Ens_Portal:U', '%Ens_Rules:RW', '%Ens_Code:RW'],
+      { GrantedRoles: ['%EnsRole_Operator'] },
+    ),
     role('%EnsRole_Operator', 'Interoperability operator', ['%Ens_Portal:U', '%Ens_MessageHeader:R']),
-    role('BreakGlass', 'Emergency escalation to %All (audited)', [], { EscalationOnly: true, GrantedRoles: ['%All'], CreatedBy: 'Admin' }),
+    role('BreakGlass', 'Emergency escalation to %All (audited)', [], {
+      EscalationOnly: true,
+      GrantedRoles: ['%All'],
+      CreatedBy: 'Admin',
+    }),
   ];
 }
 
 function seedResources(): ResourceRec[] {
-  const admin = (n: string, d: string) => ({ Name: n, Description: d, PublicPermission: '', ResourceType: 'System', AllowDelete: false });
-  const dbr = (n: string, pub = '') => ({ Name: `%DB_${n}`, Description: `R/W access to the ${n} database`, PublicPermission: pub, ResourceType: 'Database', AllowDelete: false });
-  const svc = (n: string, d: string, pub = '') => ({ Name: `%Service_${n}`, Description: d, PublicPermission: pub, ResourceType: 'Service', AllowDelete: false });
+  const admin = (n: string, d: string) => ({
+    Name: n,
+    Description: d,
+    PublicPermission: '',
+    ResourceType: 'System',
+    AllowDelete: false,
+  });
+  const dbr = (n: string, pub = '') => ({
+    Name: `%DB_${n}`,
+    Description: `R/W access to the ${n} database`,
+    PublicPermission: pub,
+    ResourceType: 'Database',
+    AllowDelete: false,
+  });
+  const svc = (n: string, d: string, pub = '') => ({
+    Name: `%Service_${n}`,
+    Description: d,
+    PublicPermission: pub,
+    ResourceType: 'Service',
+    AllowDelete: false,
+  });
   return [
     admin('%Admin_Manage', 'Manage the system'),
     admin('%Admin_Operate', 'Operate the system'),
@@ -710,12 +1149,30 @@ function seedResources(): ResourceRec[] {
     svc('Mirror', 'Mirroring'),
     svc('Telnet', 'Telnet'),
     svc('Native', 'Native API', 'U'),
-    { Name: 'dc.Aperture.Admin', Description: 'Administer the Aperture portal', PublicPermission: '', ResourceType: 'Application', AllowDelete: true },
-    { Name: 'HL7.Archive', Description: 'Access the HL7 archive', PublicPermission: '', ResourceType: 'Application', AllowDelete: true },
+    {
+      Name: 'dc.Aperture.Admin',
+      Description: 'Administer the Aperture portal',
+      PublicPermission: '',
+      ResourceType: 'Application',
+      AllowDelete: true,
+    },
+    {
+      Name: 'HL7.Archive',
+      Description: 'Access the HL7 archive',
+      PublicPermission: '',
+      ResourceType: 'Application',
+      AllowDelete: true,
+    },
   ];
 }
 
-function service(Name: string, Description: string, enabled: boolean, methods: string[], extra: Partial<ServiceRec> = {}): ServiceRec {
+function service(
+  Name: string,
+  Description: string,
+  enabled: boolean,
+  methods: string[],
+  extra: Partial<ServiceRec> = {},
+): ServiceRec {
   return {
     Name,
     Description,
@@ -747,7 +1204,9 @@ function seedServices(): ServiceRec[] {
     service('%Service_Sharding', 'Sharding', false, ['Password']),
     service('%Service_Telnet', 'Telnet', false, ['Password']),
     service('%Service_Terminal', 'Terminal', true, ['Password', 'OS']),
-    service('%Service_WebGateway', 'Web gateway', true, ['Password'], { AllowedConnections: ['127.0.0.1', '10.0.0.0/8'] }),
+    service('%Service_WebGateway', 'Web gateway', true, ['Password'], {
+      AllowedConnections: ['127.0.0.1', '10.0.0.0/8'],
+    }),
   ];
 }
 
@@ -783,28 +1242,107 @@ function webApp(Name: string, Namespace: string, Type: string, extra: Partial<We
 
 function seedWebApps(): WebAppRec[] {
   return [
-    webApp('/csp/sys', '%SYS', 'CSP', { Resource: '%Development', Description: 'System Management Portal', Path: `${MGR}../csp/sys/`, AuthenticationMethods: ['Password', 'Unauthenticated'], AutheEnabled: 96 }),
-    webApp('/csp/sys/mgr', '%SYS', 'CSP', { Resource: '%Admin_Manage', Description: 'System Management Portal - configuration', Path: `${MGR}../csp/sys/mgr/` }),
-    webApp('/csp/sys/op', '%SYS', 'CSP', { Resource: '%Admin_Operate', Description: 'System Management Portal - operation', Path: `${MGR}../csp/sys/op/` }),
-    webApp('/csp/sys/sec', '%SYS', 'CSP', { Resource: '%Admin_Secure', Description: 'System Management Portal - security', Path: `${MGR}../csp/sys/sec/` }),
-    webApp('/csp/sys/exp', '%SYS', 'CSP', { Resource: '%Development', Description: 'System Management Portal - explorer', Path: `${MGR}../csp/sys/exp/` }),
-    webApp('/csp/broker', '%SYS', 'CSP', { Description: 'Zen broker', Path: `${MGR}../csp/broker/`, AuthenticationMethods: ['Unauthenticated'], AutheEnabled: 64 }),
+    webApp('/csp/sys', '%SYS', 'CSP', {
+      Resource: '%Development',
+      Description: 'System Management Portal',
+      Path: `${MGR}../csp/sys/`,
+      AuthenticationMethods: ['Password', 'Unauthenticated'],
+      AutheEnabled: 96,
+    }),
+    webApp('/csp/sys/mgr', '%SYS', 'CSP', {
+      Resource: '%Admin_Manage',
+      Description: 'System Management Portal - configuration',
+      Path: `${MGR}../csp/sys/mgr/`,
+    }),
+    webApp('/csp/sys/op', '%SYS', 'CSP', {
+      Resource: '%Admin_Operate',
+      Description: 'System Management Portal - operation',
+      Path: `${MGR}../csp/sys/op/`,
+    }),
+    webApp('/csp/sys/sec', '%SYS', 'CSP', {
+      Resource: '%Admin_Secure',
+      Description: 'System Management Portal - security',
+      Path: `${MGR}../csp/sys/sec/`,
+    }),
+    webApp('/csp/sys/exp', '%SYS', 'CSP', {
+      Resource: '%Development',
+      Description: 'System Management Portal - explorer',
+      Path: `${MGR}../csp/sys/exp/`,
+    }),
+    webApp('/csp/broker', '%SYS', 'CSP', {
+      Description: 'Zen broker',
+      Path: `${MGR}../csp/broker/`,
+      AuthenticationMethods: ['Unauthenticated'],
+      AutheEnabled: 64,
+    }),
     webApp('/csp/user', 'USER', 'CSP', { NamespaceDefault: true, Path: `${MGR}../csp/user/` }),
-    webApp('/api/admin', '%SYS', 'REST', { Resource: '', Description: 'System administration REST API', DispatchClass: '%Api.Admin.v2.Dispatch', JWTAuthEnabled: true, AuthenticationMethods: ['Password', 'JWT'], CorsAllowlist: ['http://localhost:5173'] }),
-    webApp('/api/atelier', '%SYS', 'REST', { Description: 'Source code REST API', DispatchClass: '%Api.Atelier', AuthenticationMethods: ['Password', 'Unauthenticated'], AutheEnabled: 96 }),
-    webApp('/api/monitor', '%SYS', 'REST', { Description: 'Prometheus metrics', DispatchClass: '%Api.Monitor', AuthenticationMethods: ['Unauthenticated'], AutheEnabled: 64 }),
-    webApp('/api/docdb', '%SYS', 'REST', { Description: 'Document database REST API', DispatchClass: '%Api.DocDB.v1.Dispatch', Enabled: false }),
-    webApp('/api/mgmnt', '%SYS', 'REST', { Description: 'REST API management', DispatchClass: '%Api.Mgmnt.v2.impl' }),
-    webApp('/csp/irisapp', 'IRISAPP', 'CSP', { NamespaceDefault: true, Path: `${MGR}../csp/irisapp/`, Description: 'IRISAPP default web app' }),
-    webApp('/csp/healthshare/interop', 'INTEROP', 'CSP', { NamespaceDefault: true, Resource: '%Ens_Portal', Description: 'Interoperability portal', Path: `${MGR}../csp/interop/` }),
-    webApp('/api/hl7', 'INTEROP', 'REST', { DispatchClass: 'dc.HL7.REST', Description: 'HL7 archive REST API', Resource: 'HL7.Archive', JWTAuthEnabled: true, AuthenticationMethods: ['Password', 'JWT'] }),
-    webApp('/aperture', '%SYS', 'CSP', { Description: 'Aperture management portal (this app)', Path: `${MGR}../csp/aperture/`, ServeFiles: 'Always', AuthenticationMethods: ['Unauthenticated'], AutheEnabled: 64, Resource: '' }),
+    webApp('/api/admin', '%SYS', 'REST', {
+      Resource: '',
+      Description: 'System administration REST API',
+      DispatchClass: '%Api.Admin.v2.Dispatch',
+      JWTAuthEnabled: true,
+      AuthenticationMethods: ['Password', 'JWT'],
+      CorsAllowlist: ['http://localhost:5173'],
+    }),
+    webApp('/api/atelier', '%SYS', 'REST', {
+      Description: 'Source code REST API',
+      DispatchClass: '%Api.Atelier',
+      AuthenticationMethods: ['Password', 'Unauthenticated'],
+      AutheEnabled: 96,
+    }),
+    webApp('/api/monitor', '%SYS', 'REST', {
+      Description: 'Prometheus metrics',
+      DispatchClass: '%Api.Monitor',
+      AuthenticationMethods: ['Unauthenticated'],
+      AutheEnabled: 64,
+    }),
+    webApp('/api/docdb', '%SYS', 'REST', {
+      Description: 'Document database REST API',
+      DispatchClass: '%Api.DocDB.v1.Dispatch',
+      Enabled: false,
+    }),
+    webApp('/api/mgmnt', '%SYS', 'REST', {
+      Description: 'REST API management',
+      DispatchClass: '%Api.Mgmnt.v2.impl',
+    }),
+    webApp('/csp/irisapp', 'IRISAPP', 'CSP', {
+      NamespaceDefault: true,
+      Path: `${MGR}../csp/irisapp/`,
+      Description: 'IRISAPP default web app',
+    }),
+    webApp('/csp/healthshare/interop', 'INTEROP', 'CSP', {
+      NamespaceDefault: true,
+      Resource: '%Ens_Portal',
+      Description: 'Interoperability portal',
+      Path: `${MGR}../csp/interop/`,
+    }),
+    webApp('/api/hl7', 'INTEROP', 'REST', {
+      DispatchClass: 'dc.HL7.REST',
+      Description: 'HL7 archive REST API',
+      Resource: 'HL7.Archive',
+      JWTAuthEnabled: true,
+      AuthenticationMethods: ['Password', 'JWT'],
+    }),
+    webApp('/aperture', '%SYS', 'CSP', {
+      Description: 'Aperture management portal (this app)',
+      Path: `${MGR}../csp/aperture/`,
+      ServeFiles: 'Always',
+      AuthenticationMethods: ['Unauthenticated'],
+      AutheEnabled: 64,
+      Resource: '',
+    }),
   ];
 }
 
 function seedAuditEvents(): AuditEventRec[] {
   const rnd = seeded(5);
-  const mk = (EventSource: string, EventType: string, EventName: string, Description: string, Enabled = true): AuditEventRec => ({
+  const mk = (
+    EventSource: string,
+    EventType: string,
+    EventName: string,
+    Description: string,
+    Enabled = true,
+  ): AuditEventRec => ({
     EventSource,
     EventType,
     EventName,
@@ -853,20 +1391,117 @@ function seedAuditEvents(): AuditEventRec[] {
 
 function seedWebSessions(): WebSessionRec[] {
   return [
-    { ID: 'NrT0uQV9SV', Username: '_SYSTEM', Preserve: 0, Application: '/api/admin', Timeout: inMinutes(14), LicenseId: '_SYSTEM@127.0.0.1', SesProcessId: '', AllowEndSession: false },
-    { ID: 'kA2mPq7LzX', Username: 'jdoe', Preserve: 1, Application: '/csp/sys', Timeout: inMinutes(9), LicenseId: 'jdoe@10.0.0.41', SesProcessId: '', AllowEndSession: true },
-    { ID: 'Bq91xTgH0e', Username: 'jdoe', Preserve: 0, Application: '/csp/irisapp', Timeout: inMinutes(3), LicenseId: 'jdoe@10.0.0.41', SesProcessId: '', AllowEndSession: true },
-    { ID: 'Zx5cVb3NmQ', Username: 'ops', Preserve: 1, Application: '/csp/healthshare/interop', Timeout: inMinutes(12), LicenseId: 'ops@10.0.0.52', SesProcessId: '', AllowEndSession: true },
-    { ID: 'Yt8kLp2WsD', Username: 'UnknownUser', Preserve: 0, Application: '/api/monitor', Timeout: inMinutes(1), LicenseId: '', SesProcessId: '', AllowEndSession: true },
+    {
+      ID: 'NrT0uQV9SV',
+      Username: '_SYSTEM',
+      Preserve: 0,
+      Application: '/api/admin',
+      Timeout: inMinutes(14),
+      LicenseId: '_SYSTEM@127.0.0.1',
+      SesProcessId: '',
+      AllowEndSession: false,
+    },
+    {
+      ID: 'kA2mPq7LzX',
+      Username: 'jdoe',
+      Preserve: 1,
+      Application: '/csp/sys',
+      Timeout: inMinutes(9),
+      LicenseId: 'jdoe@10.0.0.41',
+      SesProcessId: '',
+      AllowEndSession: true,
+    },
+    {
+      ID: 'Bq91xTgH0e',
+      Username: 'jdoe',
+      Preserve: 0,
+      Application: '/csp/irisapp',
+      Timeout: inMinutes(3),
+      LicenseId: 'jdoe@10.0.0.41',
+      SesProcessId: '',
+      AllowEndSession: true,
+    },
+    {
+      ID: 'Zx5cVb3NmQ',
+      Username: 'ops',
+      Preserve: 1,
+      Application: '/csp/healthshare/interop',
+      Timeout: inMinutes(12),
+      LicenseId: 'ops@10.0.0.52',
+      SesProcessId: '',
+      AllowEndSession: true,
+    },
+    {
+      ID: 'Yt8kLp2WsD',
+      Username: 'UnknownUser',
+      Preserve: 0,
+      Application: '/api/monitor',
+      Timeout: inMinutes(1),
+      LicenseId: '',
+      SesProcessId: '',
+      AllowEndSession: true,
+    },
   ];
 }
 
 function seedSsl(): SslRec[] {
   return [
-    { Name: '%SuperServer', Description: 'Superserver TLS', Enabled: true, Type: 'Server', CAFile: '/usr/irissys/mgr/certs/ca.pem', CertificateFile: '/usr/irissys/mgr/certs/server.pem', PrivateKeyFile: '/usr/irissys/mgr/certs/server.key', TLSMinVersion: 16, TLSMaxVersion: 32, VerifyPeer: 0, CipherList: ['ALL:!aNULL:!eNULL:!EXP:!SSLv2'], Ciphersuites: ['TLS_AES_256_GCM_SHA384', 'TLS_CHACHA20_POLY1305_SHA256'] },
-    { Name: 'MirrorSSL', Description: 'Mirror member TLS', Enabled: false, Type: 'Client', CAFile: '/usr/irissys/mgr/certs/ca.pem', CertificateFile: '/usr/irissys/mgr/certs/mirror.pem', PrivateKeyFile: '/usr/irissys/mgr/certs/mirror.key', TLSMinVersion: 16, TLSMaxVersion: 32, VerifyPeer: 1, CipherList: ['HIGH'], Ciphersuites: [] },
-    { Name: 'DMZ-SFTP', Description: 'Outbound TLS to the DMZ SFTP', Enabled: true, Type: 'Client', CAFile: '/usr/irissys/mgr/certs/dmz-ca.pem', CertificateFile: '', PrivateKeyFile: '', TLSMinVersion: 16, TLSMaxVersion: 32, VerifyPeer: 1, CipherList: ['HIGH'], Ciphersuites: [] },
-    { Name: 'LDAP-Corp', Description: 'LDAPS to the corporate directory', Enabled: true, Type: 'Client', CAFile: '/etc/ssl/certs/corp-root.pem', CertificateFile: '', PrivateKeyFile: '', TLSMinVersion: 16, TLSMaxVersion: 32, VerifyPeer: 1, CipherList: ['HIGH'], Ciphersuites: [] },
+    {
+      Name: '%SuperServer',
+      Description: 'Superserver TLS',
+      Enabled: true,
+      Type: 'Server',
+      CAFile: '/usr/irissys/mgr/certs/ca.pem',
+      CertificateFile: '/usr/irissys/mgr/certs/server.pem',
+      PrivateKeyFile: '/usr/irissys/mgr/certs/server.key',
+      TLSMinVersion: 16,
+      TLSMaxVersion: 32,
+      VerifyPeer: 0,
+      CipherList: ['ALL:!aNULL:!eNULL:!EXP:!SSLv2'],
+      Ciphersuites: ['TLS_AES_256_GCM_SHA384', 'TLS_CHACHA20_POLY1305_SHA256'],
+    },
+    {
+      Name: 'MirrorSSL',
+      Description: 'Mirror member TLS',
+      Enabled: false,
+      Type: 'Client',
+      CAFile: '/usr/irissys/mgr/certs/ca.pem',
+      CertificateFile: '/usr/irissys/mgr/certs/mirror.pem',
+      PrivateKeyFile: '/usr/irissys/mgr/certs/mirror.key',
+      TLSMinVersion: 16,
+      TLSMaxVersion: 32,
+      VerifyPeer: 1,
+      CipherList: ['HIGH'],
+      Ciphersuites: [],
+    },
+    {
+      Name: 'DMZ-SFTP',
+      Description: 'Outbound TLS to the DMZ SFTP',
+      Enabled: true,
+      Type: 'Client',
+      CAFile: '/usr/irissys/mgr/certs/dmz-ca.pem',
+      CertificateFile: '',
+      PrivateKeyFile: '',
+      TLSMinVersion: 16,
+      TLSMaxVersion: 32,
+      VerifyPeer: 1,
+      CipherList: ['HIGH'],
+      Ciphersuites: [],
+    },
+    {
+      Name: 'LDAP-Corp',
+      Description: 'LDAPS to the corporate directory',
+      Enabled: true,
+      Type: 'Client',
+      CAFile: '/etc/ssl/certs/corp-root.pem',
+      CertificateFile: '',
+      PrivateKeyFile: '',
+      TLSMinVersion: 16,
+      TLSMaxVersion: 32,
+      VerifyPeer: 1,
+      CipherList: ['HIGH'],
+      Ciphersuites: [],
+    },
   ];
 }
 

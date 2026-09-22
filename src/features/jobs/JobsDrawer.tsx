@@ -13,10 +13,18 @@ export function JobsDrawer() {
   const navigate = useNavigate();
 
   return (
-    <Drawer opened={open} onClose={() => setOpen(false)} position="right" size="md" title="Job Center" padding="md">
+    <Drawer
+      opened={open}
+      onClose={() => setOpen(false)}
+      position="right"
+      size="md"
+      title="Job Center"
+      padding="md"
+    >
       <Stack gap="sm">
         <Text size="sm" c="dimmed">
-          Long-running operations the API accepted with <code>202</code>. They keep running on the server; this list follows them.
+          Long-running operations the API accepted with <code>202</code>. They keep running on the server;
+          this list follows them.
         </Text>
         <Group justify="space-between">
           <Button size="compact-xs" variant="subtle" onClick={clearFinished} disabled={!jobs.length}>
@@ -34,7 +42,13 @@ export function JobsDrawer() {
             All jobs on server
           </Button>
         </Group>
-        {jobs.length ? jobs.map((j) => <JobCard key={j.id} job={j} compact />) : <Text c="dimmed" size="sm">No jobs in this session yet.</Text>}
+        {jobs.length ? (
+          jobs.map((j) => <JobCard key={j.id} job={j} compact />)
+        ) : (
+          <Text c="dimmed" size="sm">
+            No jobs in this session yet.
+          </Text>
+        )}
       </Stack>
     </Drawer>
   );

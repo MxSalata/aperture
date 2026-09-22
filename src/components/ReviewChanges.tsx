@@ -14,7 +14,11 @@ export interface FieldChange {
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
 /** Keys whose value differs between two objects (deep-compared by JSON). */
-export function diffObjects(before: Record<string, unknown> | undefined, after: Record<string, unknown>, omit: string[] = []): FieldChange[] {
+export function diffObjects(
+  before: Record<string, unknown> | undefined,
+  after: Record<string, unknown>,
+  omit: string[] = [],
+): FieldChange[] {
   const out: FieldChange[] = [];
   const keys = new Set([...Object.keys(before ?? {}), ...Object.keys(after)]);
   for (const key of keys) {
@@ -47,7 +51,15 @@ interface ReviewOptions<T extends Record<string, unknown>> {
   onConfirm: () => unknown | Promise<unknown>;
 }
 
-function Body<T extends Record<string, unknown>>({ id, changes, labels, refetch, before, confirmLabel, onConfirm }: ReviewOptions<T> & { id: string; changes: FieldChange[] }) {
+function Body<T extends Record<string, unknown>>({
+  id,
+  changes,
+  labels,
+  refetch,
+  before,
+  confirmLabel,
+  onConfirm,
+}: ReviewOptions<T> & { id: string; changes: FieldChange[] }) {
   const [busy, setBusy] = useState(false);
   const [drift, setDrift] = useState<FieldChange[] | null>(refetch ? null : []);
   const [checking, setChecking] = useState(!!refetch);
@@ -91,8 +103,12 @@ function Body<T extends Record<string, unknown>>({ id, changes, labels, refetch,
           {changes.map((c) => (
             <Table.Tr key={c.key}>
               <Table.Td>{labels?.[c.key] ?? humanize(c.key)}</Table.Td>
-              <Table.Td className="mono muted" style={{ wordBreak: 'break-all' }}>{show(c.before)}</Table.Td>
-              <Table.Td className="mono" style={{ wordBreak: 'break-all' }}>{show(c.after)}</Table.Td>
+              <Table.Td className="mono muted" style={{ wordBreak: 'break-all' }}>
+                {show(c.before)}
+              </Table.Td>
+              <Table.Td className="mono" style={{ wordBreak: 'break-all' }}>
+                {show(c.after)}
+              </Table.Td>
             </Table.Tr>
           ))}
         </Table.Tbody>
@@ -106,15 +122,29 @@ function Body<T extends Record<string, unknown>>({ id, changes, labels, refetch,
           Could not re-read the object before applying: {checkError}
         </Alert>
       ) : drift && drift.length ? (
-        <Alert color="orange" variant="light" icon={<IconAlertTriangle size={16} />} title="Changed on the server since you opened it">
+        <Alert
+          color="orange"
+          variant="light"
+          icon={<IconAlertTriangle size={16} />}
+          title="Changed on the server since you opened it"
+        >
           <Stack gap={4}>
             {drift.map((d) => (
               <Group key={d.key} gap={6}>
-                <Badge size="xs" color="orange" variant="light" style={{ textTransform: 'none' }}>{labels?.[d.key] ?? humanize(d.key)}</Badge>
-                <Text size="xs" className="mono">{show(d.before)} → {show(d.after)}</Text>
+                <Badge size="xs" color="orange" variant="light" style={{ textTransform: 'none' }}>
+                  {labels?.[d.key] ?? humanize(d.key)}
+                </Badge>
+                <Text size="xs" className="mono">
+                  {show(d.before)} → {show(d.after)}
+                </Text>
               </Group>
             ))}
-            <Checkbox size="xs" label="Apply my changes anyway (overwrites those server-side values)" checked={override} onChange={(e) => setOverride(e.currentTarget.checked)} />
+            <Checkbox
+              size="xs"
+              label="Apply my changes anyway (overwrites those server-side values)"
+              checked={override}
+              onChange={(e) => setOverride(e.currentTarget.checked)}
+            />
           </Stack>
         </Alert>
       ) : drift ? (
@@ -123,7 +153,9 @@ function Body<T extends Record<string, unknown>>({ id, changes, labels, refetch,
         </Text>
       ) : null}
       <Group justify="flex-end" gap="xs">
-        <Button variant="default" onClick={() => modals.close(id)}>Cancel</Button>
+        <Button variant="default" onClick={() => modals.close(id)}>
+          Cancel
+        </Button>
         <Button
           disabled={checking || blocked}
           loading={busy}
@@ -169,5 +201,12 @@ export function reviewChanges<T extends Record<string, unknown>>(opts: ReviewOpt
     return;
   }
   const id = `review-${Math.random().toString(36).slice(2)}`;
-  modals.open({ modalId: id, title: opts.title ?? 'Review changes', centered: true, size: 'lg', zIndex: 1100, children: <Body {...opts} id={id} changes={changes} /> });
+  modals.open({
+    modalId: id,
+    title: opts.title ?? 'Review changes',
+    centered: true,
+    size: 'lg',
+    zIndex: 1100,
+    children: <Body {...opts} id={id} changes={changes} />,
+  });
 }

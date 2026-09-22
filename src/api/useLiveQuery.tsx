@@ -15,7 +15,12 @@ interface Options {
 export function useLiveQuery<T>(
   query: { queryKey: QueryKey; queryFn: () => Promise<T> },
   { defaultLive = false, intervalMs = 5000, label }: Options = {},
-): { query: ReturnType<typeof useQuery<T>>; live: boolean; setLive: (live: boolean) => void; control: ReactNode } {
+): {
+  query: ReturnType<typeof useQuery<T>>;
+  live: boolean;
+  setLive: (live: boolean) => void;
+  control: ReactNode;
+} {
   const [live, setLive] = useState(defaultLive);
   const result = useQuery({ ...query, refetchInterval: live ? intervalMs : false });
   const control = (

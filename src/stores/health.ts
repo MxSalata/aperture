@@ -22,7 +22,13 @@ export const useHealth = create<HealthState>()((set) => ({
   lastFailAt: null,
   lastError: null,
   failures: 0,
-  markOk: () => set((s) => (s.reachable && s.failures === 0 ? { lastOkAt: Date.now() } : { reachable: true, failures: 0, lastError: null, lastOkAt: Date.now() })),
-  markFail: (message) => set((s) => ({ reachable: false, failures: s.failures + 1, lastFailAt: Date.now(), lastError: message })),
+  markOk: () =>
+    set((s) =>
+      s.reachable && s.failures === 0
+        ? { lastOkAt: Date.now() }
+        : { reachable: true, failures: 0, lastError: null, lastOkAt: Date.now() },
+    ),
+  markFail: (message) =>
+    set((s) => ({ reachable: false, failures: s.failures + 1, lastFailAt: Date.now(), lastError: message })),
   reset: () => set({ reachable: true, lastOkAt: null, lastFailAt: null, lastError: null, failures: 0 }),
 }));

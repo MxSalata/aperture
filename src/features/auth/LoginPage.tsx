@@ -23,7 +23,13 @@ import { IconAlertCircle, IconFlask, IconInfoCircle, IconLogin, IconServer } fro
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useSession } from '@/stores/session';
-import { normalizeBaseUrl, newProfileId, nextProfileColor, useConnections, SAME_ORIGIN_ID } from '@/stores/connections';
+import {
+  normalizeBaseUrl,
+  newProfileId,
+  nextProfileColor,
+  useConnections,
+  SAME_ORIGIN_ID,
+} from '@/stores/connections';
 import { DEMO_BUILD, useDemo } from '@/stores/demo';
 import { describeError } from '@/lib/errors';
 import { APP_NAME, APP_TAGLINE } from '@/theme';
@@ -62,7 +68,10 @@ export default function LoginPage() {
     validate: {
       username: (v) => (v.trim() ? null : 'Username is required'),
       password: (v) => (v ? null : 'Password is required'),
-      newBaseUrl: (v, values) => (values.connectionId === NEW_ID && !/^https?:\/\//.test(v.trim()) ? 'Enter a URL such as http://iris.lan:52773' : null),
+      newBaseUrl: (v, values) =>
+        values.connectionId === NEW_ID && !/^https?:\/\//.test(v.trim())
+          ? 'Enter a URL such as http://iris.lan:52773'
+          : null,
     },
   });
 
@@ -117,7 +126,13 @@ export default function LoginPage() {
     try {
       await enableDemo();
       setLastUsed(SAME_ORIGIN_ID);
-      await login({ connectionId: SAME_ORIGIN_ID, baseUrl: '', username: '_SYSTEM', password: 'SYS', auth: 'jwt' });
+      await login({
+        connectionId: SAME_ORIGIN_ID,
+        baseUrl: '',
+        username: '_SYSTEM',
+        password: 'SYS',
+        auth: 'jwt',
+      });
     } catch (e) {
       setError(describeError(e));
     } finally {
@@ -126,17 +141,33 @@ export default function LoginPage() {
   };
 
   const selectData = [
-    ...profiles.map((p) => ({ value: p.id, label: p.baseUrl ? `${p.name} · ${p.baseUrl}` : `${p.name} (same origin)` })),
+    ...profiles.map((p) => ({
+      value: p.id,
+      label: p.baseUrl ? `${p.name} · ${p.baseUrl}` : `${p.name} (same origin)`,
+    })),
     { value: NEW_ID, label: '+ New connection…' },
   ];
 
   return (
-    <Box mih="100vh" style={{ background: 'linear-gradient(160deg, var(--mantine-color-indigo-light) 0%, transparent 55%)' }}>
+    <Box
+      mih="100vh"
+      style={{ background: 'linear-gradient(160deg, var(--mantine-color-indigo-light) 0%, transparent 55%)' }}
+    >
       <Container size={460} py={60}>
         <Center mb="lg">
           <Stack gap={4} align="center">
             <Group gap={10}>
-              <Box w={40} h={40} style={{ borderRadius: 12, background: 'linear-gradient(135deg, var(--mantine-color-indigo-6), var(--mantine-color-cyan-5))', display: 'grid', placeItems: 'center' }}>
+              <Box
+                w={40}
+                h={40}
+                style={{
+                  borderRadius: 12,
+                  background:
+                    'linear-gradient(135deg, var(--mantine-color-indigo-6), var(--mantine-color-cyan-5))',
+                  display: 'grid',
+                  placeItems: 'center',
+                }}
+              >
                 <Box w={16} h={16} style={{ borderRadius: '50%', border: '3px solid white' }} />
               </Box>
               <Title order={1} style={{ letterSpacing: -0.5 }}>
@@ -158,7 +189,12 @@ export default function LoginPage() {
                 </Alert>
               ) : null}
               {error ? (
-                <Alert color="red" variant="light" icon={<IconAlertCircle size={16} />} title="Sign-in failed">
+                <Alert
+                  color="red"
+                  variant="light"
+                  icon={<IconAlertCircle size={16} />}
+                  title="Sign-in failed"
+                >
                   {error}
                 </Alert>
               ) : null}
@@ -181,12 +217,26 @@ export default function LoginPage() {
               {form.values.connectionId === NEW_ID ? (
                 <Group grow align="flex-start">
                   <TextInput label="Name" placeholder="Home server" {...form.getInputProps('newName')} />
-                  <TextInput label="Base URL" placeholder="http://iris.lan:52773" {...form.getInputProps('newBaseUrl')} description="Origin in front of /api/admin" />
+                  <TextInput
+                    label="Base URL"
+                    placeholder="http://iris.lan:52773"
+                    {...form.getInputProps('newBaseUrl')}
+                    description="Origin in front of /api/admin"
+                  />
                 </Group>
               ) : null}
 
-              <TextInput label="Username" autoComplete="username" data-autofocus {...form.getInputProps('username')} />
-              <PasswordInput label="Password" autoComplete="current-password" {...form.getInputProps('password')} />
+              <TextInput
+                label="Username"
+                autoComplete="username"
+                data-autofocus
+                {...form.getInputProps('username')}
+              />
+              <PasswordInput
+                label="Password"
+                autoComplete="current-password"
+                {...form.getInputProps('password')}
+              />
               <TextInput
                 label="Escalation role"
                 placeholder="optional, e.g. %All"
@@ -208,11 +258,17 @@ export default function LoginPage() {
                   {...form.getInputProps('auth')}
                 />
                 <Text size="xs" c="dimmed">
-                  Auto tries <code>POST /login</code> for a JWT and falls back to HTTP Basic on older versions.
+                  Auto tries <code>POST /login</code> for a JWT and falls back to HTTP Basic on older
+                  versions.
                 </Text>
               </Stack>
 
-              <Checkbox size="xs" label="Keep me signed in for this browser tab" description="Off: credentials stay in memory only and a reload signs you out" {...form.getInputProps('persist', { type: 'checkbox' })} />
+              <Checkbox
+                size="xs"
+                label="Keep me signed in for this browser tab"
+                description="Off: credentials stay in memory only and a reload signs you out"
+                {...form.getInputProps('persist', { type: 'checkbox' })}
+              />
 
               <Button type="submit" leftSection={<IconLogin size={16} />} loading={busy} fullWidth mt="xs">
                 Sign in
@@ -220,13 +276,25 @@ export default function LoginPage() {
 
               <Divider label="or" labelPosition="center" />
 
-              <Tooltip label="Runs the whole API in your browser with realistic fake data. Nothing is sent anywhere." multiline maw={300}>
-                <Button variant="light" color="grape" leftSection={<IconFlask size={16} />} onClick={tryDemo} loading={busy} fullWidth>
+              <Tooltip
+                label="Runs the whole API in your browser with realistic fake data. Nothing is sent anywhere."
+                multiline
+                maw={300}
+              >
+                <Button
+                  variant="light"
+                  color="grape"
+                  leftSection={<IconFlask size={16} />}
+                  onClick={tryDemo}
+                  loading={busy}
+                  fullWidth
+                >
                   Try the demo (no IRIS needed)
                 </Button>
               </Tooltip>
               <Text size="xs" c="dimmed" ta="center">
-                Demo accounts: <code>_SYSTEM</code>, <code>operator</code>, <code>auditor</code> - password <code>SYS</code>
+                Demo accounts: <code>_SYSTEM</code>, <code>operator</code>, <code>auditor</code> - password{' '}
+                <code>SYS</code>
               </Text>
             </Stack>
           </form>
@@ -234,7 +302,12 @@ export default function LoginPage() {
 
         <Text size="xs" c="dimmed" ta="center" mt="lg">
           Built on the InterSystems IRIS SysAdmin REST API v2 ·{' '}
-          <Anchor size="xs" href="https://github.com/intersystems-community/sysadmin-api-specification" target="_blank" rel="noreferrer">
+          <Anchor
+            size="xs"
+            href="https://github.com/intersystems-community/sysadmin-api-specification"
+            target="_blank"
+            rel="noreferrer"
+          >
             specification
           </Anchor>
         </Text>

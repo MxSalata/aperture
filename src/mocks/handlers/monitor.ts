@@ -46,7 +46,10 @@ function mainDashboard() {
       WriteDaemon: 'Normal',
       Processes: mockDb.processes.length,
       CSPSessions: mockDb.webSessions.length,
-      BusyProcesses: mockDb.processes.filter((p) => p.State === 'RUNW' && p.Username).slice(0, busy).map((p) => ({ Pid: p.Pid, Username: p.Username, Routine: p.Routine, State: p.State })),
+      BusyProcesses: mockDb.processes
+        .filter((p) => p.State === 'RUNW' && p.Username)
+        .slice(0, busy)
+        .map((p) => ({ Pid: p.Pid, Username: p.Username, Routine: p.Routine, State: p.State })),
     },
     Alerts: {
       SeriousAlerts: mockDb.tasks.some((t) => t.Status === 'Error') ? 1 : 0,
@@ -67,7 +70,12 @@ function mainDashboard() {
 function prometheusText(): string {
   const cpu = drift(23, 12, 90, 2).toFixed(2);
   const mem = drift(64, 6, 200, 3).toFixed(2);
-  const dbs = mockDb.localDbs.map((d) => ({ dir: d.Directory, size: d.Size, free: Math.round(d.AvailableSpace), full: Math.min(99, Math.round(100 - (d.AvailableSpace / Math.max(1, d.Size)) * 100)) }));
+  const dbs = mockDb.localDbs.map((d) => ({
+    dir: d.Directory,
+    size: d.Size,
+    free: Math.round(d.AvailableSpace),
+    full: Math.min(99, Math.round(100 - (d.AvailableSpace / Math.max(1, d.Size)) * 100)),
+  }));
   const lines = [
     '# HELP iris_cpu_usage Percentage of CPU used by the instance',
     '# TYPE iris_cpu_usage gauge',
@@ -107,11 +115,28 @@ function prometheusText(): string {
 }
 
 export const nativeMonitorHandlers = [
-  http.get('*/api/monitor/metrics', () => new HttpResponse(prometheusText(), { status: 200, headers: { 'Content-Type': 'text/plain; version=0.0.4' } })),
+  http.get(
+    '*/api/monitor/metrics',
+    () =>
+      new HttpResponse(prometheusText(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain; version=0.0.4' },
+      }),
+  ),
   http.get('*/api/monitor/alerts', () =>
     HttpResponse.json([
-      { time: hoursAgo(20), severity: 2, process: '5471', message: 'ERROR #5002: SFTP connection refused (task Nightly HL7 archive export)' },
-      { time: hoursAgo(31), severity: 1, process: 'JRNDMN', message: 'Journal file /usr/irissys/mgr/journal/20260915.002 switched: file size limit reached' },
+      {
+        time: hoursAgo(20),
+        severity: 2,
+        process: '5471',
+        message: 'ERROR #5002: SFTP connection refused (task Nightly HL7 archive export)',
+      },
+      {
+        time: hoursAgo(31),
+        severity: 1,
+        process: 'JRNDMN',
+        message: 'Journal file /usr/irissys/mgr/journal/20260915.002 switched: file size limit reached',
+      },
     ]),
   ),
 ];
@@ -121,7 +146,16 @@ export const monitorHandlers = [
 
   route('get', '/v2/monitor/dashboard/system-resources', OPERATE, () =>
     ok(
-      ['Global', 'Routine', 'Lock', 'GlobalBufferPool', 'JournalBuffer', 'DirectoryBlock', 'PIDTable', 'Shared memory heap'].map((Name, i) => ({
+      [
+        'Global',
+        'Routine',
+        'Lock',
+        'GlobalBufferPool',
+        'JournalBuffer',
+        'DirectoryBlock',
+        'PIDTable',
+        'Shared memory heap',
+      ].map((Name, i) => ({
         Name,
         Seize: Math.round(drift(120_000 / (i + 1), 8_000, 60, i)),
         Nseize: Math.round(drift(400 / (i + 1), 80, 60, i + 1)),
@@ -161,8 +195,42 @@ export const monitorHandlers = [
 
   route('get', '/v2/monitor/dashboard/ecp', OPERATE, () =>
     ok({
-      AppServer: { MaxConn: 0, ActConn: 0, GloRef: 0, ByteSent: 0, ByteRcvd: 0, BlockAdd: 0, BlockBuffPurge: 0, BlockSvrPurge: 0, GloRefLocal: 0, GloRefRemote: 0, GloUpdateLocal: 0, RoutineCallLocal: 0, RoutineCallRemote: 0, RoutineBuffLocal: 0, RoutineBuffRemote: 0 },
-      DataServer: { GloUpdate: 0, ReqRcvd: 0, ReqBuff: 0, BlockSent: 0, LockGrant: 0, LockFail: 0, LockQueGrant: 0, LockQueFail: 0, SvrBlockPurge: 0, RoutinePurge: 0, BigKill: 0, BigString: 0, MaxConn: 0, ActConn: 0, ByteRcvd: 0, ByteSent: 0, GloRef: 0 },
+      AppServer: {
+        MaxConn: 0,
+        ActConn: 0,
+        GloRef: 0,
+        ByteSent: 0,
+        ByteRcvd: 0,
+        BlockAdd: 0,
+        BlockBuffPurge: 0,
+        BlockSvrPurge: 0,
+        GloRefLocal: 0,
+        GloRefRemote: 0,
+        GloUpdateLocal: 0,
+        RoutineCallLocal: 0,
+        RoutineCallRemote: 0,
+        RoutineBuffLocal: 0,
+        RoutineBuffRemote: 0,
+      },
+      DataServer: {
+        GloUpdate: 0,
+        ReqRcvd: 0,
+        ReqBuff: 0,
+        BlockSent: 0,
+        LockGrant: 0,
+        LockFail: 0,
+        LockQueGrant: 0,
+        LockQueFail: 0,
+        SvrBlockPurge: 0,
+        RoutinePurge: 0,
+        BigKill: 0,
+        BigString: 0,
+        MaxConn: 0,
+        ActConn: 0,
+        ByteRcvd: 0,
+        ByteSent: 0,
+        GloRef: 0,
+      },
     }),
   ),
 
@@ -208,15 +276,48 @@ export const monitorHandlers = [
   route('get', '/v2/monitor/license-usage', OPERATE, () => {
     const users = mockDb.processes.filter((p) => p.Username && p.IPAddress);
     const byUser = new Map<string, number>();
-    for (const p of users) byUser.set(`${p.Username}@${p.IPAddress || 'local'}`, (byUser.get(`${p.Username}@${p.IPAddress || 'local'}`) ?? 0) + 1);
+    for (const p of users)
+      byUser.set(
+        `${p.Username}@${p.IPAddress || 'local'}`,
+        (byUser.get(`${p.Username}@${p.IPAddress || 'local'}`) ?? 0) + 1,
+      );
     return ok({
       Summary: [
         { Type: 'Local', CurrentUsed: byUser.size, MaxUsed: 13, Available: 20 - byUser.size, Enforced: 20 },
-        { Type: 'Distributed', CurrentUsed: byUser.size, MaxUsed: 13, Available: 20 - byUser.size, Enforced: 20 },
+        {
+          Type: 'Distributed',
+          CurrentUsed: byUser.size,
+          MaxUsed: 13,
+          Available: 20 - byUser.size,
+          Enforced: 20,
+        },
       ],
-      UsageByUser: [...byUser.entries()].map(([id, n]) => ({ UserId: id, Connections: n, Units: 1, Type: 'Local', Active: true, Grace: 0 })),
-      UsageByProcess: users.map((p) => ({ Pid: p.Pid, UserId: `${p.Username}@${p.IPAddress || 'local'}`, Type: 'Local', Units: 1, ClientIP: p.IPAddress, EXEName: p.EXEName, Connections: 1, LicenseCheck: 'OK' })),
-      ConnectionList: users.map((p) => ({ Pid: p.Pid, UserId: p.Username, ClientIP: p.IPAddress, Connections: 1, Type: 'Local', Expires: inMinutes(30) })),
+      UsageByUser: [...byUser.entries()].map(([id, n]) => ({
+        UserId: id,
+        Connections: n,
+        Units: 1,
+        Type: 'Local',
+        Active: true,
+        Grace: 0,
+      })),
+      UsageByProcess: users.map((p) => ({
+        Pid: p.Pid,
+        UserId: `${p.Username}@${p.IPAddress || 'local'}`,
+        Type: 'Local',
+        Units: 1,
+        ClientIP: p.IPAddress,
+        EXEName: p.EXEName,
+        Connections: 1,
+        LicenseCheck: 'OK',
+      })),
+      ConnectionList: users.map((p) => ({
+        Pid: p.Pid,
+        UserId: p.Username,
+        ClientIP: p.IPAddress,
+        Connections: 1,
+        Type: 'Local',
+        Expires: inMinutes(30),
+      })),
     });
   }),
 ];

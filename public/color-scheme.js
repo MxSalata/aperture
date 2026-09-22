@@ -17,7 +17,9 @@
   try {
     var raw = localStorage.getItem('aperture.appearance');
     var setting = raw ? (JSON.parse(raw).state || {}).contrast : 'auto';
-    var high = setting === 'high' || (setting !== 'normal' && window.matchMedia && matchMedia('(prefers-contrast: more)').matches);
+    var high =
+      setting === 'high' ||
+      (setting !== 'normal' && window.matchMedia && matchMedia('(prefers-contrast: more)').matches);
     document.documentElement.setAttribute('data-aperture-contrast', high ? 'high' : 'normal');
   } catch (e) {
     /* same */

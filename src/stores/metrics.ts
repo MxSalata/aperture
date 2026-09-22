@@ -42,6 +42,10 @@ export const useMetrics = create<MetricsState>()(
         }),
       clear: () => set({ samples: [] }),
     }),
-    { name: 'aperture.metrics', storage: createJSONStorage(() => safeSessionStorage), partialize: (s) => ({ samples: s.samples }) as MetricsState },
+    {
+      name: 'aperture.metrics',
+      storage: createJSONStorage(() => safeSessionStorage),
+      partialize: (s) => ({ samples: s.samples }) as MetricsState,
+    },
   ),
 );

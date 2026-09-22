@@ -43,7 +43,8 @@
   --aperture-muted: var(--mantine-color-gray-4);
   --aperture-muted-soft: var(--mantine-color-gray-5);
 }
-:root[data-aperture-contrast='high'] :where(.mantine-Paper-root, .mantine-Table-td, .mantine-Table-th, .mantine-Input-input) {
+:root[data-aperture-contrast='high']
+  :where(.mantine-Paper-root, .mantine-Table-td, .mantine-Table-th, .mantine-Input-input) {
   border-width: var(--aperture-border-width);
 }
 :root[data-aperture-contrast='high'] :focus-visible {

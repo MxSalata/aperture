@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, formatMB, formatNumber, parseIrisDate, formatDateTime, truncate, setInstanceTimezone, getInstanceTimezone } from '../format';
+import {
+  formatBytes,
+  formatMB,
+  formatNumber,
+  parseIrisDate,
+  formatDateTime,
+  truncate,
+  setInstanceTimezone,
+  getInstanceTimezone,
+} from '../format';
 
 describe('format helpers', () => {
   it('formats bytes with binary units and binary labels', () => {

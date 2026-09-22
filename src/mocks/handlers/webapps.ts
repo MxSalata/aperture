@@ -14,16 +14,50 @@ const listShape = (w: WebAppRec) => ({
   DispatchClass: w.DispatchClass,
 });
 
-const find = (name: string | null) => (name ? mockDb.webApps.find((w) => w.Name.toLowerCase() === name.toLowerCase()) : undefined);
+const find = (name: string | null) =>
+  name ? mockDb.webApps.find((w) => w.Name.toLowerCase() === name.toLowerCase()) : undefined;
 
 export const webAppHandlers = [
-  route('get', '/v2/web-apps', SECURE, ({ request }) => ok(filterRows(mockDb.webApps.map(listShape) as unknown as Record<string, unknown>[], request))),
+  route('get', '/v2/web-apps', SECURE, ({ request }) =>
+    ok(filterRows(mockDb.webApps.map(listShape) as unknown as Record<string, unknown>[], request)),
+  ),
 
   route('get', '/v2/web-app', SECURE, ({ request }) => {
     const w = find(requireParam(request, 'name'));
     if (!w) return notFound('Web application');
-    const { Name: _n, Namespace, NamespaceDefault, Type: _t, AuthenticationMethods: _a, IsSystemApp: _s, ...rest } = w;
-    return ok({ ...rest, NameSpace: Namespace, IsNameSpaceDefault: NamespaceDefault, AutoCompile: true, ChangePasswordPage: '', CookiePath: w.Name + '/', CSPZENEnabled: w.Type === 'CSP', DeepSeeEnabled: false, ErrorPage: '', EventClass: '', GroupById: '', iKnowEnabled: false, InbndWebServicesEnabled: true, LockCSPName: true, LoginPage: '', Package: '', PermittedClasses: '', RedirectEmptyPath: false, ServeFilesTimeout: 3600, SuperClass: '', TwoFactorEnabled: false, UseSessionCookie: 2 });
+    const {
+      Name: _n,
+      Namespace,
+      NamespaceDefault,
+      Type: _t,
+      AuthenticationMethods: _a,
+      IsSystemApp: _s,
+      ...rest
+    } = w;
+    return ok({
+      ...rest,
+      NameSpace: Namespace,
+      IsNameSpaceDefault: NamespaceDefault,
+      AutoCompile: true,
+      ChangePasswordPage: '',
+      CookiePath: w.Name + '/',
+      CSPZENEnabled: w.Type === 'CSP',
+      DeepSeeEnabled: false,
+      ErrorPage: '',
+      EventClass: '',
+      GroupById: '',
+      iKnowEnabled: false,
+      InbndWebServicesEnabled: true,
+      LockCSPName: true,
+      LoginPage: '',
+      Package: '',
+      PermittedClasses: '',
+      RedirectEmptyPath: false,
+      ServeFilesTimeout: 3600,
+      SuperClass: '',
+      TwoFactorEnabled: false,
+      UseSessionCookie: 2,
+    });
   }),
 
   route('put', '/v2/web-app', SECURE, async ({ request }) => {
@@ -74,8 +108,18 @@ export const webAppHandlers = [
     return ok({}, { summary: `Web application ${w.Name} deleted` });
   }),
 
-  route('get', '/v2/web-app/pct-accesses', SECURE, () => ok([{ Name: '/csp/sys', AllowType: 'Prefix', Class: '%CSP.UI.', Namespace: '%SYS' }])),
-  route('get', '/v2/web-app/pct-access', SECURE, ({ request }) => ok({ Name: requireParam(request, 'name'), AllowType: requireParam(request, 'allowType'), Class: requireParam(request, 'class') })),
+  route('get', '/v2/web-app/pct-accesses', SECURE, () =>
+    ok([{ Name: '/csp/sys', AllowType: 'Prefix', Class: '%CSP.UI.', Namespace: '%SYS' }]),
+  ),
+  route('get', '/v2/web-app/pct-access', SECURE, ({ request }) =>
+    ok({
+      Name: requireParam(request, 'name'),
+      AllowType: requireParam(request, 'allowType'),
+      Class: requireParam(request, 'class'),
+    }),
+  ),
   route('put', '/v2/web-app/pct-access', SECURE, () => created({}, ['Percent class access created'])),
-  route('delete', '/v2/web-app/pct-access', SECURE, () => ok({}, { summary: 'Percent class access deleted' })),
+  route('delete', '/v2/web-app/pct-access', SECURE, () =>
+    ok({}, { summary: 'Percent class access deleted' }),
+  ),
 ];

@@ -15,5 +15,7 @@ interface AppearanceState {
 }
 
 export const useAppearance = create<AppearanceState>()(
-  persist((set) => ({ contrast: 'auto', setContrast: (contrast) => set({ contrast }) }), { name: 'aperture.appearance' }),
+  persist((set) => ({ contrast: 'auto', setContrast: (contrast) => set({ contrast }) }), {
+    name: 'aperture.appearance',
+  }),
 );

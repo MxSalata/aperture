@@ -20,6 +20,14 @@ describe('csv export', () => {
     expect(csvCell(-5)).toBe('-5');
   });
   it('writes a BOM, a header row and CRLF line ends', () => {
-    expect(toCsv(['Name', 'PID'], [['jdoe', 1234], ['sys', null]])).toBe('﻿Name,PID\r\njdoe,1234\r\nsys,\r\n');
+    expect(
+      toCsv(
+        ['Name', 'PID'],
+        [
+          ['jdoe', 1234],
+          ['sys', null],
+        ],
+      ),
+    ).toBe('﻿Name,PID\r\njdoe,1234\r\nsys,\r\n');
   });
 });

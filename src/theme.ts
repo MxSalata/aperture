@@ -8,7 +8,8 @@ export const themeBase: MantineThemeOverride = {
   primaryColor: 'indigo',
   primaryShade: { light: 6, dark: 5 },
   defaultRadius: 'md',
-  fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  fontFamily:
+    'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   fontFamilyMonospace: 'ui-monospace, Menlo, Consolas, "Liberation Mono", monospace',
   headings: { fontWeight: '650' },
   fontSizes: { xs: rem(12), sm: rem(13.5), md: rem(15), lg: rem(17), xl: rem(20) },

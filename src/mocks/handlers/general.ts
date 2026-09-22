@@ -13,7 +13,13 @@ function loginResponse(username: string, sid: string) {
   return HttpResponse.json({
     status: { Errors: [], summary: '' },
     console: [],
-    result: { access_token: access, refresh_token: refresh, sub: username, iat: payload.iat, exp: payload.exp },
+    result: {
+      access_token: access,
+      refresh_token: refresh,
+      sub: username,
+      iat: payload.iat,
+      exp: payload.exp,
+    },
   });
 }
 
@@ -32,7 +38,14 @@ export const generalHandlers = [
     if (!account) return unauthorized();
     if (body.role && !['%All', '%Manager', 'BreakGlass'].includes(body.role)) {
       return HttpResponse.json(
-        { status: { Errors: [`Role ${body.role} is not a valid escalation role for this user`], summary: 'Invalid escalation role' }, console: [], result: {} },
+        {
+          status: {
+            Errors: [`Role ${body.role} is not a valid escalation role for this user`],
+            summary: 'Invalid escalation role',
+          },
+          console: [],
+          result: {},
+        },
         { status: 401 },
       );
     }
@@ -70,6 +83,11 @@ export const generalHandlers = [
     const account = authenticate(request);
     if (!account) return unauthorized();
     if (!account.privileges.length) return new HttpResponse(null, { status: 403 });
-    return HttpResponse.json(infoFor(account, mockDb.namespaces.map((n) => n.Name)));
+    return HttpResponse.json(
+      infoFor(
+        account,
+        mockDb.namespaces.map((n) => n.Name),
+      ),
+    );
   }),
 ];

@@ -22,7 +22,9 @@ export function Timestamp({ value, mode = 'absolute', className }: Props) {
   const primary = mode === 'relative' ? relative : absolute;
   const secondary = mode === 'relative' ? absolute : relative;
   return (
-    <Tooltip label={`${secondary} · ${zone ? `instance time zone ${zone}` : 'instance clock, assumed to be in your time zone'}`}>
+    <Tooltip
+      label={`${secondary} · ${zone ? `instance time zone ${zone}` : 'instance clock, assumed to be in your time zone'}`}
+    >
       <time dateTime={d.toISOString()} className={className ?? 'tabular'} style={{ cursor: 'help' }}>
         {primary}
       </time>

@@ -1,7 +1,25 @@
-import { Button, Checkbox, Drawer, Group, NumberInput, Paper, Stack, Tabs, Text, TextInput, Title } from '@mantine/core';
+import {
+  Button,
+  Checkbox,
+  Drawer,
+  Group,
+  NumberInput,
+  Paper,
+  Stack,
+  Tabs,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconArrowsExchange, IconFolder, IconListDetails, IconRefresh, IconShieldCheck } from '@tabler/icons-react';
+import {
+  IconArrowsExchange,
+  IconFolder,
+  IconListDetails,
+  IconRefresh,
+  IconShieldCheck,
+} from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { api, call, result, run, useApiMutation, useAsyncResult, jobHeaders, SILENT } from '@/api/hooks';
 import type { JournalFileList, JournalSettings } from '@/api/types';
@@ -15,41 +33,142 @@ import { formatBytes, formatDateTime } from '@/lib/format';
 import { useJobs } from '@/stores/jobs';
 
 type FileRow = JournalFileList[number];
-const keys = { files: ['journal', 'files'] as const, file: (f: string) => ['journal', 'file', f] as const, settings: ['journal', 'settings'] as const };
+const keys = {
+  files: ['journal', 'files'] as const,
+  file: (f: string) => ['journal', 'file', f] as const,
+  settings: ['journal', 'settings'] as const,
+};
 
 const fileColumns: ColumnDef<FileRow, unknown>[] = [
-  { accessorKey: 'Name', header: 'File', cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span> },
-  { accessorKey: 'Size', header: 'Size on disk', cell: (c) => <span className="tabular">{formatBytes(c.getValue() as number)}</span> },
-  { accessorKey: 'DataSize', header: 'Journal data', cell: (c) => <span className="tabular">{formatBytes(c.getValue() as number)}</span> },
+  {
+    accessorKey: 'Name',
+    header: 'File',
+    cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span>,
+  },
+  {
+    accessorKey: 'Size',
+    header: 'Size on disk',
+    cell: (c) => <span className="tabular">{formatBytes(c.getValue() as number)}</span>,
+  },
+  {
+    accessorKey: 'DataSize',
+    header: 'Journal data',
+    cell: (c) => <span className="tabular">{formatBytes(c.getValue() as number)}</span>,
+  },
   { accessorKey: 'CreationTime', header: 'Created', cell: (c) => formatDateTime(c.getValue() as string) },
   { accessorKey: 'Reason', header: 'Switch reason' },
 ];
 
 function FileDrawer({ file, onClose }: { file: string | null; onClose: () => void }) {
-  const detail = useQuery({ queryKey: keys.file(file ?? ''), enabled: !!file, queryFn: () => result(api().GET('/v2/journal/file', { params: { query: { file: file! } } })) });
-  const records = useAsyncResult<Record<string, unknown>[]>({ queryKey: keys.file(file ?? ''), silent: true });
+  const detail = useQuery({
+    queryKey: keys.file(file ?? ''),
+    enabled: !!file,
+    queryFn: () => result(api().GET('/v2/journal/file', { params: { query: { file: file! } } })),
+  });
+  const records = useAsyncResult<Record<string, unknown>[]>({
+    queryKey: keys.file(file ?? ''),
+    silent: true,
+  });
   const openDrawer = useJobs((s) => s.setDrawerOpen);
-  const check = useApiMutation(() => run(api().POST('/v2/journal/file/integrity-check', { params: { query: { file: file! } }, headers: jobHeaders('Journal integrity check', file ?? undefined) })), { success: 'Integrity check queued - see Job Center', onSuccess: () => openDrawer(true) });
+  const check = useApiMutation(
+    () =>
+      run(
+        api().POST('/v2/journal/file/integrity-check', {
+          params: { query: { file: file! } },
+          headers: jobHeaders('Journal integrity check', file ?? undefined),
+        }),
+      ),
+    { success: 'Integrity check queued - see Job Center', onSuccess: () => openDrawer(true) },
+  );
   const { reset } = records;
   // Populate the form once the record arrives; the form object itself is stable.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { reset(); }, [file]);
+  useEffect(() => {
+    reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [file]);
   const rows = records.result ?? [];
-  const recColumns: ColumnDef<Record<string, unknown>, unknown>[] = ['Address', 'TimeStamp', 'TypeName', 'ProcessID', 'GlobalNode', 'NewValue', 'InTransaction'].map((k) => ({ accessorKey: k, header: k, cell: (c) => <span className={k === 'GlobalNode' || k === 'NewValue' ? 'mono' : 'tabular'}>{String(c.getValue() ?? '')}</span> }));
+  const recColumns: ColumnDef<Record<string, unknown>, unknown>[] = [
+    'Address',
+    'TimeStamp',
+    'TypeName',
+    'ProcessID',
+    'GlobalNode',
+    'NewValue',
+    'InTransaction',
+  ].map((k) => ({
+    accessorKey: k,
+    header: k,
+    cell: (c) => (
+      <span className={k === 'GlobalNode' || k === 'NewValue' ? 'mono' : 'tabular'}>
+        {String(c.getValue() ?? '')}
+      </span>
+    ),
+  }));
 
   return (
-    <Drawer opened={!!file} onClose={onClose} position="right" size="xl" title={<span className="mono">{file}</span>} padding="md">
+    <Drawer
+      opened={!!file}
+      onClose={onClose}
+      position="right"
+      size="xl"
+      title={<span className="mono">{file}</span>}
+      padding="md"
+    >
       <Stack gap="md">
         <Group gap="xs">
-          <Button size="xs" variant="light" leftSection={<IconShieldCheck size={14} />} onClick={() => check.mutate()} loading={check.isPending}>Integrity check</Button>
-          <Button size="xs" variant="light" leftSection={<IconListDetails size={14} />} loading={records.running} onClick={() => file && records.start(() => call(api().POST('/v2/journal/file/records', { params: { query: { file, maxRows: 200 } }, headers: SILENT }), 'POST'))}>
+          <Button
+            size="xs"
+            variant="light"
+            leftSection={<IconShieldCheck size={14} />}
+            onClick={() => check.mutate()}
+            loading={check.isPending}
+          >
+            Integrity check
+          </Button>
+          <Button
+            size="xs"
+            variant="light"
+            leftSection={<IconListDetails size={14} />}
+            loading={records.running}
+            onClick={() =>
+              file &&
+              records.start(() =>
+                call(
+                  api().POST('/v2/journal/file/records', {
+                    params: { query: { file, maxRows: 200 } },
+                    headers: SILENT,
+                  }),
+                  'POST',
+                ),
+              )
+            }
+          >
             Browse records (first 200)
           </Button>
         </Group>
-        {detail.isError ? <ErrorAlert error={detail.error} /> : detail.data ? <KeyValueList cols={3} items={objectToItems(detail.data as Record<string, unknown>, { omit: ['MirrorInfo ', 'MirrorInfo'] })} /> : <Text size="sm" c="dimmed">Loading…</Text>}
+        {detail.isError ? (
+          <ErrorAlert error={detail.error} />
+        ) : detail.data ? (
+          <KeyValueList
+            cols={3}
+            items={objectToItems(detail.data as Record<string, unknown>, {
+              omit: ['MirrorInfo ', 'MirrorInfo'],
+            })}
+          />
+        ) : (
+          <Text size="sm" c="dimmed">
+            Loading…
+          </Text>
+        )}
         {records.error ? <ErrorAlert error={records.error} /> : null}
-        {records.running ? <Text size="sm" c="dimmed">Reading journal records via async task {records.jobId}…</Text> : null}
-        {rows.length ? <DataTable data={rows} columns={recColumns} dense pageSize={50} hideColumnMenu /> : null}
+        {records.running ? (
+          <Text size="sm" c="dimmed">
+            Reading journal records via async task {records.jobId}…
+          </Text>
+        ) : null}
+        {rows.length ? (
+          <DataTable data={rows} columns={recColumns} dense pageSize={50} hideColumnMenu />
+        ) : null}
       </Stack>
     </Drawer>
   );
@@ -57,15 +176,27 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
 
 export default function JournalPage() {
   const files = useQuery({ queryKey: keys.files, queryFn: () => result(api().GET('/v2/journal/files')) });
-  const settings = useQuery({ queryKey: keys.settings, queryFn: () => result(api().GET('/v2/journal/settings')) });
+  const settings = useQuery({
+    queryKey: keys.settings,
+    queryFn: () => result(api().GET('/v2/journal/settings')),
+  });
   const [selected, setSelected] = useState<string | null>(null);
-  const switchFile = useApiMutation(() => run(api().POST('/v2/journal/switch-file')), { invalidate: [keys.files] });
-  const switchDir = useApiMutation(() => run(api().POST('/v2/journal/switch-dir')), { invalidate: [keys.files, keys.settings] });
-  const save = useApiMutation((body: JournalSettings) => run(api().PUT('/v2/journal/settings', { body }), 'PUT'), { invalidate: [keys.settings] });
+  const switchFile = useApiMutation(() => run(api().POST('/v2/journal/switch-file')), {
+    invalidate: [keys.files],
+  });
+  const switchDir = useApiMutation(() => run(api().POST('/v2/journal/switch-dir')), {
+    invalidate: [keys.files, keys.settings],
+  });
+  const save = useApiMutation(
+    (body: JournalSettings) => run(api().PUT('/v2/journal/settings', { body }), 'PUT'),
+    { invalidate: [keys.settings] },
+  );
   const form = useForm<JournalSettings>({ initialValues: {} });
   // Populate the form once the record arrives; the form object itself is stable.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (settings.data) form.setValues(settings.data); }, [settings.data]);
+  useEffect(() => {
+    if (settings.data) form.setValues(settings.data);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.data]);
 
   return (
     <>
@@ -75,9 +206,47 @@ export default function JournalPage() {
         privileges={['%Admin_Operate:U', '%Admin_Journal:U']}
         actions={
           <>
-            <Button size="xs" variant="default" leftSection={<IconRefresh size={14} />} onClick={() => files.refetch()} loading={files.isFetching}>Refresh</Button>
-            <Button size="xs" variant="light" leftSection={<IconArrowsExchange size={14} />} onClick={() => confirmDanger({ title: 'Switch journal file', message: 'Start a new journal file now? The current file is closed and kept.', confirmLabel: 'Switch', color: 'indigo', onConfirm: () => switchFile.mutateAsync() })}>Switch file</Button>
-            <Button size="xs" variant="light" leftSection={<IconFolder size={14} />} onClick={() => confirmDanger({ title: 'Switch journal directory', message: `Switch journaling to the alternate directory (${String(settings.data?.AlternateDirectory ?? 'not configured')})?`, confirmLabel: 'Switch', color: 'indigo', onConfirm: () => switchDir.mutateAsync() })}>Switch to alternate directory</Button>
+            <Button
+              size="xs"
+              variant="default"
+              leftSection={<IconRefresh size={14} />}
+              onClick={() => files.refetch()}
+              loading={files.isFetching}
+            >
+              Refresh
+            </Button>
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconArrowsExchange size={14} />}
+              onClick={() =>
+                confirmDanger({
+                  title: 'Switch journal file',
+                  message: 'Start a new journal file now? The current file is closed and kept.',
+                  confirmLabel: 'Switch',
+                  color: 'indigo',
+                  onConfirm: () => switchFile.mutateAsync(),
+                })
+              }
+            >
+              Switch file
+            </Button>
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconFolder size={14} />}
+              onClick={() =>
+                confirmDanger({
+                  title: 'Switch journal directory',
+                  message: `Switch journaling to the alternate directory (${String(settings.data?.AlternateDirectory ?? 'not configured')})?`,
+                  confirmLabel: 'Switch',
+                  color: 'indigo',
+                  onConfirm: () => switchDir.mutateAsync(),
+                })
+              }
+            >
+              Switch to alternate directory
+            </Button>
           </>
         }
       />
@@ -87,32 +256,80 @@ export default function JournalPage() {
           <Tabs.Tab value="settings">Settings</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="files">
-          <DataTable stateKey="journal" exportName="journal-files" data={files.data} columns={fileColumns} loading={files.isPending} error={files.error} onRowClick={(r) => setSelected(r.Name ?? null)} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'CreationTime', desc: true }]} dense />
+          <DataTable
+            stateKey="journal"
+            exportName="journal-files"
+            data={files.data}
+            columns={fileColumns}
+            loading={files.isPending}
+            error={files.error}
+            onRowClick={(r) => setSelected(r.Name ?? null)}
+            getRowId={(r) => r.Name ?? ''}
+            initialSorting={[{ id: 'CreationTime', desc: true }]}
+            dense
+          />
           <FileDrawer file={selected} onClose={() => setSelected(null)} />
         </Tabs.Panel>
         <Tabs.Panel value="settings">
           <Paper p="md" maw={720}>
-            <Title order={5} mb="sm">Journal settings</Title>
+            <Title order={5} mb="sm">
+              Journal settings
+            </Title>
             {settings.isError ? <ErrorAlert error={settings.error} /> : null}
-            <form onSubmit={form.onSubmit((v) => reviewChanges({ title: 'Review journal settings', before: settings.data as Record<string, unknown>, after: v as Record<string, unknown>, refetch: () => result(api().GET('/v2/journal/settings')) as Promise<Record<string, unknown>>, onConfirm: () => save.mutateAsync(v) }))}>
+            <form
+              onSubmit={form.onSubmit((v) =>
+                reviewChanges({
+                  title: 'Review journal settings',
+                  before: settings.data as Record<string, unknown>,
+                  after: v as Record<string, unknown>,
+                  refetch: () =>
+                    result(api().GET('/v2/journal/settings')) as Promise<Record<string, unknown>>,
+                  onConfirm: () => save.mutateAsync(v),
+                }),
+              )}
+            >
               <Stack gap="sm">
                 <TextInput label="Current directory" {...form.getInputProps('CurrentDirectory')} />
                 <TextInput label="Alternate directory" {...form.getInputProps('AlternateDirectory')} />
                 <TextInput label="Journal file prefix" {...form.getInputProps('JournalFilePrefix')} />
                 <Group grow>
-                  <NumberInput label="File size limit (MB)" min={1} {...form.getInputProps('FileSizeLimit')} />
+                  <NumberInput
+                    label="File size limit (MB)"
+                    min={1}
+                    {...form.getInputProps('FileSizeLimit')}
+                  />
                   <NumberInput label="Days before purge" min={0} {...form.getInputProps('DaysBeforePurge')} />
-                  <NumberInput label="Backups before purge" min={0} {...form.getInputProps('BackupsBeforePurge')} />
+                  <NumberInput
+                    label="Backups before purge"
+                    min={0}
+                    {...form.getInputProps('BackupsBeforePurge')}
+                  />
                 </Group>
                 <Group grow>
                   <TextInput label="WIJ directory" {...form.getInputProps('wijdir')} />
                   <NumberInput label="Target WIJ size (MB)" min={0} {...form.getInputProps('targwijsz')} />
                 </Group>
-                <Checkbox label="Freeze on journal error" {...form.getInputProps('FreezeOnError', { type: 'checkbox' })} />
-                <Checkbox label="Compress journal files" {...form.getInputProps('CompressFiles', { type: 'checkbox' })} />
-                <Checkbox label="Journal CSP session data" {...form.getInputProps('JournalcspSession', { type: 'checkbox' })} />
-                <Checkbox label="Purge archived files" {...form.getInputProps('PurgeArchived', { type: 'checkbox' })} />
-                <Group justify="flex-end"><Button type="submit" loading={save.isPending}>Save settings</Button></Group>
+                <Checkbox
+                  label="Freeze on journal error"
+                  {...form.getInputProps('FreezeOnError', { type: 'checkbox' })}
+                />
+                <Checkbox
+                  label="Compress journal files"
+                  {...form.getInputProps('CompressFiles', { type: 'checkbox' })}
+                />
+                <Checkbox
+                  label="Journal CSP session data"
+                  {...form.getInputProps('JournalcspSession', { type: 'checkbox' })}
+                />
+                <Checkbox
+                  label="Purge archived files"
+                  {...form.getInputProps('PurgeArchived', { type: 'checkbox' })}
+                />
+                <Group justify="flex-end">
+                  <Button type="submit" loading={save.isPending}>
+                    Save settings
+                  </Button>
+                </Group>
               </Stack>
             </form>
           </Paper>

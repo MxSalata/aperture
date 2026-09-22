@@ -43,7 +43,10 @@ export function statusColor(status: string | undefined | null): string {
   return COLORS[status.toLowerCase()] ?? 'gray';
 }
 
-export function StatusBadge({ status, ...props }: { status: string | undefined | null } & Omit<BadgeProps, 'children'>) {
+export function StatusBadge({
+  status,
+  ...props
+}: { status: string | undefined | null } & Omit<BadgeProps, 'children'>) {
   return (
     <Badge size="sm" variant="light" color={statusColor(status)} style={{ textTransform: 'none' }} {...props}>
       {status || '-'}
@@ -51,7 +54,12 @@ export function StatusBadge({ status, ...props }: { status: string | undefined |
   );
 }
 
-export function BoolBadge({ value, yes = 'Yes', no = 'No', ...props }: { value: boolean | undefined | null; yes?: string; no?: string } & Omit<BadgeProps, 'children'>) {
+export function BoolBadge({
+  value,
+  yes = 'Yes',
+  no = 'No',
+  ...props
+}: { value: boolean | undefined | null; yes?: string; no?: string } & Omit<BadgeProps, 'children'>) {
   return (
     <Badge size="sm" variant="light" color={value ? 'teal' : 'gray'} {...props}>
       {value ? yes : no}
