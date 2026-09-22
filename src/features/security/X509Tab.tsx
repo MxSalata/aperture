@@ -34,7 +34,14 @@ export function ExpiryBadge({ notAfter }: { notAfter: string | null | undefined 
           ? 'expires today'
           : `${days} day${days === 1 ? '' : 's'} left`;
   return (
-    <Badge size="sm" tt="none" variant={state === 'ok' ? 'light' : 'filled'} color={STATE_COLOR[state]}>
+    <Badge
+      size="sm"
+      tt="none"
+      variant={state === 'ok' ? 'light' : 'filled'}
+      color={STATE_COLOR[state]}
+      // A badge may shrink to its cell and clip its text; the label is the point of this column.
+      styles={{ root: { maxWidth: 'none' } }}
+    >
       {label}
     </Badge>
   );
