@@ -39,8 +39,11 @@ export function ExpiryBadge({ notAfter }: { notAfter: string | null | undefined 
       tt="none"
       variant={state === 'ok' ? 'light' : 'filled'}
       color={STATE_COLOR[state]}
-      // A badge may shrink to its cell and clip its text; the label is the point of this column.
-      styles={{ root: { maxWidth: 'none' } }}
+      // A badge clips its label to the cell width; this label is the point of the column, so let it wrap.
+      styles={{
+        root: { height: 'auto', maxWidth: 'none', whiteSpace: 'normal', padding: '2px 8px' },
+        label: { whiteSpace: 'normal', overflow: 'visible', textOverflow: 'clip', lineHeight: 1.35 },
+      }}
     >
       {label}
     </Badge>
