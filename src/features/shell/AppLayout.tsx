@@ -206,14 +206,14 @@ function AppearanceMenu() {
       <Menu.Dropdown>
         <Menu.Label>Theme</Menu.Label>
         {schemes.map((s) => (
-          <Menu.Item key={s.value} leftSection={s.icon} onClick={() => setColorScheme(s.value)} role="menuitemradio" aria-checked={colorScheme === s.value} rightSection={colorScheme === s.value ? '●' : undefined}>
+          <Menu.Item key={s.value} leftSection={s.icon} onClick={() => setColorScheme(s.value)} aria-label={`${s.label}${colorScheme === s.value ? ' (current theme)' : ''}`} rightSection={colorScheme === s.value ? '●' : undefined}>
             {s.label}
           </Menu.Item>
         ))}
         <Menu.Divider />
         <Menu.Label>Contrast</Menu.Label>
         {contrasts.map((c) => (
-          <Menu.Item key={c.value} leftSection={<IconContrast size={16} />} onClick={() => setContrast(c.value)} role="menuitemradio" aria-checked={contrast === c.value} rightSection={contrast === c.value ? '●' : undefined}>
+          <Menu.Item key={c.value} leftSection={<IconContrast size={16} />} onClick={() => setContrast(c.value)} aria-label={`${c.label}${contrast === c.value ? ' (current contrast)' : ''}`} rightSection={contrast === c.value ? '●' : undefined}>
             {c.label}
           </Menu.Item>
         ))}
