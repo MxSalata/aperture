@@ -4,6 +4,7 @@ import { notifications } from '@mantine/notifications';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { humanize } from './KeyValueList';
+import { redactDeep } from '@/lib/redact';
 
 export interface FieldChange {
   key: string;
@@ -31,7 +32,9 @@ export function diffObjects(
   return out;
 }
 
-function show(v: unknown): string {
+/** One side of a change as text; secrets are redacted like everywhere else (a drift can touch them). */
+export function show(key: string, value: unknown): string {
+  const v = redactDeep(value, key).value;
   if (v === undefined || v === null || v === '') return '-';
   if (typeof v === 'boolean') return v ? 'Yes' : 'No';
   if (Array.isArray(v)) return v.length ? v.map(String).join(', ') : '-';
@@ -104,10 +107,10 @@ function Body<T extends Record<string, unknown>>({
             <Table.Tr key={c.key}>
               <Table.Td>{labels?.[c.key] ?? humanize(c.key)}</Table.Td>
               <Table.Td className="mono muted" style={{ wordBreak: 'break-all' }}>
-                {show(c.before)}
+                {show(c.key, c.before)}
               </Table.Td>
               <Table.Td className="mono" style={{ wordBreak: 'break-all' }}>
-                {show(c.after)}
+                {show(c.key, c.after)}
               </Table.Td>
             </Table.Tr>
           ))}
@@ -135,7 +138,7 @@ function Body<T extends Record<string, unknown>>({
                   {labels?.[d.key] ?? humanize(d.key)}
                 </Badge>
                 <Text size="xs" className="mono">
-                  {show(d.before)} → {show(d.after)}
+                  {show(d.key, d.before)} → {show(d.key, d.after)}
                 </Text>
               </Group>
             ))}

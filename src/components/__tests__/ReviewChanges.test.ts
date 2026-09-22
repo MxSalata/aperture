@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { diffObjects } from '../ReviewChanges';
+import { diffObjects, show } from '../ReviewChanges';
+import { REDACTED } from '@/lib/redact';
 
 describe('diffObjects', () => {
   it('lists changed keys with before/after values', () => {
@@ -12,5 +13,13 @@ describe('diffObjects', () => {
   it('treats null and undefined as equal and honours omit', () => {
     expect(diffObjects({ a: null }, { a: undefined, b: 2 }, ['b'])).toEqual([]);
     expect(diffObjects(undefined, { a: 1 })).toEqual([{ key: 'a', before: undefined, after: 1 }]);
+  });
+});
+
+describe('show', () => {
+  it('redacts secrets like every other render path', () => {
+    expect(show('PrivateKeyPassword', 's3cr3t')).toBe(REDACTED);
+    expect(show('Description', 's3cr3t')).toBe('s3cr3t');
+    expect(show('Enabled', true)).toBe('Yes');
   });
 });

@@ -1,6 +1,6 @@
 import { Badge, Group, SimpleGrid, Stack, Text } from '@mantine/core';
 import type { ReactNode } from 'react';
-import { redactDeep, redactField } from '@/lib/redact';
+import { redactDeep } from '@/lib/redact';
 
 export interface KeyValue {
   label: string;
@@ -94,7 +94,7 @@ export function objectToItems(
     .filter(([k]) => !opts.omit?.includes(k))
     .map(([k, v]) => ({
       label: opts.labels?.[k] ?? humanize(k),
-      value: renderValue(typeof v === 'string' ? redactField(k, v) : redactDeep(v).value),
+      value: renderValue(redactDeep(v, k).value),
     }));
 }
 

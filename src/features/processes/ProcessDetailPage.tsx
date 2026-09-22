@@ -10,6 +10,7 @@ import { ErrorAlert } from '@/components/ErrorAlert';
 import { JsonViewer } from '@/components/JsonViewer';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { formatBytes, formatNumber } from '@/lib/format';
+import { redactDeep } from '@/lib/redact';
 import { procKeys } from './ProcessesPage';
 
 export default function ProcessDetailPage() {
@@ -223,7 +224,7 @@ export default function ProcessDetailPage() {
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
-                    {(p.Variables as { Name?: string; Value?: string }[]).map((v, i) => (
+                    {(redactDeep(p.Variables).value as { Name?: string; Value?: string }[]).map((v, i) => (
                       <Table.Tr key={i}>
                         <Table.Td className="mono">{v.Name}</Table.Td>
                         <Table.Td className="mono">{v.Value}</Table.Td>

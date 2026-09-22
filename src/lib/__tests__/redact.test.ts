@@ -20,6 +20,11 @@ describe('isSecretKey', () => {
       'AuthorizationKey',
       'HOTPKey',
       'PrivateKey',
+      // OAuth / JWT payloads (POST /login and /refresh answers, OAuth2 client registration)
+      'access_token',
+      'refresh_token',
+      'registration_access_token',
+      'id_token',
     ])
       expect(isSecretKey(k), k).toBe(true);
   });
@@ -39,6 +44,9 @@ describe('isSecretKey', () => {
       'Name',
       'Key',
       'KeyLen',
+      'access_token_signed_response_alg',
+      'id_token_encrypted_response_enc',
+      'access_token_encryption_alg_values_supported',
     ])
       expect(isSecretKey(k), k).toBe(false);
   });
@@ -82,6 +90,33 @@ describe('redactDeep', () => {
     expect(value.Secrets).toEqual([REDACTED, REDACTED]);
     expect(value.Names).toEqual(['a']);
     expect(count).toBe(2);
+  });
+
+  it('hides every string inside an object held under a secret key', () => {
+    const { value, count } = redactDeep({
+      Secret: { username: 'svc', value: 'p@ss' },
+      Name: 'wallet-entry',
+    });
+    expect(value.Secret).toEqual({ username: REDACTED, value: REDACTED });
+    expect(value.Name).toBe('wallet-entry');
+    expect(count).toBe(2);
+  });
+
+  it('hides the value of a name/value pair whose name is a secret word', () => {
+    const { value } = redactDeep([
+      { Name: 'password', Value: 'hunter2' },
+      { Name: 'user', Value: 'jdoe' },
+    ]);
+    expect(value).toEqual([
+      { Name: 'password', Value: REDACTED },
+      { Name: 'user', Value: 'jdoe' },
+    ]);
+  });
+
+  it('takes the key of a value read out of an object', () => {
+    expect(redactDeep('hunter2', 'Password').value).toBe(REDACTED);
+    expect(redactDeep({ value: 'x' }, 'WalletSecretConfig').value).toEqual({ value: REDACTED });
+    expect(redactDeep('jdoe', 'Name').value).toBe('jdoe');
   });
 
   it('passes primitives through untouched', () => {
