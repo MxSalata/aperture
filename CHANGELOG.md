@@ -12,9 +12,11 @@ Multi-Manager, OcuPilot, Ops Canvas) turned up six things worth having before th
 - **TLS & certificates.** The TLS page gained an X.509 credentials tab: subject and issuer, the
   certificate's validity read per credential, a countdown badge (expired, expiring within 30
   days, ok), private-key presence, owners and peer names, and a type-the-alias delete.
-- **Task state is verified, not assumed.** After a suspend or resume the task is re-read and the
-  page says when IRIS still reports the previous state, a behaviour another entry observed on
-  2026.2. `npm run verify:live -- --mutate` (used by CI) records what your instance does.
+- **Task state is verified, not assumed.** After a suspend or resume the task object and the
+  task list are both re-read and the page says which one has not caught up. CI reproduced the
+  behaviour another entry reported on 2026.2: `/v2/task/info` reflects the suspend at once,
+  `/v2/tasks` does not. `npm run verify:live -- --mutate` (used by CI) records what your
+  instance does.
 - **Audit evidence for security writes.** On the Activity screen a security change can be matched
   to the `%System/%Security/<Event>` audit record that proves it; the record is shown next to
   the HTTP result and the row keeps the audit index. The demo instance writes audit records for

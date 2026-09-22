@@ -66,14 +66,26 @@ export default function TaskDetailPage() {
   // A suspend or resume is only as real as what the server reports afterwards: re-read the
   // task and keep a note when the read-back disagrees with the accepted request (on IRIS
   // 2026.2 the task list can lag behind %SYS.Task.Suspended; see lib/quirks.ts).
-  const [lastChange, setLastChange] = useState<{ expected: boolean; at: number } | null>(null);
+  const qc = useQueryClient();
+  const [lastChange, setLastChange] = useState<{
+    expected: boolean;
+    at: number;
+    listAgrees: boolean;
+  } | null>(null);
   const verify = async (expected: boolean) => {
-    const fresh = await info.refetch();
-    const reported = fresh.data?.Suspended;
-    setLastChange(reported !== undefined && !!reported !== expected ? { expected, at: Date.now() } : null);
+    // Both readings: the task object (/v2/task/info) and the row in the task list (/v2/tasks).
+    // On IRIS 2026.2 the object reflects a suspend at once and the list does not (CI-confirmed).
+    const [, list] = await Promise.all([
+      info.refetch(),
+      qc.fetchQuery({ queryKey: taskKeys.list, queryFn: () => result(api().GET('/v2/tasks')), staleTime: 0 }),
+    ]);
+    const row = list.find((x) => x.Id === tid);
+    setLastChange({ expected, at: Date.now(), listAgrees: !row || !!row.Suspended === expected });
   };
-  // Shown only while the latest read-back still disagrees with the accepted request.
+  // Shown only while the task object itself still disagrees with the accepted request.
   const lag = lastChange && info.data && !!info.data.Suspended !== lastChange.expected ? lastChange : null;
+  // The object agrees but the list has not caught up: the Tasks screen shows the old state for a while.
+  const listLag = lastChange && !lag && !lastChange.listAgrees ? lastChange : null;
   // IRIS 2026.2 answers 415 to an operation that declares a body when none is sent, even
   // when every field is optional (lib/quirks.ts, optional-body-415): send an empty object.
   const suspend = useApiMutation(() => run(api().POST('/v2/task/suspend', { ...params, body: {} })), {
@@ -187,6 +199,22 @@ export default function TaskDetailPage() {
                   GET /v2/task/info re-read at {formatDateTime(lag.at)} disagrees with the request. On IRIS
                   2026.2 the task list can lag behind the task object. This page re-reads every 10 seconds and
                   shows what the server reports, never what was requested.
+                </Text>
+              </Alert>
+            ) : null}
+            {listLag ? (
+              <Alert
+                color="blue"
+                variant="light"
+                title="Confirmed by /v2/task/info; the task list has not caught up"
+                withCloseButton
+                onClose={() => setLastChange(null)}
+                mb="sm"
+              >
+                <Text size="sm">
+                  GET /v2/tasks still reports this task as {listLag.expected ? 'active' : 'suspended'}. On
+                  IRIS 2026.2 the list lags behind the task object after a suspend or resume, so the Tasks
+                  screen may show the old state for a while. Recorded as quirk task-suspended-lag.
                 </Text>
               </Alert>
             ) : null}

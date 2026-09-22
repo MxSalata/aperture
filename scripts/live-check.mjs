@@ -251,10 +251,13 @@ try {
         const after = await readBack();
         report.quirks.taskSuspendReflected = { info: after.info ?? null, list: after.list ?? null };
         const reflected = after.info === true && after.list === true;
+        // An observation rather than a pass/fail: the portal handles both outcomes.
         record(
-          'Suspended state readable right after suspend',
-          reflected,
-          `/v2/task/info says ${after.info}, /v2/tasks says ${after.list}${reflected ? '' : ' - Aperture re-reads and shows the disagreement'}`,
+          'Read-back right after suspend',
+          true,
+          reflected
+            ? '/v2/task/info and /v2/tasks both report Suspended=true at once'
+            : `/v2/task/info says ${after.info}, /v2/tasks says ${after.list} - the list lags behind the object (quirk task-suspended-lag; Aperture re-reads both and says so)`,
         );
       } finally {
         const res = await http('POST', `/v2/task/resume?id=${id}`);

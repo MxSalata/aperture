@@ -64,9 +64,9 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
   {
     id: 'task-suspended-lag',
     appliesTo: (op) => op.path === '/v2/task/suspend' || op.path === '/v2/task/resume',
-    note: 'After a successful suspend, GET /v2/tasks and /v2/task/info can keep reporting Suspended=false for a while although %SYS.Task.Suspended changed. Aperture re-reads the task after each change and says when the two disagree.',
+    note: 'Right after a successful suspend, GET /v2/task/info reports Suspended=true while the GET /v2/tasks list still reports false. Aperture re-reads both after each change and says which one has not caught up.',
     source:
-      'IRIS Fieldwork verification report (IRIS Community 2026.2 Build 221U); `npm run verify:live -- --mutate` records what your instance does',
+      'Reproduced by Aperture CI (IRIS Community 2026.2 Build 221U, run 35719716417), first reported in the IRIS Fieldwork verification record; `npm run verify:live -- --mutate` records what your instance does',
   },
   {
     id: 'process-resume-state',
