@@ -17,10 +17,39 @@ explains how the pieces fit, in enough detail to extend the portal or reuse the 
 │ api/privileges.ts   %Admin_* ↔ GET /info                                 │
 │ lib/openapi.ts      runtime access to the spec (Explorer, mock fallback) │
 ├─────────────────────────────────────────────────────────────────────────┤
-│ stores/             zustand: session, connections, jobs, metrics, demo   │
+│ stores/             zustand: session, connections, jobs, metrics, demo,  │
+│                     activity, health, appearance                        │
 ├─────────────────────────────────────────────────────────────────────────┤
 │ mocks/              MSW handlers = demo mode = test fixtures             │
 └─────────────────────────────────────────────────────────────────────────┘
+```
+
+The same picture as a data-flow diagram, from the browser to the instance:
+
+```mermaid
+flowchart LR
+  U[Administrator / operator] --> B[Browser]
+  B --> SPA[Aperture SPA<br/>React 19 · TypeScript · Mantine]
+
+  subgraph SPA internals
+    SPA --> SCR[Screens<br/>dashboard · monitor · databases · namespaces · processes<br/>locks · journals · tasks · security · activity · explorer]
+    SCR --> Q[TanStack Query<br/>cache · polling · invalidation]
+    Q --> C[Typed client<br/>openapi-fetch + schema.d.ts from mainspec_v2.json]
+    C --> MW[Fetch middleware<br/>Bearer/Basic · refresh on 401 · capture 202 · activity log]
+    MW --> JOBS[Job Center store<br/>poll /v2/async-result]
+    SPA --> ST[zustand stores<br/>session · connections · jobs · metrics · demo<br/>activity · health · appearance]
+    SPA --> PRIV[Privileges from GET /info<br/>nav · badges · explorer]
+  end
+
+  MW -->|same origin| NG[nginx container<br/>serves dist/, proxies /api/admin]
+  MW -->|same origin| IR[IRIS web app /aperture<br/>www/ via IPM or init script]
+  MW -->|dev| VITE[Vite dev server proxy]
+  MW -->|demo / tests| MSW[Mock Service Worker<br/>in-memory IRIS, all 273 operations]
+
+  NG --> API[SysAdmin REST API v2<br/>/api/admin]
+  IR --> API
+  VITE --> API
+  API --> IRIS[(InterSystems IRIS 2025.1+ / 2026.2 JWT)]
 ```
 
 ## 2. The API layer
@@ -183,7 +212,7 @@ fields or JSON.
 | `npm run dev` | - | browser | Vite proxy → `VITE_IRIS_URL` |
 | nginx container | `npm run build` → `dist/` | browser | nginx `proxy_pass` → IRIS |
 | IRIS-hosted (`/aperture`) | `npm run build:www` → `www/` | hash, relative assets | same origin |
-| GitHub Pages demo | `npm run build:demo` → `dist-demo/` | hash, relative assets | in-browser mock |
+| Online demo (static host) | `npm run build:demo` → `dist-demo/` | hash, relative assets | in-browser mock |
 
 Hash routing is used wherever there is no server to rewrite deep links to `index.html`.
 

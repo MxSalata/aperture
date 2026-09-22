@@ -27,7 +27,7 @@ navigation, dark mode, and an in-browser demo that needs no IRIS at all.
 HL7/DICOM workloads, tasks, journals, users and audit history. Every write is real against the
 in-memory instance: create a namespace, compact a database, terminate a process, purge audit records.
 
-- GitHub Pages: https://mxsalata.github.io/intersystems-frontend-contest/ (published by the CI workflow once GitHub Pages is set to "GitHub Actions" in the repository settings)
+- Online: every CI run attaches the demo build as the `demo-site` artifact (download, unzip, serve the folder with any static server). The `deploy-demo` job publishes it to GitHub Pages once the repository is public and the repository variable `DEPLOY_DEMO` is set to `true`.
 - Or locally: `npm run build:demo && npm run preview:demo` → http://localhost:4174
 
 | Demo account | Password | Privileges                                        | What it shows                                              |
@@ -173,16 +173,13 @@ browser ──HTTPS──▶ nginx (dist/) ──/api/admin──▶ IRIS privat
 | File                                                               | Purpose                                                                          |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                       | how the layers fit: typed client, auth, async jobs, privileges, mock, deployment |
-| [docs/ARCHITECTURE_OVERVIEW.mmd](docs/ARCHITECTURE_OVERVIEW.mmd)   | the same as a Mermaid diagram                                                    |
 | [docs/CONTEST_PLAN.md](docs/CONTEST_PLAN.md)                       | contest requirements, judging, bonuses, plan                                     |
 | [docs/BONUSES.md](docs/BONUSES.md)                                 | technology bonuses: criteria, evidence, what remains                             |
 | [docs/OPENEXCHANGE_SUBMISSION.md](docs/OPENEXCHANGE_SUBMISSION.md) | paste-ready Open Exchange listing                                                |
 | [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md)       | everything to tick before the deadline                                           |
-| [docs/DEMO_ASSETS_CHECKLIST.md](docs/DEMO_ASSETS_CHECKLIST.md)     | screenshots (generated) and video assets                                         |
 | [docs/ARTICLE.md](docs/ARTICLE.md)                                 | Developer Community article draft                                                |
 | [docs/ARTICLE_2.md](docs/ARTICLE_2.md)                             | second article draft: what the specification does not tell you                   |
 | [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md)                       | three demo video storyboards                                                     |
-| [docs/prototype/](docs/prototype/)                                 | the original single-file prototype this repository started from (archived)       |
 
 ## Verified against real IRIS
 

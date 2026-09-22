@@ -27,7 +27,7 @@ PORTAL_URL=http://iris.lan:52773/aperture/index.html npm run verify:live
 | `GET` of databases, database-dirs, namespaces, processes, tasks, dashboard, async-results, users, web-apps, journal files, locks | result shapes; `403` is recorded as "privilege not held", not as failure |
 | `LocalDatabaseList` shape | the spec says object, servers say array; Aperture accepts both |
 | error envelope on a missing namespace | `status.Errors` (documented), `status.errors` objects (observed) or top-level `errors` |
-| `POST /v2/database-dir/info` → `202`, `Location` header, GUID in body, polling to `Finished` | the Job Center's contract |
+| `POST /v2/database-dir/info` → `202`, task id from the `Location` header (2026.2 sends no body), polling to `Finished` | the Job Center's contract |
 | portal HTML served (optional) | the IPM / init-script deployment path |
 
 ## Latest results

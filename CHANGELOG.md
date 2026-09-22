@@ -59,6 +59,17 @@ with each one and why the rest were deferred.
   un-expires every account (development image).
 - Whole-repository Prettier format (one isolated commit; see `.git-blame-ignore-revs`).
 
+### Repository
+
+- Removed what the release does not need: the archived single-file prototype (`docs/prototype/`,
+  still the `initial commit` in history; it targeted endpoints that are not in the v2
+  specification and was never part of the build), the standalone Mermaid file (now embedded in
+  `docs/ARCHITECTURE.md`), the demo-assets checklist (merged into `docs/VIDEO_SCRIPT.md`) and the
+  unused `QueryBoundary` component.
+- The GitHub Pages deployment is opt-in: `deploy-demo` runs only when the repository variable
+  `DEPLOY_DEMO` is `true`, so a private repository gets a skipped job instead of a failed run.
+  Every run still attaches the demo build as the `demo-site` artifact.
+
 ### Review disposition
 
 | Finding                                 | Status      | Note                                                                                                                                                                                                                                    |
