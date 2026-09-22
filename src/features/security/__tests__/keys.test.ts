@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AUTHE_FLAGS, applyFlags, bitsToFlags } from '../keys';
+import { AUTHE_FLAGS, applyFlags, bitsToFlags, webAppExposure } from '../keys';
 
 const bitOf = (label: string) => AUTHE_FLAGS.find((f) => f.label === label)?.bit;
 
@@ -26,5 +26,20 @@ describe('AutheEnabled flags', () => {
 
   it('starts from nothing for a new object', () => {
     expect(applyFlags(undefined, [32, 64])).toBe(96);
+  });
+});
+
+describe('web application exposure', () => {
+  it('is open when enabled, unauthenticated and without a resource', () => {
+    expect(webAppExposure({ Enabled: true, AuthenticationMethods: ['Unauthenticated'] })).toBe('open');
+    expect(
+      webAppExposure({
+        Enabled: true,
+        AuthenticationMethods: ['Password', 'Unauthenticated'],
+        Resource: '%DB_X',
+      }),
+    ).toBe('gated');
+    expect(webAppExposure({ Enabled: true, AuthenticationMethods: ['Password'] })).toBeNull();
+    expect(webAppExposure({ Enabled: false, AuthenticationMethods: ['Unauthenticated'] })).toBeNull();
   });
 });

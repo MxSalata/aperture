@@ -51,6 +51,7 @@ docker compose up --build
 - http://localhost:8080 - Aperture behind nginx (proxies `/api/admin` to IRIS, no CORS, no Basic-auth pop-ups; sends a Content-Security-Policy, set `IRIS_ALLOWED_ORIGINS="https://other.iris:52773"` on the `portal` service to let the browser call further instances directly)
 - http://localhost:52773/aperture/index.html - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`; the built-in web server needs the file name, a bare `/aperture/` answers 404)
 - Sign in with `_SYSTEM` / `SYS`
+- On a host with more than 20 CPU cores, IRIS Community stops at start-up with _Invalid Community Edition license, may have exceeded core limit_ (reported by the IRIS Atrium entry). Restrict the container's CPUs with a `docker-compose.override.yml` next to the compose file: `services: { iris: { cpuset: "0-19" } }`.
 - The ports are published on `127.0.0.1` only, because the image ships these well-known credentials. To use it from other machines, change the passwords, then start with `APERTURE_BIND=0.0.0.0 docker compose up`, and put TLS in front of nginx: it serves plain HTTP.
 
 The `iris` service is built from [`docker/iris/Dockerfile`](docker/iris/Dockerfile) on top of

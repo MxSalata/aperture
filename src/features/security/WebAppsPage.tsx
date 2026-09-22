@@ -1,4 +1,4 @@
-import { Badge, Button, Checkbox, Group, Modal, Select, Stack, TextInput } from '@mantine/core';
+import { Badge, Button, Checkbox, Group, Modal, Select, Stack, TextInput, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
@@ -11,7 +11,7 @@ import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { BoolBadge } from '@/components/StatusBadge';
 import { renderValue } from '@/components/KeyValueList';
 import { useSession } from '@/stores/session';
-import { AUTHE_FLAGS, flagsToBits, secKeys } from './keys';
+import { AUTHE_FLAGS, flagsToBits, secKeys, webAppExposure } from './keys';
 
 type Row = WebApplicationList[number];
 export const webAppUrl = (name: string) => `/security/web-apps/detail?name=${encodeURIComponent(name)}`;
@@ -46,7 +46,33 @@ const columns: ColumnDef<Row, unknown>[] = [
     header: 'Enabled',
     cell: (c) => <BoolBadge value={c.getValue() as boolean} yes="Enabled" no="Disabled" />,
   },
-  { accessorKey: 'AuthenticationMethods', header: 'Authentication', cell: (c) => renderValue(c.getValue()) },
+  {
+    accessorKey: 'AuthenticationMethods',
+    header: 'Authentication',
+    cell: ({ row }) => {
+      const exposure = webAppExposure(row.original);
+      return (
+        <Group gap={4} wrap="nowrap">
+          {renderValue(row.original.AuthenticationMethods)}
+          {exposure === 'open' ? (
+            <Tooltip label="Enabled, accepts unauthenticated requests and requires no resource: anyone who reaches the web server gets in as UnknownUser">
+              <Badge size="xs" color="red" variant="filled" tabIndex={0}>
+                open
+              </Badge>
+            </Tooltip>
+          ) : exposure === 'gated' ? (
+            <Tooltip
+              label={`Accepts unauthenticated requests; UnknownUser needs ${row.original.Resource} to get in`}
+            >
+              <Badge size="xs" color="yellow" variant="light" tabIndex={0}>
+                unauthenticated
+              </Badge>
+            </Tooltip>
+          ) : null}
+        </Group>
+      );
+    },
+  },
   {
     accessorKey: 'Resource',
     header: 'Resource',

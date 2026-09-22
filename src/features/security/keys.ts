@@ -52,3 +52,21 @@ export function bitsToFlags(bits: number | undefined): number[] {
 export function applyFlags(original: number | undefined, flags: number[]): number {
   return ((original ?? 0) & ~SHOWN_BITS) | flagsToBits(flags);
 }
+
+export type Exposure = 'open' | 'gated' | null;
+
+/**
+ * How a web application answers someone who has not signed in. `open`: it is enabled, accepts
+ * unauthenticated requests and requires no resource, so anyone who reaches the web server gets
+ * in (as UnknownUser). `gated`: unauthenticated requests are accepted but the application's
+ * resource must be held (by UnknownUser). null: sign-in is required, or it is disabled.
+ */
+export function webAppExposure(app: {
+  Enabled?: boolean;
+  AuthenticationMethods?: string[];
+  Resource?: string;
+}): Exposure {
+  if (!app.Enabled) return null;
+  if (!(app.AuthenticationMethods ?? []).some((m) => /^unauthenticated$/i.test(m))) return null;
+  return app.Resource ? 'gated' : 'open';
+}
