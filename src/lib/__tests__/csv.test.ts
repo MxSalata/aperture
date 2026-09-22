@@ -31,3 +31,13 @@ describe('csv export', () => {
     ).toBe('﻿Name,PID\r\njdoe,1234\r\nsys,\r\n');
   });
 });
+
+describe('csvCell numbers in text', () => {
+  it('keeps negative numbers as numbers and still neutralises formulas', () => {
+    expect(csvCell('-5')).toBe('-5');
+    expect(csvCell('+3.25')).toBe("'+3.25");
+    expect(csvCell('-1e-3')).toBe('-1e-3');
+    expect(csvCell('-2+3')).toBe("'-2+3");
+    expect(csvCell('=SUM(A1)')).toBe("'=SUM(A1)");
+  });
+});

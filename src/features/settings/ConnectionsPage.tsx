@@ -29,6 +29,8 @@ import {
   type ConnectionProfile,
 } from '@/stores/connections';
 import { isValidTimezone } from '@/lib/format';
+import { useSession } from '@/stores/session';
+import { confirmDanger } from '@/components/ConfirmDanger';
 
 const TIME_ZONES: string[] = (() => {
   try {
@@ -40,8 +42,6 @@ const TIME_ZONES: string[] = (() => {
     return [];
   }
 })();
-import { useSession } from '@/stores/session';
-import { confirmDanger } from '@/components/ConfirmDanger';
 
 export default function ConnectionsPage() {
   const profiles = useConnections((s) => s.profiles);

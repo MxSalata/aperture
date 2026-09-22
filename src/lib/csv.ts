@@ -5,6 +5,11 @@
  * names carry server-controlled text, and a CSV must never execute it.
  */
 const FORMULA_START = /^[=+\-@\t\r]/;
+/**
+ * A negative number ("-5", "-1e-3") starts like a formula but is none: it stays a number.
+ * A leading "+" keeps its apostrophe, so "+48 22 …" is not turned into a bare number.
+ */
+const NEGATIVE_NUMBER = /^-(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
 /** UTF-8 byte-order mark, so spreadsheets read accented text correctly. */
 const BOM = String.fromCharCode(0xfeff);
 
@@ -12,7 +17,8 @@ export function csvCell(value: unknown): string {
   if (value === null || value === undefined) return '';
   let text: string;
   if (typeof value === 'number' || typeof value === 'boolean') text = String(value);
-  else if (typeof value === 'string') text = FORMULA_START.test(value) ? `'${value}` : value;
+  else if (typeof value === 'string')
+    text = FORMULA_START.test(value) && !NEGATIVE_NUMBER.test(value) ? `'${value}` : value;
   else if (value instanceof Date) text = value.toISOString();
   else text = JSON.stringify(value);
   return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;

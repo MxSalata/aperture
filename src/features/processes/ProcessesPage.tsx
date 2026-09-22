@@ -68,15 +68,19 @@ export default function ProcessesPage() {
     validate: { Message: (v) => (v.trim() ? null : 'Required') },
   });
   const broadcast = useApiMutation(
-    (v: typeof form.values) =>
-      run(
+    async (v: typeof form.values) => {
+      // Read the process table at send time: the table on screen can be seconds old, and a
+      // process id that ended in between may already belong to someone else.
+      const now = await result(api().GET('/v2/processes'));
+      return run(
         api().POST('/v2/process/broadcast', {
           body: {
             Message: v.Message,
-            PidList: (list.data ?? []).filter((p) => p.CanReceiveBroadcast).map((p) => p.Pid),
-          } as never,
+            PidList: now.filter((p) => p.CanReceiveBroadcast).map((p) => p.Pid),
+          },
         }),
-      ),
+      );
+    },
     {
       onSuccess: () => {
         close();

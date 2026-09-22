@@ -4,7 +4,7 @@ import type { Info } from '@/api/types';
  * Mock identity provider. Four accounts show off privilege-aware UI:
  *   _SYSTEM / SYS     - everything
  *   superuser / SYS   - everything
- *   operator / SYS    - %Admin_Operate + %Admin_Task only
+ *   operator / SYS    - %Admin_Operate, %Admin_Task and %Admin_Journal
  *   auditor / SYS     - %Admin_Secure only
  */
 export interface MockAccount {

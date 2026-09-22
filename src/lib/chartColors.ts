@@ -1,6 +1,7 @@
 /**
- * Chart palette. Categorical hues are assigned in this fixed order and never cycled;
- * the same slot keeps the same hue whatever the series count or the colour scheme.
+ * Chart palette. Categorical hues are assigned in this fixed order, so the same slot keeps
+ * the same hue whatever the series count or the colour scheme. A sixth series would reuse
+ * the first hue (`seriesColor` wraps); no chart draws more than five.
  *
  * Two separate properties are guaranteed, and `chartColors.test.ts` enforces the second:
  *  - the hues are mutually distinguishable under the common colour-vision deficiencies

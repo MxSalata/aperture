@@ -292,11 +292,11 @@ export function AppLayout() {
   const location = useLocation();
   const instance = useInstanceLabel();
 
-  // Timestamps are parsed in the instance's zone once the profile names one.
-  useEffect(() => {
-    setInstanceTimezone(instance.timezone);
-    return () => setInstanceTimezone(null);
-  }, [instance.timezone]);
+  // Timestamps are parsed in the instance's zone once the profile names one. Set while
+  // rendering, before the page below renders its first timestamp (an effect runs after the
+  // children have already rendered in the browser's zone); idempotent, so safe to repeat.
+  setInstanceTimezone(instance.timezone);
+  useEffect(() => () => setInstanceTimezone(null), []);
 
   return (
     <AppShell
@@ -371,8 +371,11 @@ export function AppLayout() {
                     {section.label}
                   </Text>
                   {items.map((item) => {
+                    // By path segment: /security/users is not active on /security/users-audit.
                     const active =
-                      item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to);
+                      item.to === '/'
+                        ? location.pathname === '/'
+                        : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
                     return (
                       <NavLink
                         key={item.to}
