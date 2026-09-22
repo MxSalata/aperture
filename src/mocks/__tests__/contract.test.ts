@@ -17,15 +17,42 @@ const BASE = 'http://iris.test';
 /** Where real servers are known to differ from the spec, and the mock follows the servers (lib/quirks.ts). */
 const DOCUMENTED_DIVERGENCE = new Set(['/v2/database-dirs']);
 
-/** Detail reads the screens edit, with a record the seeded instance holds. */
-const DETAIL_READS: [string, Record<string, string>][] = [
-  ['/v2/security/user', { name: '_SYSTEM' }],
-  ['/v2/security/role', { name: '%Manager' }],
-  ['/v2/security/service', { name: '%Service_Bindings' }],
-  ['/v2/web-app', { name: '/api/admin' }],
-  ['/v2/namespace', { name: 'USER' }],
-  ['/v2/database', { name: 'USER' }],
-];
+/**
+ * Every parameterised read a screen makes, with an identifier taken from the seeded instance
+ * (from a list where the list names one, so the test follows the seed data).
+ */
+async function detailReads(): Promise<[string, Record<string, string>][]> {
+  const first = async (path: string, key: string) =>
+    String((((await read(path)).result as Record<string, unknown>[] | undefined) ?? [])[0]?.[key] ?? '');
+  const dir = await first('/v2/database-dirs', 'Directory');
+  const task = await first('/v2/tasks', 'Id');
+  return [
+    ['/v2/security/user', { name: '_SYSTEM' }],
+    ['/v2/security/role', { name: '%Manager' }],
+    ['/v2/security/role/owners', { name: '%Manager' }],
+    ['/v2/security/resource', { name: await first('/v2/security/resources', 'Name') }],
+    ['/v2/security/service', { name: '%Service_Bindings' }],
+    ['/v2/security/ssl-configuration', { name: await first('/v2/security/ssl-configurations', 'Name') }],
+    [
+      '/v2/security/x509-credential/certificate',
+      { alias: await first('/v2/security/x509-credentials', 'Alias') },
+    ],
+    ['/v2/security/sql-privileges', { namespace: 'USER', grantee: '_SYSTEM' }],
+    ['/v2/web-app', { name: '/api/admin' }],
+    ['/v2/namespace', { name: 'USER' }],
+    ['/v2/namespace/global-mappings', { namespace: 'USER' }],
+    ['/v2/namespace/package-mappings', { namespace: 'USER' }],
+    ['/v2/namespace/routine-mappings', { namespace: 'USER' }],
+    ['/v2/database', { name: 'USER' }],
+    ['/v2/database-dir', { dir }],
+    ['/v2/database-dir/volumes', { dir }],
+    ['/v2/journal/file', { file: await first('/v2/journal/files', 'Name') }],
+    ['/v2/process', { id: await first('/v2/processes', 'Pid') }],
+    ['/v2/task', { id: task }],
+    ['/v2/task/info', { id: task }],
+    ['/v2/task/history', { taskId: task }],
+  ];
+}
 
 let doc: OpenApiDoc;
 beforeAll(async () => {
@@ -54,7 +81,9 @@ function check(schema: JsonSchema | undefined, value: unknown, path: string, out
     out.push(`${path}: spec says ${expected}, mock sent ${actual} ${JSON.stringify(value).slice(0, 60)}`);
     return;
   }
-  if (s.enum && !s.enum.includes(value))
+  // IRIS writes "" for a setting that does not apply (DailyFrequencyTime of a run-once task),
+  // which the spec's enums omit although its descriptions say so.
+  if (s.enum && value !== '' && !s.enum.includes(value))
     out.push(`${path}: ${JSON.stringify(value)} is not one of ${JSON.stringify(s.enum)}`);
   if (actual === 'array' && s.items)
     (value as unknown[]).forEach((item, i) => check(s.items, item, `${path}[${i}]`, out, depth + 1));
@@ -92,9 +121,10 @@ describe('mock ⇄ specification contract', () => {
     expect(problems).toEqual([]);
   }, 60_000);
 
-  it('answers the detail reads the screens edit in the declared shape', async () => {
+  it('answers the parameterised reads of the screens in the declared shape', async () => {
     const problems: string[] = [];
-    for (const [path, query] of DETAIL_READS) {
+    for (const [path, query] of await detailReads()) {
+      expect(Object.values(query).every(Boolean), `${path}: no seeded identifier`).toBe(true);
       const { status, result } = await read(path, query);
       expect(status, `${path} ${JSON.stringify(query)}`).toBe(200);
       const out: string[] = [];

@@ -49,7 +49,7 @@ flowchart LR
   NG --> API[SysAdmin REST API v2<br/>/api/admin]
   IR --> API
   VITE --> API
-  API --> IRIS[(InterSystems IRIS 2025.1+ / 2026.2 JWT)]
+  API --> IRIS[(InterSystems IRIS 2026.2+ · SysAdmin API v2)]
 ```
 
 ## 2. The API layer

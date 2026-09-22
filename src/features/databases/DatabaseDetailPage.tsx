@@ -465,43 +465,38 @@ export default function DatabaseDetailPage() {
               Volumes
             </Title>
             {volumes.data ? (
-              (() => {
-                const v = volumes.data as {
-                  Volumes?: { Name?: string; Size?: number; Directory?: string }[];
-                };
-                const list =
-                  v.Volumes ??
-                  (Array.isArray(volumes.data)
-                    ? (volumes.data as { Name?: string; Size?: number; Directory?: string }[])
-                    : []);
-                return list.length ? (
-                  <Table fz="sm" verticalSpacing={4}>
-                    <Table.Thead>
-                      <Table.Tr>
-                        <Table.Th>File</Table.Th>
-                        <Table.Th>Size</Table.Th>
-                        <Table.Th>Directory</Table.Th>
+              // VolumeFiles: one row per volume file of the database.
+              volumes.data.length ? (
+                <Table fz="sm" verticalSpacing={4}>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>#</Table.Th>
+                      <Table.Th>File</Table.Th>
+                      <Table.Th>Size</Table.Th>
+                      <Table.Th>Directory</Table.Th>
+                      <Table.Th>Disk free</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {volumes.data.map((vol, i) => (
+                      <Table.Tr key={`${vol.VolumeNumber ?? i}-${vol.File ?? ''}`}>
+                        <Table.Td className="tabular">{vol.VolumeNumber ?? i}</Table.Td>
+                        <Table.Td className="mono">{vol.File}</Table.Td>
+                        <Table.Td className="tabular">{formatMB(vol.Size)}</Table.Td>
+                        <Table.Td className="mono">{vol.VolumeDirectory}</Table.Td>
+                        <Table.Td className="tabular">{formatMB(vol.DiskFree)}</Table.Td>
                       </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {list.map((vol, i) => (
-                        <Table.Tr key={i}>
-                          <Table.Td className="mono">{vol.Name}</Table.Td>
-                          <Table.Td className="tabular">{formatMB(vol.Size)}</Table.Td>
-                          <Table.Td className="mono">{vol.Directory}</Table.Td>
-                        </Table.Tr>
-                      ))}
-                    </Table.Tbody>
-                  </Table>
-                ) : (
-                  <Text size="sm" c="dimmed">
-                    Single volume (IRIS.DAT)
-                  </Text>
-                );
-              })()
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              ) : (
+                <Text size="sm" c="dimmed">
+                  Single volume (IRIS.DAT)
+                </Text>
+              )
             ) : volumes.isError ? (
               <Text size="sm" c="dimmed">
-                Volume list requires %Admin_Manage
+                {describeError(volumes.error)}
               </Text>
             ) : (
               <Text size="sm" c="dimmed">

@@ -13,8 +13,9 @@
       </Author>
       <Packaging>module</Packaging>
       <SourcesRoot>ipm</SourcesRoot>
-      <!-- The SysAdmin API exists from 2025.1; the installer's Embedded Python needs 2021.2+ -->
-      <SystemRequirements Version=">=2025.1"/>
+      <!-- The portal speaks SysAdmin API v2, which ships with IRIS 2026.2 (2026.1 serves v1 only,
+           older releases none); the installer's Embedded Python needs 2021.2+ -->
+      <SystemRequirements Version=">=2026.2"/>
 
       <!-- Post-install hook and readiness report, written in Embedded Python
            (ipm/cls/Aperture/Installer.cls) -->

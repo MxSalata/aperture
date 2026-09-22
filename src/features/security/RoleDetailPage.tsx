@@ -69,7 +69,11 @@ export default function RoleDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q.data, opened]);
   const r = q.data;
-  const o = owners.data as Record<string, unknown> | undefined;
+  // RoleOwnerList: the role's *direct* holders, users and roles alike (a user who holds it through
+  // another role appears under that role, not here).
+  const holders = owners.data;
+  const holderNames = (type: string) =>
+    (holders ?? []).filter((h) => h.Type === type).map((h) => h.Name ?? '');
 
   return (
     <>
@@ -144,10 +148,17 @@ export default function RoleDetailPage() {
             <Title order={5} mb="xs">
               Who holds this role
             </Title>
-            {o ? (
+            {holders ? (
               <KeyValueList
                 cols={1}
-                items={Object.entries(o).map(([k, v]) => ({ label: k, value: renderValue(v) }))}
+                items={[
+                  { label: 'Users', value: renderValue(holderNames('User')) },
+                  {
+                    label: 'Users who may escalate to it',
+                    value: renderValue(holderNames('User (escalation)')),
+                  },
+                  { label: 'Roles that grant it', value: renderValue(holderNames('Role')) },
+                ]}
               />
             ) : owners.isError ? (
               <ErrorAlert error={owners.error} />
@@ -160,7 +171,7 @@ export default function RoleDetailPage() {
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 5 }}>
           <Paper p="md">
-            <JsonViewer value={{ role: r, owners: o }} />
+            <JsonViewer value={{ role: r, owners: holders }} />
           </Paper>
         </Grid.Col>
       </Grid>

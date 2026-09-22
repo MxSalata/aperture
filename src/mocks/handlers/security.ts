@@ -202,11 +202,18 @@ export const securityHandlers = [
   route('get', '/v2/security/role/owners', SECURE, ({ request }) => {
     const r = findRole(requireParam(request, 'name'));
     if (!r) return notFound('Role');
-    return ok({
-      Users: mockDb.users.filter((u) => u.Roles.includes(r.Name)).map((u) => u.Name),
-      EscalationUsers: mockDb.users.filter((u) => u.EscalationRoles.includes(r.Name)).map((u) => u.Name),
-      Roles: mockDb.roles.filter((x) => x.GrantedRoles.includes(r.Name)).map((x) => x.Name),
-    });
+    // RoleOwnerList: direct holders only, users and roles alike (as IRIS 2026.2 answers).
+    return ok([
+      ...mockDb.users
+        .filter((u) => u.Roles.includes(r.Name))
+        .map((u) => ({ Name: u.Name, Type: 'User', AdminOption: false })),
+      ...mockDb.users
+        .filter((u) => u.EscalationRoles.includes(r.Name))
+        .map((u) => ({ Name: u.Name, Type: 'User (escalation)', AdminOption: false })),
+      ...mockDb.roles
+        .filter((x) => x.GrantedRoles.includes(r.Name))
+        .map((x) => ({ Name: x.Name, Type: 'Role', AdminOption: false })),
+    ]);
   }),
   route('put', '/v2/security/role', SECURE, async ({ request, account }) => {
     const name = requireParam(request, 'name');

@@ -173,6 +173,23 @@ async function basicProbe(base: string, credentials: string): Promise<Info> {
   return (body?.result ?? body) as Info;
 }
 
+/**
+ * Aperture speaks SysAdmin API v2, which ships with IRIS 2026.2. IRIS 2026.1 serves v1 only
+ * (every /api/admin/v2 path answers 404, and there is no POST /login), and older releases
+ * have no SysAdmin API at all: signing in there would open a portal whose every screen fails.
+ */
+export const REQUIRED_API_VERSION = 2;
+
+function assertSupportedApi(info: Info, url: string): void {
+  const v = Number(info.apiVersion);
+  if (Number.isFinite(v) && v > 0 && v < REQUIRED_API_VERSION)
+    throw new ApiError({
+      status: 0,
+      url,
+      summary: `This instance serves SysAdmin API v${v}${info.serverVersion ? ` (${info.serverVersion.match(/\d{4}\.\d+/)?.[0] ?? info.serverVersion})` : ''}. Aperture needs API v${REQUIRED_API_VERSION}, which ships with IRIS 2026.2.`,
+    });
+}
+
 let refreshInFlight: Promise<boolean> | null = null;
 
 /**
@@ -253,6 +270,7 @@ export const useSession = create<SessionState>()(
             }
             const credentials = basicCredentials(args.username, args.password);
             const info = await basicProbe(base, credentials);
+            assertSupportedApi(info, `${base}/info`);
             set({
               status: 'authenticated',
               mode: 'basic',
@@ -277,7 +295,7 @@ export const useSession = create<SessionState>()(
             expiresAt: outcome.expiresAt,
             basicCredentials: null,
           });
-          await get().loadInfo();
+          assertSupportedApi(await get().loadInfo(), `${base}/info`);
         } catch (e) {
           // A token issued to a session that cannot start (e.g. /info refuses the account) is revoked.
           if (get().mode === 'jwt') await get().logout();

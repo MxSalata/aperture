@@ -62,7 +62,7 @@ ClassMethod ConfigurePython(api As %String) As %Status [ Language = python ]
     try:
         applications = iris.cls("Security.Applications")
         if not applications.Exists(api):
-            print("Aperture: web application " + api + " not found; the portal needs IRIS 2025.1+ with the SysAdmin API")
+            print("Aperture: web application " + api + " not found; the portal needs IRIS 2026.2+ (SysAdmin API v2)")
             return 1
 
         app_id = None
@@ -115,7 +115,7 @@ ClassMethod DoctorPython(api As %String, portal As %String) As %Status [ Languag
         version = iris.system.Version.GetNumber()
         parts = version.split(".")
         major = (int(parts[0]), int(parts[1]))
-        check(major >= (2025, 1), "IRIS " + version, "the SysAdmin API needs 2025.1 or later")
+        check(major >= (2026, 2), "IRIS " + version, "the portal needs SysAdmin API v2, which ships with 2026.2")
 
         has_jwt = bool(iris.cls("%Dictionary.CompiledProperty")._ExistsId("Security.Applications||JWTAuthEnabled"))
         check(True, "JWT login (POST /login)", "available, IRIS 2026.2+" if has_jwt else "not on this version, the portal uses HTTP Basic")
@@ -157,7 +157,7 @@ ClassMethod ConfigureObjectScript(api As %String) As %Status
     New $Namespace
     Set $Namespace = "%SYS"
     If '##class(Security.Applications).Exists(api) {
-        Write !, "Aperture: web application ", api, " not found; the portal needs IRIS 2025.1+ with the SysAdmin API"
+        Write !, "Aperture: web application ", api, " not found; the portal needs IRIS 2026.2+ (SysAdmin API v2)"
         Return $$$OK
     }
     Do ##class(Security.Applications).Get(api, .p)

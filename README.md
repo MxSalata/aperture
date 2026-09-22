@@ -102,7 +102,7 @@ Other scripts:
 
 ### Requirements on the IRIS side
 
-- IRIS or IRIS for Health **2025.1+** with the `/api/admin` web application (**2026.2+** for JWT login; older versions use HTTP Basic automatically).
+- IRIS or IRIS for Health **2026.2+** with the `/api/admin` web application. Aperture speaks SysAdmin API v2, which ships with 2026.2; IRIS 2026.1 serves only v1 (every `/v2` path answers 404) and older releases have no SysAdmin API, so sign-in there stops with an explanation. Sign-in uses JWT and falls back to HTTP Basic when `/login` is unavailable (for example with JWT authentication switched off on `/api/admin`).
 - The account needs at least one `%Admin_*` privilege (`GET /info` refuses everyone else).
 - If the portal is served from a different origin than IRIS, add that origin to the CORS allow-list of `/api/admin` (Aperture can do that itself under _Security → Web applications → /api/admin_).
 

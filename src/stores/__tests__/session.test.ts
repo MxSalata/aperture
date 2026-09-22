@@ -126,6 +126,24 @@ describe('session', () => {
     ).rejects.toThrow(/Invalid username or password/);
   });
 
+  it('refuses an instance that serves only SysAdmin API v1 (IRIS 2026.1)', async () => {
+    server.use(
+      http.post(`${BASE}/api/admin/login`, () => new HttpResponse(null, { status: 404 })),
+      http.get(`${BASE}/api/admin/info`, () =>
+        HttpResponse.json({
+          apiVersion: 1,
+          username: '_SYSTEM',
+          serverVersion: 'IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.1 (Build 234U)',
+          privileges: { Operate: { use: true } },
+        }),
+      ),
+    );
+    await expect(
+      useSession.getState().login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' }),
+    ).rejects.toThrow(/SysAdmin API v1 \(2026\.1\)\. Aperture needs API v2, which ships with IRIS 2026\.2/);
+    expect(useSession.getState().status).toBe('anonymous');
+  });
+
   it('does not bring back tokens when a refresh lands after sign-out', async () => {
     await useSession
       .getState()

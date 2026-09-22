@@ -199,10 +199,17 @@ export const databaseHandlers = [
   route('get', '/v2/database-dir/volumes', MANAGE, ({ request }) => {
     const d = findLocal(requireParam(request, 'dir'));
     if (!d) return notFound('Local database');
-    return ok({
-      Directory: d.Directory,
-      Volumes: [{ Name: 'IRIS.DAT', Size: d.Size, Directory: d.Directory }],
-    });
+    // VolumeFiles: an array, one entry per volume (a single-volume database has one).
+    return ok([
+      {
+        VolumeNumber: 0,
+        VolumeDirectory: d.Directory,
+        File: 'IRIS.DAT',
+        Size: d.Size,
+        VolumeDirectoryTotalSize: d.Size,
+        DiskFree: 184_320,
+      },
+    ]);
   }),
 
   route('post', '/v2/database-dir/info', MANAGE_OR_OPERATE, ({ request, account }) => {

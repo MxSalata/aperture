@@ -63,7 +63,7 @@ export const journalHandlers = [
         '/usr/irissys/mgr/user/',
         '/usr/irissys/mgr/interop/',
         '/usr/irissys/mgr/clinical/',
-      ],
+      ].map((DatabasePathOrAlias, SFN) => ({ SFN, DatabasePathOrAlias })),
       ClusterStartTime: '',
       End: f.DataSize,
       FileCount: mockDb.journals.length,
