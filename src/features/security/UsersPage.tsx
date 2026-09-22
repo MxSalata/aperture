@@ -46,7 +46,7 @@ export default function UsersPage() {
     <>
       <PageHeader title="Users" description="User accounts on this instance." privileges={['%Admin_Secure:U']}
         actions={<><Button size="xs" variant="default" leftSection={<IconRefresh size={14} />} onClick={() => list.refetch()} loading={list.isFetching}>Refresh</Button><Button size="xs" leftSection={<IconPlus size={14} />} onClick={open}>Create user</Button></>} />
-      <DataTable data={list.data} columns={columns} loading={list.isPending} error={list.error} onRowClick={(r) => navigate(`/security/users/${encodeURIComponent(r.Name ?? '')}`)} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} />
+      <DataTable stateKey="users" exportName="users" getRowLabel={(r) => `Open user ${r.Name ?? ''}`} data={list.data} columns={columns} loading={list.isPending} error={list.error} onRowClick={(r) => navigate(`/security/users/${encodeURIComponent(r.Name ?? '')}`)} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} />
       <Modal opened={opened} onClose={close} title="Create user" centered>
         <form onSubmit={form.onSubmit((v) => create.mutate(v))}>
           <Stack gap="sm">

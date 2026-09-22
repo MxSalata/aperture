@@ -76,6 +76,7 @@ export default function JobsPage() {
               </Text>
             </Group>
             <DataTable
+              exportName="async-tasks"
               data={serverJobs.data}
               columns={columns}
               loading={serverJobs.isPending}

@@ -1,5 +1,26 @@
 :root {
-  --aperture-mono: ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
+  --aperture-mono: ui-monospace, Menlo, Consolas, 'Liberation Mono', monospace;
+  /* Secondary text tokens: no inline opacity anywhere, so a contrast layer can raise them. */
+  --aperture-muted: var(--mantine-color-gray-7);
+  --aperture-muted-soft: var(--mantine-color-gray-6);
+}
+
+/* Mantine's light "dimmed" is gray-6 (#868e96, 3.3:1 on white); gray-7 reads at 7:1 and still looks secondary. */
+:root[data-mantine-color-scheme='light'] {
+  --mantine-color-dimmed: var(--mantine-color-gray-7);
+}
+
+:root[data-mantine-color-scheme='dark'] {
+  --aperture-muted: var(--mantine-color-dark-2);
+  --aperture-muted-soft: var(--mantine-color-dark-3);
+}
+
+.muted {
+  color: var(--aperture-muted);
+}
+
+.muted-soft {
+  color: var(--aperture-muted-soft);
 }
 
 html,

@@ -37,7 +37,7 @@ export default function RolesPage() {
     <>
       <PageHeader title="Roles" description="Roles bundle resource permissions (e.g. %DB_USER:RW) and can grant other roles." privileges={['%Admin_Secure:U']}
         actions={<><Button size="xs" variant="default" leftSection={<IconRefresh size={14} />} onClick={() => list.refetch()} loading={list.isFetching}>Refresh</Button><Button size="xs" leftSection={<IconPlus size={14} />} onClick={open}>Create role</Button></>} />
-      <DataTable data={list.data} columns={columns} loading={list.isPending} error={list.error} onRowClick={(r) => navigate(`/security/roles/${encodeURIComponent(r.Name ?? '')}`)} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} />
+      <DataTable stateKey="roles" exportName="roles" getRowLabel={(r) => `Open role ${r.Name ?? ''}`} data={list.data} columns={columns} loading={list.isPending} error={list.error} onRowClick={(r) => navigate(`/security/roles/${encodeURIComponent(r.Name ?? '')}`)} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} />
       <Modal opened={opened} onClose={close} title="Create role" centered size="lg">
         <form onSubmit={form.onSubmit((v) => create.mutate(v))}>
           <Stack gap="sm">

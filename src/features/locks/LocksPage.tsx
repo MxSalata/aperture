@@ -1,9 +1,9 @@
-import { ActionIcon, Button, Checkbox, Group, Switch, Text, Tooltip } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
+import { ActionIcon, Button, Checkbox, Group, Text, Tooltip } from '@mantine/core';
 import { IconRefresh, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
+import { useLiveQuery } from '@/api/useLiveQuery';
 import type { LockList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
@@ -13,9 +13,8 @@ import { confirmDanger } from '@/components/ConfirmDanger';
 type Row = LockList[number];
 
 export default function LocksPage() {
-  const [live, setLive] = useState(false);
   const [checkTxn, setCheckTxn] = useState(true);
-  const list = useQuery({ queryKey: ['locks'], queryFn: () => result(api().GET('/v2/locks')), refetchInterval: live ? 5000 : false });
+  const { query: list, control: liveControl } = useLiveQuery({ queryKey: ['locks'], queryFn: () => result(api().GET('/v2/locks')) });
   const del = useApiMutation((id: string) => run(api().DELETE('/v2/lock', { params: { query: { id, checkTxn: checkTxn ? 1 : 0 } } }), 'DELETE'), { invalidate: [['locks']] });
 
   const columns: ColumnDef<Row, unknown>[] = [
@@ -48,12 +47,14 @@ export default function LocksPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           <>
-            <Switch size="xs" label="Live (5s)" checked={live} onChange={(e) => setLive(e.currentTarget.checked)} />
+            {liveControl}
             <Button size="xs" variant="default" leftSection={<IconRefresh size={14} />} onClick={() => list.refetch()} loading={list.isFetching}>Refresh</Button>
           </>
         }
       />
       <DataTable
+        stateKey="locks"
+        exportName="locks"
         data={list.data}
         columns={columns}
         loading={list.isPending}

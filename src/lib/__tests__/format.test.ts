@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, formatMB, formatNumber, parseIrisDate, formatDateTime, truncate } from '../format';
+import { formatBytes, formatMB, formatNumber, parseIrisDate, formatDateTime, truncate, setInstanceTimezone, getInstanceTimezone } from '../format';
 
 describe('format helpers', () => {
   it('formats bytes with binary units and binary labels', () => {
@@ -21,6 +21,21 @@ describe('format helpers', () => {
     expect(formatDateTime('2026-02-23 00:00')).toBe('2026-02-23 00:00:00');
     expect(formatDateTime('')).toBe('-');
     expect(formatDateTime(Date.UTC(2026, 1, 23, 0, 0, 0))).toMatch(/^2026-02-2[23] /);
+  });
+  it('keeps instance wall-clock digits and computes the instant in the instance zone', () => {
+    setInstanceTimezone('Asia/Tokyo');
+    try {
+      expect(getInstanceTimezone()).toBe('Asia/Tokyo');
+      expect(formatDateTime('2026-01-01 12:00:00')).toBe('2026-01-01 12:00:00');
+      expect(parseIrisDate('2026-01-01 12:00:00')?.valueOf()).toBe(Date.UTC(2026, 0, 1, 3, 0, 0));
+    } finally {
+      setInstanceTimezone(null);
+    }
+  });
+  it('ignores an unknown time zone instead of breaking every date', () => {
+    setInstanceTimezone('Mars/Olympus_Mons');
+    expect(getInstanceTimezone()).toBeNull();
+    expect(formatDateTime('2026-01-01 12:00:00')).toBe('2026-01-01 12:00:00');
   });
   it('formats numbers defensively', () => {
     expect(formatNumber('12')).toBe('12');

@@ -41,7 +41,7 @@ export default function ResourcesPage() {
     <>
       <PageHeader title="Resources" description="Protected assets (databases, services, applications, %Admin_* privileges) and the permissions granted to everyone." privileges={['%Admin_Secure:U']}
         actions={<><Button size="xs" variant="default" leftSection={<IconRefresh size={14} />} onClick={() => list.refetch()} loading={list.isFetching}>Refresh</Button><Button size="xs" leftSection={<IconPlus size={14} />} onClick={() => { setEditing(null); form.reset(); open(); }}>Create resource</Button></>} />
-      <DataTable data={list.data} columns={columns} loading={list.isPending} error={list.error} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} pageSize={50} dense />
+      <DataTable stateKey="resources" exportName="resources" data={list.data} columns={columns} loading={list.isPending} error={list.error} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} pageSize={50} dense />
       <Modal opened={opened} onClose={close} title={editing ? `Edit ${editing}` : 'Create resource'} centered>
         <form onSubmit={form.onSubmit((v) => (editing ? reviewChanges({ title: `Review changes to ${editing}`, before, after: { Description: v.Description, PublicPermission: v.PublicPermission }, refetch: () => result(api().GET('/v2/security/resource', { params: { query: { name: editing } } })) as Promise<Record<string, unknown>>, onConfirm: () => save.mutateAsync(v) }) : save.mutate(v)))}>
           <Stack gap="sm">

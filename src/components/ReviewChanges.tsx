@@ -91,7 +91,7 @@ function Body<T extends Record<string, unknown>>({ id, changes, labels, refetch,
           {changes.map((c) => (
             <Table.Tr key={c.key}>
               <Table.Td>{labels?.[c.key] ?? humanize(c.key)}</Table.Td>
-              <Table.Td className="mono" style={{ opacity: 0.7, wordBreak: 'break-all' }}>{show(c.before)}</Table.Td>
+              <Table.Td className="mono muted" style={{ wordBreak: 'break-all' }}>{show(c.before)}</Table.Td>
               <Table.Td className="mono" style={{ wordBreak: 'break-all' }}>{show(c.after)}</Table.Td>
             </Table.Tr>
           ))}

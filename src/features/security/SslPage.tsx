@@ -48,7 +48,7 @@ export default function SslPage() {
     <>
       <PageHeader title="TLS / SSL configurations" description="Client and server TLS configurations used by the superserver, mirroring, LDAP, HTTP outbound and interoperability adapters." privileges={['%Admin_Secure:U']}
         actions={<><Button size="xs" variant="default" leftSection={<IconRefresh size={14} />} onClick={() => list.refetch()} loading={list.isFetching}>Refresh</Button><Button size="xs" leftSection={<IconPlus size={14} />} onClick={() => { setEditing(null); form.reset(); open(); }}>Create configuration</Button></>} />
-      <DataTable data={list.data} columns={columns} loading={list.isPending} error={list.error} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} dense />
+      <DataTable stateKey="ssl" exportName="ssl" data={list.data} columns={columns} loading={list.isPending} error={list.error} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} dense />
       <Modal opened={opened} onClose={close} title={editing ? `Edit ${editing}` : 'Create SSL configuration'} centered size="lg">
         <form onSubmit={form.onSubmit((v) => (editing ? reviewChanges({ title: `Review changes to ${editing}`, before, after: toBody(v) as Record<string, unknown>, refetch: () => result(api().GET('/v2/security/ssl-configuration', { params: { query: { name: editing } } })) as Promise<Record<string, unknown>>, onConfirm: () => save.mutateAsync(v) }) : save.mutate(v)))}>
           <Stack gap="sm">

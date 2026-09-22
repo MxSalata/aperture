@@ -1,9 +1,39 @@
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import duration from 'dayjs/plugin/duration';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
 dayjs.extend(relativeTime);
 dayjs.extend(duration);
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+/**
+ * Time zone policy. IRIS reports wall-clock timestamps of the instance with no zone
+ * designator. Aperture renders them verbatim (never converted), and interprets them in
+ * the zone the connection profile names so that relative times ("3 hours ago") are exact
+ * when the operator sits in another zone. With no zone configured the browser's zone is
+ * assumed, which is right for the common case of a server next door.
+ */
+let instanceZone: string | null = null;
+
+export function isValidTimezone(zone: string): boolean {
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: zone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function setInstanceTimezone(zone: string | null | undefined): void {
+  instanceZone = zone && isValidTimezone(zone) ? zone : null;
+}
+
+export function getInstanceTimezone(): string | null {
+  return instanceZone;
+}
 
 const numberFmt = new Intl.NumberFormat(undefined);
 const compactFmt = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
@@ -44,10 +74,11 @@ export function formatPercent(v: number | null | undefined, digits = 1): string 
   return `${v.toFixed(digits)}%`;
 }
 
-/** IRIS timestamps look like "2026-12-31 23:59:59" (or without seconds). */
+/** IRIS timestamps look like "2026-12-31 23:59:59" (or without seconds); see the time zone policy above. */
 export function parseIrisDate(s: string | null | undefined): dayjs.Dayjs | null {
   if (!s) return null;
-  const d = dayjs(s.replace(' ', 'T'));
+  const iso = s.replace(' ', 'T');
+  const d = instanceZone ? dayjs.tz(iso, instanceZone) : dayjs(iso);
   return d.isValid() ? d : null;
 }
 

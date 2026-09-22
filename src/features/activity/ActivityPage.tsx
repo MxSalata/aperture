@@ -15,7 +15,7 @@ const METHOD_COLOR: Record<string, string> = { POST: 'indigo', PUT: 'orange', DE
 const columns: ColumnDef<ActivityEntry, unknown>[] = [
   { accessorKey: 'at', header: 'When', cell: (c) => <span className="tabular">{formatDateTime(c.getValue() as number)}</span> },
   { accessorKey: 'method', header: 'Method', cell: (c) => <Badge size="sm" variant="filled" color={METHOD_COLOR[c.getValue() as string] ?? 'gray'} style={{ fontFamily: 'var(--aperture-mono)' }}>{String(c.getValue())}</Badge> },
-  { accessorKey: 'path', header: 'Operation', cell: ({ row }) => <span className="mono">{row.original.path}{row.original.query ? <span style={{ opacity: 0.6 }}>?{row.original.query}</span> : null}</span> },
+  { accessorKey: 'path', header: 'Operation', cell: ({ row }) => <span className="mono">{row.original.path}{row.original.query ? <span className="muted">?{row.original.query}</span> : null}</span> },
   { accessorKey: 'status', header: 'Result', cell: ({ row }) => <Badge size="sm" variant="light" color={row.original.ok ? (row.original.status === 202 ? 'indigo' : 'teal') : 'red'}>HTTP {row.original.status}</Badge> },
   { accessorKey: 'summary', header: 'Server said' },
   { accessorKey: 'durationMs', header: 'Time', cell: (c) => <span className="tabular">{String(c.getValue())} ms</span> },
@@ -39,7 +39,7 @@ export default function ActivityPage() {
           </>
         }
       />
-      <DataTable data={entries} columns={columns} getRowId={(e) => e.id} initialSorting={[{ id: 'at', desc: true }]} dense emptyMessage={<Text size="sm" c="dimmed">No changes sent yet. Edits, creations, deletions and queued operations will appear here.</Text>} />
+      <DataTable stateKey="activity" exportName="activity" data={entries} columns={columns} getRowId={(e) => e.id} initialSorting={[{ id: 'at', desc: true }]} dense emptyMessage={<Text size="sm" c="dimmed">No changes sent yet. Edits, creations, deletions and queued operations will appear here.</Text>} />
     </>
   );
 }

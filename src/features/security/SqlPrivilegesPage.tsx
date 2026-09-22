@@ -71,11 +71,11 @@ export default function SqlPrivilegesPage() {
         <Stack gap="md">
           <Paper p="md">
             <Group justify="space-between" mb="xs"><Title order={5}>Object privileges of {grantee} in {namespace}</Title><Button size="xs" leftSection={<IconPlus size={14} />} onClick={open}>Grant…</Button></Group>
-            <DataTable data={privs.data} columns={columns} loading={privs.isPending} error={privs.error} dense emptyMessage="No object privileges" />
+            <DataTable exportName="sql-object-privileges" data={privs.data} columns={columns} loading={privs.isPending} error={privs.error} dense emptyMessage="No object privileges" />
           </Paper>
           <Paper p="md">
             <Group justify="space-between" mb="xs"><Title order={5}>Admin privileges</Title><Button size="xs" leftSection={<IconPlus size={14} />} onClick={openAdmin}>Grant…</Button></Group>
-            <DataTable data={admin.data} columns={adminColumns} loading={admin.isPending} error={admin.error} dense searchable={false} hideColumnMenu emptyMessage="No admin privileges" />
+            <DataTable exportName="sql-admin-privileges" data={admin.data} columns={adminColumns} loading={admin.isPending} error={admin.error} dense searchable={false} hideColumnMenu emptyMessage="No admin privileges" />
           </Paper>
         </Stack>
       ) : <Text c="dimmed" size="sm">Enter a user or role to see their privileges.</Text>}

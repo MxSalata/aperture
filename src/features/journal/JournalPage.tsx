@@ -87,7 +87,7 @@ export default function JournalPage() {
           <Tabs.Tab value="settings">Settings</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="files">
-          <DataTable data={files.data} columns={fileColumns} loading={files.isPending} error={files.error} onRowClick={(r) => setSelected(r.Name ?? null)} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'CreationTime', desc: true }]} dense />
+          <DataTable stateKey="journal" exportName="journal-files" data={files.data} columns={fileColumns} loading={files.isPending} error={files.error} onRowClick={(r) => setSelected(r.Name ?? null)} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'CreationTime', desc: true }]} dense />
           <FileDrawer file={selected} onClose={() => setSelected(null)} />
         </Tabs.Panel>
         <Tabs.Panel value="settings">

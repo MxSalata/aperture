@@ -42,7 +42,7 @@ export default function WebAppsPage() {
     <>
       <PageHeader title="Web applications" description="CSP and REST applications: namespace, authentication (including JWT), CORS and the resource required to use them." privileges={['%Admin_Secure:U']}
         actions={<><Button size="xs" variant="default" leftSection={<IconRefresh size={14} />} onClick={() => list.refetch()} loading={list.isFetching}>Refresh</Button><Button size="xs" leftSection={<IconPlus size={14} />} onClick={open}>Create application</Button></>} />
-      <DataTable data={list.data} columns={columns} loading={list.isPending} error={list.error} onRowClick={(r) => navigate(webAppUrl(r.Name ?? ''))} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} dense pageSize={50} />
+      <DataTable stateKey="web-apps" exportName="web-apps" getRowLabel={(r) => `Open web application ${r.Name ?? ''}`} data={list.data} columns={columns} loading={list.isPending} error={list.error} onRowClick={(r) => navigate(webAppUrl(r.Name ?? ''))} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} dense pageSize={50} />
       <Modal opened={opened} onClose={close} title="Create web application" centered size="lg">
         <form onSubmit={form.onSubmit((v) => create.mutate(v))}>
           <Stack gap="sm">

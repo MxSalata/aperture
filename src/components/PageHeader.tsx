@@ -1,6 +1,8 @@
 import { Group, Stack, Text, Title, type TitleProps } from '@mantine/core';
+import { useDocumentTitle } from '@mantine/hooks';
 import type { ReactNode } from 'react';
 import { PrivilegeBadge } from './PrivilegeBadge';
+import { useInstanceLabel } from '@/features/shell/useInstanceLabel';
 
 interface Props {
   title: ReactNode;
@@ -13,6 +15,9 @@ interface Props {
 }
 
 export function PageHeader({ title, description, actions, privileges, order = 2, children }: Props) {
+  const instance = useInstanceLabel();
+  // "Processes · iris-prod [LIVE] · Aperture": two tabs on two instances are never twins.
+  useDocumentTitle(typeof title === 'string' ? `${title} · ${instance.name}${instance.live ? ' [LIVE]' : ''} · Aperture` : '');
   return (
     <Stack gap="xs" mb="md">
       <Group justify="space-between" align="flex-start" wrap="wrap" gap="sm">

@@ -4,6 +4,7 @@ import {
   Badge,
   Box,
   Burger,
+  ColorSwatch,
   Group,
   Indicator,
   Kbd,
@@ -20,19 +21,20 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { spotlight } from '@mantine/spotlight';
 import { IconClipboardList, IconLogout, IconMoon, IconSearch, IconServer, IconSun, IconUserCircle, IconShieldCheck, IconFlask } from '@tabler/icons-react';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { NAV } from './nav';
 import { CommandPalette } from './CommandPalette';
 import { useSession } from '@/stores/session';
-import { useConnections } from '@/stores/connections';
 import { useDemo } from '@/stores/demo';
 import { useHealth } from '@/stores/health';
 import { selectActiveJobs, useJobs } from '@/stores/jobs';
 import { canUse, heldPrivileges } from '@/api/privileges';
 import { APP_NAME } from '@/theme';
 import { PageSkeleton } from '@/components/PageSkeleton';
+import { setInstanceTimezone } from '@/lib/format';
+import { useInstanceLabel } from './useInstanceLabel';
 import { JobsDrawer } from '@/features/jobs/JobsDrawer';
 import { JobPoller } from '@/features/jobs/JobPoller';
 
@@ -60,22 +62,23 @@ function Logo() {
 
 function ServerChip() {
   const info = useSession((s) => s.info);
-  const connectionId = useSession((s) => s.connectionId);
   const baseUrl = useSession((s) => s.baseUrl);
-  const profiles = useConnections((s) => s.profiles);
   const demo = useDemo((s) => s.enabled);
   const reachable = useHealth((s) => s.reachable);
   const lastError = useHealth((s) => s.lastError);
-  const profile = profiles.find((p) => p.id === connectionId);
+  const instance = useInstanceLabel();
   const version = info?.serverVersion?.match(/\d{4}\.\d+(?:\.\d+)?/)?.[0];
   const product = info?.product === 'irisforhealth' ? 'IRIS for Health' : info?.product === 'healthconnect' ? 'Health Connect' : 'IRIS';
+  const zoneNote = instance.timezone ? `times shown in ${instance.timezone}` : 'times shown as the instance reports them';
   return (
-    <Tooltip label={info?.serverVersion ?? baseUrl} multiline maw={420}>
       <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
+        <ColorSwatch color={`var(--mantine-color-${instance.color}-6)`} size={10} aria-hidden />
         <IconServer size={16} stroke={1.6} />
-        <Text size="sm" fw={500} truncate>
-          {demo ? 'Demo instance' : (profile?.name ?? baseUrl ?? 'This server')}
-        </Text>
+        <Tooltip label={`${info?.serverVersion ?? baseUrl ?? 'this server'} · ${zoneNote}`} multiline maw={420}>
+          <Text size="sm" fw={500} truncate tabIndex={0} style={{ outlineOffset: 2 }}>
+            {instance.name}
+          </Text>
+        </Tooltip>
         {version ? (
           <Badge size="xs" variant="light" color="gray" style={{ textTransform: 'none' }}>
             {product} {version}
@@ -91,16 +94,19 @@ function ServerChip() {
             DEMO
           </Badge>
         ) : reachable ? (
-          <Badge size="xs" variant="dot" color="teal" title="The last request to the instance succeeded">
-            LIVE
-          </Badge>
+          <Tooltip label="The last request to the instance succeeded">
+            <Badge size="xs" variant="dot" color="teal" tabIndex={0} aria-label="Instance reachable">
+              LIVE
+            </Badge>
+          </Tooltip>
         ) : (
-          <Badge size="xs" variant="filled" color="red" title={lastError ?? 'The instance cannot be reached'}>
-            OFFLINE
-          </Badge>
+          <Tooltip label={lastError ?? 'The instance cannot be reached'}>
+            <Badge size="xs" variant="filled" color="red" tabIndex={0} aria-label="Instance unreachable">
+              OFFLINE
+            </Badge>
+          </Tooltip>
         )}
       </Group>
-    </Tooltip>
   );
 }
 
@@ -199,6 +205,13 @@ export function AppLayout() {
   const [opened, { toggle, close }] = useDisclosure();
   const info = useSession((s) => s.info);
   const location = useLocation();
+  const instance = useInstanceLabel();
+
+  // Timestamps are parsed in the instance's zone once the profile names one.
+  useEffect(() => {
+    setInstanceTimezone(instance.timezone);
+    return () => setInstanceTimezone(null);
+  }, [instance.timezone]);
 
   return (
     <AppShell
@@ -206,7 +219,7 @@ export function AppLayout() {
       navbar={{ width: 250, breakpoint: 'md', collapsed: { mobile: !opened } }}
       padding="md"
     >
-      <AppShell.Header>
+      <AppShell.Header style={{ boxShadow: `inset 0 3px 0 0 var(--mantine-color-${instance.color}-6)` }}>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
             <Burger opened={opened} onClick={toggle} hiddenFrom="md" size="sm" aria-label="Toggle navigation" />

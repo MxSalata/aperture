@@ -7,10 +7,11 @@ import { Link } from 'react-router';
 import dayjs from 'dayjs';
 import { api, result } from '@/api/client';
 import { PageHeader } from '@/components/PageHeader';
+import { Timestamp } from '@/components/Timestamp';
 import { StatTile } from '@/components/StatTile';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { StatusBadge } from '@/components/StatusBadge';
-import { formatCompact, formatDateTime, formatNumber, formatPercent, formatRelative } from '@/lib/format';
+import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
 import { useMetrics, type MetricSample } from '@/stores/metrics';
 import { useSession } from '@/stores/session';
 import { useSeriesColors } from './useSeriesColors';
@@ -313,9 +314,7 @@ export default function DashboardPage() {
                   <IconDatabase size={14} />
                   <Text size="sm">Last backup</Text>
                 </Group>
-                <Tooltip label={formatDateTime(d?.Status?.LastBackup)}>
-                  <Text size="sm">{d?.Status?.LastBackup ? formatRelative(d.Status.LastBackup) : 'never'}</Text>
-                </Tooltip>
+                <Text size="sm">{d?.Status?.LastBackup ? <Timestamp value={d.Status.LastBackup} mode="relative" className="" /> : 'never'}</Text>
               </Group>
               <Group justify="space-between">
                 <Group gap={6}>

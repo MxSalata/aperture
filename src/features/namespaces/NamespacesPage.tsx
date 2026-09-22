@@ -52,7 +52,7 @@ export default function NamespacesPage() {
           </>
         }
       />
-      <DataTable data={list.data} columns={columns} loading={list.isPending} error={list.error} onRowClick={(r) => navigate(`/namespaces/${encodeURIComponent(r.Name ?? '')}`)} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} />
+      <DataTable stateKey="namespaces" exportName="namespaces" getRowLabel={(r) => `Open namespace ${r.Name ?? ''}`} data={list.data} columns={columns} loading={list.isPending} error={list.error} onRowClick={(r) => navigate(`/namespaces/${encodeURIComponent(r.Name ?? '')}`)} getRowId={(r) => r.Name ?? ''} initialSorting={[{ id: 'Name', desc: false }]} />
       <Modal opened={opened} onClose={close} title="Create namespace" centered>
         <form onSubmit={form.onSubmit((v) => create.mutate(v))}>
           <Stack gap="sm">

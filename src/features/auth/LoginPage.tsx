@@ -23,7 +23,7 @@ import { IconAlertCircle, IconFlask, IconInfoCircle, IconLogin, IconServer } fro
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useSession } from '@/stores/session';
-import { normalizeBaseUrl, newProfileId, useConnections, SAME_ORIGIN_ID } from '@/stores/connections';
+import { normalizeBaseUrl, newProfileId, nextProfileColor, useConnections, SAME_ORIGIN_ID } from '@/stores/connections';
 import { DEMO_BUILD, useDemo } from '@/stores/demo';
 import { describeError } from '@/lib/errors';
 import { APP_NAME, APP_TAGLINE } from '@/theme';
@@ -82,7 +82,7 @@ export default function LoginPage() {
           baseUrl: normalizeBaseUrl(values.newBaseUrl),
           auth: values.auth,
           username: values.username,
-          color: 'cyan',
+          color: nextProfileColor(profiles.length),
         };
         upsert(profile);
       } else if (profile) {

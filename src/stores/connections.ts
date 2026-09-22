@@ -17,7 +17,22 @@ export interface ConnectionProfile {
   auth: 'auto' | 'jwt' | 'basic';
   /** Last username used, for convenience. */
   username?: string;
+  /** One of PROFILE_COLORS; shown in the header so production and staging never look alike. */
   color?: string;
+  /** IANA time zone of the instance (e.g. "Europe/Warsaw"); unset = assume the browser's zone. */
+  timezone?: string;
+}
+
+/** Vetted Mantine colour keys (shade 6 keeps ≥3:1 against both header surfaces). */
+export const PROFILE_COLORS = ['indigo', 'cyan', 'teal', 'green', 'orange', 'red', 'pink', 'grape', 'violet', 'blue', 'yellow', 'gray'] as const;
+
+export function profileColor(profile: ConnectionProfile | undefined): string {
+  return profile?.color && (PROFILE_COLORS as readonly string[]).includes(profile.color) ? profile.color : 'indigo';
+}
+
+/** A colour for the n-th saved profile, so new connections do not all look the same. */
+export function nextProfileColor(existing: number): string {
+  return PROFILE_COLORS[(existing + 1) % PROFILE_COLORS.length];
 }
 
 export const SAME_ORIGIN_ID = 'same-origin';

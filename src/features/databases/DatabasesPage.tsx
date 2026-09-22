@@ -110,6 +110,9 @@ export default function DatabasesPage() {
         }
       />
       <DataTable
+        stateKey="databases"
+        exportName="databases"
+        getRowLabel={(row) => `Open database ${row.Name ?? row.Directory ?? ''}`}
         data={rows}
         columns={columns}
         loading={config.isPending || local.isPending}

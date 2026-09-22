@@ -12,7 +12,7 @@ import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
 
 const metricColumns: ColumnDef<MetricSample, unknown>[] = [
   { accessorKey: 'name', header: 'Metric', cell: (c) => <span className="mono">{String(c.getValue())}</span> },
-  { id: 'labels', header: 'Labels', accessorFn: (r) => Object.entries(r.labels).map(([k, v]) => `${k}=${v}`).join(' '), cell: (c) => <span className="mono" style={{ opacity: 0.75 }}>{String(c.getValue())}</span> },
+  { id: 'labels', header: 'Labels', accessorFn: (r) => Object.entries(r.labels).map(([k, v]) => `${k}=${v}`).join(' '), cell: (c) => <span className="mono muted">{String(c.getValue())}</span> },
   { accessorKey: 'value', header: 'Value', cell: (c) => <span className="tabular">{formatNumber(c.getValue() as number)}</span> },
   { accessorKey: 'help', header: 'Description' },
 ];
@@ -61,7 +61,7 @@ export default function MonitorPage() {
         <Grid.Col span={{ base: 12, lg: 7 }}>
           <Paper p="md" mb="md">
             <Group justify="space-between" mb="xs"><Title order={5}>All metrics</Title><Text size="xs" c="dimmed">{m.length} samples · GET /api/monitor/metrics</Text></Group>
-            <DataTable data={m} columns={metricColumns} loading={metrics.isPending} error={metrics.error} getRowId={(r) => `${r.name}{${Object.entries(r.labels).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}=${v}`).join(',')}}`} dense pageSize={30} searchPlaceholder="Filter metrics…" />
+            <DataTable stateKey="metrics" exportName="metrics" data={m} columns={metricColumns} loading={metrics.isPending} error={metrics.error} getRowId={(r) => `${r.name}{${Object.entries(r.labels).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}=${v}`).join(',')}}`} dense pageSize={30} searchPlaceholder="Filter metrics…" />
           </Paper>
         </Grid.Col>
         <Grid.Col span={{ base: 12, lg: 5 }}>

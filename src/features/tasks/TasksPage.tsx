@@ -9,7 +9,7 @@ import type { TaskList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { StatusBadge, BoolBadge } from '@/components/StatusBadge';
-import { formatDateTime, formatRelative } from '@/lib/format';
+import { Timestamp } from '@/components/Timestamp';
 import { useSession } from '@/stores/session';
 
 type Row = TaskList[number];
@@ -21,8 +21,8 @@ const columns: ColumnDef<Row, unknown>[] = [
   { accessorKey: 'Type', header: 'Type', cell: (c) => <Badge size="xs" color={c.getValue() === 'User' ? 'indigo' : 'gray'}>{String(c.getValue())}</Badge> },
   { accessorKey: 'Namespace', header: 'Namespace' },
   { accessorKey: 'Suspended', header: 'Suspended', cell: (c) => <BoolBadge value={c.getValue() as boolean} yes="Suspended" no="Active" color={c.getValue() ? 'yellow' : 'teal'} /> },
-  { accessorKey: 'LastFinished', header: 'Last finished', cell: (c) => <span title={formatDateTime(c.getValue() as string)}>{c.getValue() ? formatRelative(c.getValue() as string) : '-'}</span> },
-  { accessorKey: 'NextScheduled', header: 'Next run', cell: (c) => <span className="tabular">{c.getValue() ? formatDateTime(c.getValue() as string) : '-'}</span> },
+  { accessorKey: 'LastFinished', header: 'Last finished', cell: (c) => <Timestamp value={c.getValue() as string} mode="relative" /> },
+  { accessorKey: 'NextScheduled', header: 'Next run', cell: (c) => <Timestamp value={c.getValue() as string} /> },
   { accessorKey: 'Description', header: 'Description' },
 ];
 
@@ -92,7 +92,7 @@ export default function TasksPage() {
           </Paper>
         </Grid.Col>
       </Grid>
-      <DataTable data={list.data} columns={columns} loading={list.isPending} error={list.error} onRowClick={(r) => navigate(`/tasks/${r.Id}`)} getRowId={(r) => String(r.Id)} initialSorting={[{ id: 'NextScheduled', desc: false }]} />
+      <DataTable stateKey="tasks" exportName="tasks" getRowLabel={(r) => `Open task ${r.Name ?? ''}`} data={list.data} columns={columns} loading={list.isPending} error={list.error} onRowClick={(r) => navigate(`/tasks/${r.Id}`)} getRowId={(r) => String(r.Id)} initialSorting={[{ id: 'NextScheduled', desc: false }]} />
       <Modal opened={opened} onClose={close} title="New task" centered size="lg">
         <form onSubmit={form.onSubmit((v) => create.mutate(v))}>
           <Stack gap="sm">

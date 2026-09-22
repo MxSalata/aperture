@@ -19,5 +19,7 @@ export const theme = createTheme({
     Card: { defaultProps: { withBorder: true, radius: 'md' } },
     Badge: { defaultProps: { variant: 'light' } },
     Tooltip: { defaultProps: { withArrow: true, openDelay: 300 } },
+    // Forms live in modals; a stray click outside must not discard a half-filled one (Escape still closes).
+    Modal: { defaultProps: { closeOnClickOutside: false } },
   },
 });

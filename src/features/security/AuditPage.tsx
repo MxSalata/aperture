@@ -42,7 +42,7 @@ function EventsTab() {
       </Group>
     ) },
   ];
-  return <DataTable data={list.data} columns={columns} loading={list.isPending} error={list.error} getRowId={(r) => r.EventName ?? ''} initialSorting={[{ id: 'EventName', desc: false }]} pageSize={50} dense />;
+  return <DataTable exportName="audit-events" data={list.data} columns={columns} loading={list.isPending} error={list.error} getRowId={(r) => r.EventName ?? ''} initialSorting={[{ id: 'EventName', desc: false }]} pageSize={50} dense />;
 }
 
 function LogTab() {
@@ -87,7 +87,7 @@ function LogTab() {
       </Paper>
       {search.error ? <ErrorAlert error={search.error} /> : null}
       {search.running ? <Text size="sm" c="dimmed">Running task {search.jobId} - state {search.state ?? 'Queued'}…</Text> : null}
-      {search.finished ? <DataTable data={rows} columns={columns} onRowClick={setSelected} getRowId={(r) => String(r.AuditIndex ?? Math.random())} initialSorting={[{ id: 'TimeStamp', desc: true }]} dense pageSize={50} emptyMessage="No audit records match" /> : null}
+      {search.finished ? <DataTable exportName="audit-records" data={rows} columns={columns} onRowClick={setSelected} getRowId={(r) => String(r.AuditIndex ?? Math.random())} initialSorting={[{ id: 'TimeStamp', desc: true }]} dense pageSize={50} emptyMessage="No audit records match" /> : null}
       <Drawer opened={!!selected} onClose={() => setSelected(null)} position="right" size="lg" title={`Audit record ${selected?.AuditIndex ?? ''}`}>
         {selected ? <KeyValueList items={objectToItems(selected as Record<string, unknown>)} /> : null}
       </Drawer>
