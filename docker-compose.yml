@@ -17,9 +17,12 @@ services:
     image: aperture-iris:local
     container_name: aperture-iris
     command: --check-caps false --ISCAgent false
+    # Published on this machine only: the image ships well-known credentials (_SYSTEM / SYS,
+    # every password un-expired at build time). To reach it from other hosts, change the
+    # passwords first, then start with APERTURE_BIND=0.0.0.0 (or a specific interface address).
     ports:
-      - '1972:1972'
-      - '52773:52773'
+      - '${APERTURE_BIND:-127.0.0.1}:1972:1972'
+      - '${APERTURE_BIND:-127.0.0.1}:52773:52773'
     healthcheck:
       test: ['CMD-SHELL', 'iris qlist IRIS | grep -q running']
       interval: 10s
@@ -40,7 +43,7 @@ services:
       dockerfile: docker/Dockerfile
     container_name: aperture-portal
     ports:
-      - '8080:80'
+      - '${APERTURE_BIND:-127.0.0.1}:8080:80'
     environment:
       - IRIS_UPSTREAM=http://iris:52773
       - IRIS_API_PREFIX=/api/admin

@@ -26,7 +26,7 @@ ClassMethod Configure() As %Status
     Try {
         Set sc = ..ConfigurePython(..#API)
     } Catch ex {
-        Write !, "Aperture: Embedded Python not usable here (", ex.DisplayString(), "), using the ObjectScript fallback"
+        Write !, "Aperture: the Embedded Python configuration did not complete (", ex.DisplayString(), "), using the ObjectScript fallback"
         Set sc = ..ConfigureObjectScript(..#API)
     }
     Return sc
@@ -35,9 +35,17 @@ ClassMethod Configure() As %Status
 /// Readiness report: IRIS version, JWT availability, the state of /api/admin (enabled,
 /// password + JWT authentication), the /aperture web application and its files on disk.
 /// Safe to run at any time; never changes anything.
+/// module.xml runs this in the Activate phase: where Embedded Python is not usable the report
+/// is skipped with a note, and the installation (which Configure completed) still succeeds.
 ClassMethod Doctor() As %Status
 {
-    Return ..DoctorPython(..#API, ..#PORTAL)
+    Set sc = $$$OK
+    Try {
+        Set sc = ..DoctorPython(..#API, ..#PORTAL)
+    } Catch ex {
+        Write !, "Aperture: readiness report skipped, Embedded Python is not usable here (", ex.DisplayString(), ")", !
+    }
+    Return sc
 }
 
 /// Embedded Python implementation of <method>Configure</method>.

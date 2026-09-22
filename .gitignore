@@ -7,6 +7,7 @@ playwright-report/
 test-results/
 blob-report/
 .vite/
+*.tsbuildinfo
 *.log
 .DS_Store
 .env.local

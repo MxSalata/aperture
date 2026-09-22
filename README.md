@@ -51,6 +51,7 @@ docker compose up --build
 - http://localhost:8080 - Aperture behind nginx (proxies `/api/admin` to IRIS, no CORS, no Basic-auth pop-ups; sends a Content-Security-Policy, set `IRIS_ALLOWED_ORIGINS="https://other.iris:52773"` on the `portal` service to let the browser call further instances directly)
 - http://localhost:52773/aperture/index.html - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`; the built-in web server needs the file name, a bare `/aperture/` answers 404)
 - Sign in with `_SYSTEM` / `SYS`
+- The ports are published on `127.0.0.1` only, because the image ships these well-known credentials. To use it from other machines, change the passwords, then start with `APERTURE_BIND=0.0.0.0 docker compose up`, and put TLS in front of nginx: it serves plain HTTP.
 
 The `iris` service is built from [`docker/iris/Dockerfile`](docker/iris/Dockerfile) on top of
 `intersystems/iris-community:2026.2` (put `IRIS_IMAGE=intersystems/irishealth-community:2026.2`
@@ -154,7 +155,8 @@ Other scripts:
 ## Architecture
 
 ```
-browser ──HTTPS──▶ nginx (dist/) ──/api/admin──▶ IRIS private web server / web gateway
+browser ──HTTP(S)─▶ nginx (dist/) ──/api/admin──▶ IRIS private web server / web gateway
+                   (the container speaks HTTP; terminate TLS in front of it)
         or  ──▶ IRIS /aperture (www/, static CSP app, same origin)
         or  ──▶ Vite dev server (proxy)             or  ──▶ MSW mock (demo)
 ```
@@ -214,6 +216,7 @@ vendored at commit `f764aea427e5c0b1dd08a4c18a0457e0ff7b3b34` of
 5. The `Location` header points at `/v1/async-result?id=…` (on 2026.2 as in the spec example) while the documented endpoint is `/v2/async-result`; the id works on both. Aperture only relies on the `id` query parameter, and falls back to the `GUID` in the body when the header is not exposed (2026.2 sends no GUID in the body).
 6. Real instances have been observed to answer errors as `status.errors` (objects with a `code`) instead of the documented `status.Errors` strings, and IRIS 2026.2 accepts `ServerDefinition` where the spec names the OAuth client field `OAuth2ServerDefinition` (both reported in the IRIS Workbench verification record). Aperture normalizes the envelopes and adapts the field; see `src/lib/quirks.ts`.
 7. Error text is localized by the server from the request's `Accept-Language`; a client that sends none gets the messages in Arabic (`خطأ #420: Namespace … does not exist`, observed in CI). Browsers always send the header, and Aperture shows the numeric `code` and `id` next to the text, which are stable.
+8. Creating a resource with an empty `PublicPermission` was refused by IRIS 2026.2 although the spec allows it (reported in the iris-fieldwork verification record; quirk `resource-create-empty-public`).
 
 ## Tech stack
 

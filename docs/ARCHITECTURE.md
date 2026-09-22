@@ -128,7 +128,9 @@ database metrics, audit-log queries, journal record listings. They answer
 The same middleware records every non-GET call (method, path, status, the server's summary,
 duration, job id) in the `activity` store, shown on the Activity screen and exportable as JSON.
 `call()` also feeds the `health` store: a network failure flips the header pill to OFFLINE with
-the error, the next successful response flips it back to LIVE. The dashboard adds a PARTIAL DATA
+the error, and so does a 502/503/504, which is the proxy or Web Gateway answering for an instance
+that did not (its HTML error page becomes one line, e.g. `502 Bad Gateway`); the next successful
+response flips it back to LIVE. The dashboard adds a PARTIAL DATA
 badge when some of its polls fail, so a broken source is never hidden behind stale numbers.
 
 ### 2.6 Change review
@@ -144,6 +146,15 @@ No dialog is shown when nothing changed.
 `/api/monitor/alerts` for host-level signals the SysAdmin API lacks. JWT tokens are scoped to
 `/api/admin`, so only Basic credentials are forwarded; an unauthenticated or missing monitor app
 is reported as unavailable rather than failing the screen.
+
+`/api/monitor/alerts` is a cursor shared by every client of the instance: "When
+/api/monitor/alerts is called, it returns the alerts that have been generated since the previous
+time /api/monitor/alerts was called" (InterSystems, *Monitoring InterSystems IRIS via REST*). A
+read therefore consumes the alerts for everyone, including a Prometheus or SAM scraper.
+`features/monitor/useAlertLog.ts` never reads it on its own (`enabled: false`: no mount, poll or
+invalidation fetches it), reads it when the Host monitor's *Read new alerts* is pressed, and keeps
+every batch for the session. Counts come from `/metrics`, which is not consumed:
+`iris_system_alerts_log` (alerts in the log) and `iris_system_alerts_new` (new alerts waiting).
 
 ### 2.8 Spec quirks
 
@@ -211,9 +222,14 @@ Three rules sit at the render boundary rather than in individual screens:
   (`Password`, `ClientSecret`, `PrivateKeyPassword`, `InitialAccessToken`, `KeyValueSecret`, …)
   with a placeholder. `JsonViewer` applies it before the text exists (so the clipboard never holds a
   secret, and a badge says how many values were hidden), `objectToItems` applies it to every detail
-  page and the Explorer's field view, and `DataTable` applies it to CSV export. Configuration keys
-  that merely mention a secret word (`PasswordNeverExpires`, `PrivateKeyFile`, `AccessTokenInterval`)
-  pass through; the rule is unit-tested against the specification's vocabulary.
+  page and the Explorer's field view, `DataTable` applies it to CSV export and `reviewChanges`
+  to its old → new table. Keys are compared without `_`/`-`, so OAuth/JWT payloads
+  (`access_token`, `refresh_token`, `registration_access_token`) are covered; every string inside
+  an object held under a secret key (`Secret`, `WalletSecretConfig`) is hidden; and in a
+  name/value list (process variables) a secret `Name` hides its `Value`. Configuration keys that
+  merely mention a secret word (`PasswordNeverExpires`, `PrivateKeyFile`, `AccessTokenInterval`,
+  `…_signed_response_alg`) pass through; the rule is unit-tested against the specification's
+  vocabulary.
 - **A change is only as real as the read-back.** After a task suspend or resume the detail page
   re-reads `/v2/task/info` and says when IRIS still reports the previous state (see
   `lib/quirks.ts`, `task-suspended-lag`). The Activity screen can match a security write to the
@@ -261,6 +277,14 @@ install test of the IPM package.
 - `monitor.ts` produces drifting metrics so the dashboard charts move.
 
 The same handlers run under Node for Vitest (`src/test/setup.ts`) and in Chromium for Playwright.
+
+Because the mock is the oracle of both test suites and of the demo, `src/mocks/__tests__/contract.test.ts`
+checks its answers against the specification: every parameterless GET and the detail reads the
+screens edit are validated against their response schemas (type, enum, items, properties). A mock
+that drifted from the spec would otherwise make the tests agree with the mock and not with IRIS,
+which is how a role editor written for `Resources: string[]` survived while the API sends
+`[{ Name, Permissions }]`. The one allow-listed divergence is `database-dirs`, where real servers
+differ from the spec and the mock follows the servers.
 
 ## 7. Extending
 

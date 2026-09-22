@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased - code review
+
+A full review of the codebase (every screen, store and the mock, with probes that reproduced
+each suspected bug before it was fixed). Highlights:
+
+- **Authentication flags were mis-numbered and dropped on save.** 2048 (LDAP) was labelled
+  "Login token", 256 "LDAP", 1024 "Delegated"; the web-application and service editors rebuilt
+  `AutheEnabled` from the checkboxes, silently clearing delegated, login-token, two-factor,
+  Kerberos and mutual-TLS bits on any save. Fixed, and bits the form does not show are kept.
+- **`/api/monitor/alerts` is a cursor** (it returns what was posted since the previous call, by
+  anyone). The Host monitor polled it every 30 s and the Logs hub read it on open, emptying the
+  portal's own list and taking alerts away from Prometheus/SAM. Alerts are now read on request and
+  kept for the session; counts come from `iris_system_alerts_log` / `_new` in `/metrics`.
+- **Redaction gaps closed:** `access_token` / `refresh_token` (a POST /login in the Explorer showed
+  live tokens), strings inside secret objects, process variables named like secrets, and the
+  change-review dialog.
+- **Role grants use the API's shape** (`[{ Name, Permissions }]`); the mock had taught the editor
+  strings. A new contract test keeps the mock honest against the specification.
+- **Auditor accounts:** reading an async task needs `%Admin_Operate`; the 403 is now final (it
+  was re-polled every second) and explained.
+- **Reachability:** a 502/503/504 from the proxy counts as the instance being down; HTML error
+  pages become one line. A network blip on reload no longer signs you out.
+- **Sign-in:** passwords beyond Latin-1 no longer crash Basic authentication; JWT subjects decode
+  as UTF-8; a late token refresh cannot revive a signed-out session.
+- Smaller fixes: finished server tasks can be followed, database dialogs open with current
+  values, Windows database paths join, two-step create/delete say what exists after a partial
+  failure, TLS `VerifyPeer` 3 (mutual TLS) is editable, `ServeFiles` offers the spec's values,
+  whole-name audit matching, forms no longer overwritten by background refetches, and more
+  (see the commit messages).
+- **Deployment:** Docker Compose publishes its ports on `127.0.0.1` by default (well-known
+  credentials); `APERTURE_BIND` opts out. The installer's readiness report no longer fails an
+  install where Embedded Python is unavailable.
+
 ## 0.3.0 - what the other entries taught us
 
 A scan of the other contest entries (IRIS Ops Studio, IRIS Fieldwork, Meridian, IRIS
