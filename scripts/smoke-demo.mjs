@@ -10,9 +10,18 @@ const BASE = `http://localhost:${PORT}`;
 // The demo build uses hash routing (see .env.demo).
 const url = (path) => `${BASE}/#${path}`;
 const SHOTS = process.env.SHOTS ?? 'docs/screenshots';
+// vite itself rather than `npx vite`: killing the npx wrapper leaves the server holding the port.
 const preview = spawn(
-  'npx',
-  ['vite', 'preview', '--outDir', 'dist-demo', '--port', String(PORT), '--strictPort'],
+  process.execPath,
+  [
+    'node_modules/vite/bin/vite.js',
+    'preview',
+    '--outDir',
+    'dist-demo',
+    '--port',
+    String(PORT),
+    '--strictPort',
+  ],
   { cwd: process.cwd(), stdio: ['ignore', 'pipe', 'pipe'] },
 );
 preview.stderr.on('data', (d) => process.stderr.write(`[preview] ${d}`));
@@ -46,11 +55,13 @@ page.on('response', (r) => {
 const shot = async (name) => {
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: false });
 };
+let failedSteps = 0;
 const step = async (label, fn) => {
   try {
     await fn();
     console.log(`✔ ${label}`);
   } catch (e) {
+    failedSteps++;
     console.log(`✘ ${label}: ${e.message.split('\n')[0]}`);
     await shot(`fail-${label.replace(/\W+/g, '_')}`);
   }
@@ -235,4 +246,4 @@ console.log('failed requests:', failed.length);
 failed.slice(0, 15).forEach((e) => console.log('  -', e));
 await browser.close();
 preview.kill();
-process.exit(0);
+process.exit(failedSteps || errors.length ? 1 : 0);
