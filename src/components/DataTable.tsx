@@ -51,6 +51,12 @@ import { downloadText } from '@/lib/download';
 export type { ColumnDef };
 
 const PAGE_SIZES = [25, 50, 100, 250];
+const PAGE_CONTROL_LABEL = {
+  first: 'First page',
+  previous: 'Previous page',
+  next: 'Next page',
+  last: 'Last page',
+} as const;
 
 interface Props<T> {
   data: T[] | undefined;
@@ -380,7 +386,17 @@ export function DataTable<T>({
         </Group>
       )}
 
-      <ScrollArea type="auto" style={{ maxHeight }} offsetScrollbars>
+      <ScrollArea
+        type="auto"
+        style={{ maxHeight }}
+        offsetScrollbars
+        // A table without clickable rows has nothing focusable inside, so keyboard users could
+        // not scroll it; the viewport itself takes focus then (WCAG 2.1.1). A named group, since
+        // ARIA does not allow a label on a plain div.
+        viewportProps={
+          onRowClick ? undefined : { tabIndex: 0, role: 'group', 'aria-label': 'Scrollable table' }
+        }
+      >
         <Table
           className="sticky-thead"
           striped
@@ -518,6 +534,11 @@ export function DataTable<T>({
               total={pageCount}
               value={pageIndex + 1}
               onChange={(p) => table.setPageIndex(p - 1)}
+              getControlProps={(control) => ({ 'aria-label': PAGE_CONTROL_LABEL[control] })}
+              getItemProps={(page) => ({
+                'aria-label': `Page ${page}`,
+                'aria-current': page === pageIndex + 1 ? 'page' : undefined,
+              })}
             />
           ) : null}
         </Group>

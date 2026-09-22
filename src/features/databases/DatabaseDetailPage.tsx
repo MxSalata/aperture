@@ -390,6 +390,7 @@ export default function DatabaseDetailPage() {
                   <Progress.Section
                     value={usedPct}
                     color={usedPct > 90 ? 'red' : usedPct > 75 ? 'yellow' : 'indigo'}
+                    aria-label="Space used"
                   >
                     <Progress.Label>{usedPct.toFixed(0)}% used</Progress.Label>
                   </Progress.Section>

@@ -29,6 +29,13 @@ each suspected bug before it was fixed). Highlights:
   failure, TLS `VerifyPeer` 3 (mutual TLS) is editable, `ServeFiles` offers the spec's values,
   whole-name audit matching, forms no longer overwritten by background refetches, and more
   (see the commit messages).
+- **Accessibility is tested, not assumed.** `e2e/a11y.spec.ts` runs axe-core (WCAG 2.1 A/AA)
+  over the sign-in page and nine screens in light, dark and both high-contrast modes; serious or
+  critical findings fail CI. Its first run found Mantine's default colours below 4.5:1 almost
+  everywhere (white on filled red 3.3:1, light yellow badges 1.75:1, dark-scheme dimmed text
+  4.0:1), icon-only pagination buttons without names, unnamed progress bars and table viewports
+  keyboard users could not scroll. All fixed: `src/styles.css` now sets every filled, text,
+  outline and light-colour token to the nearest shade that passes on the surfaces it sits on.
 - **Deployment:** Docker Compose publishes its ports on `127.0.0.1` by default (well-known
   credentials); `APERTURE_BIND` opts out. The installer's readiness report no longer fails an
   install where Embedded Python is unavailable.

@@ -286,6 +286,13 @@ which is how a role editor written for `Resources: string[]` survived while the 
 `[{ Name, Permissions }]`. The one allow-listed divergence is `database-dirs`, where real servers
 differ from the spec and the mock follows the servers.
 
+`e2e/a11y.spec.ts` runs axe-core (WCAG 2.1 A/AA) over the sign-in page and nine screens in light,
+dark, and both high-contrast modes (Playwright emulates `prefers-color-scheme` and
+`prefers-contrast`). Serious and critical findings fail the run. Colour contrast is solved at the
+token level in `src/styles.css`, not per component: each of Mantine's `filled`, `text`, `outline`
+and `light-color` variables points at the shade nearest Mantine's own that reaches 4.5:1 on the
+surfaces it sits on, so any `color="…"` prop is legible without a local override.
+
 ## 7. Extending
 
 - **New screen for an existing group:** copy a feature folder, use `result(api().GET(...))` with the

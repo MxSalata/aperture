@@ -600,6 +600,7 @@ export default function DashboardPage() {
                         size="xs"
                         value={Math.max(ratio, 0.5)}
                         color={ratio > 5 ? 'red' : ratio > 1 ? 'yellow' : 'indigo'}
+                        aria-label={`${r.Name} seize waits`}
                       />
                     </div>
                   );

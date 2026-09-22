@@ -10,9 +10,108 @@
   --mantine-color-dimmed: var(--mantine-color-gray-7);
 }
 
+/*
+ * Colour tokens sized for WCAG 1.4.3 (4.5:1 for text). Mantine's defaults fall short in four places:
+ *  - filled (buttons, high-contrast badges): white on shade 6 (light) or 5 (dark), e.g. 3.3:1 on
+ *    red, 1.9:1 on yellow;
+ *  - text in the light scheme (`c="red"`, links, outline variant): shade 6 on white or on a
+ *    hovered row (gray-1);
+ *  - light-color in the light scheme (badges, light alerts): shade 6 on a 10-12 % tint of
+ *    itself, 1.75 to 4.3:1;
+ *  - text in the dark scheme: shade 4 of indigo, violet, grape and blue on dark-5 to dark-7.
+ * Each token takes the palette shade nearest Mantine's that reaches 4.5:1 against every surface
+ * it sits on (body, striped and hovered rows, and the tints over them); where even shade 9 is too
+ * light (teal, green, lime, yellow, orange), the value is shade 9 darkened in RGB until it
+ * passes, keeping the hue. The doubled :root outranks the variables Mantine injects at run time.
+ * Checked in both schemes by axe-core in e2e/a11y.spec.ts.
+ */
+:root:root[data-mantine-color-scheme='light'],
+:root:root[data-mantine-color-scheme='dark'] {
+  --mantine-color-gray-filled: var(--mantine-color-gray-7);
+  --mantine-color-gray-filled-hover: var(--mantine-color-gray-8);
+  --mantine-color-red-filled: var(--mantine-color-red-9);
+  --mantine-color-red-filled-hover: #b52626;
+  --mantine-color-pink-filled: var(--mantine-color-pink-7);
+  --mantine-color-pink-filled-hover: var(--mantine-color-pink-8);
+  --mantine-color-grape-filled: var(--mantine-color-grape-7);
+  --mantine-color-grape-filled-hover: var(--mantine-color-grape-8);
+  --mantine-color-violet-filled: var(--mantine-color-violet-6);
+  --mantine-color-violet-filled-hover: var(--mantine-color-violet-7);
+  --mantine-color-indigo-filled: var(--mantine-color-indigo-7);
+  --mantine-color-indigo-filled-hover: var(--mantine-color-indigo-8);
+  --mantine-color-blue-filled: var(--mantine-color-blue-8);
+  --mantine-color-blue-filled-hover: var(--mantine-color-blue-9);
+  --mantine-color-cyan-filled: var(--mantine-color-cyan-9);
+  --mantine-color-cyan-filled-hover: #0a6778;
+  --mantine-color-teal-filled: var(--mantine-color-teal-9);
+  --mantine-color-teal-filled-hover: #077252;
+  --mantine-color-green-filled: #2a863c;
+  --mantine-color-green-filled-hover: #267936;
+  --mantine-color-lime-filled: #51820b;
+  --mantine-color-lime-filled-hover: #49750a;
+  --mantine-color-yellow-filled: #b65e00;
+  --mantine-color-yellow-filled-hover: #a45500;
+  --mantine-color-orange-filled: #d0450e;
+  --mantine-color-orange-filled-hover: #bb3e0d;
+}
+
+:root:root[data-mantine-color-scheme='light'] {
+  --mantine-color-anchor: var(--mantine-primary-color-8);
+  --mantine-color-gray-text: var(--mantine-color-gray-7);
+  --mantine-color-gray-outline: var(--mantine-color-gray-7);
+  --mantine-color-gray-light-color: var(--mantine-color-gray-7);
+  --mantine-color-red-text: var(--mantine-color-red-9);
+  --mantine-color-red-outline: var(--mantine-color-red-9);
+  --mantine-color-red-light-color: #c12828;
+  --mantine-color-pink-text: var(--mantine-color-pink-8);
+  --mantine-color-pink-outline: var(--mantine-color-pink-8);
+  --mantine-color-pink-light-color: var(--mantine-color-pink-9);
+  --mantine-color-grape-text: var(--mantine-color-grape-8);
+  --mantine-color-grape-outline: var(--mantine-color-grape-8);
+  --mantine-color-grape-light-color: var(--mantine-color-grape-9);
+  --mantine-color-violet-text: var(--mantine-color-violet-7);
+  --mantine-color-violet-outline: var(--mantine-color-violet-7);
+  --mantine-color-violet-light-color: var(--mantine-color-violet-8);
+  --mantine-color-indigo-text: var(--mantine-color-indigo-8);
+  --mantine-color-indigo-outline: var(--mantine-color-indigo-8);
+  --mantine-color-indigo-light-color: var(--mantine-color-indigo-9);
+  --mantine-color-blue-text: var(--mantine-color-blue-9);
+  --mantine-color-blue-outline: var(--mantine-color-blue-9);
+  --mantine-color-blue-light-color: var(--mantine-color-blue-9);
+  --mantine-color-cyan-text: var(--mantine-color-cyan-9);
+  --mantine-color-cyan-outline: var(--mantine-color-cyan-9);
+  --mantine-color-cyan-light-color: #0b7184;
+  --mantine-color-teal-text: #087e5a;
+  --mantine-color-teal-outline: #087e5a;
+  --mantine-color-teal-light-color: #077655;
+  --mantine-color-green-text: #277e38;
+  --mantine-color-green-outline: #277e38;
+  --mantine-color-green-light-color: #257735;
+  --mantine-color-lime-text: #4c7b0b;
+  --mantine-color-lime-outline: #4c7b0b;
+  --mantine-color-lime-light-color: #49750a;
+  --mantine-color-yellow-text: #aa5800;
+  --mantine-color-yellow-outline: #aa5800;
+  --mantine-color-yellow-light-color: #a35400;
+  --mantine-color-orange-text: #c3410d;
+  --mantine-color-orange-outline: #c3410d;
+  --mantine-color-orange-light-color: #b83d0d;
+}
+
+/* Mantine's dark "dimmed" is dark-2 (#828282, 4.0:1 on the dark-7 body); dark-1 reads at 7.8:1. */
+:root:root[data-mantine-color-scheme='dark'] {
+  --mantine-color-dimmed: var(--mantine-color-dark-1);
+  --mantine-color-anchor: var(--mantine-primary-color-3);
+  --mantine-color-grape-text: var(--mantine-color-grape-3);
+  --mantine-color-violet-text: var(--mantine-color-violet-3);
+  --mantine-color-indigo-text: var(--mantine-color-indigo-3);
+  --mantine-color-blue-text: var(--mantine-color-blue-3);
+}
+
 :root[data-mantine-color-scheme='dark'] {
-  --aperture-muted: var(--mantine-color-dark-2);
-  --aperture-muted-soft: var(--mantine-color-dark-3);
+  --aperture-muted: var(--mantine-color-dark-1);
+  /* Icons only (3:1 for graphics): dark-2 is 4.0:1, dark-3 was 2.8:1. */
+  --aperture-muted-soft: var(--mantine-color-dark-2);
 }
 
 .muted {
