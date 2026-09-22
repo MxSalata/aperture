@@ -23,6 +23,10 @@ Multi-Manager, OcuPilot, Ops Canvas) turned up six things worth having before th
   history and this tab's changes, each with counts and the latest entry, plus an honest list of
   the logs no API route reaches.
 - **README maps the six contest areas** to screens and states each area's boundary.
+- **Found by the new probe on IRIS 2026.2:** an operation that declares an optional request body
+  answers 415 when none is sent. Task suspend, database mount and truncate, journal integrity
+  check and the Explorer now send `{}` with `Content-Type: application/json`
+  (`optional-body-415` in `src/lib/quirks.ts`).
 
 ## 0.2.0 - release candidate for the contest submission
 

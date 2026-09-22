@@ -75,6 +75,7 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
       run(
         api().POST('/v2/journal/file/integrity-check', {
           params: { query: { file: file! } },
+          body: {},
           headers: jobHeaders('Journal integrity check', file ?? undefined),
         }),
       ),

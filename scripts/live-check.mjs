@@ -240,7 +240,9 @@ try {
         return { info: one.json?.result?.Suspended, list: row?.Suspended };
       };
       try {
-        const sus = await http('POST', `/v2/task/suspend?id=${id}`);
+        // The spec declares an optional body; without one the server answers 415 (quirk
+        // optional-body-415), so the probe sends what the portal sends: an empty object.
+        const sus = await http('POST', `/v2/task/suspend?id=${id}`, { body: {} });
         hardFailure |= !record(
           `POST /v2/task/suspend (${candidate.Name})`,
           sus.status === 200,

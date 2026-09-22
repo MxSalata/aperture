@@ -120,9 +120,14 @@ export default function DatabaseDetailPage() {
   const invalidate = [dbKeys.local, dbKeys.config, dbKeys.localOne(dir), dbKeys.configOne(name)];
   const q = { params: { query: { dir } } } as const;
 
-  const mount = useApiMutation(() => run(api().POST('/v2/database-dir/mount', q)), { invalidate });
+  // mount and truncate declare optional bodies; IRIS answers 415 without one (quirk optional-body-415).
+  const mount = useApiMutation(() => run(api().POST('/v2/database-dir/mount', { ...q, body: {} })), {
+    invalidate,
+  });
   const dismount = useApiMutation(() => run(api().POST('/v2/database-dir/dismount', q)), { invalidate });
-  const truncate = useApiMutation(() => run(api().POST('/v2/database-dir/truncate', q)), { invalidate });
+  const truncate = useApiMutation(() => run(api().POST('/v2/database-dir/truncate', { ...q, body: {} })), {
+    invalidate,
+  });
   const startJob = useApiMutation(
     (
       job:

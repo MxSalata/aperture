@@ -56,6 +56,12 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
     source: 'IRIS Workbench verification record',
   },
   {
+    id: 'optional-body-415',
+    appliesTo: () => false,
+    note: 'An operation that declares a request body answers 415 Unsupported Media Type when the request carries none, even if every field is optional (seen on POST /v2/task/suspend). Aperture sends `{}` with Content-Type: application/json in that case.',
+    source: 'Aperture CI, IRIS Community 2026.2 Build 221U (scripts/live-check.mjs --mutate)',
+  },
+  {
     id: 'task-suspended-lag',
     appliesTo: (op) => op.path === '/v2/task/suspend' || op.path === '/v2/task/resume',
     note: 'After a successful suspend, GET /v2/tasks and /v2/task/info can keep reporting Suspended=false for a while although %SYS.Task.Suspended changed. Aperture re-reads the task after each change and says when the two disagree.',

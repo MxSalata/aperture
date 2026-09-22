@@ -74,7 +74,9 @@ export default function TaskDetailPage() {
   };
   // Shown only while the latest read-back still disagrees with the accepted request.
   const lag = lastChange && info.data && !!info.data.Suspended !== lastChange.expected ? lastChange : null;
-  const suspend = useApiMutation(() => run(api().POST('/v2/task/suspend', params)), {
+  // IRIS 2026.2 answers 415 to an operation that declares a body when none is sent, even
+  // when every field is optional (lib/quirks.ts, optional-body-415): send an empty object.
+  const suspend = useApiMutation(() => run(api().POST('/v2/task/suspend', { ...params, body: {} })), {
     invalidate,
     onSuccess: () => void verify(true),
   });

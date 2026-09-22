@@ -355,8 +355,10 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
         q[p.name] =
           p.type === 'boolean' ? v === 'true' : p.type === 'number' || p.type === 'integer' ? Number(v) : v;
       }
+      // An operation that declares a body always gets one: IRIS answers 415 to a bodiless
+      // request even when every field is optional (quirk optional-body-415).
       let parsedBody: unknown = undefined;
-      if (op.body && body.trim()) parsedBody = JSON.parse(body);
+      if (op.body) parsedBody = body.trim() ? JSON.parse(body) : {};
       if (parsedBody && typeof parsedBody === 'object' && !Array.isArray(parsedBody))
         parsedBody = applyQuirks(op, parsedBody as Record<string, unknown>);
       // openapi-fetch has already parsed the body; use data/error rather than re-reading the stream.

@@ -28,6 +28,7 @@ PORTAL_URL=http://iris.lan:52773/aperture/index.html npm run verify:live
 | `LocalDatabaseList` shape | the spec says object, servers say array; Aperture accepts both |
 | error envelope on a missing namespace | `status.Errors` (documented), `status.errors` objects (observed) or top-level `errors` |
 | `POST /v2/database-dir/info` → `202`, task id from the `Location` header (2026.2 sends no body), polling to `Finished` | the Job Center's contract |
+| `POST /v2/task/suspend` + `resume` (opt-in `--mutate`) | the read-back after a change; whether the task list reflects the suspend at once; a bodiless suspend answers 415 |
 | portal HTML served (optional) | the IPM / init-script deployment path |
 
 ## Latest results
@@ -40,6 +41,14 @@ and commit the JSON report next to this file.
 | 2026-09-19 | IRIS for UNIX 2026.2 (Build 221U), `intersystems/iris-community:2026.2`, CI run 35468133739 (`verify-iris` green) | JWT (login + refresh) | 22/22: `/info`, privileges, JWT login and refresh, all list shapes, error envelope, the full `202` round trip to `Finished`, portal served at `/aperture/index.html` | `iris-verification` artifact of the run |
 | 2026-09-19 | same image, run 35467740679 | JWT | 21/22: identical, except the bare `/aperture/` directory URL answered 404; the built-in web server needs `/aperture/index.html`, which the check and the docs now use | job log |
 | 2026-09-19 | same image, both runs, inside the container | - | `Aperture.Installer.Doctor()` (Embedded Python): 7/7 ok (version, JWT available, `/api/admin` enabled + password + JWT, `/aperture` web app, files on disk) | job log, step "Readiness report" |
+
+## Findings from the `--mutate` probe (22 September 2026, run 35718557061)
+
+- `POST /v2/task/suspend?id=…` **without a body answers HTTP 415**, although the specification
+  marks the body (`LeaveInQueue`) as optional. The portal and the probe now send `{}` with
+  `Content-Type: application/json`; the same applies to `database-dir/mount`, `database-dir/truncate`
+  and `journal/file/integrity-check`, and the Explorer always sends `{}` for an operation that
+  declares a body. Recorded as `optional-body-415` in `src/lib/quirks.ts`.
 
 ## Known differences between spec and instances
 
