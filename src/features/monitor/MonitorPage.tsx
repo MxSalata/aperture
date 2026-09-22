@@ -1,13 +1,14 @@
-import { Alert, Button, Grid, Group, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
+import { Alert, Badge, Button, Grid, Group, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { IconInfoCircle, IconRefresh } from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { fetchAlerts, metric, type AlertRow, type MetricSample } from '@/api/monitor';
+import { metric, type AlertRow, type MetricSample } from '@/api/monitor';
 import { useHostMetrics } from './useHostMetrics';
+import { useAlertLog } from './useAlertLog';
 import { PageHeader } from '@/components/PageHeader';
 import { StatTile } from '@/components/StatTile';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
+import { Timestamp } from '@/components/Timestamp';
 import { describeError } from '@/lib/errors';
 import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
 
@@ -37,7 +38,7 @@ const alertColumns: ColumnDef<AlertRow, unknown>[] = [
   {
     accessorKey: 'time',
     header: 'Time',
-    cell: (c) => <span className="tabular">{String(c.getValue())}</span>,
+    cell: (c) => <Timestamp value={c.getValue() as string} />,
   },
   {
     accessorKey: 'severity',
@@ -50,17 +51,14 @@ const alertColumns: ColumnDef<AlertRow, unknown>[] = [
 
 export default function MonitorPage() {
   const metrics = useHostMetrics();
-  const alerts = useQuery({
-    queryKey: ['monitor', 'alerts'],
-    queryFn: fetchAlerts,
-    refetchInterval: 30_000,
-    retry: false,
-  });
+  const alerts = useAlertLog();
   const m = useMemo(() => metrics.data ?? [], [metrics.data]);
   const cpu = metric(m, 'iris_cpu_usage')?.value;
   const mem = metric(m, 'iris_phys_mem_percent_used')?.value;
   const license = metric(m, 'iris_license_percent_used')?.value;
   const processes = metric(m, 'iris_process_count')?.value;
+  const alertsInLog = metric(m, 'iris_system_alerts_log')?.value;
+  const alertsWaiting = metric(m, 'iris_system_alerts_new')?.value === 1;
   const diskRows = useMemo(
     () =>
       m.filter(
@@ -85,10 +83,7 @@ export default function MonitorPage() {
             size="xs"
             variant="default"
             leftSection={<IconRefresh size={14} />}
-            onClick={() => {
-              metrics.refetch();
-              alerts.refetch();
-            }}
+            onClick={() => metrics.refetch()}
             loading={metrics.isFetching}
           >
             Refresh
@@ -187,23 +182,50 @@ export default function MonitorPage() {
             <Paper p="md">
               <Group justify="space-between" mb="xs">
                 <Title order={5}>Alerts (alerts.log)</Title>
-                <Text size="xs" c="dimmed">
-                  GET /api/monitor/alerts
-                </Text>
+                <Group gap="xs">
+                  {alertsInLog !== undefined ? (
+                    <Text size="xs" c="dimmed">
+                      {formatNumber(alertsInLog)} in the log
+                    </Text>
+                  ) : null}
+                  {alertsWaiting ? (
+                    <Badge size="sm" color="orange" variant="light">
+                      new alerts waiting
+                    </Badge>
+                  ) : null}
+                </Group>
               </Group>
+              <Text size="xs" c="dimmed" mb="xs">
+                GET /api/monitor/alerts hands out each alert once: it returns what was posted since the
+                previous call from any client, so reading here hides those alerts from a Prometheus or SAM
+                scraper of this instance. Alerts are therefore read only when you ask, and kept for this
+                session.
+              </Text>
+              <Button
+                size="xs"
+                variant="light"
+                mb="xs"
+                loading={alerts.isFetching}
+                onClick={() => void alerts.refetch()}
+              >
+                Read new alerts
+              </Button>
               {alerts.isError ? (
                 <Text size="sm" c="dimmed">
                   {describeError(alerts.error)}
                 </Text>
               ) : (
                 <DataTable
-                  data={alerts.data}
+                  data={alerts.data ?? []}
                   columns={alertColumns}
-                  loading={alerts.isPending}
                   searchable={false}
                   hideColumnMenu
                   dense
-                  emptyMessage="No alerts - the file may not exist yet"
+                  emptyMessage={
+                    alerts.data
+                      ? 'No alerts were posted since the previous read'
+                      : 'Not read yet in this session'
+                  }
                 />
               )}
             </Paper>

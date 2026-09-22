@@ -52,3 +52,22 @@ describe('format helpers', () => {
     expect(truncate('abcdefghij', 5)).toBe('abcd…');
   });
 });
+
+describe('parseIrisDate with a zone designator', () => {
+  it('converts an instant instead of reading it as the instance wall clock', () => {
+    const at = Date.UTC(2026, 8, 22, 12, 0, 0);
+    setInstanceTimezone('America/New_York');
+    try {
+      const d = parseIrisDate(new Date(at).toISOString());
+      expect(d?.valueOf()).toBe(at);
+      expect(d?.format('YYYY-MM-DD HH:mm')).toBe('2026-09-22 08:00');
+      expect(parseIrisDate('2026-09-22T14:00:00+02:00')?.valueOf()).toBe(at);
+      // A wall-clock IRIS timestamp is still read in the instance zone.
+      expect(parseIrisDate('2026-09-22 08:00:00')?.valueOf()).toBe(at);
+      // A plain date is not mistaken for a zone offset.
+      expect(parseIrisDate('2026-12-31')?.format('YYYY-MM-DD')).toBe('2026-12-31');
+    } finally {
+      setInstanceTimezone(null);
+    }
+  });
+});

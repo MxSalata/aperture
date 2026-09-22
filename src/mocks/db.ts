@@ -323,6 +323,8 @@ export interface MockDb {
   auditLog: AuditRecordRec[];
   startedAt: number;
   broadcasts: string[];
+  /** alerts.log entries not yet handed out by /api/monitor/alerts (the endpoint is a cursor). */
+  pendingAlerts: { time: string; severity: number; message: string }[];
 }
 
 function db(
@@ -1640,6 +1642,19 @@ export function createDb(): MockDb {
     auditLog: [],
     startedAt: Date.now() - 3 * 86_400_000 - 4 * 3_600_000 - 17 * 60_000,
     broadcasts: [],
+    // Shape and UTC time format of the documented example ("Monitoring InterSystems IRIS via REST").
+    pendingAlerts: [
+      {
+        time: new Date(Date.now() - 31 * 3_600_000).toISOString(),
+        severity: 1,
+        message: 'Journal file /usr/irissys/mgr/journal/20260915.002 switched: file size limit reached',
+      },
+      {
+        time: new Date(Date.now() - 20 * 3_600_000).toISOString(),
+        severity: 2,
+        message: 'ERROR #5002: SFTP connection refused (task Nightly HL7 archive export)',
+      },
+    ],
   };
 }
 

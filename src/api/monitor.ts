@@ -115,7 +115,11 @@ export interface AlertRow {
   raw: unknown;
 }
 
-/** alerts.log as JSON. The shape is not formally documented; accept an array or an object wrapping one. */
+/**
+ * alerts.log as JSON: the alerts posted since the previous call to the endpoint, by any client
+ * (a read consumes them; see features/monitor/useAlertLog). The shape is not formally
+ * documented; accept an array or an object wrapping one.
+ */
 export async function fetchAlerts(): Promise<AlertRow[]> {
   const res = await monitorFetch('/alerts', 'application/json');
   const text = await res.text();

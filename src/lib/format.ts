@@ -74,9 +74,21 @@ export function formatPercent(v: number | null | undefined, digits = 1): string 
   return `${v.toFixed(digits)}%`;
 }
 
-/** IRIS timestamps look like "2026-12-31 23:59:59" (or without seconds); see the time zone policy above. */
+/** A designator at the end ("…Z", "…+02:00") makes a timestamp an instant rather than a wall-clock time. */
+const ZONED = /(?:Z|[+-]\d{2}:?\d{2})$/i;
+
+/**
+ * IRIS timestamps look like "2026-12-31 23:59:59" (or without seconds); see the time zone
+ * policy above. Timestamps that name their own zone (alerts.log writes UTC "…Z", and the
+ * portal's own epochs arrive as ISO strings) are converted into the instance zone, never
+ * reinterpreted as its wall clock.
+ */
 export function parseIrisDate(s: string | null | undefined): dayjs.Dayjs | null {
   if (!s) return null;
+  if (ZONED.test(s.trim())) {
+    const d = dayjs(s.trim());
+    return d.isValid() ? (instanceZone ? d.tz(instanceZone) : d) : null;
+  }
   const iso = s.replace(' ', 'T');
   const d = instanceZone ? dayjs.tz(iso, instanceZone) : dayjs(iso);
   return d.isValid() ? d : null;

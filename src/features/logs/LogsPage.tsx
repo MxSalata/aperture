@@ -5,11 +5,13 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 import { api, result } from '@/api/hooks';
-import { fetchAlerts } from '@/api/monitor';
+import { metric } from '@/api/monitor';
 import { canUse } from '@/api/privileges';
 import { PageHeader } from '@/components/PageHeader';
 import { Timestamp } from '@/components/Timestamp';
 import { formatBytes, formatNumber, parseIrisDate } from '@/lib/format';
+import { useHostMetrics } from '@/features/monitor/useHostMetrics';
+import { useAlertLog } from '@/features/monitor/useAlertLog';
 import { useActivity } from '@/stores/activity';
 import { useSession } from '@/stores/session';
 import { secKeys } from '@/features/security/keys';
@@ -173,25 +175,42 @@ function JournalCard() {
 }
 
 function AlertsCard() {
-  const alerts = useQuery({ queryKey: ['monitor', 'alerts'], queryFn: fetchAlerts, retry: false });
-  const rows = alerts.data ?? [];
-  const latest = rows[0];
+  // Counts come from /metrics: reading /api/monitor/alerts would consume the alerts (see useAlertLog).
+  const metrics = useHostMetrics();
+  const alerts = useAlertLog();
+  const inLog = metrics.data ? metric(metrics.data, 'iris_system_alerts_log')?.value : undefined;
+  const waiting = metrics.data ? metric(metrics.data, 'iris_system_alerts_new')?.value === 1 : undefined;
+  const latest = alerts.data?.[0];
   return (
     <LogCard
       title="alerts.log"
-      source="GET /api/monitor/alerts (native monitor service)"
+      source="iris_system_alerts_log / _new in GET /api/monitor/metrics · read on request on the Host monitor"
       to="/monitor"
       privileges={[]}
     >
-      <Pending error={alerts.error}>
+      <Pending error={metrics.error}>
         <Group gap="lg" wrap="wrap">
-          <Stat label="Entries" value={alerts.isPending ? '…' : formatNumber(rows.length)} />
+          <Stat label="Entries" value={metrics.isPending ? '…' : formatNumber(inLog)} />
           <Stat
-            label="Latest"
+            label="New since last read"
             value={
-              alerts.isPending ? (
+              metrics.isPending ? (
                 '…'
-              ) : latest ? (
+              ) : waiting ? (
+                <Text span c="orange" size="sm">
+                  yes
+                </Text>
+              ) : waiting === false ? (
+                'no'
+              ) : (
+                '-'
+              )
+            }
+          />
+          <Stat
+            label="Latest read here"
+            value={
+              latest ? (
                 <>
                   {latest.time ? <Timestamp value={latest.time} mode="relative" /> : null}{' '}
                   <Text span size="sm" c="dimmed">
@@ -200,7 +219,7 @@ function AlertsCard() {
                   </Text>
                 </>
               ) : (
-                'none'
+                'not read yet'
               )
             }
           />

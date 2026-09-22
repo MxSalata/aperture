@@ -1,5 +1,5 @@
 import { mockDb } from '../db';
-import { drift, ok, fmtDate, inMinutes, hoursAgo } from '../util';
+import { drift, ok, fmtDate, inMinutes } from '../util';
 import { http, HttpResponse } from 'msw';
 import { route, OPERATE } from '../secure';
 
@@ -89,9 +89,15 @@ function prometheusText(): string {
     '# HELP iris_process_count Number of IRIS processes',
     '# TYPE iris_process_count gauge',
     `iris_process_count ${mockDb.processes.length}`,
-    '# HELP iris_system_alerts Number of alerts in alerts.log',
+    '# HELP iris_system_alerts The number of alerts posted to the messages log since system startup',
     '# TYPE iris_system_alerts gauge',
     'iris_system_alerts 2',
+    '# HELP iris_system_alerts_log The number of alerts currently located in the alerts log',
+    '# TYPE iris_system_alerts_log gauge',
+    'iris_system_alerts_log 2',
+    '# HELP iris_system_alerts_new Whether new alerts are available on the /api/monitor/alerts endpoint',
+    '# TYPE iris_system_alerts_new gauge',
+    `iris_system_alerts_new ${mockDb.pendingAlerts.length ? 1 : 0}`,
     '# HELP iris_glorefs_per_sec Global references per second',
     '# TYPE iris_glorefs_per_sec gauge',
     `iris_glorefs_per_sec ${Math.round(drift(18_500, 6_000, 45))}`,
@@ -123,22 +129,12 @@ export const nativeMonitorHandlers = [
         headers: { 'Content-Type': 'text/plain; version=0.0.4' },
       }),
   ),
-  http.get('*/api/monitor/alerts', () =>
-    HttpResponse.json([
-      {
-        time: hoursAgo(20),
-        severity: 2,
-        process: '5471',
-        message: 'ERROR #5002: SFTP connection refused (task Nightly HL7 archive export)',
-      },
-      {
-        time: hoursAgo(31),
-        severity: 1,
-        process: 'JRNDMN',
-        message: 'Journal file /usr/irissys/mgr/journal/20260915.002 switched: file size limit reached',
-      },
-    ]),
-  ),
+  // Like IRIS: each call returns the alerts posted since the previous call, then they are gone.
+  http.get('*/api/monitor/alerts', () => {
+    const batch = mockDb.pendingAlerts;
+    mockDb.pendingAlerts = [];
+    return HttpResponse.json(batch);
+  }),
 ];
 
 export const monitorHandlers = [
