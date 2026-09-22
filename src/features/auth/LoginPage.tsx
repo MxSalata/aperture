@@ -24,7 +24,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useSession } from '@/stores/session';
 import { normalizeBaseUrl, newProfileId, useConnections, SAME_ORIGIN_ID } from '@/stores/connections';
-import { useDemo } from '@/stores/demo';
+import { DEMO_BUILD, useDemo } from '@/stores/demo';
 import { describeError } from '@/lib/errors';
 import { APP_NAME, APP_TAGLINE } from '@/theme';
 
@@ -89,7 +89,9 @@ export default function LoginPage() {
         upsert({ ...profile, username: values.username, auth: values.auth });
       }
       if (!profile) throw new Error('Choose a connection');
-      if (demoEnabled && profile.baseUrl) disableDemo();
+      // Outside the demo build, a sign-in to any real profile (including "This server") ends the demo
+      // first, so the very first request is answered by IRIS and never by the mock.
+      if (demoEnabled && !DEMO_BUILD) await disableDemo();
       setLastUsed(profile.id);
       await login({
         connectionId: profile.id,
@@ -100,7 +102,8 @@ export default function LoginPage() {
         auth: values.auth,
         persist: values.persist,
       });
-      navigate(from, { replace: true });
+      // The effect above navigates once `status` is authenticated; a second navigate() here
+      // would interrupt the landing redirect for accounts that cannot use the Dashboard.
     } catch (e) {
       setError(describeError(e));
     } finally {
@@ -115,7 +118,6 @@ export default function LoginPage() {
       await enableDemo();
       setLastUsed(SAME_ORIGIN_ID);
       await login({ connectionId: SAME_ORIGIN_ID, baseUrl: '', username: '_SYSTEM', password: 'SYS', auth: 'jwt' });
-      navigate('/', { replace: true });
     } catch (e) {
       setError(describeError(e));
     } finally {

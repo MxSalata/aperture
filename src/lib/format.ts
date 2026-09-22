@@ -20,16 +20,19 @@ export function formatCompact(n: number | null | undefined): string {
   return compactFmt.format(n);
 }
 
-/** Bytes → "1.5 GB". */
+/**
+ * Bytes → "1.5 GiB". Binary units with binary labels: IRIS reports sizes in MB meaning
+ * 1024², so a value that reads "1.0 GiB" here is the "1024 MB" of the classic portal.
+ */
 export function formatBytes(bytes: number | null | undefined, digits = 1): string {
   if (bytes === null || bytes === undefined || !Number.isFinite(bytes)) return '-';
   if (bytes === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-  const i = Math.min(units.length - 1, Math.floor(Math.log(Math.abs(bytes)) / Math.log(1024)));
+  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
+  const i = Math.max(0, Math.min(units.length - 1, Math.floor(Math.log(Math.abs(bytes)) / Math.log(1024))));
   return `${(bytes / 1024 ** i).toFixed(i === 0 ? 0 : digits)} ${units[i]}`;
 }
 
-/** Megabytes (the unit IRIS uses for database sizes) → "1.5 GB". The API may return "Unlimited". */
+/** Megabytes (the unit IRIS uses for database sizes) → "1.5 GiB". The API may return "Unlimited". */
 export function formatMB(mb: number | string | null | undefined): string {
   if (mb === null || mb === undefined || mb === '') return '-';
   if (typeof mb === 'string' && Number.isNaN(Number(mb))) return mb;
@@ -48,7 +51,9 @@ export function parseIrisDate(s: string | null | undefined): dayjs.Dayjs | null 
   return d.isValid() ? d : null;
 }
 
-export function formatDateTime(s: string | null | undefined): string {
+/** Absolute wall-clock rendering of an IRIS timestamp, or of an epoch in milliseconds. */
+export function formatDateTime(s: string | number | null | undefined): string {
+  if (typeof s === 'number') return Number.isFinite(s) ? dayjs(s).format('YYYY-MM-DD HH:mm:ss') : '-';
   const d = parseIrisDate(s);
   return d ? d.format('YYYY-MM-DD HH:mm:ss') : s || '-';
 }

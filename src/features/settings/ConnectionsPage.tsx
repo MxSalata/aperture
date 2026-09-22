@@ -19,11 +19,12 @@ export default function ConnectionsPage() {
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
   const [editing, setEditing] = useState<ConnectionProfile | null>(null);
-  const form = useForm({ initialValues: { name: '', baseUrl: 'http://localhost:52773', auth: 'auto' as ConnectionProfile['auth'], username: '_SYSTEM' }, validate: { name: (v) => (v.trim() ? null : 'Required'), baseUrl: (v, all) => (editing?.id === SAME_ORIGIN_ID || /^https?:\/\//.test(v) ? null : `Enter a URL such as http://iris.lan:52773 (${all.name})`) } });
+  const form = useForm({ initialValues: { name: '', baseUrl: 'http://localhost:52773', auth: 'auto' as ConnectionProfile['auth'], username: '_SYSTEM' }, validate: { name: (v) => (v.trim() ? null : 'Required'), baseUrl: (v) => (editing?.id === SAME_ORIGIN_ID || /^https?:\/\//.test(v) ? null : 'Enter a URL such as http://iris.lan:52773') } });
 
   const startEdit = (p: ConnectionProfile | null) => { setEditing(p); form.setValues({ name: p?.name ?? '', baseUrl: p?.baseUrl ?? 'http://localhost:52773', auth: p?.auth ?? 'auto', username: p?.username ?? '_SYSTEM' }); open(); };
   const save = form.onSubmit((v) => { const id = editing?.id ?? newProfileId(); upsert({ id, name: v.name.trim(), baseUrl: id === SAME_ORIGIN_ID ? '' : normalizeBaseUrl(v.baseUrl), auth: v.auth, username: v.username, color: editing?.color ?? 'cyan' }); close(); });
-  const connect = async (p: ConnectionProfile) => { setLastUsed(p.id); await logout({ remote: false }); navigate('/login'); };
+  // Switching instances is exactly when the old session should stop being valid server-side too.
+  const connect = async (p: ConnectionProfile) => { setLastUsed(p.id); await logout(); navigate('/login'); };
 
   return (
     <>

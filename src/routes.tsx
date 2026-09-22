@@ -3,9 +3,9 @@ import { createBrowserRouter, createHashRouter, Navigate } from 'react-router';
 import { AppLayout } from './features/shell/AppLayout';
 import { RequireAuth } from './features/shell/RequireAuth';
 import { RouteError } from './features/shell/RouteError';
+import { LandingRedirect } from './features/shell/LandingRedirect';
 
 const LoginPage = lazy(() => import('./features/auth/LoginPage'));
-const DashboardPage = lazy(() => import('./features/dashboard/DashboardPage'));
 const JobsPage = lazy(() => import('./features/jobs/JobsPage'));
 const NotFoundPage = lazy(() => import('./features/shell/NotFoundPage'));
 const ComingSoon = lazy(() => import('./features/shell/ComingSoon'));
@@ -55,7 +55,7 @@ export const router = createRouter(
         {
           element: <AppLayout />,
           children: [
-            { index: true, element: <DashboardPage /> },
+            { index: true, element: <LandingRedirect /> },
             { path: 'jobs', element: <JobsPage /> },
             { path: 'activity', element: <ActivityPage /> },
             { path: 'monitor', element: <MonitorPage /> },

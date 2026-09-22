@@ -8,11 +8,12 @@ import { formatDateTime } from '@/lib/format';
 import { useActivity, type ActivityEntry } from '@/stores/activity';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import dayjs from 'dayjs';
+import { downloadText } from '@/lib/download';
 
 const METHOD_COLOR: Record<string, string> = { POST: 'indigo', PUT: 'orange', DELETE: 'red', PATCH: 'grape' };
 
 const columns: ColumnDef<ActivityEntry, unknown>[] = [
-  { accessorKey: 'at', header: 'When', cell: (c) => <span className="tabular">{formatDateTime(dayjs(c.getValue() as number).format('YYYY-MM-DD HH:mm:ss'))}</span> },
+  { accessorKey: 'at', header: 'When', cell: (c) => <span className="tabular">{formatDateTime(c.getValue() as number)}</span> },
   { accessorKey: 'method', header: 'Method', cell: (c) => <Badge size="sm" variant="filled" color={METHOD_COLOR[c.getValue() as string] ?? 'gray'} style={{ fontFamily: 'var(--aperture-mono)' }}>{String(c.getValue())}</Badge> },
   { accessorKey: 'path', header: 'Operation', cell: ({ row }) => <span className="mono">{row.original.path}{row.original.query ? <span style={{ opacity: 0.6 }}>?{row.original.query}</span> : null}</span> },
   { accessorKey: 'status', header: 'Result', cell: ({ row }) => <Badge size="sm" variant="light" color={row.original.ok ? (row.original.status === 202 ? 'indigo' : 'teal') : 'red'}>HTTP {row.original.status}</Badge> },
@@ -24,14 +25,8 @@ const columns: ColumnDef<ActivityEntry, unknown>[] = [
 export default function ActivityPage() {
   const entries = useActivity(useShallow((s) => s.entries));
   const clear = useActivity((s) => s.clear);
-  const download = () => {
-    const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `aperture-activity-${dayjs().format('YYYYMMDD-HHmmss')}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
+  const download = () =>
+    downloadText(`aperture-activity-${dayjs().format('YYYYMMDD-HHmmss')}.json`, JSON.stringify(entries, null, 2), 'application/json');
   return (
     <>
       <PageHeader

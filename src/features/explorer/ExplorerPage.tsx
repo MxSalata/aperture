@@ -1,6 +1,7 @@
 import { Accordion, Alert, Badge, Box, Button, Checkbox, Code, Grid, Group, NavLink, NumberInput, Paper, ScrollArea, Select, Stack, Tabs, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { IconPlayerPlay, IconAlertTriangle } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { api } from '@/api/client';
 import { ApiError } from '@/lib/errors';
@@ -115,6 +116,7 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
   const [busy, setBusy] = useState(false);
   const track = useJobs((s) => s.track);
   const openDrawer = useJobs((s) => s.setDrawerOpen);
+  const queryClient = useQueryClient();
 
   const execute = async () => {
     setBusy(true);
@@ -140,6 +142,8 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
       const jobId = response.status === 202 ? await jobIdFromResponse(response, fetched.data) : null;
       if (jobId) { track({ id: jobId, name: `${op.method} ${op.path}` }); openDrawer(true); }
       setRes({ status: response.status, ok: response.ok, headers, body: parsed, ms: Math.round(performance.now() - started), jobId });
+      // A write from the Explorer changes data the hand-crafted screens may be showing.
+      if (op.method !== 'GET') void queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== 'async-result' && q.queryKey[0] !== 'session' });
     } catch (e) {
       setError(e);
     } finally {
@@ -148,8 +152,13 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
   };
 
   const quirks = quirksFor(op);
-  const dangerous = op.method === 'DELETE' || /terminate|purge|truncate|dismount|revoke|delete|stop/i.test(op.path);
-  const run = () => (dangerous ? confirmDanger({ title: `Execute ${op.method} ${op.path}`, message: 'This operation modifies or removes something on the server. Continue?', confirmLabel: 'Execute', color: 'red', onConfirm: execute }) : execute());
+  // Every non-GET call changes the instance and is confirmed; the path words only escalate the wording.
+  const mutating = op.method !== 'GET';
+  const dangerous = op.method === 'DELETE' || /terminate|purge|truncate|dismount|revoke|delete|stop|kill|remove/i.test(op.path);
+  const run = () =>
+    mutating
+      ? confirmDanger({ title: `Execute ${op.method} ${op.path}`, message: dangerous ? 'This operation removes or stops something on the server. Continue?' : 'This operation changes something on the server. Continue?', confirmLabel: 'Execute', color: dangerous ? 'red' : 'orange', onConfirm: execute })
+      : execute();
 
   return (
     <Stack gap="md">
@@ -183,8 +192,8 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
       ) : null}
       {op.body ? <Paper p="sm" withBorder><BodyEditor doc={doc} op={op} value={body} onChange={setBody} /></Paper> : null}
       <Group>
-        <Button leftSection={<IconPlayerPlay size={16} />} color={dangerous ? 'red' : 'indigo'} onClick={run} loading={busy}>Execute</Button>
-        {dangerous ? <Group gap={4}><IconAlertTriangle size={14} color="var(--mantine-color-red-6)" /><Text size="xs" c="red">Destructive operation - asks for confirmation</Text></Group> : null}
+        <Button leftSection={<IconPlayerPlay size={16} />} color={dangerous ? 'red' : mutating ? 'orange' : 'indigo'} onClick={run} loading={busy}>Execute</Button>
+        {dangerous ? <Group gap={4}><IconAlertTriangle size={14} color="var(--mantine-color-red-6)" /><Text size="xs" c="red">Destructive operation - asks for confirmation</Text></Group> : mutating ? <Text size="xs" c="dimmed">Changes the instance - asks for confirmation</Text> : null}
       </Group>
       {error ? <ErrorAlert error={error} /> : null}
       {res ? <Paper p="sm" withBorder><ResultView res={res} /></Paper> : null}

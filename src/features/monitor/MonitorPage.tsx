@@ -61,7 +61,7 @@ export default function MonitorPage() {
         <Grid.Col span={{ base: 12, lg: 7 }}>
           <Paper p="md" mb="md">
             <Group justify="space-between" mb="xs"><Title order={5}>All metrics</Title><Text size="xs" c="dimmed">{m.length} samples · GET /api/monitor/metrics</Text></Group>
-            <DataTable data={m} columns={metricColumns} loading={metrics.isPending} error={metrics.error} getRowId={(r, i) => `${r.name}-${i}`} dense pageSize={30} searchPlaceholder="Filter metrics…" />
+            <DataTable data={m} columns={metricColumns} loading={metrics.isPending} error={metrics.error} getRowId={(r) => `${r.name}{${Object.entries(r.labels).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}=${v}`).join(',')}}`} dense pageSize={30} searchPlaceholder="Filter metrics…" />
           </Paper>
         </Grid.Col>
         <Grid.Col span={{ base: 12, lg: 5 }}>

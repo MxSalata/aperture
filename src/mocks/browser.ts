@@ -10,3 +10,10 @@ export async function startMockWorker() {
     serviceWorker: { url: `${import.meta.env.BASE_URL}mockServiceWorker.js` },
   });
 }
+
+/** Stop intercepting in this tab and unregister the worker so it cannot come back after a reload. */
+export async function stopMockWorker() {
+  worker.stop();
+  const registration = await navigator.serviceWorker?.getRegistration(import.meta.env.BASE_URL);
+  await registration?.unregister();
+}

@@ -6,6 +6,9 @@ import { ApiError, normalizeErrors } from '@/lib/errors';
 import { apiBase, decodeJwtPayload } from '@/api/base';
 import { useJobs } from '@/stores/jobs';
 import { useMetrics } from '@/stores/metrics';
+import { useActivity } from '@/stores/activity';
+import { useHealth } from '@/stores/health';
+import { queryClient } from '@/query';
 
 /**
  * Session store: who we are, on which instance, and how we authenticate.
@@ -142,6 +145,19 @@ async function basicProbe(base: string, credentials: string): Promise<Info> {
 
 let refreshInFlight: Promise<boolean> | null = null;
 
+/**
+ * Everything cached about the instance we were talking to: query results, jobs, metric
+ * history, the activity log and the reachability pill. A tab holds one session, so a
+ * reset at the session boundary is what keeps instance A's rows from ever painting for B.
+ */
+export function resetInstanceState(): void {
+  queryClient.clear();
+  useJobs.getState().clearAll();
+  useMetrics.getState().clear();
+  useActivity.getState().clear();
+  useHealth.getState().reset();
+}
+
 const anonymous = {
   status: 'anonymous' as SessionStatus,
   mode: null,
@@ -175,6 +191,10 @@ export const useSession = create<SessionState>()(
 
       login: async (args) => {
         const base = apiBase(args.baseUrl);
+        const previous = get();
+        if (previous.status === 'authenticated' || previous.connectionId !== args.connectionId || previous.baseUrl !== args.baseUrl) {
+          resetInstanceState();
+        }
         set({ status: 'authenticating', lastError: null, endedReason: null, baseUrl: args.baseUrl, connectionId: args.connectionId, persistTokens: args.persist !== false });
         try {
           const preferred = args.auth ?? 'auto';
@@ -267,9 +287,8 @@ export const useSession = create<SessionState>()(
           }
         }
         set({ ...anonymous, endedReason: opts?.reason ?? null });
-        // Jobs and metric history belong to the user/instance that just ended.
-        useJobs.getState().clearAll();
-        useMetrics.getState().clear();
+        // Everything cached belongs to the user/instance that just ended.
+        resetInstanceState();
       },
 
       loadInfo: async () => {

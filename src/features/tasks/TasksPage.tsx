@@ -13,7 +13,7 @@ import { formatDateTime, formatRelative } from '@/lib/format';
 import { useSession } from '@/stores/session';
 
 type Row = TaskList[number];
-export const taskKeys = { list: ['tasks'] as const, one: (id: string) => ['tasks', id] as const, manager: ['tasks', 'manager'] as const, upcoming: ['tasks', 'upcoming'] as const, history: (id?: string) => ['tasks', 'history', id ?? 'all'] as const };
+export const taskKeys = { list: ['tasks', 'list'] as const, one: (id: string) => ['tasks', 'detail', id] as const, manager: ['tasks', 'manager'] as const, upcoming: ['tasks', 'upcoming'] as const, history: (id?: string) => ['tasks', 'history', id ?? 'all'] as const };
 
 const columns: ColumnDef<Row, unknown>[] = [
   { accessorKey: 'Id', header: 'Id', cell: (c) => <span className="tabular">{String(c.getValue())}</span> },

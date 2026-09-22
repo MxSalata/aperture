@@ -57,6 +57,15 @@ test.describe('Aperture (demo mode)', () => {
     await expect(nav.getByRole('link', { name: 'Namespaces', exact: true })).toHaveCount(0);
   });
 
+  test('an account without %Admin_Operate lands on a screen it can use', async ({ page }) => {
+    await go(page, '/login');
+    await page.getByLabel('Username').fill('auditor');
+    await page.getByLabel('Password', { exact: true }).fill('SYS');
+    await page.getByRole('button', { name: /Sign in/ }).click();
+    await expect(page.getByRole('heading', { name: 'Users' })).toBeVisible();
+    await expect(page.getByRole('navigation').getByRole('link', { name: 'Dashboard', exact: true })).toHaveCount(0);
+  });
+
   test('audit log query runs as an async task and renders records', async ({ page }) => {
     await loginDemo(page);
     await go(page, '/security/audit');

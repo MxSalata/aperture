@@ -4,6 +4,9 @@ import { server } from '@/mocks/node';
 import { useSession } from '../session';
 import { resetClients, api, result } from '@/api/client';
 import { resetDb } from '@/mocks/db';
+import { queryClient } from '@/query';
+import { useActivity } from '@/stores/activity';
+import { useHealth } from '@/stores/health';
 
 const BASE = 'http://iris.test';
 
@@ -46,6 +49,24 @@ describe('session', () => {
     const dbs = await result(api().GET('/v2/databases'));
     expect(Array.isArray(dbs)).toBe(true);
     expect(useSession.getState().accessToken).not.toBe('garbage');
+  });
+
+  it('forgets everything cached about the instance on logout', async () => {
+    await useSession.getState().login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+    queryClient.setQueryData(['processes'], [{ Pid: '1' }]);
+    useActivity.getState().record({ at: Date.now(), method: 'POST', path: '/v2/x', query: '', status: 200, ok: true, summary: '', durationMs: 1 });
+    useHealth.getState().markFail('boom');
+    await useSession.getState().logout({ remote: false });
+    expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
+    expect(useActivity.getState().entries).toEqual([]);
+    expect(useHealth.getState().reachable).toBe(true);
+  });
+
+  it('resets the cache when signing in to a different instance without signing out', async () => {
+    await useSession.getState().login({ connectionId: 'a', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+    queryClient.setQueryData(['processes'], [{ Pid: 'from-a' }]);
+    await useSession.getState().login({ connectionId: 'b', baseUrl: BASE, username: 'operator', password: 'SYS' });
+    expect(queryClient.getQueryData(['processes'])).toBeUndefined();
   });
 
   it('logs out when the refresh token is invalid too', async () => {

@@ -130,6 +130,19 @@ function Body<T extends Record<string, unknown>>({ id, changes, labels, refetch,
           onClick={async () => {
             setBusy(true);
             try {
+              // The dialog may have been open for a while: re-read once more right before writing.
+              if (refetch && !override) {
+                try {
+                  const current = await refetch();
+                  const latest = diffObjects(before, current as Record<string, unknown>);
+                  if (latest.length) {
+                    setDrift(latest);
+                    return;
+                  }
+                } catch (e) {
+                  setCheckError(e instanceof Error ? e.message : String(e));
+                }
+              }
               await onConfirm();
               modals.close(id);
             } finally {

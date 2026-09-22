@@ -1,11 +1,13 @@
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { api, result } from '@/api/client';
 import { isTerminal, selectActiveJobs, useJobs } from '@/stores/jobs';
 import { notifications } from '@mantine/notifications';
-import { queryClient } from '@/query';
 import { isApiError } from '@/lib/errors';
+
+/** Query families that must not be refetched just because a job finished. */
+const UNTOUCHED_BY_JOBS = new Set(['async-result', 'session']);
 
 /**
  * Polls `GET /v2/async-result?id=` for every job that is not finished yet.
@@ -14,16 +16,23 @@ import { isApiError } from '@/lib/errors';
 export function JobPoller() {
   const active = useJobs(useShallow(selectActiveJobs));
   const update = useJobs((s) => s.update);
+  const queryClient = useQueryClient();
 
   const queries = useQueries({
     queries: active.map((job) => ({
       queryKey: ['async-result', job.id],
       queryFn: () => result(api().GET('/v2/async-result', { params: { query: { id: job.id } } })),
       refetchInterval: 1500,
-      retry: (count: number, err: unknown) => !(isApiError(err) && (err.status === 404 || err.status === 403)) && count < 2,
+      retry: (count: number, err: unknown) => !(isApiError(err) && (err.isNotFound || err.isForbidden)) && count < 2,
       staleTime: 0,
     })),
   });
+
+  // One primitive that only changes when something observable about a job changed, so the
+  // reconciliation below does not re-run (and re-render) on every poll tick.
+  const signature = queries
+    .map((q, i) => `${active[i]?.id}:${q.data?.State ?? ''}:${q.data?.Console?.length ?? 0}:${q.isError ? 'E' : ''}`)
+    .join('|');
 
   useEffect(() => {
     queries.forEach((q, i) => {
@@ -42,16 +51,25 @@ export function JobPoller() {
             message: task.FailureReason || job.name,
             color: state === 'Finished' ? 'teal' : state === 'Failed' ? 'red' : 'gray',
           });
-          // Data may have changed on the server (compact, truncate, purge…).
-          void queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== 'async-result' });
+          // Data may have changed on the server (compact, truncate, purge…); the session
+          // validation and the other job polls are not data and stay untouched.
+          void queryClient.invalidateQueries({ predicate: (query) => !UNTOUCHED_BY_JOBS.has(String(query.queryKey[0])) });
         }
       } else if (q.isError) {
-        const gone = isApiError(q.error) && (q.error.status === 404 || q.error.status === 403);
-        if (gone) update(job.id, { state: 'Missing', notified: true, error: 'The server no longer reports this task (it may belong to another user or the instance restarted).' });
+        const gone = isApiError(q.error) && (q.error.isNotFound || q.error.isForbidden);
+        if (gone)
+          update(job.id, {
+            state: 'Missing',
+            notified: true,
+            error: 'The server no longer reports this task (it may belong to another user or the instance restarted).',
+          });
         else if (job.state === 'Unknown') update(job.id, { error: q.error instanceof Error ? q.error.message : 'Polling failed' });
       }
     });
-  }, [queries, active, update]);
+    // `signature` captures every input the body reads from `queries`/`active`; keying on it
+    // (rather than the fresh arrays) is what stops the effect from firing on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature, update, queryClient]);
 
   return null;
 }
