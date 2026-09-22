@@ -1,7 +1,16 @@
 dist
 dist-demo
 node_modules
+coverage
+playwright-report
+test-results
+blob-report
+# generated or committed build output
+www
 spec
 src/api/schema.d.ts
 src/api/spec-index.json
 public/mockServiceWorker.js
+package-lock.json
+# prose keeps its own line lengths
+docs

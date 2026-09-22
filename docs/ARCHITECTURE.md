@@ -129,6 +129,15 @@ source; the Explorer shows them beside the affected operation and applies body a
 the UI stays optimistic). Navigation sections, the command palette, page headers (`PrivilegeBadge`)
 and the Explorer all use it.
 
+### 2.10 Time
+
+IRIS reports timestamps as the wall-clock time of the instance, with no zone designator
+(`2026-12-31 23:59:59`). Aperture never converts them: what the API says is what the screen shows.
+Relative times ("3 hours ago") need an instant, so the timestamp is interpreted in the time zone the
+connection profile names (an IANA zone, chosen in Connections); with none configured the browser's
+zone is assumed, which is right for a server next door and is said so in every `Timestamp` tooltip.
+`lib/format.ts` holds the policy; `Timestamp` shows one reading and the other in a tooltip.
+
 ## 3. State
 
 | Store | Persisted in | Holds |
@@ -136,10 +145,18 @@ and the Explorer all use it.
 | `session` | sessionStorage | connection, mode, tokens, `/info` |
 | `connections` | localStorage | saved IRIS instances |
 | `jobs` | sessionStorage | followed async tasks |
-| `metrics` | memory | ring buffer of dashboard samples (120 × 3 s) |
+| `metrics` | sessionStorage | ring buffer of dashboard samples (120 × 3 s) |
 | `demo` | sessionStorage | whether the in-browser mock is active |
 | `activity` | sessionStorage | changes sent from this tab |
 | `health` | memory | reachability of the instance |
+| `appearance` | localStorage | contrast setting (system / normal / high); the colour scheme itself is Mantine's own localStorage key |
+
+Everything that describes *the instance we were talking to* (the query cache, jobs, metric
+history, the activity log, reachability) is reset by `resetInstanceState()` in `stores/session.ts`
+on logout and on a sign-in to a different instance; `connections` and `appearance` are device
+preferences and survive. `DataTable` keeps its own state outside the stores: filter, sort and page
+in the URL (`?q=&sort=-Pid&page=2`) when the table is keyed, column choices and page size in
+localStorage under `aperture.table.<key>`.
 
 Server state is entirely TanStack Query: `staleTime` 10 s, one retry after a `401`, no retry on other
 4xx. Mutations go through `useApiMutation`, which toasts the envelope summary, toasts `ApiError`s
@@ -148,7 +165,7 @@ and invalidates the query keys you list.
 ## 4. Screens
 
 Hand-written screens follow one shape: `PageHeader` (title, description, privilege badge, actions),
-a `DataTable` (TanStack Table: sorting, quick filter, column chooser, pagination, sticky header) or a
+a `DataTable` (TanStack Table: sorting, quick filter, column chooser, pagination, sticky header, CSV export, URL-backed state) or a
 `KeyValueList` for details, Mantine modals with `@mantine/form` for create/edit, and `confirmDanger`
 for destructive actions (type-the-name confirmation for irreversible ones). Every detail page also
 shows the raw JSON of the responses it used.

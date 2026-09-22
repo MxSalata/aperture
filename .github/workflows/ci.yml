@@ -6,14 +6,14 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Least privilege by default; the Pages deployment job raises what it needs.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
+# One queue per branch, and a superseded push cancels the run it replaces.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
@@ -27,8 +27,17 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      - run: npm run format:check
       - run: npm test
       - run: npm run build
+      - name: Entry chunk stays small and free of the spec index
+        run: npm run check:bundle
+      - name: www/ is current (the IPM package ships the committed build)
+        run: |
+          npm run build:www
+          if [ -n "$(git status --porcelain -- www)" ]; then
+            echo "www/ is stale: run 'npm run build:www' and commit the result"; git status --porcelain -- www; exit 1
+          fi
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
@@ -45,10 +54,10 @@ jobs:
         with:
           path: dist-demo
 
-  # Builds the IRIS image (IRIS Community 2026.2 + IPM), which installs Aperture through
-  # its own module.xml (zpm "load") and runs the Embedded Python installer at build time;
-  # then starts it and checks the SysAdmin API behaves as Aperture assumes
-  # (JWT, shapes, 202 flow, portal served).
+  # Builds the IRIS image (official IRIS Community 2026.2 image plus the package manager),
+  # which installs Aperture through its own module.xml (zpm "load") and runs the Embedded
+  # Python installer at build time; then starts it and checks the SysAdmin API behaves as
+  # Aperture assumes (JWT, shapes, 202 flow, portal served).
   verify-iris:
     needs: verify
     runs-on: ubuntu-latest
@@ -98,6 +107,14 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: verify
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    # Pages deployments must never be interrupted, so this job keeps its own serial queue.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

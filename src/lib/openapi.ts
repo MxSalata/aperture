@@ -1,10 +1,11 @@
 /**
- * Runtime helpers over the OpenAPI document.
+ * Runtime helpers over the OpenAPI document: schema resolution, example generation and
+ * labels. Pure functions and types only; the operation index itself is in `specIndex.ts`
+ * so that this module can be imported eagerly without dragging 175 KB into the entry chunk.
  *
  * The full spec is ~1 MB, so it is loaded lazily (Vite splits it into its own
  * chunk) and only by the Explorer and the demo-mode mock.
  */
-import specIndex from '@/api/spec-index.json';
 
 export type JsonSchema = {
   type?: string | string[];
@@ -65,19 +66,10 @@ export interface SpecIndex {
   title: string;
   version: string;
   basePath: string;
-  generatedAt: string;
+  /** SHA-256 of spec/mainspec_v2.json the index was built from. */
+  specSha256: string;
   groups: Record<string, number>;
   operations: IndexedOperation[];
-}
-
-export const index = specIndex as unknown as SpecIndex;
-
-export const operationsByGroup: Record<string, IndexedOperation[]> = {};
-for (const op of index.operations) (operationsByGroup[op.group] ??= []).push(op);
-
-export function findIndexedOperation(method: string, path: string): IndexedOperation | undefined {
-  const m = method.toUpperCase();
-  return index.operations.find((o) => o.method === m && o.path === path);
 }
 
 let specPromise: Promise<OpenApiDoc> | null = null;

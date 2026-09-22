@@ -48,7 +48,7 @@ cd intersystems-frontend-contest
 docker compose up --build
 ```
 
-- http://localhost:8080 - Aperture behind nginx (proxies `/api/admin` to IRIS, no CORS, no Basic-auth pop-ups)
+- http://localhost:8080 - Aperture behind nginx (proxies `/api/admin` to IRIS, no CORS, no Basic-auth pop-ups; sends a Content-Security-Policy, set `IRIS_ALLOWED_ORIGINS="https://other.iris:52773"` on the `portal` service to let the browser call further instances directly)
 - http://localhost:52773/aperture/index.html - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`; the built-in web server needs the file name, a bare `/aperture/` answers 404)
 - Sign in with `_SYSTEM` / `SYS`
 
@@ -119,7 +119,10 @@ Other scripts:
 | **Locks, Journals, Tasks, Web sessions, License** | lock removal with transaction check, journal files/records/settings/switching, task schedules + history + task manager, session ending, license key/usage/servers | |
 | **Security** | users, roles, resources, services, web applications (JWT, CORS), audit events + log + purge, TLS/SSL configs + test, SQL privileges | |
 | **API Explorer** | every one of the 273 operations rendered from the OpenAPI document: parameters, request body form or JSON, privileges, documented responses, response as table / fields / JSON | reachable from the command palette |
-| **Everywhere** | ⌘K command palette, privilege badges, raw JSON of every response, dark mode, responsive layout, multiple saved connections, escalation-role login, LIVE / OFFLINE / DEMO indicator | |
+| **Everywhere** | ⌘K command palette, privilege badges, raw JSON of every response, responsive layout, multiple saved connections, escalation-role login, LIVE / OFFLINE / DEMO indicator | |
+| **Tables** | filter, sort and page live in the URL (share a link to exactly what you see; Back restores it), column choices and page size are remembered per table, every table exports its filtered rows as CSV, "no rows" and "nothing matches your filter" are different messages | `stateKey` / `exportName` on `DataTable` |
+| **Instances** | each saved connection has a colour (a bar under the header, so production never looks like staging) and an optional time zone, browser-tab titles carry the instance name and its LIVE flag, and an account without `%Admin_Operate` lands on a screen it can use | `docs/ARCHITECTURE.md` §2.10 for the time policy |
+| **Appearance** | light / dark / system theme plus an independent contrast axis (system / normal / high), applied before the first paint; live regions, keyboard-reachable tooltips, reduced-motion and forced-colors support; chart palettes validated against their surfaces by a unit test | Appearance menu in the header |
 | **Change review** | every edit form shows old → new per field, re-reads the object to detect concurrent edits, and only then applies | `reviewChanges()` in `src/components/ReviewChanges.tsx` |
 
 <details>

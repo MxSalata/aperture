@@ -1,0 +1,2 @@
+# Whole-repository reformat (prettier --write .), no semantic change.
+# Use: git config blame.ignoreRevsFile .git-blame-ignore-revs

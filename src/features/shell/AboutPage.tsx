@@ -1,6 +1,7 @@
 import { Anchor, Badge, Grid, Group, List, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { PageHeader } from '@/components/PageHeader';
-import { groupLabel, index } from '@/lib/openapi';
+import { groupLabel } from '@/lib/openapi';
+import { index } from '@/lib/specIndex';
 import { useSession } from '@/stores/session';
 import { APP_NAME } from '@/theme';
 import { JsonViewer } from '@/components/JsonViewer';

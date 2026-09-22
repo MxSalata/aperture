@@ -2,7 +2,8 @@ import { http, HttpResponse } from 'msw';
 import { authenticate, holds } from '../auth';
 import { forbidden, unauthorized, accepted } from '../util';
 import { apiBasePath } from '../secure';
-import { exampleFromSchema, findIndexedOperation, loadSpec, resultSchema } from '@/lib/openapi';
+import { exampleFromSchema, loadSpec, resultSchema } from '@/lib/openapi';
+import { findIndexedOperation } from '@/lib/specIndex';
 import { startAsyncTask } from '../async';
 
 /**

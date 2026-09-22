@@ -1,8 +1,10 @@
 // Builds a compact operation index from the OpenAPI document.
 //
 // The full spec (≈1 MB) is lazy-loaded by the Explorer only when needed; the index
-// (≈60 KB) ships with the main bundle and powers navigation, the command palette and
-// privilege hints for every one of the 273 operations.
+// (≈175 KB minified) lives in lazy chunks too (see src/lib/specIndex.ts) and powers the
+// Explorer, the command palette and privilege hints for every one of the 273 operations.
+// The output is deterministic: provenance is the SHA-256 of the spec, not a timestamp.
+import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -11,7 +13,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const specPath = resolve(here, '../spec/mainspec_v2.json');
 const outPath = resolve(here, '../src/api/spec-index.json');
 
-const spec = JSON.parse(readFileSync(specPath, 'utf8'));
+const specText = readFileSync(specPath, 'utf8');
+const spec = JSON.parse(specText);
 const METHODS = ['get', 'post', 'put', 'delete', 'patch'];
 
 /** Resolve a local `$ref` such as `#/components/parameters/maxRows`. */
@@ -105,7 +108,7 @@ const index = {
   title: spec.info?.title,
   version: spec.info?.version,
   basePath: spec.servers?.[0]?.url ?? '/api/admin',
-  generatedAt: new Date().toISOString(),
+  specSha256: createHash('sha256').update(specText).digest('hex'),
   groups,
   operations,
 };

@@ -1,9 +1,9 @@
 import { Spotlight, type SpotlightActionData, type SpotlightActionGroupData } from '@mantine/spotlight';
 import { IconApi, IconSearch } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ALL_NAV_ITEMS } from './nav';
-import { index, groupLabel } from '@/lib/openapi';
+import { groupLabel, type IndexedOperation } from '@/lib/openapi';
 import { useSession } from '@/stores/session';
 import { canUse } from '@/api/privileges';
 
@@ -11,6 +11,21 @@ import { canUse } from '@/api/privileges';
 export function CommandPalette() {
   const navigate = useNavigate();
   const info = useSession((s) => s.info);
+
+  // The operation index (~175 KB) is not part of the entry bundle: it is fetched when the
+  // browser is idle or on the first open, whichever comes first (see lib/specIndex.ts).
+  const [operations, setOperations] = useState<IndexedOperation[] | null>(null);
+  const loadOperations = useCallback(() => {
+    void import('@/lib/specIndex').then((m) => setOperations((cur) => cur ?? m.index.operations));
+  }, []);
+  useEffect(() => {
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(loadOperations, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(loadOperations, 1500);
+    return () => clearTimeout(t);
+  }, [loadOperations]);
 
   const actions = useMemo<(SpotlightActionData | SpotlightActionGroupData)[]>(() => {
     const pages: SpotlightActionData[] = ALL_NAV_ITEMS.filter((n) => canUse(info, n.privileges)).map((n) => ({
@@ -21,7 +36,7 @@ export function CommandPalette() {
       leftSection: <n.icon size={18} stroke={1.6} />,
       onClick: () => navigate(n.to),
     }));
-    const ops: SpotlightActionData[] = index.operations.map((op) => ({
+    const ops: SpotlightActionData[] = (operations ?? []).map((op) => ({
       id: `op:${op.id}`,
       label: `${op.method} ${op.path}`,
       description: `${groupLabel(op.group)} · ${op.summary}`,
@@ -29,18 +44,16 @@ export function CommandPalette() {
       leftSection: <IconApi size={18} stroke={1.6} />,
       onClick: () => navigate(`/explorer/${encodeURIComponent(op.group)}?op=${encodeURIComponent(op.id)}`),
     }));
-    return [
-      { group: 'Screens', actions: pages },
-      { group: 'API operations', actions: ops },
-    ];
-  }, [info, navigate]);
+    return [{ group: 'Screens', actions: pages }, ...(ops.length ? [{ group: 'API operations', actions: ops }] : [])];
+  }, [info, navigate, operations]);
 
   return (
     <Spotlight
       actions={actions}
+      onSpotlightOpen={loadOperations}
       shortcut={['mod + K', '/']}
       limit={12}
-      nothingFound="Nothing found"
+      nothingFound={operations ? 'Nothing found' : 'Loading the API operations…'}
       highlightQuery
       scrollable
       maxHeight={420}

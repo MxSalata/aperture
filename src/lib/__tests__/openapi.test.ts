@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { exampleFromSchema, findIndexedOperation, index, loadSpec, resultSchema, groupLabel } from '../openapi';
+import { exampleFromSchema, loadSpec, resultSchema, groupLabel } from '../openapi';
+import { findIndexedOperation, index } from '../specIndex';
 
 describe('openapi helpers', () => {
   it('indexes every operation with its privileges', () => {

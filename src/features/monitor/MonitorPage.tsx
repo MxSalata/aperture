@@ -2,7 +2,8 @@ import { Alert, Button, Grid, Group, Paper, SimpleGrid, Stack, Text, Title } fro
 import { useQuery } from '@tanstack/react-query';
 import { IconInfoCircle, IconRefresh } from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { fetchAlerts, fetchMetrics, metric, type AlertRow, type MetricSample } from '@/api/monitor';
+import { fetchAlerts, metric, type AlertRow, type MetricSample } from '@/api/monitor';
+import { useHostMetrics } from './useHostMetrics';
 import { PageHeader } from '@/components/PageHeader';
 import { StatTile } from '@/components/StatTile';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
@@ -22,10 +23,6 @@ const alertColumns: ColumnDef<AlertRow, unknown>[] = [
   { accessorKey: 'process', header: 'Process' },
   { accessorKey: 'message', header: 'Message' },
 ];
-
-export function useHostMetrics(intervalMs = 10_000) {
-  return useQuery({ queryKey: ['monitor', 'metrics'], queryFn: fetchMetrics, refetchInterval: intervalMs, retry: false, staleTime: 5_000 });
-}
 
 export default function MonitorPage() {
   const metrics = useHostMetrics();

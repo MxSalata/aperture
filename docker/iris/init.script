@@ -4,7 +4,10 @@
 // One statement per line: `iris session` reads stdin line by line, so { } blocks cannot span lines.
 zn "%SYS"
 Write "IRIS version: ",$zversion,!
-// Community images ship development accounts with expired passwords
+// Development convenience for this throwaway image: Community images ship their accounts with
+// expired passwords, which would block the first sign-in. Every account is un-expired here.
+// Do not reuse this script against an instance that holds real accounts.
+Write "Aperture image: un-expiring the passwords of all accounts (development image)",!
 Do ##class(Security.Users).UnExpireUserPasswords("*")
 // IPM is preinstalled in the intersystemsdc "-zpm" tags; the official image needs the
 // installer from the community registry (the same step the InterSystems templates use)

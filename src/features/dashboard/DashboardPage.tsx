@@ -17,7 +17,7 @@ import { useSession } from '@/stores/session';
 import { useSeriesColors } from './useSeriesColors';
 import { useReducedMotion } from '@mantine/hooks';
 import { SERIES_DASH } from '@/lib/chartColors';
-import { useHostMetrics } from '@/features/monitor/MonitorPage';
+import { useHostMetrics } from '@/features/monitor/useHostMetrics';
 import { metric } from '@/api/monitor';
 import { describeError } from '@/lib/errors';
 

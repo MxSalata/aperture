@@ -1,7 +1,15 @@
+# Both images copy from the repository root: the nginx image builds the SPA from source,
+# the IRIS image needs module.xml, ipm/, www/ and docker/iris/. Everything else stays out.
 node_modules
 dist
 dist-demo
 coverage
 playwright-report
 test-results
+blob-report
 .git
+.github
+docs
+e2e
+playwright.config.ts
+*.md
