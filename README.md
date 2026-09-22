@@ -133,7 +133,8 @@ Other scripts:
 | ![Databases](docs/screenshots/03-databases.png)   | ![Database detail](docs/screenshots/04-database-detail.png) |
 | ![Job Center](docs/screenshots/05-job-center.png) | ![Processes](docs/screenshots/06-processes.png)             |
 | ![Audit](docs/screenshots/09-audit.png)           | ![Explorer](docs/screenshots/11-explorer.png)               |
-| ![Dark mode](docs/screenshots/13-dark.png)        | ![Mobile](docs/screenshots/15-mobile.png)                   |
+| ![Dark mode](docs/screenshots/13-dark.png)        | ![High contrast](docs/screenshots/19-high-contrast.png)     |
+| ![Mobile](docs/screenshots/15-mobile.png)         | ![Host monitor](docs/screenshots/16-monitor.png)            |
 
 </details>
 
