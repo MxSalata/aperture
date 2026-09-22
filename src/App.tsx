@@ -5,9 +5,13 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router';
 import { router } from './routes';
 import { queryClient } from './query';
-import { theme } from './theme';
+import { themeFor } from './theme';
+import { useApplyAppearance } from './features/shell/useApplyAppearance';
+import { useMemo } from 'react';
 
 export default function App() {
+  const contrast = useApplyAppearance();
+  const theme = useMemo(() => themeFor(contrast), [contrast]);
   return (
     <MantineProvider theme={theme} defaultColorScheme="auto">
       <Notifications position="top-right" limit={5} />

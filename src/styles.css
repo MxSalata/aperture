@@ -23,6 +23,57 @@
   color: var(--aperture-muted-soft);
 }
 
+/* ---- High-contrast axis (data-aperture-contrast, set before first paint by color-scheme.js
+   and kept in sync by useApplyAppearance). Independent of light/dark: four combinations. */
+:root[data-aperture-contrast='high'] {
+  --aperture-border-width: 2px;
+  --mantine-color-default-border: currentColor;
+}
+:root[data-aperture-contrast='high'][data-mantine-color-scheme='light'] {
+  --mantine-color-text: #000;
+  --mantine-color-body: #fff;
+  --mantine-color-dimmed: var(--mantine-color-gray-8);
+  --aperture-muted: var(--mantine-color-gray-8);
+  --aperture-muted-soft: var(--mantine-color-gray-7);
+}
+:root[data-aperture-contrast='high'][data-mantine-color-scheme='dark'] {
+  --mantine-color-text: #fff;
+  --mantine-color-body: #000;
+  --mantine-color-dimmed: var(--mantine-color-gray-4);
+  --aperture-muted: var(--mantine-color-gray-4);
+  --aperture-muted-soft: var(--mantine-color-gray-5);
+}
+:root[data-aperture-contrast='high'] :where(.mantine-Paper-root, .mantine-Table-td, .mantine-Table-th, .mantine-Input-input) {
+  border-width: var(--aperture-border-width);
+}
+:root[data-aperture-contrast='high'] :focus-visible {
+  outline: 3px solid var(--mantine-color-text);
+  outline-offset: 2px;
+}
+
+/* Motion is a preference, not a requirement. Recharts animations are switched off in code. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Windows High Contrast: the meaning-carrying colour bar and badges keep their colour; text stays readable. */
+@media (forced-colors: active) {
+  .mantine-Badge-root,
+  .mantine-ColorSwatch-root {
+    forced-color-adjust: none;
+  }
+  .clickable-row:focus-visible {
+    outline: 2px solid Highlight;
+  }
+}
+
 html,
 body,
 #root {

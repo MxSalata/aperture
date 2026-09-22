@@ -15,6 +15,8 @@ import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
 import { useMetrics, type MetricSample } from '@/stores/metrics';
 import { useSession } from '@/stores/session';
 import { useSeriesColors } from './useSeriesColors';
+import { useReducedMotion } from '@mantine/hooks';
+import { SERIES_DASH } from '@/lib/chartColors';
 import { useHostMetrics } from '@/features/monitor/MonitorPage';
 import { metric } from '@/api/monitor';
 import { describeError } from '@/lib/errors';
@@ -45,6 +47,8 @@ export default function DashboardPage() {
   const push = useMetrics((s) => s.push);
   const [paused, setPaused] = useState(false);
   const colors = useSeriesColors();
+  const reducedMotion = useReducedMotion();
+  const animate = !reducedMotion;
 
   const main = useQuery({
     queryKey: ['dashboard', 'main'],
@@ -134,14 +138,14 @@ export default function DashboardPage() {
           value={formatCompact(last?.globalRefsPerSec)}
           hint="Performance.GlobalRefsPerSecond"
           footer={`${formatCompact(last?.logicalRequests)} logical requests/s`}
-          aside={samples.length > 1 ? <Sparkline w={110} h={44} data={spark('globalRefsPerSec')} color={colors[0]} curveType="monotone" strokeWidth={1.5} fillOpacity={0.12} /> : <IconActivity size={22} />}
+          aside={samples.length > 1 ? <Sparkline w={110} h={44} data={spark('globalRefsPerSec')} color={colors[0]} curveType="monotone" strokeWidth={1.5} fillOpacity={0.12} areaProps={{ isAnimationActive: false }} /> : <IconActivity size={22} />}
         />
         <StatTile
           label="Cache efficiency"
           value={last ? formatPercent(last.cacheEfficiency, 1) : '-'}
           hint="Logical block requests satisfied from the global buffer pool"
           footer={`${formatCompact(last?.diskReads)} reads/s · ${formatCompact(last?.diskWrites)} writes/s`}
-          aside={samples.length > 1 ? <Sparkline w={110} h={44} data={spark('cacheEfficiency')} color={colors[1]} curveType="monotone" strokeWidth={1.5} fillOpacity={0.12} /> : <IconDeviceFloppy size={22} />}
+          aside={samples.length > 1 ? <Sparkline w={110} h={44} data={spark('cacheEfficiency')} color={colors[1]} curveType="monotone" strokeWidth={1.5} fillOpacity={0.12} areaProps={{ isAnimationActive: false }} /> : <IconDeviceFloppy size={22} />}
         />
         <StatTile
           label="Processes"
@@ -199,6 +203,7 @@ export default function DashboardPage() {
                 curveType="monotone"
                 withDots={false}
                 strokeWidth={2}
+                lineProps={{ isAnimationActive: animate }}
                 gridAxis="y"
                 tickLine="none"
                 withLegend={false}
@@ -229,13 +234,14 @@ export default function DashboardPage() {
                 data={chartData}
                 dataKey="time"
                 series={[
-                  { name: 'diskReads', label: 'Reads', color: colors[1] },
-                  { name: 'diskWrites', label: 'Writes', color: colors[2] },
+                  { name: 'diskReads', label: 'Reads', color: colors[1], strokeDasharray: SERIES_DASH[1] },
+                  { name: 'diskWrites', label: 'Writes', color: colors[2], strokeDasharray: SERIES_DASH[2] },
                 ]}
                 curveType="monotone"
                 withDots={false}
                 strokeWidth={2}
                 fillOpacity={0.1}
+                areaProps={{ isAnimationActive: animate }}
                 gridAxis="y"
                 tickLine="none"
                 withLegend

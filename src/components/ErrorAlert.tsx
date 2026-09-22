@@ -14,7 +14,7 @@ export function ErrorAlert({ error, title, onRetry }: Props) {
   const api = isApiError(error) ? error : null;
   const details = api ? [...api.errors, ...api.console].filter((l) => l && l !== api.summary) : [];
   return (
-    <Alert color="red" variant="light" icon={<IconAlertTriangle size={18} />} title={title ?? (api ? `${api.method} ${api.url.replace(/^.*\/api\/admin/, '') || 'request'} → HTTP ${api.status}` : 'Something went wrong')}>
+    <Alert role="alert" color="red" variant="light" icon={<IconAlertTriangle size={18} />} title={title ?? (api ? `${api.method} ${api.url.replace(/^.*\/api\/admin/, '') || 'request'} → HTTP ${api.status}` : 'Something went wrong')}>
       <Stack gap="xs">
         <Text size="sm">{describeError(error)}</Text>
         <Group gap="xs">

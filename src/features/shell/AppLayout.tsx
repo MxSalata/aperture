@@ -20,7 +20,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { spotlight } from '@mantine/spotlight';
-import { IconClipboardList, IconLogout, IconMoon, IconSearch, IconServer, IconSun, IconUserCircle, IconShieldCheck, IconFlask } from '@tabler/icons-react';
+import { IconClipboardList, IconContrast, IconDeviceDesktop, IconLogout, IconMoon, IconSearch, IconServer, IconSun, IconUserCircle, IconShieldCheck, IconFlask } from '@tabler/icons-react';
 import { Suspense, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -35,6 +35,8 @@ import { APP_NAME } from '@/theme';
 import { PageSkeleton } from '@/components/PageSkeleton';
 import { setInstanceTimezone } from '@/lib/format';
 import { useInstanceLabel } from './useInstanceLabel';
+import { useAppearance, type ContrastSetting } from '@/stores/appearance';
+import { useResolvedContrast } from './useApplyAppearance';
 import { JobsDrawer } from '@/features/jobs/JobsDrawer';
 import { JobPoller } from '@/features/jobs/JobPoller';
 
@@ -175,15 +177,48 @@ function UserMenu() {
   );
 }
 
-function ThemeToggle() {
-  const { setColorScheme } = useMantineColorScheme();
+/** Light / Dark / System (a way back to following the OS) and the independent contrast axis. */
+function AppearanceMenu() {
+  const { colorScheme, setColorScheme } = useMantineColorScheme();
   const computed = useComputedColorScheme('light');
+  const contrast = useAppearance((s) => s.contrast);
+  const setContrast = useAppearance((s) => s.setContrast);
+  const resolved = useResolvedContrast();
+  const schemes = [
+    { value: 'light', label: 'Light', icon: <IconSun size={16} /> },
+    { value: 'dark', label: 'Dark', icon: <IconMoon size={16} /> },
+    { value: 'auto', label: 'System', icon: <IconDeviceDesktop size={16} /> },
+  ] as const;
+  const contrasts: { value: ContrastSetting; label: string }[] = [
+    { value: 'auto', label: 'System' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'high', label: 'High' },
+  ];
   return (
-    <Tooltip label={computed === 'dark' ? 'Light mode' : 'Dark mode'}>
-      <ActionIcon variant="subtle" color="gray" size="lg" onClick={() => setColorScheme(computed === 'dark' ? 'light' : 'dark')} aria-label="Toggle color scheme">
-        {computed === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
-      </ActionIcon>
-    </Tooltip>
+    <Menu shadow="md" width={220} position="bottom-end" withinPortal>
+      <Menu.Target>
+        <Tooltip label="Appearance">
+          <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Appearance">
+            {resolved === 'high' ? <IconContrast size={18} /> : computed === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+          </ActionIcon>
+        </Tooltip>
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Label>Theme</Menu.Label>
+        {schemes.map((s) => (
+          <Menu.Item key={s.value} leftSection={s.icon} onClick={() => setColorScheme(s.value)} role="menuitemradio" aria-checked={colorScheme === s.value} rightSection={colorScheme === s.value ? '●' : undefined}>
+            {s.label}
+          </Menu.Item>
+        ))}
+        <Menu.Divider />
+        <Menu.Label>Contrast</Menu.Label>
+        {contrasts.map((c) => (
+          <Menu.Item key={c.value} leftSection={<IconContrast size={16} />} onClick={() => setContrast(c.value)} role="menuitemradio" aria-checked={contrast === c.value} rightSection={contrast === c.value ? '●' : undefined}>
+            {c.label}
+          </Menu.Item>
+        ))}
+      </Menu.Dropdown>
+    </Menu>
   );
 }
 
@@ -246,7 +281,7 @@ export function AppLayout() {
               <IconSearch size={18} />
             </ActionIcon>
             <JobsButton />
-            <ThemeToggle />
+            <AppearanceMenu />
             <UserMenu />
           </Group>
         </Group>
