@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { IconKey, IconRefresh } from '@tabler/icons-react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { PageHeader } from '@/components/PageHeader';
+import { confirmDanger } from '@/components/ConfirmDanger';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
@@ -194,7 +195,17 @@ export default function LicensePage() {
               Validate
             </Button>
             <Button
-              onClick={() => form.validate().hasErrors || activate.mutate(form.values)}
+              onClick={() =>
+                form.validate().hasErrors ||
+                confirmDanger({
+                  title: 'Activate this license key',
+                  message:
+                    'The instance switches to this key now: its capacity and expiry replace the current ones for every user. Validate it first if you have not.',
+                  confirmLabel: 'Activate',
+                  color: 'orange',
+                  onConfirm: () => activate.mutateAsync(form.values),
+                })
+              }
               loading={activate.isPending}
             >
               Activate

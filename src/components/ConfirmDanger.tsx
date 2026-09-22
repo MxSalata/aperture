@@ -45,6 +45,8 @@ function Body({ message, confirmText, confirmLabel, color, onConfirm, id }: Opti
             try {
               await onConfirm();
               modals.close(id);
+            } catch {
+              /* the action reported its own error (useApiMutation toasts it); the dialog stays open to retry */
             } finally {
               setBusy(false);
             }

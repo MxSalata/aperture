@@ -20,10 +20,14 @@ import type { ServiceList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { renderValue } from '@/components/KeyValueList';
+import { notifyError } from '@/lib/notify';
 import { AUTHE_FLAGS, applyFlags, bitsToFlags, secKeys } from './keys';
 import { reviewChanges } from '@/components/ReviewChanges';
 
 type Row = ServiceList[number];
+
+const readService = (name: string) =>
+  result(api().GET('/v2/security/service', { params: { query: { name } } }));
 
 export default function ServicesPage() {
   const list = useQuery({
@@ -101,10 +105,14 @@ export default function ServicesPage() {
             aria-label="Edit"
             onClick={async (e) => {
               stop(e);
+              let d: Awaited<ReturnType<typeof readService>>;
+              try {
+                d = await readService(row.original.Name ?? '');
+              } catch (err) {
+                notifyError(err, 'Cannot open the service');
+                return;
+              }
               setEditing(row.original.Name ?? '');
-              const d = await result(
-                api().GET('/v2/security/service', { params: { query: { name: row.original.Name ?? '' } } }),
-              );
               setBefore(d as Record<string, unknown>);
               form.setValues({
                 Description: d.Description ?? '',

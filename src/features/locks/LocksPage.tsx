@@ -67,12 +67,12 @@ export default function LocksPage() {
       header: '',
       enableSorting: false,
       cell: ({ row }) => (
-        <Tooltip label={row.original.Removable ? 'Remove lock' : 'Not removable'}>
+        <Tooltip label={row.original.Removable && row.original.DeleteID ? 'Remove lock' : 'Not removable'}>
           <ActionIcon
             size="sm"
             variant="subtle"
             color="red"
-            disabled={!row.original.Removable}
+            disabled={!row.original.Removable || !row.original.DeleteID}
             aria-label="Remove lock"
             onClick={(e) => {
               stop(e);
@@ -85,7 +85,7 @@ export default function LocksPage() {
                   </>
                 ),
                 confirmLabel: 'Remove',
-                onConfirm: () => del.mutateAsync(row.original.DeleteID ?? ''),
+                onConfirm: () => del.mutateAsync(row.original.DeleteID!),
               });
             }}
           >

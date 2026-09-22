@@ -23,16 +23,42 @@ import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { BoolBadge } from '@/components/StatusBadge';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { reviewChanges } from '@/components/ReviewChanges';
+import { notifyError } from '@/lib/notify';
 import { secKeys } from './keys';
 import { X509Tab } from './X509Tab';
 
 type Row = SSLConfigurationList[number];
+
+/** VerifyPeer as the spec defines it per configuration type (3 = mutual TLS, servers only). */
+const VERIFY_PEER: Record<string, { value: string; label: string }[]> = {
+  '0': [
+    { value: '0', label: 'None (continue if verification fails)' },
+    { value: '1', label: 'Require server certificate' },
+  ],
+  '1': [
+    { value: '0', label: 'None (no client certificate)' },
+    { value: '1', label: 'Request client certificate' },
+    { value: '3', label: 'Require client certificate' },
+  ],
+};
+
+/** `ALL:!aNULL` ⇄ `["ALL", "!aNULL"]`: the API lists the cipher specifications one per item. */
+const joinCiphers = (list: unknown) => (Array.isArray(list) ? list.join(':') : '');
+const splitCiphers = (text: string) =>
+  text
+    .split(':')
+    .map((c) => c.trim())
+    .filter(Boolean);
 const TLS = [
+  { value: '2', label: 'SSLv3 (insecure)' },
   { value: '4', label: 'TLS 1.0' },
   { value: '8', label: 'TLS 1.1' },
   { value: '16', label: 'TLS 1.2' },
   { value: '32', label: 'TLS 1.3' },
 ];
+
+const readConfig = (name: string) =>
+  result(api().GET('/v2/security/ssl-configuration', { params: { query: { name } } }));
 
 export default function SslPage() {
   const list = useQuery({
@@ -71,7 +97,10 @@ export default function SslPage() {
     TLSMinVersion: Number(v.TLSMinVersion),
     TLSMaxVersion: Number(v.TLSMaxVersion),
     VerifyPeer: Number(v.VerifyPeer),
-    CipherList: [v.CipherList],
+    // Sent only when it changed: re-sending a list the server keeps in its own format could rewrite it.
+    ...(editing && v.CipherList === joinCiphers(before?.CipherList)
+      ? {}
+      : { CipherList: splitCiphers(v.CipherList) }),
   });
   const save = useApiMutation(
     (v: typeof form.values) =>
@@ -110,7 +139,12 @@ export default function SslPage() {
   const columns: ColumnDef<Row, unknown>[] = [
     { accessorKey: 'Name', header: 'Configuration', cell: (c) => <b>{String(c.getValue())}</b> },
     { accessorKey: 'Description', header: 'Description' },
-    { accessorKey: 'Type', header: 'Type' },
+    {
+      accessorKey: 'Type',
+      header: 'Type',
+      cell: (c) =>
+        c.getValue() === 1 ? 'Server' : c.getValue() === 0 ? 'Client' : String(c.getValue() ?? ''),
+    },
     {
       accessorKey: 'Enabled',
       header: 'Enabled',
@@ -143,11 +177,13 @@ export default function SslPage() {
               aria-label="Edit"
               onClick={async (e) => {
                 stop(e);
-                const d = await result(
-                  api().GET('/v2/security/ssl-configuration', {
-                    params: { query: { name: row.original.Name ?? '' } },
-                  }),
-                );
+                let d: Awaited<ReturnType<typeof readConfig>>;
+                try {
+                  d = await readConfig(row.original.Name ?? '');
+                } catch (err) {
+                  notifyError(err, 'Cannot open the configuration');
+                  return;
+                }
                 setBefore(d as Record<string, unknown>);
                 setEditing(row.original.Name ?? '');
                 form.setValues({
@@ -161,7 +197,7 @@ export default function SslPage() {
                   TLSMinVersion: String(d.TLSMinVersion ?? 16),
                   TLSMaxVersion: String(d.TLSMaxVersion ?? 32),
                   VerifyPeer: String(d.VerifyPeer ?? 0),
-                  CipherList: (d.CipherList ?? []).join(':'),
+                  CipherList: joinCiphers(d.CipherList),
                 });
                 open();
               }}
@@ -300,10 +336,8 @@ export default function SslPage() {
               <Select label="Max TLS version" data={TLS} {...form.getInputProps('TLSMaxVersion')} />
               <Select
                 label="Verify peer"
-                data={[
-                  { value: '0', label: 'None' },
-                  { value: '1', label: 'Require' },
-                ]}
+                data={VERIFY_PEER[form.values.Type] ?? VERIFY_PEER['0']}
+                allowDeselect={false}
                 {...form.getInputProps('VerifyPeer')}
               />
             </Group>

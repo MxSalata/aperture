@@ -236,6 +236,9 @@ export function DataTable<T>({
     [pagination, setPageIndex],
   );
 
+  // TanStack Table hands out fresh functions on a stable object, which the React Compiler cannot
+  // memoise; the build does not run the compiler, and this component must never be memoised by it.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: rows,
     columns,

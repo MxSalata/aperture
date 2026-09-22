@@ -100,11 +100,14 @@ export default function DashboardPage() {
     ? host.data.filter((s) => s.name === 'iris_disk_percent_full').reduce((a, s) => Math.max(a, s.value), 0)
     : undefined;
 
+  // One sample per successful poll, stamped with its arrival. Keyed on dataUpdatedAt, not on the
+  // data: two identical answers are still two samples (structural sharing keeps the object).
+  const updatedAt = main.dataUpdatedAt;
   useEffect(() => {
     const d = main.data;
-    if (!d) return;
+    if (!d || !updatedAt) return;
     push({
-      t: Date.now(),
+      t: updatedAt,
       globalRefsPerSec: num(d.Performance?.GlobalRefsPerSecond),
       globalSetKill: num(d.Performance?.GlobalSetKill),
       routineRefs: num(d.Performance?.RoutineRefs),
@@ -116,7 +119,8 @@ export default function DashboardPage() {
       processes: num(d.SystemUsage?.Processes),
       cspSessions: num(d.SystemUsage?.CSPSessions),
     });
-  }, [main.data, push]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updatedAt, push]);
 
   const chartData = useMemo(
     () => samples.map((s: MetricSample) => ({ ...s, time: dayjs(s.t).format('HH:mm:ss') })),
@@ -218,7 +222,7 @@ export default function DashboardPage() {
         />
         <StatTile
           label="License units"
-          value={licenseUse === null ? 'unlimited' : `${licenseUse}%`}
+          value={!d ? '-' : licenseUse === null ? 'unlimited' : `${licenseUse}%`}
           hint="Licensing.LicenseUse (percentage of the license limit)"
           icon={<IconLicense size={20} />}
           color={
@@ -229,9 +233,11 @@ export default function DashboardPage() {
                 : 'indigo'
           }
           footer={
-            licenseLimit
-              ? `limit ${formatNumber(licenseLimit)} · peak ${licenseHigh ?? '-'}%`
-              : 'no license limit'
+            !d
+              ? ' '
+              : licenseLimit
+                ? `limit ${formatNumber(licenseLimit)} · peak ${licenseHigh ?? '-'}%`
+                : 'no license limit'
           }
         />
       </SimpleGrid>
@@ -277,7 +283,8 @@ export default function DashboardPage() {
                 Global references per second
               </Text>
               <Text size="xs" c="dimmed">
-                last {Math.round((samples.length * POLL_MS) / 1000)}s
+                last{' '}
+                {samples.length > 1 ? Math.round((samples[samples.length - 1].t - samples[0].t) / 1000) : 0}s
               </Text>
             </Group>
             {chartData.length > 1 ? (

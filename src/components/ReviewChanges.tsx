@@ -180,6 +180,8 @@ function Body<T extends Record<string, unknown>>({
               }
               await onConfirm();
               modals.close(id);
+            } catch {
+              /* the write reported its own error (useApiMutation toasts it); the review stays open */
             } finally {
               setBusy(false);
             }
