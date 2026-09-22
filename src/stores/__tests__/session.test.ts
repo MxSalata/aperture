@@ -7,6 +7,7 @@ import { resetDb } from '@/mocks/db';
 import { queryClient } from '@/query';
 import { useActivity } from '@/stores/activity';
 import { useHealth } from '@/stores/health';
+import { basicCredentials, decodeJwtPayload } from '@/api/base';
 
 const BASE = 'http://iris.test';
 
@@ -110,5 +111,42 @@ describe('session', () => {
     await expect(result(api().GET('/v2/databases'))).rejects.toMatchObject({ status: 401 });
     expect(useSession.getState().status).toBe('anonymous');
     expect(useSession.getState().endedReason).toMatch(/expired/);
+  });
+
+  it('answers a Basic sign-in with a password beyond Latin-1 instead of crashing in btoa', async () => {
+    server.use(http.post(`${BASE}/api/admin/login`, () => new HttpResponse('Not Found', { status: 404 })));
+    await expect(
+      useSession.getState().login({
+        connectionId: 't',
+        baseUrl: BASE,
+        username: 'mikołaj',
+        password: 'zażółć',
+        auth: 'basic',
+      }),
+    ).rejects.toThrow(/Invalid username or password/);
+  });
+
+  it('does not bring back tokens when a refresh lands after sign-out', async () => {
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+    const pending = useSession.getState().refresh();
+    await useSession.getState().logout({ remote: false });
+    expect(await pending).toBe(false);
+    expect(useSession.getState().accessToken).toBeNull();
+  });
+});
+
+describe('credential encoding', () => {
+  it('keeps Latin-1 credentials byte-identical and sends the rest as UTF-8', () => {
+    expect(basicCredentials('operator', 'café')).toBe(btoa('operator:café'));
+    const utf8 = basicCredentials('u', 'ł');
+    expect(Array.from(atob(utf8), (c) => c.charCodeAt(0))).toEqual([0x75, 0x3a, 0xc5, 0x82]);
+  });
+
+  it('decodes a UTF-8 JWT payload', () => {
+    const bytes = new TextEncoder().encode(JSON.stringify({ sub: 'Mikołaj' }));
+    const part = btoa(String.fromCharCode(...bytes)).replace(/=+$/, '');
+    expect(decodeJwtPayload(`h.${part}.s`)?.sub).toBe('Mikołaj');
   });
 });

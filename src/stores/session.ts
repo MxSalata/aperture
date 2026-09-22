@@ -3,7 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { safeSessionStorage } from './storage';
 import type { Info } from '@/api/types';
 import { ApiError, normalizeErrors } from '@/lib/errors';
-import { apiBase, decodeJwtPayload } from '@/api/base';
+import { apiBase, basicCredentials, decodeJwtPayload } from '@/api/base';
 import { useJobs } from '@/stores/jobs';
 import { useMetrics } from '@/stores/metrics';
 import { useActivity } from '@/stores/activity';
@@ -251,7 +251,7 @@ export const useSession = create<SessionState>()(
                   'JWT login is not available on this server (requires IRIS 2026.2+). Try Basic authentication.',
               });
             }
-            const credentials = btoa(`${args.username}:${args.password}`);
+            const credentials = basicCredentials(args.username, args.password);
             const info = await basicProbe(base, credentials);
             set({
               status: 'authenticated',
@@ -279,6 +279,8 @@ export const useSession = create<SessionState>()(
           });
           await get().loadInfo();
         } catch (e) {
+          // A token issued to a session that cannot start (e.g. /info refuses the account) is revoked.
+          if (get().mode === 'jwt') await get().logout();
           set({ ...anonymous, lastError: e instanceof Error ? e.message : String(e) });
           throw e;
         }
@@ -299,6 +301,8 @@ export const useSession = create<SessionState>()(
             if (!res.ok) return false;
             const tokens = tokensFromLoginBody(await readJson(res));
             if (!tokens) return false;
+            // Signed out (or into another session) while the refresh was in flight: do not bring it back.
+            if (get().refreshToken !== s.refreshToken) return false;
             set({
               accessToken: tokens.accessToken,
               refreshToken: tokens.refreshToken ?? s.refreshToken,
