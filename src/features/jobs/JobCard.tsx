@@ -65,7 +65,7 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
     }
   };
 
-  const console = job.task?.Console ?? [];
+  const consoleLines = job.task?.Console ?? [];
   const hasResult = job.task?.Result && Object.keys(job.task.Result as object).length > 0;
   const prog = job.task?.Result as
     { ProgressCurrent?: number; ProgressTotal?: number; ProgressUnits?: string } | undefined;
@@ -186,9 +186,9 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
         ) : null}
         <Collapse in={open}>
           <Stack gap="xs">
-            {console.length ? (
+            {consoleLines.length ? (
               <Code block style={{ fontSize: 11, maxHeight: 160, overflow: 'auto' }}>
-                {console.join('\n')}
+                {consoleLines.join('\n')}
               </Code>
             ) : (
               <Text size="xs" c="dimmed">
