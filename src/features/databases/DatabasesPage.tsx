@@ -14,6 +14,8 @@ import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import { useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { describeError } from '@/lib/errors';
 import { useNavigate } from 'react-router';
 import { api, run } from '@/api/hooks';
 import { useApiMutation } from '@/api/hooks';
@@ -24,6 +26,7 @@ import { formatMB } from '@/lib/format';
 import {
   dbKeys,
   joinDatabases,
+  suggestDirectory,
   useConfigDatabases,
   useLocalDatabases,
   type DatabaseRow,
@@ -106,7 +109,23 @@ const columns: ColumnDef<DatabaseRow, unknown>[] = [
   },
 ];
 
-function CreateDatabaseModal({ opened, onClose }: { opened: boolean; onClose: () => void }) {
+function CreateDatabaseModal({
+  opened,
+  onClose,
+  rows,
+}: {
+  opened: boolean;
+  onClose: () => void;
+  rows: DatabaseRow[];
+}) {
+  const queryClient = useQueryClient();
+  const userDir = rows.find((r) => r.Name === 'USER')?.Directory;
+  const suggest = (name: string) =>
+    suggestDirectory(
+      rows.map((r) => r.Directory),
+      name,
+      userDir,
+    );
   const form = useForm({
     initialValues: {
       Name: '',
@@ -139,18 +158,26 @@ function CreateDatabaseModal({ opened, onClose }: { opened: boolean; onClose: ()
         }),
       );
       if (v.createConfig) {
-        await run(
-          api().PUT('/v2/database', {
-            params: { query: { name: v.Name } },
-            body: {
-              Directory: v.Directory,
-              MountAtStartup: v.MountAtStartup,
-              MountRequired: false,
-              ClusterMountMode: false,
-            },
-          }),
-          'PUT',
-        );
+        // Two calls, no transaction: if the second fails, say that the file exists and what is missing.
+        try {
+          await run(
+            api().PUT('/v2/database', {
+              params: { query: { name: v.Name } },
+              body: {
+                Directory: v.Directory,
+                MountAtStartup: v.MountAtStartup,
+                MountRequired: false,
+                ClusterMountMode: false,
+              },
+            }),
+            'PUT',
+          );
+        } catch (e) {
+          void queryClient.invalidateQueries({ queryKey: dbKeys.local });
+          throw new Error(
+            `The database file was created in ${v.Directory}, but registering it as ${v.Name.toUpperCase()} failed: ${describeError(e)}. It is listed as "no config entry".`,
+          );
+        }
       }
       return {
         summary: `Database ${v.Name.toUpperCase()} created${v.createConfig ? ' and registered' : ''}`,
@@ -177,12 +204,12 @@ function CreateDatabaseModal({ opened, onClose }: { opened: boolean; onClose: ()
             {...form.getInputProps('Name')}
             onBlur={() => {
               if (!form.values.Directory && form.values.Name)
-                form.setFieldValue('Directory', `/usr/irissys/mgr/${form.values.Name.toLowerCase()}/`);
+                form.setFieldValue('Directory', suggest(form.values.Name) ?? '');
             }}
           />
           <TextInput
             label="Directory"
-            placeholder="/usr/irissys/mgr/myapp/"
+            placeholder={suggest('myapp') ?? '/usr/irissys/mgr/myapp/'}
             description="Absolute path on the IRIS host; created if missing"
             {...form.getInputProps('Directory')}
           />
@@ -281,7 +308,7 @@ export default function DatabasesPage() {
           </Text>
         }
       />
-      <CreateDatabaseModal opened={opened} onClose={close} />
+      <CreateDatabaseModal opened={opened} onClose={close} rows={rows} />
     </>
   );
 }

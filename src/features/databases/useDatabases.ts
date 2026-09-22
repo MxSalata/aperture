@@ -39,14 +39,41 @@ export function useLocalDatabases() {
   });
 }
 
+/**
+ * A directory as a join key: without its trailing separator, and case-folded when it is a
+ * Windows path (`C:\InterSystems\IRIS\mgr\user\` and `c:\intersystems\iris\mgr\USER` are
+ * one database; Windows file names are case-insensitive, Unix ones are not).
+ */
+export function dirKey(dir: string): string {
+  const trimmed = dir.replace(/[\\/]+$/, '');
+  return /^[a-z]:[\\/]|\\/i.test(trimmed) ? trimmed.toLowerCase().replace(/\//g, '\\') : trimmed;
+}
+
+/**
+ * Where a new database called `name` would normally go on this instance: next to the
+ * existing ones (the parent of USER's directory, or of the first database), in the
+ * separator style the instance uses. Undefined when no database directory is known.
+ */
+export function suggestDirectory(
+  dirs: (string | undefined)[],
+  name: string,
+  userDir?: string,
+): string | undefined {
+  const sample = userDir ?? dirs.find(Boolean);
+  if (!sample || !name) return undefined;
+  const sep = sample.includes('\\') ? '\\' : '/';
+  const parent = sample.replace(/[\\/]+$/, '').replace(/[^\\/]*$/, '');
+  return `${parent}${name.toLowerCase()}${sep}`;
+}
+
 export function joinDatabases(
   config: ConfigDatabaseList | undefined,
   local: LocalRow[] | undefined,
 ): DatabaseRow[] {
   const byDir = new Map<string, LocalRow>();
-  for (const l of local ?? []) if (l.Directory) byDir.set(l.Directory.replace(/\/+$/, ''), l);
+  for (const l of local ?? []) if (l.Directory) byDir.set(dirKey(l.Directory), l);
   const rows: DatabaseRow[] = (config ?? []).map((c) => {
-    const l = c.Directory ? byDir.get(c.Directory.replace(/\/+$/, '')) : undefined;
+    const l = c.Directory ? byDir.get(dirKey(c.Directory)) : undefined;
     return {
       ...c,
       local: l,
@@ -59,9 +86,9 @@ export function joinDatabases(
     };
   });
   // Local databases without a Config.Databases entry (e.g. dismounted or orphaned).
-  const seen = new Set(rows.map((r) => r.Directory?.replace(/\/+$/, '')));
+  const seen = new Set(rows.map((r) => (r.Directory ? dirKey(r.Directory) : undefined)));
   for (const l of local ?? []) {
-    const key = l.Directory?.replace(/\/+$/, '');
+    const key = l.Directory ? dirKey(l.Directory) : undefined;
     if (key && !seen.has(key))
       rows.push({
         Name: '',

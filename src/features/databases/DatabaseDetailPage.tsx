@@ -33,6 +33,7 @@ import { confirmDanger } from '@/components/ConfirmDanger';
 import { reviewChanges } from '@/components/ReviewChanges';
 import { formatDateTime, formatMB, formatNumber } from '@/lib/format';
 import { useJobs } from '@/stores/jobs';
+import { describeError } from '@/lib/errors';
 import { dbKeys } from './useDatabases';
 
 type Metrics = Schemas['AsyncTaskResultDatabaseMetrics'];
@@ -59,6 +60,12 @@ function NumberModal({
   loading: boolean;
 }) {
   const form = useForm({ initialValues: { value: initial } });
+  // The dialog is mounted with the page, before the metrics it defaults from have arrived:
+  // take the current value each time it opens.
+  useEffect(() => {
+    if (opened) form.setValues({ value: initial });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opened]);
   return (
     <Modal opened={opened} onClose={onClose} title={title} centered>
       <form onSubmit={form.onSubmit((v) => onSubmit(Number(v.value)))}>
@@ -193,7 +200,16 @@ export default function DatabaseDetailPage() {
   const remove = useApiMutation(
     async (opts: { deleteFiles: boolean }) => {
       if (name) await run(api().DELETE('/v2/database', { params: { query: { name } } }), 'DELETE');
-      if (opts.deleteFiles && dir) await run(api().DELETE('/v2/database-dir', q), 'DELETE');
+      if (opts.deleteFiles && dir) {
+        try {
+          await run(api().DELETE('/v2/database-dir', q), 'DELETE');
+        } catch (e) {
+          if (!name) throw e;
+          throw new Error(
+            `The configuration entry ${name} was removed, but deleting the files in ${dir} failed: ${describeError(e)}. They are listed as "no config entry".`,
+          );
+        }
+      }
       return { summary: `Database ${name || dir} deleted` };
     },
     { invalidate, onSuccess: () => navigate('/databases') },
@@ -220,8 +236,7 @@ export default function DatabaseDetailPage() {
   }, [config.data, configOpen]);
 
   const m = metrics.result;
-  const mounted =
-    m?.Mounted ?? !/dismount|not mounted/i.test(String(config.data ? '' : local.data ? '' : ''));
+  const mounted = m?.Mounted;
   const usedMB = m ? Math.max(0, (m.Size ?? 0) - (m.AvailableSpace ?? 0)) : undefined;
   const usedPct = m && m.Size ? Math.min(100, ((usedMB ?? 0) / m.Size) * 100) : 0;
 
@@ -276,10 +291,11 @@ export default function DatabaseDetailPage() {
               </Menu.Target>
               <Menu.Dropdown>
                 <Menu.Label>Operate (%Admin_Operate)</Menu.Label>
-                <Menu.Item onClick={() => mount.mutate()} disabled={mounted === true && m !== undefined}>
+                <Menu.Item onClick={() => mount.mutate()} disabled={mounted === true}>
                   Mount
                 </Menu.Item>
                 <Menu.Item
+                  disabled={mounted === false}
                   onClick={() =>
                     confirmDanger({
                       title: 'Dismount database',
@@ -520,7 +536,7 @@ export default function DatabaseDetailPage() {
         title="Expand database"
         label="New size (MB)"
         description="Must be larger than the current size."
-        initial={(m?.Size ?? local.data?.MaxSize ?? 0) + 100}
+        initial={(m?.Size ?? 0) + 100}
         min={1}
         loading={startJob.isPending}
         onSubmit={(v) => startJob.mutate({ size: v })}
