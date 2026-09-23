@@ -2,6 +2,12 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **A limited mode for IRIS 2026.1 is scoped, not built** (docs/SCOPE-2026.1.md). 2026.1 serves
+  SysAdmin API v1 only, over Basic. Mapped by v1's own conventions, 74 of the 112 operations
+  Aperture calls have a v1 route: all of security, tasks, processes, the dashboard and the license.
+  None of databases, namespaces, journals or locks do, since v1 has no such API. v1's answer shapes
+  are unrecorded. The note proposes recording a 2026.1 instance first, then a read-only v1 mode.
+
 - **The Explorer sends the OAuth token revocation where IRIS serves it.** The spec documents
   `POST /v2/security/oauth2/revoke`; IRIS 2026.2 has no such route (404 to every method) and serves
   the operation at `/v2/security/oauth2/server/revoke`. Found by comparing the routes `%Api.Admin`
