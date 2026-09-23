@@ -187,6 +187,43 @@ await step('activity log', async () => {
   await shot('22-audit-evidence');
   await page.keyboard.press('Escape');
 });
+await step('who loses what', async () => {
+  await page.goto(url(`/security/users/jdoe`));
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await page.locator('.mantine-Pill-root', { hasText: '%Developer' }).locator('.mantine-Pill-remove').click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByText('Who loses what').waitFor({ timeout: 15000 });
+  await page.waitForTimeout(600);
+  await shot('24-who-loses-what');
+  // Close the review, then the edit form (Escape closes the top modal).
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  await page.keyboard.press('Escape');
+  await page.getByRole('dialog').waitFor({ state: 'detached', timeout: 5000 });
+});
+await step('REST services and their routes', async () => {
+  await page.goto(url(`/rest-services`));
+  // The demo signs in with a JWT, which /api/mgmnt does not take: it asks for the password.
+  await page.getByLabel(/Password for/).fill('SYS');
+  await page.getByRole('button', { name: 'Read REST services' }).click();
+  await page.getByRole('button', { name: 'Routes of /api/admin' }).click();
+  await page.getByRole('dialog').getByText('/api/admin/v2/async-results').first().waitFor({ timeout: 15000 });
+  await page.waitForTimeout(500);
+  await shot('23-rest-services');
+  await page.keyboard.press('Escape');
+});
+await step('read-only tab', async () => {
+  await page.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Make this tab read-only' }).click();
+  await page.goto(url(`/locks`));
+  await page.getByRole('button', { name: 'Remove lock' }).and(page.locator(':enabled')).first().click();
+  await page.getByText('This tab is read-only').waitFor({ timeout: 15000 });
+  await page.waitForTimeout(400);
+  await shot('25-read-only');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Allow changes in this tab' }).click();
+});
 await step('explorer executes GET', async () => {
   await page.goto(
     url(
@@ -235,7 +272,8 @@ await step('operator (limited privileges) login', async () => {
 });
 await step('mobile layout', async () => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(url(`/databases`));
+  // The operator is signed in here, and databases need %Admin_Manage on IRIS 2026.2.
+  await page.goto(url(`/processes`));
   await page.waitForTimeout(1200);
   await shot('15-mobile');
 });
