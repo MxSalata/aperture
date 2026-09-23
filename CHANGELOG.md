@@ -21,8 +21,9 @@
 
 - **The Disk I/O chart draws again.** It showed its axes and nothing else. `@mantine/charts` 8 wraps
   each area in a Fragment, and recharts 2 finds its children with its own `react-is` 18, which does
-  not recognise React 19 elements, so the areas were never seen. recharts now gets `react-is` 19
-  through an npm override (recharts' documented fix for React 19), and an e2e test checks that
+  not recognise React 19 elements, so the areas were never seen. Every `react-is` is now 19 through
+  a global npm override (recharts' documented fix for React 19; an override scoped to recharts also
+  reached the `prop-types` it shares with Mantine, which npm 10 rejects in `npm ci`), and an e2e test checks that
   both dashboard charts draw their series. Recharts stays on 2 (deprecated): recharts 3 under
   `@mantine/charts` 8 draws no areas either; it comes with `@mantine/charts` 9.
 

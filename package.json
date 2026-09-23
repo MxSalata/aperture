@@ -81,8 +81,6 @@
     ]
   },
   "overrides": {
-    "recharts": {
-      "react-is": "^19.2.0"
-    }
+    "react-is": "^19.2.0"
   }
 }
