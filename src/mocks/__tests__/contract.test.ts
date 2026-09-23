@@ -27,6 +27,13 @@ const DOCUMENTED_DIVERGENCE: Record<string, { paths: RegExp; evidence: string }[
       evidence: 'an array on every server (quirk local-database-list-shape)',
     },
   ],
+  '/v2/monitor/dashboard/main': [
+    {
+      paths: /^result\.SystemUsage\.BusyProcesses\[\d+\]\.Process: spec says integer, mock sent string ""/,
+      evidence:
+        'ten rows always, padded with { Process: "", Commands: 0 } on IRIS 2026.2 (docs/verification)',
+    },
+  ],
   '/v2/security/services': [
     {
       paths: /^result\[\d+\]\.Enabled: spec says string, mock sent boolean/,

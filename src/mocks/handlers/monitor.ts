@@ -1,5 +1,5 @@
 import { mockDb } from '../db';
-import { drift, ok, fmtDate } from '../util';
+import { counter, drift, ok, fmtDate } from '../util';
 import { http, HttpResponse } from 'msw';
 import { route, OPERATE } from '../secure';
 
@@ -8,7 +8,8 @@ function uptime(): string {
   const d = Math.floor(ms / 86_400_000);
   const h = Math.floor((ms % 86_400_000) / 3_600_000);
   const m = Math.floor((ms % 3_600_000) / 60_000);
-  return `${d}d ${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m`;
+  // As IRIS writes it: "0d  0h 35m" (hours padded with a space).
+  return `${d}d ${String(h).padStart(2, ' ')}h ${String(m).padStart(2, '0')}m`;
 }
 
 function mainDashboard() {
@@ -18,12 +19,15 @@ function mainDashboard() {
     Performance: {
       GlobalRefsPerSecond: Math.round(refs),
       GlobalRefs: Math.round(1_284_003_112 + (Date.now() - mockDb.startedAt) * 18),
-      GlobalSetKill: Math.round(drift(2_300, 900, 30, 1)),
-      RoutineRefs: Math.round(drift(4_100, 1_200, 50, 2)),
-      LogicalRequests: Math.round(drift(9_800, 3_000, 40, 3)),
-      DiskReads: Math.round(drift(120, 90, 35, 4)),
-      DiskWrites: Math.round(drift(60, 40, 55, 5)),
-      CacheEfficiency: Number((98.2 + drift(0.6, 0.5, 70, 6)).toFixed(2)),
+      // Totals since system startup, like GlobalRefs; only GlobalRefsPerSecond and
+      // CacheEfficiency are "most recently measured".
+      GlobalSetKill: counter(17_000, 2_300, 900, 30, 1, mockDb.startedAt),
+      RoutineRefs: counter(87_000, 4_100, 1_200, 50, 2, mockDb.startedAt),
+      LogicalRequests: counter(108_000, 9_800, 3_000, 40, 3, mockDb.startedAt),
+      DiskReads: counter(2_600, 120, 90, 35, 4, mockDb.startedAt),
+      DiskWrites: counter(400, 60, 40, 55, 5, mockDb.startedAt),
+      // Global references per physical read or write: a ratio, several hundred on a warm cache.
+      CacheEfficiency: Number(drift(650, 120, 70, 6).toFixed(2)),
     },
     ECP: {
       ECPClients: '0',
@@ -46,10 +50,14 @@ function mainDashboard() {
       WriteDaemon: 'Normal',
       Processes: mockDb.processes.length,
       CSPSessions: mockDb.webSessions.length,
-      BusyProcesses: mockDb.processes
-        .filter((p) => p.State === 'RUNW' && p.Username)
-        .slice(0, busy)
-        .map((p) => ({ Pid: p.Pid, Username: p.Username, Routine: p.Routine, State: p.State })),
+      // Always ten rows of { Process, Commands }, padded with { Process: "", Commands: 0 }.
+      BusyProcesses: [
+        ...mockDb.processes
+          .filter((p) => p.State === 'RUNW' && p.Username)
+          .slice(0, busy)
+          .map((p) => ({ Process: p.Pid, Commands: p.Commands })),
+        ...Array.from({ length: 10 }, () => ({ Process: '', Commands: 0 })),
+      ].slice(0, 10),
     },
     Alerts: {
       SeriousAlerts: mockDb.tasks.some((t) => t.Status === 'Error') ? 1 : 0,

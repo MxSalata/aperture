@@ -122,6 +122,25 @@ export function drift(base: number, amplitude: number, periodSec = 60, phase = 0
   return Math.max(0, base + amplitude * (wave + jitter));
 }
 
+/**
+ * A total "since system startup", as IRIS reports GlobalSetKill, DiskReads and the other
+ * Performance counters: it never goes down, and it grows by `rate` ± `amplitude` per second.
+ * It is the integral of a drifting rate, non-decreasing while amplitude ≤ rate.
+ */
+export function counter(
+  start: number,
+  rate: number,
+  amplitude: number,
+  periodSec: number,
+  phase: number,
+  since: number,
+): number {
+  const t = Math.max(0, (Date.now() - since) / 1000);
+  const w = (2 * Math.PI) / periodSec;
+  const a = Math.min(amplitude, rate);
+  return Math.round(start + rate * t + (a / w) * (Math.cos(phase) - Math.cos(w * t + phase)));
+}
+
 export function pick<T>(rnd: () => number, items: readonly T[]): T {
   return items[Math.floor(rnd() * items.length)];
 }

@@ -37,6 +37,7 @@ import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
 import { useMetrics, type MetricSample } from '@/stores/metrics';
 import { useSession } from '@/stores/session';
 import { useSeriesColors } from './useSeriesColors';
+import { busyProcesses, withRates } from './rates';
 import { useReducedMotion } from '@mantine/hooks';
 import { SERIES_DASH } from '@/lib/chartColors';
 import { useHostMetrics } from '@/features/monitor/useHostMetrics';
@@ -122,13 +123,15 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updatedAt, push]);
 
+  // DiskReads, LogicalRequests & co. are totals since startup: the screen shows their rates.
   const chartData = useMemo(
-    () => samples.map((s: MetricSample) => ({ ...s, time: dayjs(s.t).format('HH:mm:ss') })),
+    () => withRates(samples).map((s) => ({ ...s, time: dayjs(s.t).format('HH:mm:ss') })),
     [samples],
   );
-  const last = samples[samples.length - 1];
+  const last = chartData[chartData.length - 1];
   const d = main.data;
   const spark = (key: keyof MetricSample) => samples.slice(-30).map((s) => num(s[key]));
+  const busy = busyProcesses(d?.SystemUsage?.BusyProcesses);
   const licenseLimit = num(d?.Licensing?.LicenseLimit);
   const licenseUse = pct(d?.Licensing?.LicenseUse);
   const licenseHigh = pct(d?.Licensing?.LicenseUseHigh);
@@ -172,7 +175,7 @@ export default function DashboardPage() {
           label="Global refs / s"
           value={formatCompact(last?.globalRefsPerSec)}
           hint="Performance.GlobalRefsPerSecond"
-          footer={`${formatCompact(last?.logicalRequests)} logical requests/s`}
+          footer={`${formatCompact(last?.logicalRequestsPerSec)} logical requests/s`}
           aside={
             samples.length > 1 ? (
               <Sparkline
@@ -192,9 +195,9 @@ export default function DashboardPage() {
         />
         <StatTile
           label="Cache efficiency"
-          value={last ? formatPercent(last.cacheEfficiency, 1) : '-'}
-          hint="Logical block requests satisfied from the global buffer pool"
-          footer={`${formatCompact(last?.diskReads)} reads/s · ${formatCompact(last?.diskWrites)} writes/s`}
+          value={last ? `${formatCompact(last.cacheEfficiency)} : 1` : '-'}
+          hint="Global references per physical block read or write (Performance.CacheEfficiency, a ratio)"
+          footer={`${formatCompact(last?.diskReadsPerSec)} reads/s · ${formatCompact(last?.diskWritesPerSec)} writes/s`}
           aside={
             samples.length > 1 ? (
               <Sparkline
@@ -218,7 +221,7 @@ export default function DashboardPage() {
           hint="SystemUsage.Processes"
           icon={<IconCpu size={20} />}
           color="teal"
-          footer={`${d?.SystemUsage?.BusyProcesses?.length ?? 0} busy · ${formatNumber(d?.SystemUsage?.CSPSessions)} web sessions`}
+          footer={`${busy.length} busy · ${formatNumber(d?.SystemUsage?.CSPSessions)} web sessions`}
         />
         <StatTile
           label="License units"
@@ -327,8 +330,18 @@ export default function DashboardPage() {
                 data={chartData}
                 dataKey="time"
                 series={[
-                  { name: 'diskReads', label: 'Reads', color: colors[1], strokeDasharray: SERIES_DASH[1] },
-                  { name: 'diskWrites', label: 'Writes', color: colors[2], strokeDasharray: SERIES_DASH[2] },
+                  {
+                    name: 'diskReadsPerSec',
+                    label: 'Reads',
+                    color: colors[1],
+                    strokeDasharray: SERIES_DASH[1],
+                  },
+                  {
+                    name: 'diskWritesPerSec',
+                    label: 'Writes',
+                    color: colors[2],
+                    strokeDasharray: SERIES_DASH[2],
+                  },
                 ]}
                 curveType="monotone"
                 withDots={false}
@@ -493,28 +506,25 @@ export default function DashboardPage() {
                 All processes
               </Button>
             </Group>
-            {d?.SystemUsage?.BusyProcesses?.length ? (
+            {busy.length ? (
               <Table verticalSpacing={4} fz="sm">
                 <Table.Tbody>
-                  {(d.SystemUsage.BusyProcesses as Record<string, unknown>[]).slice(0, 8).map((p, i) => (
-                    <Table.Tr key={i}>
+                  {busy.slice(0, 8).map((p) => (
+                    <Table.Tr key={p.pid}>
                       <Table.Td>
                         <Text
                           size="sm"
                           className="mono"
                           component={Link}
-                          to={`/processes/${p.Pid}`}
+                          to={`/processes/${p.pid}`}
                           c="indigo"
                         >
-                          {String(p.Pid ?? '')}
+                          {p.pid}
                         </Text>
                       </Table.Td>
-                      <Table.Td>
-                        <Text size="sm">{String(p.Username ?? '')}</Text>
-                      </Table.Td>
-                      <Table.Td style={{ maxWidth: 160 }}>
-                        <Text size="xs" c="dimmed" truncate>
-                          {String(p.Routine ?? '')}
+                      <Table.Td ta="right">
+                        <Text size="sm" className="tabular">
+                          {formatCompact(p.commands)} commands
                         </Text>
                       </Table.Td>
                     </Table.Tr>
@@ -533,7 +543,7 @@ export default function DashboardPage() {
           <Paper p="md" h="100%">
             <Group justify="space-between" mb="xs">
               <Text fw={600} size="sm">
-                Globals and routines (per second)
+                Globals and routines (totals since startup)
               </Text>
               <Text size="xs" c="dimmed">
                 /v2/monitor/dashboard/globals-and-routines

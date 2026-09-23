@@ -11,6 +11,13 @@ differently; the evidence is in `docs/verification/`.
   read only `EnabledBoolean`. The mock now serves the services of a 2026.2 container with their
   real `AutheEnabled` values and names authentication methods as IRIS does
   ("Operating System", no invented "JWT"); the contract test lists divergences per field.
+- **Dashboard numbers.** Disk reads/writes and logical requests are totals since startup (the spec
+  says so; the mock sent rates): the tiles and the "Disk I/O per second" chart now show rates
+  derived from consecutive samples, with no rate across a restart. Cache efficiency is a ratio
+  (global references per physical I/O, 680 on the test instance), not a percentage. Busy
+  processes are the `{ Process, Commands }` rows IRIS sends, without its ten-row padding: the list
+  showed blank rows and "10 busy" for one. The globals-and-routines panel says its values are
+  totals.
 - **Processes: the Executable column was always empty.** IRIS spells the field `EXEname` (the spec
   says `EXEName`). Elapsed time sorts by duration (`hh:mm:ss`, as IRIS writes it) instead of as text.
 
