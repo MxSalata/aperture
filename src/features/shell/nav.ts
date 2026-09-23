@@ -80,7 +80,9 @@ export const NAV: NavSection[] = [
         label: 'Databases',
         to: '/databases',
         icon: IconDatabase,
-        privileges: ['%Admin_Manage:U', '%Admin_Operate:U'],
+        // The spec says Manage or Operate; IRIS 2026.2 refuses the lists to %Operator (quirk
+        // database-lists-need-manage).
+        privileges: ['%Admin_Manage:U'],
         description: 'Database configuration, sizes, mount, compact, integrity check',
       },
       {

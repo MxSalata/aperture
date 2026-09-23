@@ -270,7 +270,7 @@ export default function DatabasesPage() {
       <PageHeader
         title="Databases"
         description="Config.Databases entries joined with the local database files behind them. Open a database for metrics, mount/dismount, compaction, defragmentation and integrity checks."
-        privileges={['%Admin_Manage:U', '%Admin_Operate:U']}
+        privileges={['%Admin_Manage:U']}
         actions={
           <>
             <Button

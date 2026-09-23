@@ -72,7 +72,8 @@ function metrics(d: DbLocal) {
 
 export const databaseHandlers = [
   // ---- Config.Databases ---------------------------------------------------
-  route('get', '/v2/databases', MANAGE_OR_OPERATE, ({ request }) =>
+  // IRIS 2026.2 answers 403 to %Operator (Operate without Manage) although the spec allows it.
+  route('get', '/v2/databases', MANAGE, ({ request }) =>
     ok(filterRows(mockDb.configDbs as unknown as Record<string, unknown>[], request)),
   ),
 
@@ -118,7 +119,7 @@ export const databaseHandlers = [
   }),
 
   // ---- Local databases (SYS.Database) ------------------------------------
-  route('get', '/v2/database-dirs', MANAGE_OR_OPERATE, ({ request }) =>
+  route('get', '/v2/database-dirs', MANAGE, ({ request }) =>
     ok(filterRows(mockDb.localDbs.map(listShape) as unknown as Record<string, unknown>[], request)),
   ),
 

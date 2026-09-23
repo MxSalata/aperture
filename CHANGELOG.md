@@ -20,6 +20,9 @@ differently; the evidence is in `docs/verification/`.
   totals.
 - **Journal records: "first 200" showed 100.** IRIS returns half the `maxRows` it is given; the
   drawer asks for twice its page, shows one page and says when the file holds more.
+- **Operators were offered Databases and met a 403.** The spec allows `%Admin_Operate` for the
+  database lists; IRIS refuses them to `%Operator`. The navigation, the page badge and the mock
+  follow the server.
 - **Processes: the Executable column was always empty.** IRIS spells the field `EXEname` (the spec
   says `EXEName`). Elapsed time sorts by duration (`hh:mm:ss`, as IRIS writes it) instead of as text.
 

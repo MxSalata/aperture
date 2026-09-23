@@ -56,6 +56,13 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
     source: 'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification)',
   },
   {
+    id: 'database-lists-need-manage',
+    appliesTo: (op) =>
+      op.method === 'GET' && (op.path === '/v2/databases' || op.path === '/v2/database-dirs'),
+    note: 'The spec allows %Admin_Manage:U or %Admin_Operate:U; IRIS 2026.2 answers 403 (with an empty error list) to an account holding %Operator, which has %Admin_Operate:U and %DB_IRISSYS:RW. One directory (GET /v2/database-dir) is readable with Operate.',
+    source: 'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification)',
+  },
+  {
     id: 'info-without-envelope',
     appliesTo: (op) => op.path === '/info',
     note: 'Returned without the standard {status, console, result} envelope.',
