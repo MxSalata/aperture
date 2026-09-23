@@ -2,6 +2,12 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **A finished task refetches what it changed, not every screen.** Any task ending (a metrics
+  lookup, an integrity check) invalidated every query. A job now records the operation that queued
+  it; reads refetch nothing, database maintenance refetches databases and the dashboard, namespace
+  and audit operations their screens, and an unknown operation (the Explorer can queue any) still
+  refetches everything. Tasks followed from the server list are recognised by their name.
+
 - **No change can lock everyone out of security.** Removing roles from a user, disabling or
   deleting a user, deleting a role or editing its resources or granted roles is judged first: if no
   enabled account would still hold `%All` or `%Admin_Secure:U` (directly or through granted roles,

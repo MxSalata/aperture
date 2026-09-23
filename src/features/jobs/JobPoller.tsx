@@ -5,6 +5,7 @@ import { readAsyncResult } from '@/api/hooks';
 import { isTerminal, selectActiveJobs, useJobs } from '@/stores/jobs';
 import { notifications } from '@mantine/notifications';
 import { isApiError } from '@/lib/errors';
+import { affectedBy } from './jobEffects';
 
 /** Query families that must not be refetched just because a job finished. */
 const UNTOUCHED_BY_JOBS = new Set(['async-result', 'session']);
@@ -55,11 +56,15 @@ export function JobPoller() {
             message: task.FailureReason || job.name,
             color: state === 'Finished' ? 'teal' : state === 'Failed' ? 'red' : 'gray',
           });
-          // Data may have changed on the server (compact, truncate, purge…); the session
-          // validation and the other job polls are not data and stay untouched.
-          void queryClient.invalidateQueries({
-            predicate: (query) => !UNTOUCHED_BY_JOBS.has(String(query.queryKey[0])),
-          });
+          // Refetch what this operation may have changed (a compact: databases and the
+          // dashboard; a metrics lookup: nothing). An unknown operation refetches every query
+          // but the session validation and the job polls, which are not data.
+          const affected = affectedBy(job.path);
+          if (affected === 'all')
+            void queryClient.invalidateQueries({
+              predicate: (query) => !UNTOUCHED_BY_JOBS.has(String(query.queryKey[0])),
+            });
+          else for (const queryKey of affected) void queryClient.invalidateQueries({ queryKey });
         }
       } else if (q.isError) {
         const forbidden = isApiError(q.error) && q.error.isForbidden;

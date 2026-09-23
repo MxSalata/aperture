@@ -22,6 +22,8 @@ export interface Job {
   notified?: boolean;
   /** Free-form context, e.g. the database directory the job targets. */
   subject?: string;
+  /** The operation that queued it (`/v2/database-dir/compact`): decides what to refetch when it ends. */
+  path?: string;
 }
 
 export const TERMINAL_STATES: ReadonlySet<string> = new Set(['Finished', 'Failed', 'Canceled', 'Missing']);
@@ -73,6 +75,8 @@ export const useJobs = create<JobsState>()(
           const job: Job = {
             id,
             name,
+            // The server names a task after its operation ("POST /v2/database-dir/compact").
+            path: /^[A-Z]+ (\/\S+)/.exec(name)?.[1],
             state: 'Unknown',
             createdAt: now,
             updatedAt: now,

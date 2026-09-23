@@ -95,6 +95,7 @@ async function finalize(request: Request, response: Response, entry: Inflight | 
         id: jobId,
         name: entry?.jobName ?? defaultJobName(request),
         subject: entry?.jobSubject ?? undefined,
+        path: relativePath(request).path,
       });
     }
   }
