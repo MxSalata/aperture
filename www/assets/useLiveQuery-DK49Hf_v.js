@@ -1,0 +1,1 @@
+import{r as i,j as l,ag as f}from"./mantine-DmiXEbMG.js";import{u as x}from"./query-CkSBfyR4.js";function p(r,{defaultLive:o=!1,intervalMs:s=5e3,label:a}={}){const[e,t]=i.useState(o),c=x({...r,refetchInterval:e?s:!1}),u=l.jsx(f,{size:"xs",label:a??`Live (${s/1e3}s)`,checked:e,onChange:n=>t(n.currentTarget.checked)});return{query:c,live:e,setLive:t,control:u}}export{p as u};
