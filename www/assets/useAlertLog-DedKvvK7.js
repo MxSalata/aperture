@@ -1,1 +1,0 @@
-import{a as s,u as a}from"./query-CkSBfyR4.js";import{f as i}from"./useHostMetrics-DqmQD65z.js";const t=["monitor","alerts"];function o(e){return[...e].sort((r,n)=>n.time.localeCompare(r.time))}function y(){const e=s();return a({queryKey:t,queryFn:async()=>o([...await i(),...e.getQueryData(t)??[]]),enabled:!1,staleTime:1/0,gcTime:1/0,retry:!1})}export{y as u};
