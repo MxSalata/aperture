@@ -18,6 +18,8 @@ differently; the evidence is in `docs/verification/`.
   processes are the `{ Process, Commands }` rows IRIS sends, without its ten-row padding: the list
   showed blank rows and "10 busy" for one. The globals-and-routines panel says its values are
   totals.
+- **Journal records: "first 200" showed 100.** IRIS returns half the `maxRows` it is given; the
+  drawer asks for twice its page, shows one page and says when the file holds more.
 - **Processes: the Executable column was always empty.** IRIS spells the field `EXEname` (the spec
   says `EXEName`). Elapsed time sorts by duration (`hh:mm:ss`, as IRIS writes it) instead of as text.
 

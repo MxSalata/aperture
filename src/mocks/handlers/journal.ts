@@ -94,12 +94,13 @@ export const journalHandlers = [
   route('post', '/v2/journal/file/records', OPERATE, ({ request, account }) => {
     const f = findFile(request);
     if (!f) return notFound('Journal file');
-    const max = Number(new URL(request.url).searchParams.get('maxRows') ?? 200) || 200;
+    // IRIS 2026.2 returns half the maxRows it is given (default 1000 → 500); the file here holds 600.
+    const max = Number(new URL(request.url).searchParams.get('maxRows') ?? 1000) || 1000;
     const id = startAsyncTask({
       name: `POST /v2/journal/file/records ${f.Name}`,
       owner: account.username,
       console: [`Reading ${f.Name}`],
-      result: journalRecords(f.Name, Math.min(max, 120)),
+      result: journalRecords(f.Name, Math.min(Math.floor(max / 2), 600)),
       tickMs: 400,
     });
     return accepted(id, apiBasePath(request));

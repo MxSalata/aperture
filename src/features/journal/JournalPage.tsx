@@ -33,7 +33,12 @@ import { formatBytes, formatDateTime } from '@/lib/format';
 import { useJobs } from '@/stores/jobs';
 
 type FileRow = JournalFileList[number];
-/** Journal records read per request. */
+/**
+ * Journal records shown per read. IRIS 2026.2 returns half the maxRows it is given (200 → 100,
+ * the default 1000 → 500; quirk journal-records-half-maxrows), so the request asks for twice as
+ * many and the screen keeps one page. A full page means the file holds more, which the table's
+ * limit badge says; if IRIS stops halving, the page is still one page.
+ */
 const RECORDS_PAGE = 200;
 const keys = {
   files: ['journal', 'files'] as const,
@@ -86,7 +91,7 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
     reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file]);
-  const rows = records.result ?? [];
+  const rows = (records.result ?? []).slice(0, RECORDS_PAGE);
   const recColumns: ColumnDef<Record<string, unknown>, unknown>[] = [
     'Address',
     'TimeStamp',
@@ -135,7 +140,7 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
               records.start(() =>
                 call(
                   api().POST('/v2/journal/file/records', {
-                    params: { query: { file, maxRows: RECORDS_PAGE } },
+                    params: { query: { file, maxRows: RECORDS_PAGE * 2 } },
                     headers: SILENT,
                   }),
                   'POST',

@@ -44,6 +44,18 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
     source: 'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification)',
   },
   {
+    id: 'journal-records-half-maxrows',
+    appliesTo: (op) => op.path === '/v2/journal/file/records',
+    note: 'The task result holds half the maxRows asked for: maxRows=200 gives the first 100 records, the default 1000 gives 500, 5000 gives 2500. The records are contiguous; the count is halved. Aperture asks for twice its page.',
+    source: 'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification)',
+  },
+  {
+    id: 'task-upcoming-default-100',
+    appliesTo: (op) => op.path === '/v2/task/upcoming',
+    note: 'Without maxRows the list stops at 100 runs; the spec documents a default of 1000 (443 runs came back with maxRows=1000 on the test instance).',
+    source: 'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification)',
+  },
+  {
     id: 'info-without-envelope',
     appliesTo: (op) => op.path === '/info',
     note: 'Returned without the standard {status, console, result} envelope.',

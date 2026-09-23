@@ -185,7 +185,8 @@ export const taskHandlers = [
     return ok(filterRows(rows, request));
   }),
 
-  route('get', '/v2/task/upcoming', OPERATE, () =>
+  // IRIS 2026.2 answers at most 100 runs unless maxRows asks for more (the spec says 1000).
+  route('get', '/v2/task/upcoming', OPERATE, ({ request }) =>
     ok(
       mockDb.tasks
         .filter((t) => t.NextScheduled)
@@ -195,7 +196,8 @@ export const taskHandlers = [
           Namespace: t.Namespace,
           Datetime: t.NextScheduled,
           Suspended: t.Suspended,
-        })),
+        }))
+        .slice(0, Number(new URL(request.url).searchParams.get('maxRows') ?? 100) || 100),
     ),
   ),
 
