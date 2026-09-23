@@ -41,3 +41,37 @@ describe('non-JSON error bodies', () => {
     expect(textFromBody('plain text')).toBe('plain text');
   });
 });
+
+describe('errors as IRIS for Health 2026.2 answers them', () => {
+  it('reads a 404 without repeating the code the text already names', () => {
+    // GET /v2/namespace?name=APERTURE_DOES_NOT_EXIST, verbatim.
+    const body = {
+      status: {
+        errors: [
+          {
+            error: 'ERROR #420: Namespace APERTURE_DOES_NOT_EXIST does not exist',
+            code: 420,
+            domain: '%ObjectErrors',
+            id: 'CPFNameDoesNotExist',
+            params: ['Namespace', 'APERTURE_DOES_NOT_EXIST'],
+          },
+        ],
+        summary: 'ERROR #420: Namespace APERTURE_DOES_NOT_EXIST does not exist',
+      },
+      console: [],
+      result: {},
+    };
+    const n = normalizeErrors(body);
+    expect(n.errors).toEqual(['ERROR #420: Namespace APERTURE_DOES_NOT_EXIST does not exist']);
+    expect(n.summary).toBe('ERROR #420: Namespace APERTURE_DOES_NOT_EXIST does not exist');
+  });
+
+  it('falls back to the status text for a 403, which carries none', () => {
+    // GET /v2/databases as %Operator, verbatim.
+    const n = normalizeErrors({ status: { errors: [], summary: '' }, console: [], result: {} });
+    expect(n.errors).toEqual([]);
+    expect(new ApiError({ status: 403, url: '', errors: n.errors, summary: n.summary }).summary).toMatch(
+      /Forbidden/,
+    );
+  });
+});

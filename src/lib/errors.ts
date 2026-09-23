@@ -84,7 +84,8 @@ function errorText(e: unknown): string {
     const msg = [o.error, o.message, o.summary, o.text].find((v) => typeof v === 'string' && v) as
       string | undefined;
     const code = o.code;
-    if (msg) return code !== undefined && code !== '' ? `${msg} (${code})` : msg;
+    // IRIS texts carry their number ("ERROR #420: …", "FEHLER #420: …"): do not repeat it.
+    if (msg) return code !== undefined && code !== '' && !msg.includes(`#${code}`) ? `${msg} (${code})` : msg;
     if (code !== undefined) return `Error code ${code}`;
     return JSON.stringify(e);
   }

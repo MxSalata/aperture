@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { api, call, envelope, result, jobIdFromResponse } from './client';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { isTerminal } from '@/stores/jobs';
-import { isApiError } from '@/lib/errors';
+import { ApiError, isApiError } from '@/lib/errors';
 import type { AsyncTask } from './types';
 import { endedTask, keepEndedTask } from './endedTasks';
 
@@ -50,7 +50,21 @@ export function useApiMutation<TVars, TData extends { summary?: string } = { sum
 export async function readAsyncResult(id: string, headers?: Record<string, string>): Promise<AsyncTask> {
   const kept = endedTask(id);
   if (kept) return kept;
-  const task = await result(api().GET('/v2/async-result', { params: { query: { id } }, headers }));
+  let task: AsyncTask;
+  try {
+    task = await result(api().GET('/v2/async-result', { params: { query: { id } }, headers }));
+  } catch (e) {
+    // IRIS answers 403 with no text; say which privilege reading a task needs.
+    if (isApiError(e) && e.isForbidden && !e.errors.length)
+      throw new ApiError({
+        status: 403,
+        url: e.url,
+        method: 'GET',
+        summary:
+          'Reading task results (GET /v2/async-result) needs %Admin_Operate, which this account does not hold. The task itself may still run.',
+      });
+    throw e;
+  }
   if (task && ['Finished', 'Failed', 'Canceled'].includes(task.State ?? '')) keepEndedTask(id, task);
   return task;
 }

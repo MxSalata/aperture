@@ -51,7 +51,8 @@ describe('typed client', () => {
     const jobs = Object.values(useJobs.getState().jobs);
     expect(jobs).toHaveLength(1);
     expect(jobs[0].name).toBe('Compact USER');
-    expect(response.headers.get('Location')).toContain(`/v2/async-result?id=${jobs[0].id}`);
+    // IRIS names the v1 path in the header of a v2 call; only the id is used.
+    expect(response.headers.get('Location')).toContain(`/v1/async-result?id=${jobs[0].id}`);
   });
 
   it('keeps silent jobs out of the Job Center', async () => {

@@ -10,16 +10,13 @@ function loginResponse(username: string, sid: string) {
   const access = issueToken(username, 'access', ACCESS_TTL, sid);
   const refresh = issueToken(username, 'refresh', REFRESH_TTL, sid);
   const payload = parseToken(access)!;
+  // Not enveloped on IRIS 2026.2 (unlike every /v2 answer and /info).
   return HttpResponse.json({
-    status: { Errors: [], summary: '' },
-    console: [],
-    result: {
-      access_token: access,
-      refresh_token: refresh,
-      sub: username,
-      iat: payload.iat,
-      exp: payload.exp,
-    },
+    access_token: access,
+    refresh_token: refresh,
+    sub: username,
+    iat: payload.iat,
+    exp: payload.exp,
   });
 }
 
@@ -36,19 +33,8 @@ export const generalHandlers = [
       }
     }
     if (!account) return unauthorized();
-    if (body.role && !['%All', '%Manager', 'BreakGlass'].includes(body.role)) {
-      return HttpResponse.json(
-        {
-          status: {
-            Errors: [`Role ${body.role} is not a valid escalation role for this user`],
-            summary: 'Invalid escalation role',
-          },
-          console: [],
-          result: {},
-        },
-        { status: 401 },
-      );
-    }
+    // An escalation role the account may not use is refused like a wrong password: 401, no body.
+    if (body.role && !['%All', '%Manager', 'BreakGlass'].includes(body.role)) return unauthorized();
     const sid = Math.random().toString(36).slice(2, 12);
     return loginResponse(account.username, sid);
   }),
@@ -67,7 +53,8 @@ export const generalHandlers = [
       const p = parseToken(header.slice(7));
       if (p) revokeSession(p.sid);
     }
-    return HttpResponse.json({ status: { Errors: [], summary: 'Logged out' }, console: [], result: {} });
+    // IRIS answers 200 with an empty body.
+    return new HttpResponse(null, { status: 200 });
   }),
 
   http.post('*/api/admin/revoke', async ({ request }) => {
@@ -76,18 +63,21 @@ export const generalHandlers = [
       const p = parseToken(header.slice(7));
       if (p) revokeSession(p.sid);
     }
-    return HttpResponse.json({ status: { Errors: [], summary: 'Token revoked' }, console: [], result: {} });
+    return HttpResponse.json({ status: { errors: [], summary: 'Token revoked' }, console: [], result: {} });
   }),
 
   http.get('*/api/admin/info', ({ request }) => {
     const account = authenticate(request);
     if (!account) return unauthorized();
     if (!account.privileges.length) return new HttpResponse(null, { status: 403 });
-    return HttpResponse.json(
-      infoFor(
+    // Enveloped on IRIS 2026.2, although the spec documents /info without the envelope.
+    return HttpResponse.json({
+      status: { errors: [], summary: '' },
+      console: [],
+      result: infoFor(
         account,
         mockDb.namespaces.map((n) => n.Name),
       ),
-    );
+    });
   }),
 ];

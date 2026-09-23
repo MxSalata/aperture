@@ -70,10 +70,11 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
       'Aperture live verification, IRIS for Health 2026.2 Build 221U (reproduced: 1 alert per re-read, 0 for a single read)',
   },
   {
-    id: 'info-without-envelope',
+    id: 'info-envelope',
     appliesTo: (op) => op.path === '/info',
-    note: 'Returned without the standard {status, console, result} envelope.',
-    source: 'spec/mainspec_v2.json',
+    note: 'The spec documents Info without the {status, console, result} envelope; IRIS 2026.2 wraps it like every /v2 answer. /login and /refresh are not wrapped, as the spec says. Aperture accepts both forms.',
+    source:
+      'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification, j-sign-in.json)',
   },
   {
     id: 'integrity-check-body',

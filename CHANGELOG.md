@@ -18,6 +18,12 @@ differently; the evidence is in `docs/verification/`.
   processes are the `{ Process, Commands }` rows IRIS sends, without its ten-row padding: the list
   showed blank rows and "10 busy" for one. The globals-and-routines panel says its values are
   totals.
+- **The mock answers as IRIS does**: `/info` enveloped, `/login` and `/refresh` not; errors in
+  `status.errors` as `{ error, code, domain, id, params }`; a 403 with no text; a 401 with no body
+  and a Bearer challenge; a 202 with the task id only in a `Location` that names `/v1`; logout
+  with an empty body. The Explorer's error block read only the documented `status.Errors` and
+  stayed empty against IRIS; codes already in the text are no longer repeated; a 403 on a task
+  read says it needs `%Admin_Operate`.
 - **Re-reading a finished task raised alerts on the instance.** IRIS logs a severity-2 alert for
   every read of an ended async task after the first, which turns the instance's system state to
   Warning. Aperture re-read them whenever a finished lookup was refetched (a remount, or any job

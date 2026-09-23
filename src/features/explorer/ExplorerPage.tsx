@@ -25,7 +25,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { api } from '@/api/client';
-import { ApiError } from '@/lib/errors';
+import { ApiError, normalizeErrors } from '@/lib/errors';
 import { PageHeader } from '@/components/PageHeader';
 import { PrivilegeBadge } from '@/components/PrivilegeBadge';
 import { JsonViewer } from '@/components/JsonViewer';
@@ -235,11 +235,13 @@ function BodyEditor({
 
 function ResultView({ res }: { res: ExecResult }) {
   const body = res.body as {
-    status?: { summary?: string; Errors?: string[] };
+    status?: { summary?: string };
     console?: string[];
     result?: unknown;
   } | null;
   const result = body?.result;
+  // IRIS answers status.errors (objects), the spec documents status.Errors (strings): read both.
+  const errors = res.ok ? [] : normalizeErrors(body).errors;
   const isTable =
     Array.isArray(result) && result.length > 0 && typeof result[0] === 'object' && result[0] !== null;
   const columns: ColumnDef<Record<string, unknown>, unknown>[] = isTable
@@ -274,9 +276,9 @@ function ResultView({ res }: { res: ExecResult }) {
           </Badge>
         ) : null}
       </Group>
-      {body?.status?.Errors?.length ? (
+      {errors.length ? (
         <Code block color="red">
-          {body.status.Errors.join('\n')}
+          {errors.join('\n')}
         </Code>
       ) : null}
       {body?.console?.length ? <Code block>{body.console.join('\n')}</Code> : null}

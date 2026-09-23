@@ -17,10 +17,13 @@ export function autheMethodNames(bits: number): string[] {
   return names.filter(([bit]) => (bits & bit) === bit).map(([, name]) => name);
 }
 
-/** Standard SysAdmin API envelope. */
+/**
+ * The SysAdmin API envelope as IRIS 2026.2 writes it: `status.errors` in lower case (the spec
+ * documents `status.Errors`).
+ */
 export function ok<T>(result: T, extra?: { console?: string[]; summary?: string; status?: number }) {
   return HttpResponse.json(
-    { status: { Errors: [], summary: extra?.summary ?? '' }, console: extra?.console ?? [], result },
+    { status: { errors: [], summary: extra?.summary ?? '' }, console: extra?.console ?? [], result },
     { status: extra?.status ?? 200 },
   );
 }
@@ -29,8 +32,27 @@ export function created<T>(result: T, console: string[] = []) {
   return ok(result, { status: 201, console });
 }
 
+/**
+ * An error as IRIS writes it: `status.errors` holds `{ error, code, domain, id, params }` objects,
+ * the text starts with its number ("ERROR #420: Namespace X does not exist") and `summary`
+ * repeats the first text. The words follow the request's Accept-Language; code and id do not.
+ */
 export function fail(status: number, summary: string, errors: string[] = [summary]) {
-  return HttpResponse.json({ status: { Errors: errors, summary }, console: [], result: {} }, { status });
+  const objects = errors.map((text) => {
+    const numbered = /^ERROR #(\d+): /.exec(text);
+    const code = numbered ? Number(numbered[1]) : 5001;
+    return {
+      error: numbered ? text : `ERROR #${code}: ${text}`,
+      code,
+      domain: '%ObjectErrors',
+      id: numbered ? 'Error' : 'GeneralError',
+      params: [text],
+    };
+  });
+  return HttpResponse.json(
+    { status: { errors: objects, summary: objects[0]?.error ?? '' }, console: [], result: {} },
+    { status },
+  );
 }
 
 export function notFound(what: string) {
@@ -41,18 +63,30 @@ export function badRequest(msg: string) {
   return fail(400, msg);
 }
 
-export function forbidden(resource: string) {
-  return fail(403, `User does not hold the required privilege ${resource}`);
+/**
+ * A privilege refusal as IRIS 2026.2 answers it: 403 with no error and no summary, whatever the
+ * missing resource (`_resource` documents it for the reader of the mock).
+ */
+export function forbidden(_resource: string) {
+  return HttpResponse.json({ status: { errors: [], summary: '' }, console: [], result: {} }, { status: 403 });
 }
 
+/** 401 as IRIS answers it: no body, and a Bearer challenge (never Basic, so no browser dialog). */
 export function unauthorized() {
-  return new HttpResponse(null, { status: 401 });
+  return new HttpResponse(null, {
+    status: 401,
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'WWW-Authenticate': 'Bearer' },
+  });
 }
 
+/**
+ * 202 as IRIS 2026.2 answers it: an empty result (no GUID in the body) and the task id only in
+ * the Location header, which names the v1 path even for a v2 call.
+ */
 export function accepted(taskId: string, basePath: string) {
   return HttpResponse.json(
-    { status: { Errors: [], summary: 'Task queued' }, console: [], result: { GUID: taskId } },
-    { status: 202, headers: { Location: `${basePath}/v2/async-result?id=${taskId}` } },
+    { status: { errors: [], summary: '' }, console: [], result: {} },
+    { status: 202, headers: { Location: `${basePath}/v1/async-result?id=${taskId}` } },
   );
 }
 
