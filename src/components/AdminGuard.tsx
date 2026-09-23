@@ -1,15 +1,75 @@
-import { Alert, Text, TextInput } from '@mantine/core';
+import { Alert, Code, Stack, Text, TextInput } from '@mantine/core';
 import { IconShieldExclamation } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { queryClient } from '@/query';
 import { describeError } from '@/lib/errors';
 import { judge, loadAdminModel, type AdminChange } from '@/features/security/adminGuard';
+import { loadImpact, MAX_USERS, type ImpactReport } from '@/features/security/impact';
 
 /** What a guarded dialog knows about the security administrators after the change. */
 export type GuardOutcome =
-  | { status: 'ok'; after: string[] }
+  | { status: 'ok'; after: string[]; impact?: ImpactOutcome }
   | { status: 'locks-out'; before: string[] }
   | { status: 'unknown'; error: string };
+
+/** The privileges each affected account loses or gains; null for a change with no preview. */
+export type ImpactOutcome = { report: ImpactReport | null } | { error: string };
+
+const SHOWN = 10;
+
+function list(items: string[]) {
+  return items.map((p, i) => (
+    <span key={p}>
+      {i ? ', ' : ''}
+      <Code>{p}</Code>
+    </span>
+  ));
+}
+
+/** "alice loses %DB_USER:W; bob gains …": the accounts whose privileges the change moves. */
+export function ImpactNotice({ impact }: { impact: ImpactOutcome | undefined }) {
+  if (!impact) return null;
+  if ('error' in impact)
+    return (
+      <Text size="xs" c="dimmed">
+        Could not work out whose privileges change: {impact.error}
+      </Text>
+    );
+  const report = impact.report;
+  if (!report) return null;
+  const partial =
+    report.more > 0
+      ? ` Only the first ${MAX_USERS} of ${report.checked + report.more} accounts holding it were checked.`
+      : '';
+  if (!report.changes.length)
+    return (
+      <Text size="xs" c="dimmed">
+        No account's privileges change ({report.checked} checked).{partial}
+      </Text>
+    );
+  return (
+    <Alert variant="light" color="blue" title="Who loses what" p="xs">
+      <Stack gap={4}>
+        {report.changes.slice(0, SHOWN).map((c) => (
+          <Text key={c.user} size="xs">
+            <b>{c.user}</b>
+            {c.lost.length ? <> loses {list(c.lost)}</> : null}
+            {c.lost.length && c.gained.length ? ';' : null}
+            {c.gained.length ? <> gains {list(c.gained)}</> : null}
+          </Text>
+        ))}
+        {report.changes.length > SHOWN ? (
+          <Text size="xs" c="dimmed">
+            and {report.changes.length - SHOWN} more accounts.
+          </Text>
+        ) : null}
+        <Text size="xs" c="dimmed">
+          Counting every role each account holds, the roles those grant, and public permissions.{partial}
+        </Text>
+      </Stack>
+    </Alert>
+  );
+}
 
 /** Read the model (fresh: this runs right before a write) and judge the change. */
 export async function checkAdminChange(change: AdminChange): Promise<GuardOutcome> {
@@ -20,7 +80,13 @@ export async function checkAdminChange(change: AdminChange): Promise<GuardOutcom
       staleTime: 5_000,
     });
     const v = judge(model, change);
-    return v.locksOut ? { status: 'locks-out', before: v.before } : { status: 'ok', after: v.after };
+    if (v.locksOut) return { status: 'locks-out', before: v.before };
+    // Who loses what is information, not a gate: when it cannot be read, the change may still go.
+    const impact: ImpactOutcome = await loadImpact(model, change).then(
+      (report) => ({ report }),
+      (e: unknown) => ({ error: describeError(e) }),
+    );
+    return { status: 'ok', after: v.after, impact };
   } catch (e) {
     return { status: 'unknown', error: describeError(e) };
   }
@@ -83,10 +149,13 @@ export function useAdminGuard(guard: (() => Promise<GuardOutcome>) | undefined, 
       />
     </Alert>
   ) : (
-    <Text size="xs" c="dimmed">
-      Security stays administered by {outcome.after.slice(0, 5).join(', ')}
-      {outcome.after.length > 5 ? ` and ${outcome.after.length - 5} more` : ''}.
-    </Text>
+    <Stack gap="xs">
+      <ImpactNotice impact={outcome.impact} />
+      <Text size="xs" c="dimmed">
+        Security stays administered by {outcome.after.slice(0, 5).join(', ')}
+        {outcome.after.length > 5 ? ` and ${outcome.after.length - 5} more` : ''}.
+      </Text>
+    </Stack>
   );
   return { allowed, notice, pending: !!guard && !outcome };
 }

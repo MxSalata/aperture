@@ -24,6 +24,8 @@ export interface AdminModel {
   enabled: Record<string, boolean>;
   /** %Admin_Secure is public with U: every account holds it. */
   publicSecure: boolean;
+  /** Each user's name as IRIS spells it, by lower-case name (for display). */
+  userNames?: Record<string, string>;
 }
 
 export type AdminChange =
@@ -98,7 +100,7 @@ export function judge(model: AdminModel, change: AdminChange): AdminVerdict {
   return { before, after, locksOut: before.length > 0 && after.length === 0 };
 }
 
-async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+export async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(items.length);
   let next = 0;
   const worker = async () => {
@@ -138,9 +140,13 @@ export async function loadAdminModel(): Promise<AdminModel> {
   });
   const users = (await result(api().GET('/v2/security/users'))) ?? [];
   const enabled: Record<string, boolean> = {};
-  for (const u of users) enabled[lc(u.Name ?? '')] = u.Enabled === true;
+  const userNames: Record<string, string> = {};
+  for (const u of users) {
+    enabled[lc(u.Name ?? '')] = u.Enabled === true;
+    if (u.Name) userNames[lc(u.Name)] = u.Name;
+  }
   const secure = await result(
     api().GET('/v2/security/resource', { params: { query: { name: '%Admin_Secure' } } }),
   );
-  return { roles, holders, enabled, publicSecure: /u/i.test(secure?.PublicPermission ?? '') };
+  return { roles, holders, enabled, userNames, publicSecure: /u/i.test(secure?.PublicPermission ?? '') };
 }

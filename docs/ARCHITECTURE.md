@@ -283,6 +283,12 @@ Three rules sit at the render boundary rather than in individual screens:
   fresh from role details, the owners of the administering roles and the user list; the review or
   confirmation dialog shows the verdict, refuses a change that would leave nobody, and asks for the
   object's name to be typed when the model cannot be read.
+- **A change to a role or to a user's roles says who loses what.** The same dialog lists, per
+  enabled account the change reaches (a role's direct holders and the holders of every role that
+  grants it, at most 50 accounts), the privileges lost and gained (`features/security/impact.ts`).
+  An account's privileges are the union of its roles, the roles they grant and the public
+  permissions, so a privilege the role drops is not listed for an account that still holds it
+  another way. The preview informs; unlike the lock-out check it never blocks.
 - **Every log the API exposes has one door.** The **Logs** hub (`features/logs`) lists the audit
   database, journal files, `alerts.log` from the native monitor service, task history and this tab's
   changes with counts and the latest entry, gates each card on the privilege it needs, and says

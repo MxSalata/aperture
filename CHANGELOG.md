@@ -2,6 +2,13 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **Editing a role or a user's roles shows who loses what.** The review lists, per enabled account
+  the change reaches (holders of the role and of every role granting it), the privileges lost and
+  gained, as `%DB_USER:W`. A privilege is only listed as lost when no other role, granted role or
+  public permission still gives it, so removing %Admin_Task from %Operator does not list an account
+  that also holds %Manager. It reads the accounts' roles (at most 50, eight at a time) when the
+  dialog opens, from the same role model as the lock-out check.
+
 - **A tab can be read-only.** Turn it on in the account menu or at sign-in; a READ-ONLY badge shows
   in the header, and the setting survives a reload of that tab only. The tab then sends nothing that
   changes the instance: the request middleware refuses every write before it leaves the browser

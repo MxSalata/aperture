@@ -39,6 +39,25 @@ describe('a dialog guarded against locking everyone out', () => {
     expect(button()).toBeEnabled();
   });
 
+  it('says who loses what', async () => {
+    open({
+      status: 'ok',
+      after: ['bob'],
+      impact: {
+        report: {
+          changes: [{ user: 'operator', lost: ['%Admin_Journal:U'], gained: ['%DB_USER:R'] }],
+          checked: 3,
+          more: 0,
+        },
+      },
+    });
+    expect(await screen.findByText('Who loses what')).toBeInTheDocument();
+    expect(screen.getByText('%Admin_Journal:U').closest('p')).toHaveTextContent(
+      'operator loses %Admin_Journal:U; gains %DB_USER:R',
+    );
+    expect(button()).toBeEnabled();
+  });
+
   it('asks for the name to be typed when it cannot tell', async () => {
     open({ status: 'unknown', error: 'HTTP 500' });
     const input = await screen.findByLabelText(/to go on/);
