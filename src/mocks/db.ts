@@ -329,7 +329,11 @@ export interface MockDb {
   startedAt: number;
   broadcasts: string[];
   /** alerts.log entries not yet handed out by /api/monitor/alerts (the endpoint is a cursor). */
-  pendingAlerts: { time: string; severity: number; message: string }[];
+  pendingAlerts: { time: string; severity: string; message: string }[];
+  /** Alerts posted since startup (iris_system_alerts, iris_system_alerts_log). */
+  alertsPosted: number;
+  /** Async tasks whose end has been read once: IRIS logs an alert for every read after that. */
+  endedTasksRead: Set<string>;
 }
 
 function db(
@@ -1651,15 +1655,17 @@ export function createDb(): MockDb {
     pendingAlerts: [
       {
         time: new Date(Date.now() - 31 * 3_600_000).toISOString(),
-        severity: 1,
+        severity: '1',
         message: 'Journal file /usr/irissys/mgr/journal/20260915.002 switched: file size limit reached',
       },
       {
         time: new Date(Date.now() - 20 * 3_600_000).toISOString(),
-        severity: 2,
+        severity: '2',
         message: 'ERROR #5002: SFTP connection refused (task Nightly HL7 archive export)',
       },
     ],
+    alertsPosted: 2,
+    endedTasksRead: new Set(),
   };
 }
 

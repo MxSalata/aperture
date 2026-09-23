@@ -102,7 +102,9 @@ export default function JobsPage() {
               dense
             />
             <Text size="xs" c="dimmed" mt="xs">
-              Click a row to follow it in this session.
+              Click a row to follow it in this session. A task that has ended is read once more to show its
+              result, and IRIS 2026.2 logs a severity-2 alert for every read of an ended task after the first
+              (messages.log, /api/monitor/alerts) unless this tab already read it.
             </Text>
           </Paper>
         </Grid.Col>

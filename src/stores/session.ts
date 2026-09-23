@@ -9,6 +9,7 @@ import { useMetrics } from '@/stores/metrics';
 import { useActivity } from '@/stores/activity';
 import { useHealth } from '@/stores/health';
 import { queryClient } from '@/query';
+import { forgetEndedTasks } from '@/api/endedTasks';
 
 /**
  * Session store: who we are, on which instance, and how we authenticate.
@@ -199,6 +200,7 @@ let refreshInFlight: Promise<boolean> | null = null;
  */
 export function resetInstanceState(): void {
   queryClient.clear();
+  forgetEndedTasks();
   useJobs.getState().clearAll();
   useMetrics.getState().clear();
   useActivity.getState().clear();

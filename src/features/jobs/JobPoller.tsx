@@ -1,7 +1,7 @@
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { api, result } from '@/api/client';
+import { readAsyncResult } from '@/api/hooks';
 import { isTerminal, selectActiveJobs, useJobs } from '@/stores/jobs';
 import { notifications } from '@mantine/notifications';
 import { isApiError } from '@/lib/errors';
@@ -21,7 +21,7 @@ export function JobPoller() {
   const queries = useQueries({
     queries: active.map((job) => ({
       queryKey: ['async-result', job.id],
-      queryFn: () => result(api().GET('/v2/async-result', { params: { query: { id: job.id } } })),
+      queryFn: () => readAsyncResult(job.id),
       refetchInterval: 1500,
       retry: (count: number, err: unknown) =>
         !(isApiError(err) && (err.isNotFound || err.isForbidden)) && count < 2,

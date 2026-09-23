@@ -18,6 +18,12 @@ differently; the evidence is in `docs/verification/`.
   processes are the `{ Process, Commands }` rows IRIS sends, without its ten-row padding: the list
   showed blank rows and "10 busy" for one. The globals-and-routines panel says its values are
   totals.
+- **Re-reading a finished task raised alerts on the instance.** IRIS logs a severity-2 alert for
+  every read of an ended async task after the first, which turns the instance's system state to
+  Warning. Aperture re-read them whenever a finished lookup was refetched (a remount, or any job
+  finishing, which invalidated every query). Every read now goes through `readAsyncResult()`,
+  which keeps the first final answer; the mock posts the same alert on a re-read, and tests assert
+  the portal causes none.
 - **Journal records: "first 200" showed 100.** IRIS returns half the `maxRows` it is given; the
   drawer asks for twice its page, shows one page and says when the file holds more.
 - **Operators were offered Databases and met a 403.** The spec allows `%Admin_Operate` for the

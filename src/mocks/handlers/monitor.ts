@@ -3,6 +3,12 @@ import { counter, drift, ok, fmtDate } from '../util';
 import { http, HttpResponse } from 'msw';
 import { route, OPERATE } from '../secure';
 
+/** Post an entry to alerts.log, as IRIS does for a message of severity 2 or more. */
+export function postAlert(severity: '2' | '3', message: string): void {
+  mockDb.pendingAlerts.push({ time: new Date().toISOString(), severity, message });
+  mockDb.alertsPosted += 1;
+}
+
 function uptime(): string {
   const ms = Date.now() - mockDb.startedAt;
   const d = Math.floor(ms / 86_400_000);
@@ -99,10 +105,10 @@ function prometheusText(): string {
     `iris_process_count ${mockDb.processes.length}`,
     '# HELP iris_system_alerts The number of alerts posted to the messages log since system startup',
     '# TYPE iris_system_alerts gauge',
-    'iris_system_alerts 2',
+    `iris_system_alerts ${mockDb.alertsPosted}`,
     '# HELP iris_system_alerts_log The number of alerts currently located in the alerts log',
     '# TYPE iris_system_alerts_log gauge',
-    'iris_system_alerts_log 2',
+    `iris_system_alerts_log ${mockDb.alertsPosted}`,
     '# HELP iris_system_alerts_new Whether new alerts are available on the /api/monitor/alerts endpoint',
     '# TYPE iris_system_alerts_new gauge',
     `iris_system_alerts_new ${mockDb.pendingAlerts.length ? 1 : 0}`,

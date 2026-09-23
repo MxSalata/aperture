@@ -5,6 +5,7 @@ import { notifyError, notifySuccess } from '@/lib/notify';
 import { isTerminal } from '@/stores/jobs';
 import { isApiError } from '@/lib/errors';
 import type { AsyncTask } from './types';
+import { endedTask, keepEndedTask } from './endedTasks';
 
 interface MutationOptions<TVars, TData> {
   /** Toast shown on success; defaults to the API's `status.summary`. */
@@ -41,6 +42,19 @@ export function useApiMutation<TVars, TData extends { summary?: string } = { sum
   });
 }
 
+/**
+ * GET /v2/async-result, and never again once the task has ended: the first final answer is kept
+ * (`endedTasks.ts`) and served to every later read, because IRIS logs an alert for each re-read
+ * of an ended task. Every read of a task goes through here.
+ */
+export async function readAsyncResult(id: string, headers?: Record<string, string>): Promise<AsyncTask> {
+  const kept = endedTask(id);
+  if (kept) return kept;
+  const task = await result(api().GET('/v2/async-result', { params: { query: { id } }, headers }));
+  if (task && ['Finished', 'Failed', 'Canceled'].includes(task.State ?? '')) keepEndedTask(id, task);
+  return task;
+}
+
 /** Shorthand for mutations that just need the envelope (`{summary, console}`) back. */
 export const run = envelope;
 export { api, call, result };
@@ -61,13 +75,7 @@ export function useAsyncResult<TResult = unknown>(
   const poll = useQuery({
     queryKey: [...opts.queryKey, 'async-result', jobId],
     enabled: !!jobId,
-    queryFn: () =>
-      result(
-        api().GET('/v2/async-result', {
-          params: { query: { id: jobId! } },
-          headers: { 'x-aperture-silent': '1' },
-        }),
-      ),
+    queryFn: () => readAsyncResult(jobId!, SILENT),
     // A 4xx is final (403: reading task results needs %Admin_Operate, 404: the task is gone):
     // polling on would repeat it every second for as long as the screen is open.
     refetchInterval: (q) =>
@@ -129,9 +137,7 @@ export async function awaitAsyncResult<T>(
 ): Promise<T> {
   const started = Date.now();
   for (;;) {
-    const task = await result(
-      api().GET('/v2/async-result', { params: { query: { id: jobId } }, headers: SILENT }),
-    );
+    const task = await readAsyncResult(jobId, SILENT);
     if (task.State === 'Finished') return task.Result as T;
     if (task.State === 'Failed' || task.State === 'Canceled')
       throw new Error(task.FailureReason || `Task ${task.State}`);

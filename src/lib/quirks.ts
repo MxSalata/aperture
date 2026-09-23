@@ -63,6 +63,13 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
     source: 'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification)',
   },
   {
+    id: 'async-result-reread-alert',
+    appliesTo: (op) => op.path === '/v2/async-result' && op.method === 'GET',
+    note: 'Every read of a task after the one that first reported it ended logs a severity-2 alert (ERROR #7846 "WQM attach passed invalid token" from TryToKillQueue); the answer itself is unchanged. The alert reaches messages.log, /api/monitor/alerts and iris_system_state (Warning). Aperture keeps the first final answer and never reads an ended task again.',
+    source:
+      'Aperture live verification, IRIS for Health 2026.2 Build 221U (reproduced: 1 alert per re-read, 0 for a single read)',
+  },
+  {
     id: 'info-without-envelope',
     appliesTo: (op) => op.path === '/info',
     note: 'Returned without the standard {status, console, result} envelope.',
