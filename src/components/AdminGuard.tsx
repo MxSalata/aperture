@@ -80,13 +80,15 @@ export async function checkAdminChange(change: AdminChange): Promise<GuardOutcom
       staleTime: 5_000,
     });
     const v = judge(model, change);
-    if (v.locksOut) return { status: 'locks-out', before: v.before };
+    // The model compares names without case; show them as IRIS spells them.
+    const spelled = (names: string[]) => names.map((n) => model.userNames?.[n] ?? n);
+    if (v.locksOut) return { status: 'locks-out', before: spelled(v.before) };
     // Who loses what is information, not a gate: when it cannot be read, the change may still go.
     const impact: ImpactOutcome = await loadImpact(model, change).then(
       (report) => ({ report }),
       (e: unknown) => ({ error: describeError(e) }),
     );
-    return { status: 'ok', after: v.after, impact };
+    return { status: 'ok', after: spelled(v.after), impact };
   } catch (e) {
     return { status: 'unknown', error: describeError(e) };
   }
