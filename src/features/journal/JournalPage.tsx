@@ -12,6 +12,8 @@ import {
   Title,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { canUse } from '@/api/privileges';
+import { useSession } from '@/stores/session';
 import { useQuery } from '@tanstack/react-query';
 import {
   IconArrowsExchange,
@@ -33,6 +35,8 @@ import { formatBytes, formatDateTime } from '@/lib/format';
 import { useJobs } from '@/stores/jobs';
 
 type FileRow = JournalFileList[number];
+const SETTINGS_PRIVILEGES = ['%Admin_Manage:U', '%Admin_Journal:U'];
+
 const EMPTY_SETTINGS: JournalSettings = {
   CurrentDirectory: '',
   AlternateDirectory: '',
@@ -203,9 +207,13 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
 
 export default function JournalPage() {
   const files = useQuery({ queryKey: keys.files, queryFn: () => result(api().GET('/v2/journal/files')) });
+  // The settings need %Admin_Manage or %Admin_Journal; an operator (%Admin_Operate) sees the files only.
+  const info = useSession((s) => s.info);
+  const mayReadSettings = canUse(info, SETTINGS_PRIVILEGES);
   const settings = useQuery({
     queryKey: keys.settings,
     queryFn: () => result(api().GET('/v2/journal/settings')),
+    enabled: mayReadSettings,
   });
   const [selected, setSelected] = useState<string | null>(null);
   const switchFile = useApiMutation(() => run(api().POST('/v2/journal/switch-file')), {
@@ -308,6 +316,11 @@ export default function JournalPage() {
             <Title order={5} mb="sm">
               Journal settings
             </Title>
+            {!mayReadSettings ? (
+              <Text size="sm" c="dimmed">
+                Reading the journal settings needs {SETTINGS_PRIVILEGES.join(' or ')}.
+              </Text>
+            ) : null}
             {settings.isError ? <ErrorAlert error={settings.error} /> : null}
             {settings.data ? (
               // Fields appear with the values they edit: an empty form would be editable, and saveable.
