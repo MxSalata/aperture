@@ -5,6 +5,7 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { humanize } from './KeyValueList';
 import { redactDeep } from '@/lib/redact';
+import { useAdminGuard, type GuardOutcome } from './AdminGuard';
 
 export interface FieldChange {
   key: string;
@@ -52,6 +53,10 @@ interface ReviewOptions<T extends Record<string, unknown>> {
   refetch?: () => Promise<T>;
   confirmLabel?: string;
   onConfirm: () => unknown | Promise<unknown>;
+  /** A check that may forbid the write (last-admin protection); judged when the dialog opens. */
+  guard?: () => Promise<GuardOutcome>;
+  /** What to type when the guard cannot decide (the object's name). */
+  guardConfirmText?: string;
 }
 
 function Body<T extends Record<string, unknown>>({
@@ -62,7 +67,10 @@ function Body<T extends Record<string, unknown>>({
   before,
   confirmLabel,
   onConfirm,
+  guard,
+  guardConfirmText,
 }: ReviewOptions<T> & { id: string; changes: FieldChange[] }) {
+  const admin = useAdminGuard(guard, guardConfirmText ?? 'apply');
   const [busy, setBusy] = useState(false);
   const [drift, setDrift] = useState<FieldChange[] | null>(refetch ? null : []);
   const [checking, setChecking] = useState(!!refetch);
@@ -155,12 +163,13 @@ function Body<T extends Record<string, unknown>>({
           Verified: the definition on the server still matches what you edited.
         </Text>
       ) : null}
+      {admin.notice}
       <Group justify="flex-end" gap="xs">
         <Button variant="default" onClick={() => modals.close(id)}>
           Cancel
         </Button>
         <Button
-          disabled={checking || blocked}
+          disabled={checking || blocked || !admin.allowed}
           loading={busy}
           onClick={async () => {
             setBusy(true);

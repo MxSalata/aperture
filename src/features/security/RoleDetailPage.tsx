@@ -25,6 +25,7 @@ import { KeyValueList, renderValue } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { JsonViewer } from '@/components/JsonViewer';
 import { confirmDanger } from '@/components/ConfirmDanger';
+import { checkAdminChange } from '@/components/AdminGuard';
 import { reviewChanges } from '@/components/ReviewChanges';
 import { secKeys } from './keys';
 import { useResourceNames } from './RolesPage';
@@ -112,6 +113,7 @@ export default function RoleDetailPage() {
                   ),
                   confirmText: name,
                   confirmLabel: 'Delete',
+                  guard: () => checkAdminChange({ kind: 'role-delete', role: name }),
                   onConfirm: () => remove.mutateAsync(),
                 })
               }
@@ -187,6 +189,14 @@ export default function RoleDetailPage() {
                 result(api().GET('/v2/security/role', params)).then(normalised) as Promise<
                   Record<string, unknown>
                 >,
+              guard: () =>
+                checkAdminChange({
+                  kind: 'role-edit',
+                  role: name,
+                  resources: body.Resources ?? [],
+                  granted: body.GrantedRoles ?? [],
+                }),
+              guardConfirmText: name,
               onConfirm: () => save.mutateAsync(body),
             });
           })}

@@ -1,6 +1,7 @@
 import { Button, Group, Stack, Text, TextInput } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { useState } from 'react';
+import { useAdminGuard, type GuardOutcome } from './AdminGuard';
 
 interface Options {
   title: string;
@@ -10,12 +11,15 @@ interface Options {
   confirmLabel?: string;
   color?: string;
   onConfirm: () => unknown | Promise<unknown>;
+  /** A check that may forbid the action (last-admin protection); judged when the dialog opens. */
+  guard?: () => Promise<GuardOutcome>;
 }
 
-function Body({ message, confirmText, confirmLabel, color, onConfirm, id }: Options & { id: string }) {
+function Body({ message, confirmText, confirmLabel, color, onConfirm, guard, id }: Options & { id: string }) {
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
-  const ready = !confirmText || typed.trim() === confirmText;
+  const admin = useAdminGuard(guard, confirmText ?? 'confirm');
+  const ready = (!confirmText || typed.trim() === confirmText) && admin.allowed;
   return (
     <Stack gap="sm">
       <Text size="sm">{message}</Text>
@@ -32,6 +36,7 @@ function Body({ message, confirmText, confirmLabel, color, onConfirm, id }: Opti
           autoComplete="off"
         />
       ) : null}
+      {admin.notice}
       <Group justify="flex-end" gap="xs">
         <Button variant="default" onClick={() => modals.close(id)}>
           Cancel

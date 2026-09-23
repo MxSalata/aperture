@@ -27,6 +27,7 @@ import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { JsonViewer } from '@/components/JsonViewer';
 import { confirmDanger } from '@/components/ConfirmDanger';
+import { checkAdminChange } from '@/components/AdminGuard';
 import { reviewChanges } from '@/components/ReviewChanges';
 import { BoolBadge } from '@/components/StatusBadge';
 import { useSession } from '@/stores/session';
@@ -112,8 +113,32 @@ export default function UserDetailPage() {
                 <Menu.Item leftSection={<IconKey size={14} />} onClick={openPw}>
                   Change password…
                 </Menu.Item>
-                <Menu.Item onClick={() => u && save.mutate({ ...u, Enabled: !u.Enabled })}>
-                  {u?.Enabled ? 'Disable account' : 'Enable account'}
+                <Menu.Item
+                  onClick={() => {
+                    if (!u) return;
+                    if (!u.Enabled) return save.mutate({ ...u, Enabled: true });
+                    // Disabling can remove the last account able to administer security.
+                    confirmDanger({
+                      title: 'Disable account',
+                      message: (
+                        <>
+                          Disable <b>{name}</b>? It can no longer sign in.
+                        </>
+                      ),
+                      confirmLabel: 'Disable',
+                      color: 'orange',
+                      guard: () =>
+                        checkAdminChange({
+                          kind: 'user-edit',
+                          user: name,
+                          roles: u.Roles ?? [],
+                          enabled: false,
+                        }),
+                      onConfirm: () => save.mutateAsync({ ...u, Enabled: false }),
+                    });
+                  }}
+                >
+                  {u?.Enabled ? 'Disable account…' : 'Enable account'}
                 </Menu.Item>
                 <Menu.Item component={Link} to={`/security/sql?grantee=${encodeURIComponent(name)}`}>
                   SQL privileges
@@ -132,6 +157,7 @@ export default function UserDetailPage() {
                       ),
                       confirmText: name,
                       confirmLabel: 'Delete',
+                      guard: () => checkAdminChange({ kind: 'user-delete', user: name }),
                       onConfirm: () => remove.mutateAsync(),
                     })
                   }
@@ -182,6 +208,14 @@ export default function UserDetailPage() {
               after: v as Record<string, unknown>,
               refetch: () =>
                 result(api().GET('/v2/security/user', params)) as Promise<Record<string, unknown>>,
+              guard: () =>
+                checkAdminChange({
+                  kind: 'user-edit',
+                  user: name,
+                  roles: v.Roles ?? [],
+                  enabled: v.Enabled !== false,
+                }),
+              guardConfirmText: name,
               onConfirm: () => save.mutateAsync(v),
             }),
           )}

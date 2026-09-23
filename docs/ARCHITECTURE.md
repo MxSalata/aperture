@@ -266,6 +266,14 @@ Three rules sit at the render boundary rather than in individual screens:
   `%System/%Security/<Event>` audit record that proves it: `lib/auditEvents.ts` maps the request
   path to the event, the audit log is queried as an asynchronous task around the request time, and
   the closest matching record is shown next to the HTTP result.
+- **No change locks everyone out of security.** Editing a user's roles, disabling or deleting a
+  user, editing a role's resources or granted roles and deleting a role are judged before they run
+  (`features/security/adminGuard.ts`): an account administers security when it is enabled and one
+  of its own roles is `%All`, grants `%Admin_Secure:U`, or grants such a role at any depth
+  (escalation roles do not count; a public `%Admin_Secure:U` makes everyone one). The model is read
+  fresh from role details, the owners of the administering roles and the user list; the review or
+  confirmation dialog shows the verdict, refuses a change that would leave nobody, and asks for the
+  object's name to be typed when the model cannot be read.
 - **Every log the API exposes has one door.** The **Logs** hub (`features/logs`) lists the audit
   database, journal files, `alerts.log` from the native monitor service, task history and this tab's
   changes with counts and the latest entry, gates each card on the privilege it needs, and says

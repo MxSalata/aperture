@@ -2,6 +2,13 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **No change can lock everyone out of security.** Removing roles from a user, disabling or
+  deleting a user, deleting a role or editing its resources or granted roles is judged first: if no
+  enabled account would still hold `%All` or `%Admin_Secure:U` (directly or through granted roles,
+  at any depth; escalation roles do not count), the dialog refuses and names today's
+  administrators; when roles and owners cannot be read it asks for the name to be typed. "Disable
+  account" used to act at once with no dialog at all; it asks now.
+
 - **Docker: no well-known password, pinned supply chain.** The IRIS image used to un-expire every
   account and keep `_SYSTEM`/`SYS`. `npm run iris:password` now writes a generated password to
   `.secrets/iris-password` (git- and docker-ignored), compose passes it to the build as a BuildKit
