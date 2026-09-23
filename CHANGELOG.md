@@ -2,6 +2,10 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **X.509 certificates are read at a steady pace.** The API has no batch read, so the tab reads one
+  certificate per credential; it fired all of them at once. At most four are in flight now, each
+  kept ten minutes, and only while the tab is shown.
+
 - **A finished task refetches what it changed, not every screen.** Any task ending (a metrics
   lookup, an integrity check) invalidated every query. A job now records the operation that queued
   it; reads refetch nothing, database maintenance refetches databases and the dashboard, namespace

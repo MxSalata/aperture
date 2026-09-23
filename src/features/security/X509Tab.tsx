@@ -8,7 +8,14 @@ import { BoolBadge } from '@/components/StatusBadge';
 import { Timestamp } from '@/components/Timestamp';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { certificateStatus, commonName, EXPIRY_WARNING_DAYS, type CertState } from '@/lib/certs';
+import { createLimiter } from '@/lib/limiter';
 import { secKeys } from './keys';
+
+/**
+ * The API has no batch read of certificates: one request per credential. At most four are in flight
+ * (a long list becomes a steady trickle, not a burst), and a certificate read is kept ten minutes.
+ */
+const certificateReads = createLimiter(4);
 
 type Row = X509CredentialsList[number] &
   Partial<X509CredentialCertificate> & { certLoading?: boolean; certError?: string };
@@ -52,8 +59,9 @@ export function ExpiryBadge({ notAfter }: { notAfter: string | null | undefined 
 
 /**
  * X.509 credentials with the validity of the certificate each one holds. The list endpoint
- * does not carry dates, so the certificate is read per alias; a credential whose certificate
- * cannot be read is still listed, with the reason.
+ * does not carry dates, so the certificate is read per alias (paced, see certificateReads), and
+ * only while this tab is shown (the TLS page unmounts hidden panels); a credential whose
+ * certificate cannot be read is still listed, with the reason.
  */
 export function X509Tab() {
   const list = useQuery({
@@ -65,8 +73,10 @@ export function X509Tab() {
     queries: aliases.map((alias) => ({
       queryKey: secKeys.x509Cert(alias),
       queryFn: () =>
-        result(api().GET('/v2/security/x509-credential/certificate', { params: { query: { alias } } })),
-      staleTime: 60_000,
+        certificateReads(() =>
+          result(api().GET('/v2/security/x509-credential/certificate', { params: { query: { alias } } })),
+        ),
+      staleTime: 10 * 60_000,
     })),
   });
   const rows: Row[] = (list.data ?? []).map((c, i) => ({
