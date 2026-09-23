@@ -162,7 +162,12 @@ badge when some of its polls fail, so a broken source is never hidden behind sta
 `reviewChanges()` (`components/ReviewChanges.tsx`) wraps every edit form: it diffs the loaded
 object against the form values, lists old → new per field, re-reads the object from the server to
 detect concurrent edits (an "Apply anyway" checkbox overrides), and only then runs the mutation.
-No dialog is shown when nothing changed.
+No dialog is shown when nothing changed. The write receives the changed fields. For an object type
+whose PUT merges (`api/partialPut.ts`: local database, database configuration, journal settings,
+namespace; each recorded on IRIS 2026.2 by `scripts/live/partial-put.mjs`) only those are sent,
+so a field changed on the server since the dialog opened that the user did not touch is kept, and
+only a field changed on both sides stops the write. The security types send the whole form until
+`e2e/live/writes.spec.ts` has confirmed their PUT merges too.
 
 **Read-only tab.** A tab can be made read-only (account menu, or at sign-in); the flag lives in
 sessionStorage (`stores/readOnly.ts`), so it survives a reload of that tab and no other tab sees

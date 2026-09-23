@@ -31,6 +31,7 @@ import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { reviewChanges } from '@/components/ReviewChanges';
+import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import { formatBytes, formatDateTime } from '@/lib/format';
 import { useJobs } from '@/stores/jobs';
 
@@ -332,7 +333,9 @@ export default function JournalPage() {
                     after: v as Record<string, unknown>,
                     refetch: () =>
                       result(api().GET('/v2/journal/settings')) as Promise<Record<string, unknown>>,
-                    onConfirm: () => save.mutateAsync(v),
+                    onlyChanges: sendsOnlyChanges('/v2/journal/settings'),
+                    onConfirm: (changed) =>
+                      save.mutateAsync(putBody('/v2/journal/settings', v, changed as Partial<typeof v>)),
                   }),
                 )}
               >

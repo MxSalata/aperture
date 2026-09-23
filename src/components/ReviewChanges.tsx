@@ -54,7 +54,14 @@ interface ReviewOptions<T extends Record<string, unknown>> {
   /** Re-read the object right before applying, to detect edits made elsewhere since it was opened. */
   refetch?: () => Promise<T>;
   confirmLabel?: string;
-  onConfirm: () => unknown | Promise<unknown>;
+  /** Runs the write; receives the changed fields, as the review lists them. */
+  onConfirm: (changed: Partial<T>) => unknown | Promise<unknown>;
+  /**
+   * The write sends only the changed fields (a merging PUT, api/partialPut.ts). A field changed on
+   * the server that the user did not touch is then kept, not overwritten, so only a field changed
+   * on both sides stops the write.
+   */
+  onlyChanges?: boolean;
   /** A check that may forbid the write (last-admin protection); judged when the dialog opens. */
   guard?: () => Promise<GuardOutcome>;
   /** What to type when the guard cannot decide (the object's name). */
@@ -71,6 +78,7 @@ function Body<T extends Record<string, unknown>>({
   onConfirm,
   guard,
   guardConfirmText,
+  onlyChanges = false,
 }: ReviewOptions<T> & { id: string; changes: FieldChange[] }) {
   const admin = useAdminGuard(guard, guardConfirmText ?? 'apply');
   const readOnly = useReadOnly((s) => s.readOnly);
@@ -99,11 +107,21 @@ function Body<T extends Record<string, unknown>>({
     };
   }, [refetch, before]);
 
-  const blocked = (drift?.length ?? 0) > 0 && !override;
+  const changedKeys = new Set(changes.map((c) => c.key));
+  const changed = Object.fromEntries(changes.map((c) => [c.key, c.after])) as Partial<T>;
+  // With a whole-object write every drifted field would be overwritten; with only the changes, only
+  // a field changed on both sides is.
+  const conflictsOf = (d: FieldChange[]) => (onlyChanges ? d.filter((x) => changedKeys.has(x.key)) : d);
+  const conflicts = drift ? conflictsOf(drift) : [];
+  const kept = drift && onlyChanges ? drift.filter((x) => !changedKeys.has(x.key)) : [];
+  const blocked = conflicts.length > 0 && !override;
   return (
     <Stack gap="sm">
       <Text size="sm">
-        {changes.length} field{changes.length === 1 ? '' : 's'} will change. Nothing is sent until you apply.
+        {changes.length} field{changes.length === 1 ? '' : 's'} will change. Nothing is sent until you apply
+        {onlyChanges
+          ? '; then only these fields are sent, and every other one stays as the server has it.'
+          : '.'}
       </Text>
       <Table fz="sm" verticalSpacing={4}>
         <Table.Thead>
@@ -135,7 +153,7 @@ function Body<T extends Record<string, unknown>>({
         <Alert color="yellow" variant="light" icon={<IconAlertTriangle size={16} />}>
           Could not re-read the object before applying: {checkError}
         </Alert>
-      ) : drift && drift.length ? (
+      ) : conflicts.length ? (
         <Alert
           color="orange"
           variant="light"
@@ -143,7 +161,7 @@ function Body<T extends Record<string, unknown>>({
           title="Changed on the server since you opened it"
         >
           <Stack gap={4}>
-            {drift.map((d) => (
+            {conflicts.map((d) => (
               <Group key={d.key} gap={6}>
                 <Badge size="xs" color="orange" variant="light" style={{ textTransform: 'none' }}>
                   {labels?.[d.key] ?? humanize(d.key)}
@@ -161,6 +179,11 @@ function Body<T extends Record<string, unknown>>({
             />
           </Stack>
         </Alert>
+      ) : kept.length ? (
+        <Text size="xs" c="dimmed">
+          Changed on the server since you opened it, and kept as it is there (your change does not touch it):{' '}
+          {kept.map((d) => labels?.[d.key] ?? humanize(d.key)).join(', ')}.
+        </Text>
       ) : drift ? (
         <Text size="xs" c="teal">
           Verified: the definition on the server still matches what you edited.
@@ -183,15 +206,13 @@ function Body<T extends Record<string, unknown>>({
                 try {
                   const current = await refetch();
                   const latest = diffObjects(before, current as Record<string, unknown>);
-                  if (latest.length) {
-                    setDrift(latest);
-                    return;
-                  }
+                  setDrift(latest);
+                  if (conflictsOf(latest).length) return;
                 } catch (e) {
                   setCheckError(e instanceof Error ? e.message : String(e));
                 }
               }
-              await onConfirm();
+              await onConfirm(changed);
               modals.close(id);
             } catch {
               /* the write reported its own error (useApiMutation toasts it); the review stays open */

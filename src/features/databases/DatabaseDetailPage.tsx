@@ -31,6 +31,7 @@ import { ErrorAlert } from '@/components/ErrorAlert';
 import { JsonViewer } from '@/components/JsonViewer';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { reviewChanges } from '@/components/ReviewChanges';
+import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import { formatDateTime, formatMB, formatNumber } from '@/lib/format';
 import { useJobs } from '@/stores/jobs';
 import { describeError } from '@/lib/errors';
@@ -546,7 +547,9 @@ export default function DatabaseDetailPage() {
               before: local.data as Record<string, unknown>,
               after: v as Record<string, unknown>,
               refetch: () => result(api().GET('/v2/database-dir', q)) as Promise<Record<string, unknown>>,
-              onConfirm: () => editLocal.mutateAsync(v),
+              onlyChanges: sendsOnlyChanges('/v2/database-dir'),
+              onConfirm: (changed) =>
+                editLocal.mutateAsync(putBody('/v2/database-dir', v, changed as Partial<typeof v>)),
             }),
           )}
         >
@@ -596,7 +599,15 @@ export default function DatabaseDetailPage() {
                 result(api().GET('/v2/database', { params: { query: { name } } })) as Promise<
                   Record<string, unknown>
                 >,
-              onConfirm: () => editConfig.mutateAsync({ ...v, Directory: v.Directory ?? dir }),
+              onlyChanges: sendsOnlyChanges('/v2/database'),
+              onConfirm: (changed) =>
+                editConfig.mutateAsync(
+                  putBody(
+                    '/v2/database',
+                    { ...v, Directory: v.Directory ?? dir },
+                    changed as Partial<typeof v>,
+                  ),
+                ),
             }),
           )}
         >

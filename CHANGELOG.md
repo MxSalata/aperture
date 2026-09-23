@@ -2,6 +2,15 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **Edits send only what changed, where IRIS merges a PUT.** The review dialog now hands the write
+  the changed fields. For the local database, the database configuration and the journal settings
+  only those are sent: a field changed on the server since the dialog opened that you did not touch
+  is kept instead of overwritten, and only a field changed on both sides stops the write. Recorded
+  first on IRIS 2026.2 (`scripts/live/partial-put.mjs`): a PUT naming one field changed that field
+  and no other, for each of these types and for namespaces. Users, roles, resources, services, web
+  applications and TLS send the whole form until `e2e/live/writes.spec.ts` confirms their PUT
+  merges too.
+
 - **Sign-in falls back to Basic when JWT is switched off on /api/admin, as the README promised.** It
   did not: with JWT off, IRIS answers `POST /login` with a bodiless 401 naming `Basic` (it asks for a
   password before the API is reached), and Aperture fell back only on 404, so it reported a wrong
