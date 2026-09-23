@@ -6,6 +6,8 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  // The live run against a real instance has its own config (playwright.live.config.ts).
+  testIgnore: ['live/**'],
   timeout: 45_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

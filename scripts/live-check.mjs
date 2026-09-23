@@ -24,9 +24,16 @@ const saveIdx = process.argv.indexOf('--save');
 const SAVE = saveIdx > 0 ? process.argv[saveIdx + 1] : null;
 const base = `${IRIS_URL}${PREFIX}`;
 
+/** The report is committed as evidence: a host other than this machine is named by role, not address. */
+function publicUrl(url) {
+  const u = new URL(url);
+  if (!['localhost', '127.0.0.1', '::1', '[::1]'].includes(u.hostname)) u.hostname = 'iris-host';
+  return u.origin;
+}
+
 const report = {
   startedAt: new Date().toISOString(),
-  irisUrl: IRIS_URL,
+  irisUrl: publicUrl(IRIS_URL),
   prefix: PREFIX,
   user: USER,
   checks: [],
@@ -44,7 +51,9 @@ function record(name, ok, detail, extra = {}) {
 }
 
 async function http(method, path, { body, auth = true, accept = 'application/json' } = {}) {
-  const headers = { Accept: accept };
+  // Browsers name their languages; without the header IRIS answers errors in the first
+  // language it has (Arabic), which makes the saved evidence unreadable.
+  const headers = { Accept: accept, 'Accept-Language': 'en' };
   if (auth) headers.Authorization = authHeader;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   const started = Date.now();

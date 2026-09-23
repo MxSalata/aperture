@@ -22,6 +22,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:live": "playwright test -c playwright.live.config.ts",
     "gen:api": "openapi-typescript spec/mainspec_v2.json -o src/api/schema.d.ts && node scripts/build-spec-index.mjs",
     "build:www": "vite build --mode iris --outDir www",
     "smoke": "node scripts/smoke-demo.mjs",
