@@ -1,0 +1,193 @@
+{
+  "startedAt": "2026-09-23T12:04:10.150Z",
+  "irisUrl": "http://iris-host:52773",
+  "prefix": "/api/admin",
+  "user": "_SYSTEM",
+  "checks": [
+    {
+      "name": "GET /info with Basic auth",
+      "ok": true,
+      "detail": "HTTP 200 in 35 ms",
+      "status": 200
+    },
+    {
+      "name": "/info envelope",
+      "ok": true,
+      "detail": "wrapped in {result} (differs from spec)"
+    },
+    {
+      "name": "/info privileges",
+      "ok": true,
+      "detail": "keys: ExternalLanguageServerEdit, Journal, Manage, OAuth2_Client, OAuth2_Registration, OAuth2_Server, Operate, Secure, Task, Wallet, FileSystemAccess"
+    },
+    {
+      "name": "POST /login (JWT)",
+      "ok": true,
+      "detail": "access token 303 chars, refresh present, exp 1790165111"
+    },
+    {
+      "name": "Bearer token accepted on /info",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "POST /refresh",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "GET /v2/databases",
+      "ok": true,
+      "detail": "HTTP 200 result=array[13]",
+      "status": 200,
+      "shape": "array[13]"
+    },
+    {
+      "name": "GET /v2/database-dirs",
+      "ok": true,
+      "detail": "HTTP 200 result=array[13]",
+      "status": 200,
+      "shape": "array[13]"
+    },
+    {
+      "name": "LocalDatabaseList shape",
+      "ok": true,
+      "detail": "array (spec says object) - Aperture handles both"
+    },
+    {
+      "name": "GET /v2/namespaces",
+      "ok": true,
+      "detail": "HTTP 200 result=array[6]",
+      "status": 200,
+      "shape": "array[6]"
+    },
+    {
+      "name": "GET /v2/processes",
+      "ok": true,
+      "detail": "HTTP 200 result=array[27]",
+      "status": 200,
+      "shape": "array[27]"
+    },
+    {
+      "name": "GET /v2/tasks",
+      "ok": true,
+      "detail": "HTTP 200 result=array[18]",
+      "status": 200,
+      "shape": "array[18]"
+    },
+    {
+      "name": "GET /v2/monitor/dashboard/main",
+      "ok": true,
+      "detail": "HTTP 200 result=object{Performance,ECP,Status,SystemUsage,Alerts,Licensing,…}",
+      "status": 200,
+      "shape": "object{Performance,ECP,Status,SystemUsage,Alerts,Licensing,…}"
+    },
+    {
+      "name": "GET /v2/async-results",
+      "ok": true,
+      "detail": "HTTP 200 result=array[26]",
+      "status": 200,
+      "shape": "array[26]"
+    },
+    {
+      "name": "GET /v2/security/users",
+      "ok": true,
+      "detail": "HTTP 200 result=array[11]",
+      "status": 200,
+      "shape": "array[11]"
+    },
+    {
+      "name": "GET /v2/web-apps",
+      "ok": true,
+      "detail": "HTTP 200 result=array[41]",
+      "status": 200,
+      "shape": "array[41]"
+    },
+    {
+      "name": "GET /v2/journal/files",
+      "ok": true,
+      "detail": "HTTP 200 result=array[2]",
+      "status": 200,
+      "shape": "array[2]"
+    },
+    {
+      "name": "GET /v2/locks",
+      "ok": true,
+      "detail": "HTTP 200 result=array[8]",
+      "status": 200,
+      "shape": "array[8]"
+    },
+    {
+      "name": "Role grants shape",
+      "ok": true,
+      "detail": "HTTP 200, Resources as objects (e.g. {\"Name\":\"%Admin_ExternalLanguageServerEdit\",\"Permissions\":\"U\"})"
+    },
+    {
+      "name": "Error envelope",
+      "ok": true,
+      "detail": "HTTP 404, errors in status.errors: [{\"error\":\"خطأ #420: Namespace APERTURE_DOES_NOT_EXIST does not exist\",\"code\":420,\"domain\":\"%ObjectErrors\",\"id\":\"CPFNameDoesNotExist\",\"params\":[\"Namespace\",\"APE"
+    },
+    {
+      "name": "POST /v2/database-dir/info → 202",
+      "ok": true,
+      "detail": "HTTP 202, Location /api/admin/v1/async-result?id=983407226604953934454410, body GUID absent"
+    },
+    {
+      "name": "Async task completes",
+      "ok": true,
+      "detail": "state Finished, result object{Size,ExpansionSize,MaxSize,ReadOnlyReason,EncryptionKeyID,BlockSize,…}, console 0 lines",
+      "result": {
+        "Size": 11,
+        "ExpansionSize": 0,
+        "MaxSize": 0,
+        "ReadOnlyReason": "",
+        "EncryptionKeyID": "",
+        "BlockSize": 8192,
+        "Blocks": 1408,
+        "AvailableSpace": 9.9,
+        "DiskFree": "3.162TB",
+        "EndFree": 9,
+        "LastExpansionTime": "2026-09-23 11:37:09",
+        "MirrorSetName": "",
+        "MirrorDBName": "",
+        "SFN": 9,
+        "Mirrored": false,
+        "Encrypted": false,
+        "Full": false,
+        "Mounted": true,
+        "MirrorFailoverDB": false
+      }
+    },
+    {
+      "name": "POST /v2/task/suspend (Purge Journal)",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Read-back right after suspend",
+      "ok": true,
+      "detail": "/v2/task/info says true, /v2/tasks says false - the list lags behind the object (quirk task-suspended-lag; Aperture re-reads both and says so)"
+    },
+    {
+      "name": "POST /v2/task/resume (Purge Journal)",
+      "ok": true,
+      "detail": "HTTP 200, /v2/task/info says Suspended=false"
+    }
+  ],
+  "serverVersion": "IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2 (Build 221U) Fri Jun 26 2026 09:58:52 EDT",
+  "auth": "jwt",
+  "quirks": {
+    "infoEnveloped": true,
+    "localDatabaseListIsArray": true,
+    "roleResourcesShape": "objects",
+    "errorEnvelope": "status.errors",
+    "asyncLocationHeader": true,
+    "asyncGuidInBody": false,
+    "taskSuspendReflected": {
+      "info": true,
+      "list": false
+    }
+  },
+  "finishedAt": "2026-09-23T12:04:10.376Z",
+  "passed": true
+}

@@ -1,0 +1,37 @@
+{
+  "about": "e2e/live/outage.spec.ts through the nginx portal (docker/Dockerfile) while the instance container was stopped for the baseline snapshot and started again; transcribed from the run output",
+  "stoppedAt": "2026-09-23T11:59:00Z",
+  "startedAt": "2026-09-23T11:59:08Z",
+  "runs": [
+    {
+      "from": "2026-09-23T11:43:16.969Z",
+      "to": "2026-09-23T11:59:01.913Z",
+      "pill": "LIVE",
+      "statuses": {
+        "200": 820,
+        "401": 2,
+        "500": 1,
+        "network": 2
+      }
+    },
+    {
+      "from": "2026-09-23T11:59:03.938Z",
+      "to": "2026-09-23T11:59:08.032Z",
+      "pill": "OFFLINE",
+      "statuses": {
+        "502": 5
+      }
+    },
+    {
+      "from": "2026-09-23T11:59:10.051Z",
+      "to": "2026-09-23T12:00:10.621Z",
+      "pill": "LIVE",
+      "statuses": {
+        "200": 58,
+        "401": 2,
+        "network": 2
+      }
+    }
+  ],
+  "signedOut": false
+}

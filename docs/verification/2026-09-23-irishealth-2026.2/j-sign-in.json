@@ -1,0 +1,383 @@
+{
+  "meta": {
+    "image": "containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3",
+    "serverVersion": "IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2 (Build 221U) Fri Jun 26 2026 09:58:52 EDT",
+    "capturedAt": "2026-09-23T13:15:47.020Z",
+    "instance": "http://<iris-host>:52773/api/admin"
+  },
+  "assumption": "JWT login, refresh, logout revocation, Basic fallback, error answers",
+  "unauthenticated": {
+    "method": "GET",
+    "path": "/info",
+    "status": 401,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "www-authenticate": "Bearer",
+      "server": "Apache",
+      "content-length": "0"
+    },
+    "json": null,
+    "text": "",
+    "ms": 27
+  },
+  "basicInfo": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "server": "Apache",
+      "content-length": "392"
+    },
+    "enveloped": true,
+    "body": {
+      "status": {
+        "errors": [],
+        "summary": ""
+      },
+      "console": [],
+      "result": {
+        "apiVersion": 2,
+        "username": "_SYSTEM",
+        "serverVersion": "IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2 (Build 221U) Fri Jun 26 2026 09:58:52 EDT",
+        "systemMode": "",
+        "product": "irisforhealth",
+        "namespaces": [
+          {
+            "name": "%SYS"
+          },
+          {
+            "name": "HSCUSTOM"
+          },
+          {
+            "name": "HSLIB"
+          },
+          {
+            "name": "HSSYS"
+          },
+          {
+            "name": "HSSYSLOCALTEMP"
+          },
+          {
+            "name": "USER"
+          }
+        ],
+        "privileges": {
+          "ExternalLanguageServerEdit": {
+            "use": true
+          },
+          "Journal": {
+            "use": true
+          },
+          "Manage": {
+            "use": true
+          },
+          "OAuth2_Client": {
+            "use": true
+          },
+          "OAuth2_Registration": {
+            "use": true
+          },
+          "OAuth2_Server": {
+            "use": true
+          },
+          "Operate": {
+            "use": true
+          },
+          "Secure": {
+            "use": true
+          },
+          "Task": {
+            "use": true
+          },
+          "Wallet": {
+            "use": true
+          },
+          "FileSystemAccess": {
+            "use": true
+          }
+        }
+      }
+    }
+  },
+  "basicWrongPassword": {
+    "method": "GET",
+    "path": "/info",
+    "status": 401,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "www-authenticate": "Bearer",
+      "server": "Apache",
+      "content-length": "0"
+    },
+    "json": null,
+    "text": "",
+    "ms": 8
+  },
+  "login": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "server": "Apache",
+      "content-length": "469"
+    },
+    "tokens": {
+      "keys": [
+        "access_token",
+        "refresh_token",
+        "sub",
+        "iat",
+        "exp"
+      ],
+      "access": "<jwt 304 chars>",
+      "refresh": "<jwt 283 chars>",
+      "exp": 1790169407,
+      "accessClaims": {
+        "header": {
+          "alg": "ES256",
+          "typ": "JWT"
+        },
+        "payload": {
+          "iat": 1790169347.821296,
+          "exp": 1790169407,
+          "iss": "<iris-hostname>/IRIS",
+          "sub": "_SYSTEM",
+          "sid": "S7qkG1doMoqbBvt8Ed5k0sDN",
+          "app": "/api/admin/"
+        }
+      },
+      "refreshClaims": {
+        "header": {
+          "alg": "ES256",
+          "typ": "JWT"
+        },
+        "payload": {
+          "iat": 1790169347.821296,
+          "exp": 1790170247,
+          "iss": "<iris-hostname>/IRIS",
+          "sid": "S7qkG1doMoqbBvt8Ed5k0sDN",
+          "app": "/api/admin/"
+        }
+      }
+    }
+  },
+  "bearerInfo": {
+    "status": 200
+  },
+  "refresh": {
+    "status": 200,
+    "tokens": {
+      "keys": [
+        "access_token",
+        "refresh_token",
+        "sub",
+        "iat",
+        "exp"
+      ],
+      "access": "<jwt 304 chars>",
+      "refresh": "<jwt 283 chars>",
+      "exp": 1790169407,
+      "accessClaims": {
+        "header": {
+          "alg": "ES256",
+          "typ": "JWT"
+        },
+        "payload": {
+          "iat": 1790169347.830554,
+          "exp": 1790169407,
+          "iss": "<iris-hostname>/IRIS",
+          "sub": "_SYSTEM",
+          "sid": "S7qkG1doMoqbBvt8Ed5k0sDN",
+          "app": "/api/admin/"
+        }
+      },
+      "refreshClaims": {
+        "header": {
+          "alg": "ES256",
+          "typ": "JWT"
+        },
+        "payload": {
+          "iat": 1790169347.830554,
+          "exp": 1790170247,
+          "iss": "<iris-hostname>/IRIS",
+          "sid": "S7qkG1doMoqbBvt8Ed5k0sDN",
+          "app": "/api/admin/"
+        }
+      }
+    },
+    "refreshTokenRotated": true
+  },
+  "logoutWithBody": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "server": "Apache",
+      "content-length": "0"
+    },
+    "body": ""
+  },
+  "accessTokenAfterLogout": {
+    "status": 401
+  },
+  "refreshTokenAfterLogout": {
+    "status": 401,
+    "body": ""
+  },
+  "logoutWithoutBody": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "server": "Apache",
+      "content-length": "0"
+    },
+    "body": ""
+  },
+  "accessTokenAfterLogoutWithoutBody": {
+    "status": 401
+  },
+  "refreshTokenAfterLogoutWithoutBody": {
+    "status": 401
+  },
+  "wrongPasswordLogin": {
+    "method": "POST",
+    "path": "/login",
+    "status": 401,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "www-authenticate": "Bearer",
+      "server": "Apache",
+      "content-length": "0"
+    },
+    "json": null,
+    "text": "",
+    "ms": 8
+  },
+  "loginWithUnknownRole": {
+    "status": 401,
+    "body": "",
+    "tokens": null
+  },
+  "operator": {
+    "basicInfo": {
+      "method": "GET",
+      "path": "/info",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "server": "Apache",
+        "content-length": "367"
+      },
+      "json": {
+        "status": {
+          "errors": [],
+          "summary": ""
+        },
+        "console": [],
+        "result": {
+          "apiVersion": 2,
+          "username": "test",
+          "serverVersion": "IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2 (Build 221U) Fri Jun 26 2026 09:58:52 EDT",
+          "systemMode": "",
+          "product": "irisforhealth",
+          "namespaces": [
+            {
+              "name": "%SYS"
+            },
+            {
+              "name": "HSLIB"
+            }
+          ],
+          "privileges": {
+            "ExternalLanguageServerEdit": {
+              "use": false
+            },
+            "Journal": {
+              "use": false
+            },
+            "Manage": {
+              "use": false
+            },
+            "OAuth2_Client": {
+              "use": false
+            },
+            "OAuth2_Registration": {
+              "use": false
+            },
+            "OAuth2_Server": {
+              "use": false
+            },
+            "Operate": {
+              "use": true
+            },
+            "Secure": {
+              "use": false
+            },
+            "Task": {
+              "use": false
+            },
+            "Wallet": {
+              "use": false
+            },
+            "FileSystemAccess": {
+              "use": false
+            }
+          }
+        }
+      },
+      "ms": 9
+    },
+    "login": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "server": "Apache",
+        "content-length": "464"
+      },
+      "tokens": {
+        "keys": [
+          "access_token",
+          "refresh_token",
+          "sub",
+          "iat",
+          "exp"
+        ],
+        "access": "<jwt 300 chars>",
+        "refresh": "<jwt 283 chars>",
+        "exp": 1790169407,
+        "accessClaims": {
+          "header": {
+            "alg": "ES256",
+            "typ": "JWT"
+          },
+          "payload": {
+            "iat": 1790169347.891504,
+            "exp": 1790169407,
+            "iss": "<iris-hostname>/IRIS",
+            "sub": "test",
+            "sid": "t5p+plcjsq6h+nr/p7sReq3s",
+            "app": "/api/admin/"
+          }
+        },
+        "refreshClaims": {
+          "header": {
+            "alg": "ES256",
+            "typ": "JWT"
+          },
+          "payload": {
+            "iat": 1790169347.891504,
+            "exp": 1790170247,
+            "iss": "<iris-hostname>/IRIS",
+            "sid": "t5p+plcjsq6h+nr/p7sReq3s",
+            "app": "/api/admin/"
+          }
+        }
+      }
+    },
+    "loginWithNonEscalationRole": {
+      "request": {
+        "role": "%Manager"
+      },
+      "status": 401,
+      "body": "",
+      "tokens": null
+    }
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "meta": {
+    "image": "containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3",
+    "serverVersion": "IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2 (Build 221U) Fri Jun 26 2026 09:58:52 EDT",
+    "capturedAt": "2026-09-23T13:15:53.354Z",
+    "instance": "http://<iris-host>:52773/api/admin"
+  },
+  "assumption": "Which fields are zoned (Z/±hh:mm) and which are instance-local",
+  "capturedAtUtc": "2026-09-23T13:15:53.353Z",
+  "headersOfOneResponse": {
+    "content-type": "application/json; charset=utf-8",
+    "server": "Apache",
+    "content-length": "392"
+  },
+  "auditOffset": [
+    {
+      "TimeStamp": "2026-09-23 14:15:53.224",
+      "UTCTimeStamp": "2026-09-23 13:15:53.224",
+      "offsetMinutes": 60
+    },
+    {
+      "TimeStamp": "2026-09-23 14:15:49.975",
+      "UTCTimeStamp": "2026-09-23 13:15:49.975",
+      "offsetMinutes": 60
+    },
+    {
+      "TimeStamp": "2026-09-23 14:15:48.597",
+      "UTCTimeStamp": "2026-09-23 13:15:48.597",
+      "offsetMinutes": 60
+    },
+    {
+      "TimeStamp": "2026-09-23 14:15:48.582",
+      "UTCTimeStamp": "2026-09-23 13:15:48.582",
+      "offsetMinutes": 60
+    },
+    {
+      "TimeStamp": "2026-09-23 14:15:47.867",
+      "UTCTimeStamp": "2026-09-23 13:15:47.867",
+      "offsetMinutes": 60
+    }
+  ],
+  "fields": {
+    "/v2/async-results[].TimeQueued": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 14:15:48",
+        "2026-09-23 14:15:48",
+        "2026-09-23 14:15:23"
+      ]
+    },
+    "/v2/async-results[].TimeStarted": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 14:15:48",
+        "2026-09-23 14:15:48",
+        "2026-09-23 14:15:23"
+      ]
+    },
+    "/v2/async-results[].TimeFinished": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 14:15:48",
+        "2026-09-23 14:15:48",
+        "2026-09-23 14:15:23"
+      ]
+    },
+    "/v2/journal/files[].CreationTime": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 12:59:09",
+        "2026-09-23 11:37:07"
+      ]
+    },
+    "/v2/monitor/system-usage.LastUpdate": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 14:15:49"
+      ]
+    },
+    "/v2/task/history[].LastStart": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 14:15:00",
+        "2026-09-23 14:10:00",
+        "2026-09-23 14:10:00"
+      ]
+    },
+    "/v2/task/history[].Completed": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 14:15:00",
+        "2026-09-23 14:10:00",
+        "2026-09-23 14:10:00"
+      ]
+    },
+    "/v2/task/history[].LogDatetime": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 14:15:00",
+        "2026-09-23 14:10:00",
+        "2026-09-23 14:10:00"
+      ]
+    },
+    "/v2/task/upcoming[].Datetime": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 14:20:00",
+        "2026-09-23 14:20:00",
+        "2026-09-23 14:25:00"
+      ]
+    },
+    "/v2/tasks[].NextScheduled": {
+      "form": "naive",
+      "examples": [
+        "2026-09-24 00:00:00",
+        "2026-09-24 00:30:00",
+        "2026-09-24 01:00:00"
+      ]
+    },
+    "/v2/tasks[].LastFinished": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 11:38:00",
+        "2026-09-23 11:38:00",
+        "2026-09-23 14:10:00"
+      ]
+    },
+    "/v2/web-sessions[].Timeout": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 20:40:03"
+      ]
+    },
+    "POST /v2/journal/file/records[].TimeStamp": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 11:37:07",
+        "2026-09-23 11:37:07",
+        "2026-09-23 11:37:07"
+      ]
+    },
+    "POST /v2/security/audit/records[].TimeStamp": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 14:15:53.224",
+        "2026-09-23 14:15:49.975",
+        "2026-09-23 14:15:48.597"
+      ]
+    },
+    "POST /v2/security/audit/records[].UTCTimeStamp": {
+      "form": "naive",
+      "examples": [
+        "2026-09-23 13:15:53.224",
+        "2026-09-23 13:15:49.975",
+        "2026-09-23 13:15:48.597"
+      ]
+    }
+  }
+}

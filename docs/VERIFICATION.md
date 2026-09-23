@@ -42,6 +42,7 @@ and commit the JSON report next to this file.
 | 2026-09-19 | same image, run 35467740679 | JWT | 21/22: identical, except the bare `/aperture/` directory URL answered 404; the built-in web server needs `/aperture/index.html`, which the check and the docs now use | job log |
 | 2026-09-22 | same image, run 35719716417 (`--mutate`) | JWT | 25/25: the previous 22 plus a suspend/resume round trip; the read-back showed `/v2/task/info` correct and `/v2/tasks` lagging (recorded, not a failure) | `iris-verification` artifact of the run |
 | 2026-09-19 | same image, both runs, inside the container | - | `Aperture.Installer.Doctor()` (Embedded Python): 7/7 ok (version, JWT available, `/api/admin` enabled + password + JWT, `/aperture` web app, files on disk) | job log, step "Readiness report" |
+| 2026-09-23 | IRIS for Health 2026.2 (Build 221U), `containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3…62cf3`, a real instance on a LAN | JWT | 22/22, and 25/25 with `--mutate` (the task list lags the task object again) | [`2026-09-23-irishealth-2026.2/`](2026-09-23-irishealth-2026.2/) |
 
 ## Findings from the `--mutate` probe (22 September 2026, run 35718557061)
 
@@ -54,6 +55,34 @@ and commit the JSON report next to this file.
   `Content-Type: application/json`; the same applies to `database-dir/mount`, `database-dir/truncate`
   and `journal/file/integrity-check`, and the Explorer always sends `{}` for an operation that
   declares a body. Recorded as `optional-body-415` in `src/lib/quirks.ts`.
+
+## A real instance, 23 September 2026
+
+The first pass against a real instance rather than CI's throwaway container: an IRIS for Health
+2026.2 Community container on a LAN, with an administrator and an account holding `%Operator`,
+from a browser in another time zone. `scripts/live/evidence.mjs` recorded the API's answers per
+assumption and `playwright.live.config.ts` walked every screen; everything is in
+[`2026-09-23-irishealth-2026.2/`](2026-09-23-irishealth-2026.2/), with an index of what each file
+shows. What it changed in Aperture (see `CHANGELOG.md` for each fix):
+
+- **Screens broken against every real instance, because the spec (and a mock that followed it)
+  names fields IRIS does not send:** every service shown disabled (`Enabled` is a boolean, there
+  is no `EnabledBoolean`); the processes' Executable column (`EXEname`); SQL privileges' columns
+  and Revoke (`Object`/`Action`, not `Name`/`Privilege`); the Explorer's error block
+  (`status.errors` objects); the licence servers' Description (IRIS sends `KeyDirectory`).
+- **Numbers read wrongly:** totals since startup shown as per-second rates, a ratio shown as a
+  percentage, ten padded busy-process rows shown as ten busy processes.
+- **Times from another zone:** 300 minutes off from New York against a London instance; the
+  instance's offset is now measured when the connection names no zone.
+- **Behaviour the spec does not describe:** 60-second access tokens that rotate, with a replayed
+  refresh token revoking the session (duplicated tabs signed each other out); re-reading a
+  finished async task logs a severity-2 alert (the portal re-read them on refetch); journal records
+  return half of `maxRows`; `task/upcoming` stops at 100; the database lists refuse `%Operator`.
+- **The mock is now also held to the shapes the instance answered in**
+  (`src/mocks/__tests__/iris-shapes.json`), so the next field the spec gets wrong fails a test
+  instead of a screen.
+
+Checks that change security settings are `e2e/live/writes.spec.ts`, run by the instance's owner.
 
 ## Known differences between spec and instances
 

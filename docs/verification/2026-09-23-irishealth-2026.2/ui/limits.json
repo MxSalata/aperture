@@ -1,0 +1,22 @@
+{
+  "audit": {
+    "requested": 5,
+    "badges": 1,
+    "counts": [
+      "5 rows"
+    ]
+  },
+  "tasks": {
+    "badges": 0,
+    "counts": [
+      "18 rows"
+    ]
+  },
+  "journal": {
+    "button": "Browse records (first 200)",
+    "badges": 1,
+    "counts": [
+      "200 rows"
+    ]
+  }
+}

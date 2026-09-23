@@ -1,0 +1,3753 @@
+{
+  "meta": {
+    "image": "containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3",
+    "serverVersion": "IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2 (Build 221U) Fri Jun 26 2026 09:58:52 EDT",
+    "capturedAt": "2026-09-23T13:15:47.597Z",
+    "instance": "http://<iris-host>:52773/api/admin"
+  },
+  "assumption": "AutheEnabled bit numbering (src/features/security/keys.ts) and round trip",
+  "webApps": [
+    {
+      "name": "/api/admin",
+      "list": {
+        "Name": "/api/admin",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%Api.Admin"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/admin/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": false,
+        "DeepSeeEnabled": false,
+        "Description": "Admin REST Apis",
+        "DispatchClass": "%Api.Admin",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": true,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 3600,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/api/atelier",
+      "list": {
+        "Name": "/api/atelier",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "%Development",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%Api.Atelier"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/atelier/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": false,
+        "DeepSeeEnabled": false,
+        "Description": "Atelier REST Apis",
+        "DispatchClass": "%Api.Atelier",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "%Development",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 3600,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/api/deepsee",
+      "list": {
+        "Name": "/api/deepsee",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%Api.DeepSee"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/deepsee/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": false,
+        "DeepSeeEnabled": false,
+        "Description": "DeepSee REST Apis",
+        "DispatchClass": "%Api.DeepSee",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 3600,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/api/docdb",
+      "list": {
+        "Name": "/api/docdb",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%Api.DocDB"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/docdb/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": false,
+        "DeepSeeEnabled": false,
+        "Description": "DocDB REST Apis",
+        "DispatchClass": "%Api.DocDB",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 3600,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/api/fhir-explorer",
+      "list": {
+        "Name": "/api/fhir-explorer",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "HS.HC.FHIRExplorer.Handler"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/fhir-explorer/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "",
+        "DispatchClass": "HS.HC.FHIRExplorer.Handler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": true,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSCUSTOM",
+              "%DB_HSLIB",
+              "%HS_DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/api/healthshare-rest/hssys",
+      "list": {
+        "Name": "/api/healthshare-rest/hssys",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "HS.HC.SYS.ServicesRESTHandler"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/healthshare-rest/hssys/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "Web Application for REST Services in namespace HSSYS",
+        "DispatchClass": "HS.HC.SYS.ServicesRESTHandler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Never",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "%HS_ServiceRole",
+            "TargetRoles": [
+              "%All"
+            ]
+          },
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSCUSTOM",
+              "%DB_HSLIB",
+              "%DB_IRISSYS",
+              "%HS_DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/api/iam",
+      "list": {
+        "Name": "/api/iam",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": false,
+        "Type": "CSP",
+        "Resource": "%IAM",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%Api.IAM.v1.disp"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/iam/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": false,
+        "DeepSeeEnabled": false,
+        "Description": "IAM REST Apis",
+        "DispatchClass": "%Api.IAM.v1.disp",
+        "Enabled": false,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "%IAM",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 3600,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/api/iknow",
+      "list": {
+        "Name": "/api/iknow",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%Api.iKnow"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/iknow/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": false,
+        "DeepSeeEnabled": false,
+        "Description": "iKnow REST Apis",
+        "DispatchClass": "%Api.iKnow",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 3600,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/api/interop-editors",
+      "list": {
+        "Name": "/api/interop-editors",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%Api.InteropEditors"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/interop-editors/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": false,
+        "DeepSeeEnabled": false,
+        "Description": "Interoperability Editors REST Apis",
+        "DispatchClass": "%Api.InteropEditors",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": true,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 3600,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%EnsRole_InteropEditorsAPI"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/api/mgmnt",
+      "list": {
+        "Name": "/api/mgmnt",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%Api.Mgmnt.v2.disp"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/mgmnt/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": false,
+        "DeepSeeEnabled": false,
+        "Description": "API Management REST Apis",
+        "DispatchClass": "%Api.Mgmnt.v2.disp",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 3600,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/api/monitor",
+      "list": {
+        "Name": "/api/monitor",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%Api.Monitor"
+      },
+      "AutheEnabled": 64,
+      "AuthenticationMethods": [
+        "Unauthenticated"
+      ],
+      "detail": {
+        "AutheEnabled": 64,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/monitor/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": false,
+        "DeepSeeEnabled": false,
+        "Description": "Monitoring REST Apis",
+        "DispatchClass": "%Api.Monitor",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 3600,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_IRISSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/api/security-config",
+      "list": {
+        "Name": "/api/security-config",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "HS.HC.Security.Handler"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/api/security-config/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "",
+        "DispatchClass": "HS.HC.Security.Handler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": true,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Never",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSLIB",
+              "%DB_IRISSYS",
+              "%HS_DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/fhir-management",
+      "list": {
+        "Name": "/csp/fhir-management",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%ZHSLIB.REST.AngularHandler"
+      },
+      "AutheEnabled": 64,
+      "AuthenticationMethods": [
+        "Unauthenticated"
+      ],
+      "detail": {
+        "AutheEnabled": 64,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/fhir-management/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "FHIR Management UI",
+        "DispatchClass": "%ZHSLIB.REST.AngularHandler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "/usr/irissys/csp/hslib/ui/isc-fhir/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/fhir-management/api",
+      "list": {
+        "Name": "/csp/fhir-management/api",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "HS.FHIRServer.Management.REST.Handler"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/fhir-management/api/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "FHIR Management REST API",
+        "DispatchClass": "HS.FHIRServer.Management.REST.Handler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": true,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": true,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSCUSTOM",
+              "%DB_HSLIB",
+              "%DB_IRISSYS",
+              "%HS_DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/fhirsql",
+      "list": {
+        "Name": "/csp/fhirsql",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%ZHSLIB.REST.AngularHandler"
+      },
+      "AutheEnabled": 64,
+      "AuthenticationMethods": [
+        "Unauthenticated"
+      ],
+      "detail": {
+        "AutheEnabled": 64,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/fhirsql/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "",
+        "DispatchClass": "%ZHSLIB.REST.AngularHandler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "/usr/irissys/csp/hslib/ui/fhir-sql/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/fhirsql/api/repository",
+      "list": {
+        "Name": "/csp/fhirsql/api/repository",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "HS.HC.FHIRSQL.REST.BackEndAPI.Map"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/fhirsql/api/repository/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "",
+        "DispatchClass": "HS.HC.FHIRSQL.REST.BackEndAPI.Map",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Never",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSCUSTOM",
+              "%DB_HSLIB",
+              "%DB_IRISSYS",
+              "%HS_DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/fhirsql/api/ui",
+      "list": {
+        "Name": "/csp/fhirsql/api/ui",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "HS.HC.FHIRSQL.REST.FrontEndAPI.Map"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/fhirsql/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "",
+        "DispatchClass": "HS.HC.FHIRSQL.REST.FrontEndAPI.Map",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": true,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Never",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSCUSTOM",
+              "%DB_HSLIB",
+              "%DB_IRISSYS",
+              "%HS_DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/healthshare",
+      "list": {
+        "Name": "/csp/healthshare",
+        "Namespace": "HSLIB",
+        "NamespaceDefault": true,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password",
+          "Delegated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 8224,
+      "AuthenticationMethods": [
+        "Password",
+        "Delegated"
+      ],
+      "detail": {
+        "AutheEnabled": 8224,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/healthshare/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": true,
+        "Description": "HealthShare Core",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": true,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSLIB",
+        "Package": "",
+        "Path": "/usr/irissys/csp/healthshare/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSLIB",
+              "%DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/healthshare/hssys",
+      "list": {
+        "Name": "/csp/healthshare/hssys",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password",
+          "Delegated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 8224,
+      "AuthenticationMethods": [
+        "Password",
+        "Delegated"
+      ],
+      "detail": {
+        "AutheEnabled": 8224,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/healthshare/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": true,
+        "Description": "HealthShare SYS Portal",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "/usr/irissys/csp/healthshare/hssys/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSLIB",
+              "%DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/healthshare/hssys/app",
+      "list": {
+        "Name": "/csp/healthshare/hssys/app",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%ZHSLIB.REST.AngularHandler"
+      },
+      "AutheEnabled": 64,
+      "AuthenticationMethods": [
+        "Unauthenticated"
+      ],
+      "detail": {
+        "AutheEnabled": 64,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/healthshare/hssys/app/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "",
+        "DispatchClass": "%ZHSLIB.REST.AngularHandler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "/usr/irissys/csp/hslib/ui/hs-app-instance/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Never",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/healthshare/hssys/app/api",
+      "list": {
+        "Name": "/csp/healthshare/hssys/app/api",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "HS.HC.SYS.RESTHandler"
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/healthshare/hssys/app/api/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "Web Application for REST API to serve the single UI for namespace HSSYS",
+        "DispatchClass": "HS.HC.SYS.RESTHandler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": true,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Never",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSCUSTOM",
+              "%DB_HSLIB",
+              "%DB_IRISSYS",
+              "%HS_DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/healthshare/hssys/services",
+      "list": {
+        "Name": "/csp/healthshare/hssys/services",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/healthshare/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": false,
+        "CSRFToken": false,
+        "DeepSeeEnabled": false,
+        "Description": "HealthShare SYS Services",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "/usr/irissys/csp/healthshare/hssys/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSLIB",
+              "%DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/hscustom",
+      "list": {
+        "Name": "/csp/hscustom",
+        "Namespace": "HSCUSTOM",
+        "NamespaceDefault": true,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/hscustom",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "Web App for Visual Studio Code to properly edit documents",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": true,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSCUSTOM",
+        "Package": "",
+        "Path": "/usr/irissys/csp/hscustom/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/hssys",
+      "list": {
+        "Name": "/csp/hssys",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": true,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Password",
+          "Delegated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 8224,
+      "AuthenticationMethods": [
+        "Password",
+        "Delegated"
+      ],
+      "detail": {
+        "AutheEnabled": 8224,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": true,
+        "Description": "Ensemble Management Portal",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": true,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "/usr/irissys/csp/healthshare/hssys/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSLIB",
+              "%DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/oauth2-client/api",
+      "list": {
+        "Name": "/csp/oauth2-client/api",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "%HSAdmin_InstallationManagement",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "HS.HC.OAuth2.Client.REST.Handler"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/oauth2-client/api/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "OAuth2 Client REST API",
+        "DispatchClass": "HS.HC.OAuth2.Client.REST.Handler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": true,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": true,
+        "Resource": "%HSAdmin_InstallationManagement",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSCUSTOM",
+              "%DB_HSLIB",
+              "%DB_IRISSYS",
+              "%HS_DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/oauth2-server/api",
+      "list": {
+        "Name": "/csp/oauth2-server/api",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "%HSAdmin_InstallationManagement",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "HS.HC.OAuth2.Server.REST.Handler"
+      },
+      "AutheEnabled": 32,
+      "AuthenticationMethods": [
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 32,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/oauth2-server/api/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "OAuth2 Server REST API",
+        "DispatchClass": "HS.HC.OAuth2.Server.REST.Handler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": true,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": true,
+        "Resource": "%HSAdmin_InstallationManagement",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_HSCUSTOM",
+              "%DB_HSLIB",
+              "%DB_IRISSYS",
+              "%HS_DB_HSSYS"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/csp/sys/oauth2",
+      "list": {
+        "Name": "/csp/sys/oauth2",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": false,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 64,
+      "AuthenticationMethods": [
+        "Unauthenticated"
+      ],
+      "detail": {
+        "AutheEnabled": 64,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/sys/oauth2/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "Redirection endpoints for OAuth 2.0 clients",
+        "DispatchClass": "",
+        "Enabled": false,
+        "ErrorPage": "OAuth2.ErrorPage",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "",
+        "PermittedClasses": "1(1\"OAuth2.Response\",1\"OAuth2.JWTServer\",1\"OAuth2.PostLogoutRedirect\")",
+        "Recurse": false,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "No",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Never",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/user",
+      "list": {
+        "Name": "/csp/user",
+        "Namespace": "USER",
+        "NamespaceDefault": true,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/user/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "User Namespace applications",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": true,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "USER",
+        "Package": "",
+        "Path": "/durable/iris/csp/user/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": [
+          {
+            "MatchRole": "",
+            "TargetRoles": [
+              "%DB_USER"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "/isc/studio/usertemplates",
+      "list": {
+        "Name": "/isc/studio/usertemplates",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/isc/studio/usertemplates/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "User Studio Templates",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "%Z.usertemplate",
+        "Path": "/durable/iris/devuser/studio/templates/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "%CSP.StudioTemplateSuper",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/ui/fhir-explorer",
+      "list": {
+        "Name": "/ui/fhir-explorer",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%ZHSLIB.REST.AngularHandler"
+      },
+      "AutheEnabled": 64,
+      "AuthenticationMethods": [
+        "Unauthenticated"
+      ],
+      "detail": {
+        "AutheEnabled": 64,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/ui/fhir-explorer/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "",
+        "DispatchClass": "%ZHSLIB.REST.AngularHandler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "/usr/irissys/csp/hslib/ui/fhir-explorer/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Never",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/ui/interop",
+      "list": {
+        "Name": "/ui/interop",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 64,
+      "AuthenticationMethods": [
+        "Unauthenticated"
+      ],
+      "detail": {
+        "AutheEnabled": 64,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/ui/interop/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "Interoperability",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "/usr/irissys/ui/interop/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 3600,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/ui/security-config",
+      "list": {
+        "Name": "/ui/security-config",
+        "Namespace": "HSSYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": "%ZHSLIB.REST.AngularHandler"
+      },
+      "AutheEnabled": 64,
+      "AuthenticationMethods": [
+        "Unauthenticated"
+      ],
+      "detail": {
+        "AutheEnabled": 64,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/ui/security-config/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": true,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "",
+        "DispatchClass": "%ZHSLIB.REST.AngularHandler",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "HSSYS",
+        "Package": "",
+        "Path": "/usr/irissys/csp/hslib/ui/isc-security/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Never",
+        "SessionScope": "Lax",
+        "UserCookieScope": "Lax",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/broker",
+      "list": {
+        "Name": "/csp/broker",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "System,CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 64,
+      "AuthenticationMethods": [
+        "Unauthenticated"
+      ],
+      "detail": {
+        "AutheEnabled": 64,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/broker/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": false,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "Common static file store",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": false,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "%cspbroker",
+        "Path": "/durable/iris/csp/broker/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 28800,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/documatic",
+      "list": {
+        "Name": "/csp/documatic",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "System,CSP",
+        "Resource": "%Development",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/documatic/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "Documentation class reference",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "/usr/irissys/docs/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "%Development",
+        "ServeFiles": "Always",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/sys",
+      "list": {
+        "Name": "/csp/sys",
+        "Namespace": "%SYS",
+        "NamespaceDefault": true,
+        "Enabled": true,
+        "Type": "System,CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/sys/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "System Management Portal",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": true,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "%cspapp",
+        "Path": "/usr/irissys/csp/sys/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "%CSP.Util.Domain",
+        "Timeout": 28800,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/sys/exp",
+      "list": {
+        "Name": "/csp/sys/exp",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "System,CSP",
+        "Resource": "%Development",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/sys/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "System Management Developer Portal",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "%cspapp.exp",
+        "Path": "/usr/irissys/csp/sys/exp/",
+        "PermittedClasses": "",
+        "Recurse": false,
+        "RedirectEmptyPath": false,
+        "Resource": "%Development",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "%CSP.Util.Domain",
+        "Timeout": 28800,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/sys/mgr",
+      "list": {
+        "Name": "/csp/sys/mgr",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "System,CSP",
+        "Resource": "%Admin_Manage",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/sys/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "System Management Manager Portal",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "%cspapp.mgr",
+        "Path": "/usr/irissys/csp/sys/mgr/",
+        "PermittedClasses": "",
+        "Recurse": false,
+        "RedirectEmptyPath": false,
+        "Resource": "%Admin_Manage",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "%CSP.Util.Domain",
+        "Timeout": 28800,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/sys/op",
+      "list": {
+        "Name": "/csp/sys/op",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "System,CSP",
+        "Resource": "%Admin_Operate",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/sys/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "System Management Operator Portal",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "%cspapp.op",
+        "Path": "/usr/irissys/csp/sys/op/",
+        "PermittedClasses": "",
+        "Recurse": false,
+        "RedirectEmptyPath": false,
+        "Resource": "%Admin_Operate",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "%CSP.Util.Domain",
+        "Timeout": 28800,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/csp/sys/sec",
+      "list": {
+        "Name": "/csp/sys/sec",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "System,CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/csp/sys/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "System Management Security Portal",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "%cspapp.sec",
+        "Path": "/usr/irissys/csp/sys/sec/",
+        "PermittedClasses": "",
+        "Recurse": false,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "%CSP.Util.Domain",
+        "Timeout": 28800,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/isc/studio/rules",
+      "list": {
+        "Name": "/isc/studio/rules",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "System,CSP",
+        "Resource": "",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/isc/studio/rules/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "InterSystems Studio Rules",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "",
+        "Path": "/usr/irissys/dev/csp/rules/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "",
+        "ServeFiles": "No",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    },
+    {
+      "name": "/isc/studio/templates",
+      "list": {
+        "Name": "/isc/studio/templates",
+        "Namespace": "%SYS",
+        "NamespaceDefault": false,
+        "Enabled": true,
+        "Type": "System,CSP",
+        "Resource": "%Development",
+        "AuthenticationMethods": [
+          "Unauthenticated",
+          "Password"
+        ],
+        "IsSystemApp": false,
+        "DispatchClass": ""
+      },
+      "AutheEnabled": 96,
+      "AuthenticationMethods": [
+        "Unauthenticated",
+        "Password"
+      ],
+      "detail": {
+        "AutheEnabled": 96,
+        "AutoCompile": false,
+        "ChangePasswordPage": "",
+        "CookiePath": "/isc/studio/templates/",
+        "CorsAllowlist": [],
+        "CorsCredentialsAllowed": false,
+        "CorsHeadersList": [],
+        "CSPZENEnabled": true,
+        "CSRFToken": true,
+        "DeepSeeEnabled": false,
+        "Description": "InterSystems Studio Templates",
+        "DispatchClass": "",
+        "Enabled": true,
+        "ErrorPage": "",
+        "EventClass": "",
+        "GroupById": "%ISCMgtPortal",
+        "iKnowEnabled": false,
+        "InbndWebServicesEnabled": true,
+        "IsNameSpaceDefault": false,
+        "JWTAuthEnabled": false,
+        "JWTAccessTokenTimeout": 60,
+        "JWTRefreshTokenTimeout": 900,
+        "LockCSPName": true,
+        "LoginPage": "",
+        "NameSpace": "%SYS",
+        "Package": "%template",
+        "Path": "/usr/irissys/dev/studio/templates/",
+        "PermittedClasses": "",
+        "Recurse": true,
+        "RedirectEmptyPath": false,
+        "Resource": "%Development",
+        "ServeFiles": "Always and cached",
+        "ServeFilesTimeout": 3600,
+        "SuperClass": "%CSP.StudioTemplateSuper",
+        "Timeout": 900,
+        "TraceEnabled": false,
+        "TwoFactorEnabled": false,
+        "UseCookies": "Always",
+        "SessionScope": "Strict",
+        "UserCookieScope": "Strict",
+        "WSGIAppLocation": "",
+        "WSGIAppName": "",
+        "WSGICallable": "app",
+        "WSGIDebug": false,
+        "WSGIType": "WSGI",
+        "MatchRoles": []
+      }
+    }
+  ],
+  "services": [
+    {
+      "name": "%Service_Bindings",
+      "list": {
+        "Name": "%Service_Bindings",
+        "Enabled": true,
+        "Public": "N/A",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "AllowedConnections": [],
+        "Description": "Controls SQL or Objects",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 32,
+        "ClientSystems": [],
+        "Description": "Controls SQL or Objects",
+        "Enabled": true
+      }
+    },
+    {
+      "name": "%Service_CacheDirect",
+      "list": {
+        "Name": "%Service_CacheDirect",
+        "Enabled": false,
+        "Public": "Yes",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "AllowedConnections": [],
+        "Description": "Controls Cache Direct",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 32,
+        "ClientSystems": [],
+        "Description": "Controls Cache Direct",
+        "Enabled": false
+      }
+    },
+    {
+      "name": "%Service_CallIn",
+      "list": {
+        "Name": "%Service_CallIn",
+        "Enabled": false,
+        "Public": "Yes",
+        "AuthenticationMethods": [
+          "Password",
+          "Operating System"
+        ],
+        "AllowedConnections": [],
+        "Description": "Controls the Call-In Interface",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 48,
+        "ClientSystems": [],
+        "Description": "Controls the Call-In Interface",
+        "Enabled": false
+      }
+    },
+    {
+      "name": "%Service_DataCheck",
+      "list": {
+        "Name": "%Service_DataCheck",
+        "Enabled": false,
+        "Public": "N/A",
+        "AuthenticationMethods": [],
+        "AllowedConnections": [],
+        "Description": "Controls this system as a DataCheck source",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 1024,
+        "ClientSystems": [],
+        "Description": "Controls this system as a DataCheck source",
+        "Enabled": false
+      }
+    },
+    {
+      "name": "%Service_DocDB",
+      "list": {
+        "Name": "%Service_DocDB",
+        "Enabled": false,
+        "Public": "No",
+        "AuthenticationMethods": [],
+        "AllowedConnections": [],
+        "Description": "Controls Doc DB applications",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 1024,
+        "ClientSystems": [],
+        "Description": "Controls Doc DB applications",
+        "Enabled": false
+      }
+    },
+    {
+      "name": "%Service_ECP",
+      "list": {
+        "Name": "%Service_ECP",
+        "Enabled": false,
+        "Public": "N/A",
+        "AuthenticationMethods": [],
+        "AllowedConnections": [],
+        "Description": "Controls Enterprise Cache Protocol (ECP)",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 1024,
+        "ClientSystems": [],
+        "Description": "Controls Enterprise Cache Protocol (ECP)",
+        "Enabled": false
+      }
+    },
+    {
+      "name": "%Service_EscalateLogin",
+      "list": {
+        "Name": "%Service_EscalateLogin",
+        "Enabled": true,
+        "Public": "Yes",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "AllowedConnections": [],
+        "Description": "Controls Escalated logins",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 1056,
+        "ClientSystems": [],
+        "Description": "Controls Escalated logins",
+        "Enabled": true
+      }
+    },
+    {
+      "name": "%Service_Login",
+      "list": {
+        "Name": "%Service_Login",
+        "Enabled": true,
+        "Public": "No",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "AllowedConnections": [],
+        "Description": "Controls SYSTEM.Security.Login",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 1056,
+        "ClientSystems": [],
+        "Description": "Controls SYSTEM.Security.Login",
+        "Enabled": true
+      }
+    },
+    {
+      "name": "%Service_Mirror",
+      "list": {
+        "Name": "%Service_Mirror",
+        "Enabled": false,
+        "Public": "N/A",
+        "AuthenticationMethods": [],
+        "AllowedConnections": [],
+        "Description": "Controls Mirroring",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 1024,
+        "ClientSystems": [],
+        "Description": "Controls Mirroring",
+        "Enabled": false
+      }
+    },
+    {
+      "name": "%Service_Monitor",
+      "list": {
+        "Name": "%Service_Monitor",
+        "Enabled": false,
+        "Public": "N/A",
+        "AuthenticationMethods": [],
+        "AllowedConnections": [],
+        "Description": "Controls SNMP and remote Monitor commands",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 1024,
+        "ClientSystems": [],
+        "Description": "Controls SNMP and remote Monitor commands",
+        "Enabled": false
+      }
+    },
+    {
+      "name": "%Service_Shadow",
+      "list": {
+        "Name": "%Service_Shadow",
+        "Enabled": false,
+        "Public": "N/A",
+        "AuthenticationMethods": [],
+        "AllowedConnections": [],
+        "Description": "Controls if this system can be the source of a shadow",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 1024,
+        "ClientSystems": [],
+        "Description": "Controls if this system can be the source of a shadow",
+        "Enabled": false
+      }
+    },
+    {
+      "name": "%Service_Sharding",
+      "list": {
+        "Name": "%Service_Sharding",
+        "Enabled": false,
+        "Public": "N/A",
+        "AuthenticationMethods": [],
+        "AllowedConnections": [],
+        "Description": "Controls this system as a Shard Server",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 1024,
+        "ClientSystems": [],
+        "Description": "Controls this system as a Shard Server",
+        "Enabled": false
+      }
+    },
+    {
+      "name": "%Service_Terminal",
+      "list": {
+        "Name": "%Service_Terminal",
+        "Enabled": true,
+        "Public": "Yes",
+        "AuthenticationMethods": [
+          "Password",
+          "Operating System"
+        ],
+        "AllowedConnections": [],
+        "Description": "Controls terminal session on Unix",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 48,
+        "ClientSystems": [],
+        "Description": "Controls terminal session on Unix",
+        "Enabled": true
+      }
+    },
+    {
+      "name": "%Service_WebGateway",
+      "list": {
+        "Name": "%Service_WebGateway",
+        "Enabled": true,
+        "Public": "Yes",
+        "AuthenticationMethods": [
+          "Password"
+        ],
+        "AllowedConnections": [],
+        "Description": "Controls Web Gateway access",
+        "HttpOnlyCookies": true,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 32,
+        "ClientSystems": [],
+        "Description": "Controls Web Gateway sessions",
+        "Enabled": true
+      }
+    },
+    {
+      "name": "%Service_Weblink",
+      "list": {
+        "Name": "%Service_Weblink",
+        "Enabled": false,
+        "Public": "N/A",
+        "AuthenticationMethods": [
+          "Unauthenticated"
+        ],
+        "AllowedConnections": [],
+        "Description": "Controls WebLink",
+        "HttpOnlyCookies": false,
+        "TwoFactorEnabled": false
+      },
+      "detail": {
+        "AutheEnabled": 64,
+        "ClientSystems": [],
+        "Description": "Controls WebLink",
+        "Enabled": false
+      }
+    }
+  ],
+  "byBit": {
+    "4": [
+      {
+        "name": "%Service_CallIn",
+        "methods": [
+          "Password",
+          "Operating System"
+        ]
+      },
+      {
+        "name": "%Service_Terminal",
+        "methods": [
+          "Password",
+          "Operating System"
+        ]
+      }
+    ],
+    "5": [
+      {
+        "name": "/api/admin",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/api/atelier",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/api/deepsee",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/api/docdb",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/api/fhir-explorer",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/api/healthshare-rest/hssys",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/api/iam",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/api/iknow",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/api/interop-editors",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/api/mgmnt",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/api/security-config",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/fhir-management/api",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/fhirsql/api/repository",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/fhirsql/api/ui",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/healthshare",
+        "methods": [
+          "Password",
+          "Delegated"
+        ]
+      },
+      {
+        "name": "/csp/healthshare/hssys",
+        "methods": [
+          "Password",
+          "Delegated"
+        ]
+      },
+      {
+        "name": "/csp/healthshare/hssys/app/api",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/healthshare/hssys/services",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/hscustom",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/hssys",
+        "methods": [
+          "Password",
+          "Delegated"
+        ]
+      },
+      {
+        "name": "/csp/oauth2-client/api",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/oauth2-server/api",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/user",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/isc/studio/usertemplates",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/documatic",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys/exp",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys/mgr",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys/op",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys/sec",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/isc/studio/rules",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/isc/studio/templates",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "%Service_Bindings",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "%Service_CacheDirect",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "%Service_CallIn",
+        "methods": [
+          "Password",
+          "Operating System"
+        ]
+      },
+      {
+        "name": "%Service_EscalateLogin",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "%Service_Login",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "%Service_Terminal",
+        "methods": [
+          "Password",
+          "Operating System"
+        ]
+      },
+      {
+        "name": "%Service_WebGateway",
+        "methods": [
+          "Password"
+        ]
+      }
+    ],
+    "6": [
+      {
+        "name": "/api/monitor",
+        "methods": [
+          "Unauthenticated"
+        ]
+      },
+      {
+        "name": "/csp/fhir-management",
+        "methods": [
+          "Unauthenticated"
+        ]
+      },
+      {
+        "name": "/csp/fhirsql",
+        "methods": [
+          "Unauthenticated"
+        ]
+      },
+      {
+        "name": "/csp/healthshare/hssys/app",
+        "methods": [
+          "Unauthenticated"
+        ]
+      },
+      {
+        "name": "/csp/healthshare/hssys/app/api",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys/oauth2",
+        "methods": [
+          "Unauthenticated"
+        ]
+      },
+      {
+        "name": "/csp/user",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/isc/studio/usertemplates",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/ui/fhir-explorer",
+        "methods": [
+          "Unauthenticated"
+        ]
+      },
+      {
+        "name": "/ui/interop",
+        "methods": [
+          "Unauthenticated"
+        ]
+      },
+      {
+        "name": "/ui/security-config",
+        "methods": [
+          "Unauthenticated"
+        ]
+      },
+      {
+        "name": "/csp/broker",
+        "methods": [
+          "Unauthenticated"
+        ]
+      },
+      {
+        "name": "/csp/documatic",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys/exp",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys/mgr",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys/op",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/csp/sys/sec",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/isc/studio/rules",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "/isc/studio/templates",
+        "methods": [
+          "Unauthenticated",
+          "Password"
+        ]
+      },
+      {
+        "name": "%Service_Weblink",
+        "methods": [
+          "Unauthenticated"
+        ]
+      }
+    ],
+    "10": [
+      {
+        "name": "%Service_DataCheck",
+        "methods": []
+      },
+      {
+        "name": "%Service_DocDB",
+        "methods": []
+      },
+      {
+        "name": "%Service_ECP",
+        "methods": []
+      },
+      {
+        "name": "%Service_EscalateLogin",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "%Service_Login",
+        "methods": [
+          "Password"
+        ]
+      },
+      {
+        "name": "%Service_Mirror",
+        "methods": []
+      },
+      {
+        "name": "%Service_Monitor",
+        "methods": []
+      },
+      {
+        "name": "%Service_Shadow",
+        "methods": []
+      },
+      {
+        "name": "%Service_Sharding",
+        "methods": []
+      }
+    ],
+    "13": [
+      {
+        "name": "/csp/healthshare",
+        "methods": [
+          "Password",
+          "Delegated"
+        ]
+      },
+      {
+        "name": "/csp/healthshare/hssys",
+        "methods": [
+          "Password",
+          "Delegated"
+        ]
+      },
+      {
+        "name": "/csp/hssys",
+        "methods": [
+          "Password",
+          "Delegated"
+        ]
+      }
+    ]
+  }
+}

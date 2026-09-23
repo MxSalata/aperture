@@ -6,6 +6,7 @@
 //
 //   node --env-file=$HOME/.aperture/iris-live.env scripts/live/evidence.mjs --out docs/verification/<run>
 //     --keep-lan   keep LAN addresses and host names (scratch runs that are not committed)
+//     --reread     also show that re-reading an ended async task logs an alert (posts 2 alerts)
 //
 // Every file under --out is stamped with IRIS_IMAGE and the server's version string.
 import {
@@ -47,7 +48,9 @@ function claims(jwt) {
       .split('.')
       .slice(0, 2)
       .map((x) => JSON.parse(Buffer.from(x, 'base64url').toString('utf8')));
-    return { header: h, payload: { ...p, jti: p.jti ? '<jti>' : undefined } };
+    // The issuer is <host>/<instance>: the instance name is evidence, the host name is not published.
+    const iss = typeof p.iss === 'string' ? p.iss.replace(/^[^/]*/, '<iris-hostname>') : p.iss;
+    return { header: h, payload: { ...p, iss, jti: p.jti ? '<jti>' : undefined } };
   } catch {
     return null;
   }
@@ -79,11 +82,9 @@ const strip = (r) => ({ ...r, json: r.json, text: r.text?.slice(0, 400) });
   const t1 = tok(login);
   const bearer = await http('GET', '/info', { auth: `Bearer ${t1?.access_token}` });
 
-  // Refresh, then try the old refresh token again: is it rotated (single use)?
+  // Refresh (rotation and replay are section k, each in a session of its own).
   const refresh = await http('POST', '/refresh', { body: { refresh_token: t1?.refresh_token } });
   const t2 = tok(refresh);
-  const refreshReuse = await http('POST', '/refresh', { body: { refresh_token: t1?.refresh_token } });
-  const oldAccessAfterRefresh = await http('GET', '/info', { auth: `Bearer ${t1?.access_token}` });
 
   // Logout the way Aperture does it (bearer + refresh token in a JSON body), then reuse both.
   const t2Access = t2?.access_token ?? t1?.access_token;
@@ -164,8 +165,6 @@ const strip = (r) => ({ ...r, json: r.json, text: r.text?.slice(0, 400) });
       tokens: tokenSummary(t2),
       refreshTokenRotated: !!t2?.refresh_token && t2.refresh_token !== t1?.refresh_token,
     },
-    oldRefreshTokenReused: { status: refreshReuse.status, body: refreshReuse.json ?? refreshReuse.text },
-    oldAccessTokenAfterRefresh: { status: oldAccessAfterRefresh.status },
     logoutWithBody: { status: logout.status, headers: logout.headers, body: logout.json ?? logout.text },
     accessTokenAfterLogout: { status: accessAfterLogout.status },
     refreshTokenAfterLogout: {
@@ -189,7 +188,7 @@ const strip = (r) => ({ ...r, json: r.json, text: r.text?.slice(0, 400) });
   });
   note(
     'j',
-    `server ${serverVersion}; /info ${basic.status} (${basic.json?.result ? 'enveloped' : 'unwrapped'}); login ${login.status}; refresh ${refresh.status} (rotated ${t2?.refresh_token !== t1?.refresh_token}, reuse ${refreshReuse.status}); logout ${logout.status} → access ${accessAfterLogout.status}, refresh ${refreshAfterLogout.status}; bodiless logout ${logoutNoBody.status} → access ${accessAfterLogoutNoBody.status}, refresh ${refreshAfterLogoutNoBody.status}; unknown role ${unknownRole.status}; wrong password ${badLogin.status} / Basic ${wrongBasic.status} (${wrongBasic.headers['www-authenticate'] ?? 'no WWW-Authenticate'})`,
+    `server ${serverVersion}; /info ${basic.status} (${basic.json?.result ? 'enveloped' : 'unwrapped'}); login ${login.status}; refresh ${refresh.status} (rotated ${t2?.refresh_token !== t1?.refresh_token}); logout ${logout.status} → access ${accessAfterLogout.status}, refresh ${refreshAfterLogout.status}; bodiless logout ${logoutNoBody.status} → access ${accessAfterLogoutNoBody.status}, refresh ${refreshAfterLogoutNoBody.status}; unknown role ${unknownRole.status}; wrong password ${badLogin.status} / Basic ${wrongBasic.status} (${wrongBasic.headers['www-authenticate'] ?? 'no WWW-Authenticate'})`,
   );
 }
 
@@ -550,6 +549,240 @@ const bodies = {};
     byAcceptLanguage: lang,
   });
   note('i', `missing namespace → ${nf.status} ${JSON.stringify(nf.json?.status ?? nf.text).slice(0, 160)}`);
+}
+
+// ---- k. token lifetime: each rule in a session of its own ---------------------------------------------
+{
+  const loginAs = async () =>
+    tok(await http('POST', '/login', { body: { user: admin.user, password: admin.password } }));
+  const infoWith = async (t) => (await http('GET', '/info', { auth: `Bearer ${t}` })).status;
+  const refreshWith = async (rt) => {
+    const r = await http('POST', '/refresh', { body: { refresh_token: rt } });
+    return { status: r.status, t: tok(r) };
+  };
+  const out = {};
+  {
+    const t = await loginAs();
+    const lo = await http('POST', '/logout', {
+      auth: `Bearer ${t.access_token}`,
+      body: { refresh_token: t.refresh_token },
+    });
+    out.logoutBearerAndBody = {
+      logout: lo.status,
+      accessAfter: await infoWith(t.access_token),
+      refreshAfter: (await refreshWith(t.refresh_token)).status,
+    };
+  }
+  {
+    const t = await loginAs();
+    const r = await refreshWith(t.refresh_token);
+    const x = {
+      refresh: r.status,
+      newAccess: await infoWith(r.t.access_token),
+      oldAccessAfterRefresh: await infoWith(t.access_token),
+    };
+    x.replayOldRefresh = (await refreshWith(t.refresh_token)).status;
+    x.newAccessAfterReplay = await infoWith(r.t.access_token);
+    x.newRefreshAfterReplay = (await refreshWith(r.t.refresh_token)).status;
+    out.rotation = x;
+  }
+  {
+    const t = await loginAs();
+    const lo = await http('POST', '/logout', { auth: `Bearer ${t.access_token}` });
+    out.logoutBearerOnly = {
+      logout: lo.status,
+      accessAfter: await infoWith(t.access_token),
+      refreshAfter: (await refreshWith(t.refresh_token)).status,
+    };
+  }
+  {
+    const t = await loginAs();
+    const lo = await http('POST', '/logout', { body: { refresh_token: t.refresh_token } });
+    out.logoutBodyOnly = {
+      logout: lo.status,
+      accessAfter: await infoWith(t.access_token),
+      refreshAfter: (await refreshWith(t.refresh_token)).status,
+    };
+    if (out.logoutBodyOnly.accessAfter === 200)
+      await http('POST', '/logout', { auth: `Bearer ${t.access_token}` });
+  }
+  {
+    const t = await loginAs();
+    const c = (j) => JSON.parse(Buffer.from(j.split('.')[1], 'base64url'));
+    const [ac, rc] = [c(t.access_token), c(t.refresh_token)];
+    out.lifetimes = {
+      accessSeconds: ac.exp - ac.iat,
+      refreshSeconds: rc.exp - rc.iat,
+      accessClaims: Object.keys(ac),
+      refreshClaims: Object.keys(rc),
+    };
+    await http('POST', '/logout', { auth: `Bearer ${t.access_token}` });
+  }
+  save('k-token-lifetime', {
+    assumption: 'JWT lifetimes, rotation, reuse revocation and logout variants (one fresh session per rule)',
+    ...out,
+  });
+  note(
+    'k',
+    `access ${Math.round(out.lifetimes.accessSeconds)} s, refresh ${Math.round(out.lifetimes.refreshSeconds)} s; refresh → old access ${out.rotation.oldAccessAfterRefresh}; replayed refresh ${out.rotation.replayOldRefresh} → new pair ${out.rotation.newAccessAfterReplay}/${out.rotation.newRefreshAfterReplay}; logout bearer+body ${out.logoutBearerAndBody.logout}, bearer only ${out.logoutBearerOnly.logout}, body only ${out.logoutBodyOnly.logout}`,
+  );
+}
+
+// ---- l. what an operator may read, against what the spec says ----------------------------------------
+if (opSession) {
+  const firstOf = async (path, key) => {
+    const r = resultOf(await get(path));
+    return Array.isArray(r) && r.length ? r[0]?.[key] : undefined;
+  };
+  const ids = {
+    dir: userDir,
+    file: journalFile,
+    taskId: await firstOf('/v2/tasks', 'Id'),
+    pid: await firstOf('/v2/processes', 'Pid'),
+  };
+  const names = {
+    '/v2/security/user': admin.user,
+    '/v2/security/role': '%Manager',
+    '/v2/security/role/owners': '%Manager',
+    '/v2/security/resource': '%DB_USER',
+    '/v2/security/service': '%Service_Bindings',
+    '/v2/web-app': '/api/admin',
+    '/v2/namespace': 'USER',
+    '/v2/database': 'USER',
+  };
+  const valueFor = (path, param) => {
+    if (param === 'name') return names[path];
+    if (param === 'id') return path.startsWith('/v2/process') ? ids.pid : ids.taskId;
+    if (param === 'namespace') return 'USER';
+    if (param === 'grantee') return admin.user;
+    return ids[param];
+  };
+  const rows = [];
+  for (const o of index.operations.filter((o) => o.method === 'GET' && o.path.startsWith('/v2/'))) {
+    const q = new URLSearchParams();
+    let complete = true;
+    for (const p of o.params.filter((p) => p.required)) {
+      const v = valueFor(o.path, p.name);
+      if (v === undefined || v === null) {
+        complete = false;
+        break;
+      }
+      q.set(p.name, String(v));
+    }
+    if (!complete) continue;
+    const path = q.toString() ? `${o.path}?${q}` : o.path;
+    const [a, b] = [await get(path), await get(path, opSession.auth)];
+    const specAllows = !o.privileges?.length || o.privileges.includes('%Admin_Operate:U');
+    rows.push({
+      path: o.path,
+      spec: o.privileges.join(' or '),
+      admin: a.status,
+      operator: b.status,
+      differs: a.status === 200 && specAllows !== (b.status === 200),
+    });
+  }
+  save('l-operator-privileges', {
+    assumption: 'An account holding %Operator gets what the spec says %Admin_Operate may read',
+    rows,
+  });
+  note(
+    'l',
+    `${rows.length} reads; differ from the spec: ${
+      rows
+        .filter((r) => r.differs)
+        .map((r) => `${r.path} (${r.operator})`)
+        .join(', ') || 'none'
+    }`,
+  );
+}
+
+// ---- m. row limits the spec does not document ------------------------------------------------------------
+{
+  const count = async (p) => {
+    const r = await get(p);
+    return Array.isArray(resultOf(r)) ? resultOf(r).length : r.status;
+  };
+  const upcoming = {
+    default: await count('/v2/task/upcoming'),
+    maxRows150: await count('/v2/task/upcoming?maxRows=150'),
+    maxRows1000: await count('/v2/task/upcoming?maxRows=1000'),
+  };
+  const journal = {};
+  if (journalFile)
+    for (const n of [null, 10, 20, 600, 1000]) {
+      const r = await http(
+        'POST',
+        `/v2/journal/file/records?file=${encodeURIComponent(journalFile)}${n ? `&maxRows=${n}` : ''}`,
+        { auth: A },
+      );
+      const id = r.headers.location ? new URL(r.headers.location, IRIS_URL).searchParams.get('id') : null;
+      const done = id ? await waitForTask(A, id, { budgetMs: 120_000 }) : null;
+      const rows = done?.json?.result?.Result;
+      journal[n ? `maxRows${n}` : 'default'] = {
+        returned: Array.isArray(rows) ? rows.length : null,
+        firstAddresses: Array.isArray(rows) ? rows.slice(0, 5).map((x) => x.Address) : null,
+      };
+    }
+  save('m-list-limits', {
+    assumption: 'Lists stop at maxRows, default 1000 (spec)',
+    taskUpcoming: upcoming,
+    journalRecords: journal,
+  });
+  note(
+    'm',
+    `task/upcoming ${JSON.stringify(upcoming)}; journal records ${Object.entries(journal)
+      .map(([k, v]) => `${k}→${v.returned}`)
+      .join(', ')}`,
+  );
+}
+
+// ---- n. (opt-in, posts alerts) reading an ended async task again ----------------------------------------
+if (argv.includes('--reread')) {
+  const alerts = async () => {
+    const t = await (await fetch(`${IRIS_URL}/api/monitor/metrics`)).text();
+    return Number(t.match(/^iris_system_alerts (\d+)/m)?.[1] ?? NaN);
+  };
+  const queue = async () => {
+    const r = await http('POST', `/v2/database-dir/info?dir=${encodeURIComponent(userDir)}`, { auth: A });
+    return new URL(r.headers.location, IRIS_URL).searchParams.get('id');
+  };
+  const read = async (id, v = 'v2') =>
+    (await http('GET', '', { auth: A, base: `${IRIS_URL}${PREFIX}/${v}/async-result?id=${id}` })).json?.result
+      ?.State;
+  const untilEnded = async (id) => {
+    for (let i = 0; i < 60; i++) {
+      const s = await read(id);
+      if (['Finished', 'Failed', 'Canceled'].includes(s)) return s;
+      await new Promise((r) => setTimeout(r, 700));
+    }
+    return null;
+  };
+  const scenarios = {
+    singleReadAfterEnd: async (id) => {
+      await new Promise((r) => setTimeout(r, 4000));
+      return [await read(id)];
+    },
+    readUntilEndThenV2Again: async (id) => [await untilEnded(id), await read(id)],
+    readUntilEndThenV1Location: async (id) => [await untilEnded(id), await read(id, 'v1')],
+  };
+  const cases = {};
+  for (const [name, run] of Object.entries(scenarios)) {
+    const before = await alerts();
+    const reads = await run(await queue());
+    await new Promise((r) => setTimeout(r, 1500));
+    cases[name] = { reads, newAlerts: (await alerts()) - before };
+  }
+  save('n-async-reread-alert', {
+    assumption: 'Reading an ended async task again is harmless',
+    cases,
+    note: 'counted with iris_system_alerts of /api/monitor/metrics; each re-read logs ERROR #7846 "WQM attach passed invalid token" at severity 2 in messages.log',
+  });
+  note(
+    'n',
+    Object.entries(cases)
+      .map(([k, v]) => `${k}: ${v.newAlerts} alert(s)`)
+      .join('; '),
+  );
 }
 
 for (const s of [session, opSession])

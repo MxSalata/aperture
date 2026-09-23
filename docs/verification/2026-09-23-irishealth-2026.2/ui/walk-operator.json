@@ -1,0 +1,329 @@
+[
+  {
+    "route": "/",
+    "heading": "Dashboard",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/jobs",
+    "heading": "Job Center",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/activity",
+    "heading": "Activity",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/monitor",
+    "heading": "Host monitor",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/logs",
+    "heading": "Logs",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/databases",
+    "heading": "Databases",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/databases → 403",
+      "GET /api/admin/v2/database-dirs → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/namespaces",
+    "heading": "Namespaces",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/namespaces → 403",
+      "GET /api/admin/v2/databases → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/processes",
+    "heading": "Processes",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/locks",
+    "heading": "Locks",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/journal",
+    "heading": "Journaling",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/journal/settings → 403"
+    ],
+    "alerts": []
+  },
+  {
+    "route": "/tasks",
+    "heading": "Tasks",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/web-sessions",
+    "heading": "Web sessions",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/license",
+    "heading": null,
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/security/users",
+    "heading": "Users",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/roles → 403",
+      "GET /api/admin/v2/security/users → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/security/roles",
+    "heading": "Roles",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/resources → 403",
+      "GET /api/admin/v2/security/roles → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/security/resources",
+    "heading": "Resources",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/resources → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/security/services",
+    "heading": "Services",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/services → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/security/web-apps",
+    "heading": "Web applications",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/web-apps → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/security/audit",
+    "heading": "Audit",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/audit/events → 403",
+      "GET /api/admin/v2/security/audit/enabled → 403"
+    ],
+    "alerts": []
+  },
+  {
+    "route": "/security/ssl",
+    "heading": "TLS & certificates",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/ssl-configurations → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/security/sql",
+    "heading": "SQL privileges",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/explorer",
+    "heading": "API Explorer",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/settings/connections",
+    "heading": "Connections",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/about",
+    "heading": "About Aperture",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/databases/detail?dir=%2Fdurable%2Firis%2Fmgr%2Fuser%2F&name=USER",
+    "heading": "USER",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/database-dir/volumes?dir=%2Fdurable%2Firis%2Fmgr%2Fuser%2F → 403",
+      "GET /api/admin/v2/database?name=USER → 403"
+    ],
+    "alerts": [
+      "GET /v2/database?name=USER → HTTP 403Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/namespaces/USER",
+    "heading": "USER",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/namespace/package-mappings?namespace=USER → 403",
+      "GET /api/admin/v2/namespaces → 403",
+      "GET /api/admin/v2/namespace/global-mappings?namespace=USER → 403",
+      "GET /api/admin/v2/namespace?name=USER → 403",
+      "GET /api/admin/v2/namespace/routine-mappings?namespace=USER → 403",
+      "GET /api/admin/v2/databases → 403"
+    ],
+    "alerts": [
+      "GET /v2/namespace?name=USER → HTTP 403Forbidden - you do not hold the required privilegeRetry",
+      "Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/processes/817",
+    "heading": "Process 817RUN",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/tasks/1",
+    "heading": "Switch Journal1",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  },
+  {
+    "route": "/security/users/_SYSTEM",
+    "heading": "_SYSTEM",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/roles → 403",
+      "GET /api/admin/v2/security/user?name=_SYSTEM → 403"
+    ],
+    "alerts": [
+      "GET /v2/security/user?name=_SYSTEM → HTTP 403Forbidden - you do not hold the required privilegeRetry"
+    ]
+  },
+  {
+    "route": "/security/roles/%25Manager",
+    "heading": "%Manager",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/role?name=%25Manager → 403",
+      "GET /api/admin/v2/security/resources → 403",
+      "GET /api/admin/v2/security/roles → 403",
+      "GET /api/admin/v2/security/role/owners?name=%25Manager → 403"
+    ],
+    "alerts": [
+      "GET /v2/security/role?name=%25Manager → HTTP 403Forbidden - you do not hold the required privilegeRetry",
+      "GET /v2/security/role/owners?name=%25Manager → HTTP 403Forbidden - you do not hold the required privilege"
+    ]
+  },
+  {
+    "route": "/security/web-apps/detail?name=%2Fapi%2Fadmin",
+    "heading": "/api/admin",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/web-app?name=%2Fapi%2Fadmin → 403"
+    ],
+    "alerts": [
+      "GET /v2/web-app?name=%2Fapi%2Fadmin → HTTP 403Forbidden - you do not hold the required privilegeRetry"
+    ]
+  },
+  {
+    "route": "/explorer/Databases",
+    "heading": "API Explorer",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": []
+  }
+]

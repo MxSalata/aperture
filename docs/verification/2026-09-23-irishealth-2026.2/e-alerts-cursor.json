@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "image": "containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3",
+    "serverVersion": "IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2 (Build 221U)",
+    "capturedAt": "2026-09-23T12:03:54.749Z",
+    "instance": "http://<iris-host>:52773/api/admin"
+  },
+  "assumption": "/api/monitor/alerts is a destructive cursor; iris_system_alerts_log and _new in /metrics are not",
+  "steps": [
+    {
+      "step": "metrics before",
+      "counters": {
+        "iris_system_alerts": "4",
+        "iris_system_alerts_log": "2",
+        "iris_system_alerts_new": "1",
+        "iris_system_state": "1"
+      }
+    },
+    {
+      "step": "alerts, first read",
+      "status": 200,
+      "contentType": "application/json",
+      "body": [
+        {
+          "time": "2026-09-23T12:02:14.473Z",
+          "severity": "2",
+          "message": "ISCLOG: WorkMgr Detach Returning error ns=%SYS rtn=%SYS.WorkQueueMgr  data=\"0 \"_$lb($lb(7846,\"ObGs7mukTxXOAtwB/s0dYc1XPA0AAjiMIcKMJG3W8Vk\",,,,,,,,$lb(,\"%SYS\",$lb(\"e^AttachGroup+11^%SYS.WorkQueueMgr^2\",\"e^Attach+1^%SYSTEM.WorkMgr.1^1\",\"e^GetQueue+4^%Api.Admin.Util.AsyncTask.1^1\",\"e^TryToKillQueue+4^%Api.Admin.Util.AsyncTask.1^1\",\"d^RunGet+14^%Api.Admin.Endpoints.AsyncResult.1^1\",\"e^Run+1^%Api.Admin.Endpoint.1^1\",\"e^Run+1^%Api.Admin.Endpoints.AsyncResult.1^1\",\"e^Main+69^%Api.Admin.Dispatch.v1.1^1\",\"e^GetAsyncResult+2^%Api.Admin.Dispatch.v1.1^1\",\"e^DispatchRequest+25^%CSP.REST.1^1\",\"e^Page+27^%CSP.REST.1^1\",\"e^CSPDispatch+521^%SYS.cspServer^1\",\"d^CSPDispatch+280^%SYS.cspServer^1\",\"d^ProcessRequest+1^%CSP.Session.1^1\",\"d^Request+699^%SYS.cspServer2^1\",\"d^Request+25^%SYS.cspServer2^1\",\"d^ProcessRequest+1^%CSP.Request.1^1\",\"d^css+14^%SYS.cspServer2^1\",\"d^Server+64^%SYS.SERVER^2\",\"d^^^0\"))))/* ERROR #7846: WQM attach passed invalid token 'ObGs7mukTxXOAtwB/s0dYc1XPA0AAjiMIcKMJG3W8Vk'. */"
+        },
+        {
+          "time": "2026-09-23T12:02:39.118Z",
+          "severity": "2",
+          "message": "Process 1054 generated 3 alerts in 20 seconds. Suspending alert notifications for this process."
+        }
+      ]
+    },
+    {
+      "step": "metrics after first read",
+      "counters": {
+        "iris_system_alerts": "4",
+        "iris_system_alerts_log": "2",
+        "iris_system_alerts_new": "0",
+        "iris_system_state": "1"
+      }
+    },
+    {
+      "step": "alerts, second read",
+      "status": 200,
+      "contentType": "application/json",
+      "body": []
+    },
+    {
+      "step": "metrics after second read",
+      "counters": {
+        "iris_system_alerts": "4",
+        "iris_system_alerts_log": "2",
+        "iris_system_alerts_new": "0",
+        "iris_system_state": "1"
+      }
+    }
+  ]
+}
