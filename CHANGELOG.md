@@ -37,6 +37,7 @@ differently; the evidence is in `docs/verification/`.
   journal settings form rendered empty and editable before the settings arrived, and its inputs
   switched from uncontrolled to controlled; a table's empty message and a Logs statistic nested
   block elements in `<p>`.
+- Error texts arrive HTML-escaped inside the JSON (`&lt;INVALID OREF&gt;`); they are shown unescaped.
 - **The mock answers as IRIS does**: `/info` enveloped, `/login` and `/refresh` not; errors in
   `status.errors` as `{ error, code, domain, id, params }`; a 403 with no text; a 401 with no body
   and a Bearer challenge; a 202 with the task id only in a `Location` that names `/v1`; logout

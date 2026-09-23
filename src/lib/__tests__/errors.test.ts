@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeErrors, ApiError } from '../errors';
+import { normalizeErrors, ApiError, unescapeHtml } from '../errors';
 
 describe('normalizeErrors', () => {
   it('reads the documented status.Errors strings', () => {
@@ -73,5 +73,29 @@ describe('errors as IRIS for Health 2026.2 answers them', () => {
     expect(new ApiError({ status: 403, url: '', errors: n.errors, summary: n.summary }).summary).toMatch(
       /Forbidden/,
     );
+  });
+});
+
+describe('error texts IRIS escaped for HTML', () => {
+  it('shows <INVALID OREF> rather than &lt;INVALID OREF&gt;', () => {
+    // GET /v2/security/ldap/configurations as %Operator on IRIS for Health 2026.2, verbatim.
+    const text =
+      'ERROR #5002: ObjectScript error: &lt;INVALID OREF&gt;AppendStatementResult+5^%Api.Admin.Util.ClassQuery.1';
+    const n = normalizeErrors({
+      status: {
+        errors: [{ error: text, code: 5002, domain: '%ObjectErrors', id: 'ObjectScriptError', params: [] }],
+        summary: text,
+      },
+      console: [],
+      result: [],
+    });
+    const plain =
+      'ERROR #5002: ObjectScript error: <INVALID OREF>AppendStatementResult+5^%Api.Admin.Util.ClassQuery.1';
+    expect(n.errors).toEqual([plain]);
+    expect(n.summary).toBe(plain);
+  });
+
+  it('decodes numeric entities and leaves unknown ones alone', () => {
+    expect(unescapeHtml('a &amp; b &#60;x&#x3e; &unknown;')).toBe('a & b <x> &unknown;');
   });
 });

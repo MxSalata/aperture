@@ -114,6 +114,23 @@ export function textFromBody(body: string): string {
   return text.length > MAX_TEXT ? `${text.slice(0, MAX_TEXT - 1)}…` : text;
 }
 
+const ENTITIES: Record<string, string> = { lt: '<', gt: '>', amp: '&', quot: '"', apos: "'" };
+
+/**
+ * IRIS escapes its error texts for HTML inside the JSON ("<INVALID OREF>" arrives as
+ * "&lt;INVALID OREF&gt;"). The texts are rendered as text, never as markup, so they are
+ * unescaped here rather than shown with their entities.
+ */
+export function unescapeHtml(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e: string) => {
+    if (e[0] === '#') {
+      const code = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1));
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : m;
+    }
+    return ENTITIES[e.toLowerCase()] ?? m;
+  });
+}
+
 /** Extract messages, summary and console lines from any of the observed envelope shapes. */
 export function normalizeErrors(body: unknown): { errors: string[]; summary?: string; console: string[] } {
   if (typeof body === 'string') {
@@ -125,8 +142,8 @@ export function normalizeErrors(body: unknown): { errors: string[]; summary?: st
   const raw = status?.Errors ?? status?.errors ?? b.errors ?? [];
   const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
   return {
-    errors: list.map(errorText).filter(Boolean),
-    summary: status?.summary || b.summary || undefined,
+    errors: list.map(errorText).filter(Boolean).map(unescapeHtml),
+    summary: status?.summary || b.summary ? unescapeHtml(String(status?.summary || b.summary)) : undefined,
     console: Array.isArray(b.console) ? b.console.map(String) : [],
   };
 }
