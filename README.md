@@ -240,7 +240,7 @@ vendored at commit `f764aea427e5c0b1dd08a4c18a0457e0ff7b3b34` of
 
 ## Tech stack
 
-React 19 · TypeScript 5.9 · Vite 7 · Mantine 8 (+ charts, spotlight, notifications, modals) · TanStack Query 5 · TanStack Table 8 · React Router 7 · zustand · openapi-typescript / openapi-fetch · Mock Service Worker 2 · Vitest 3 · Playwright · nginx · IPM · Embedded Python (installer)
+React 19 · TypeScript 5.9 · Vite 7 · Mantine 8 (+ charts, spotlight, notifications, modals) · TanStack Query 5 · TanStack Table 8 · React Router 7 · zustand · openapi-typescript / openapi-fetch · Mock Service Worker 2 · Vitest 4 · Playwright · nginx · IPM · Embedded Python (installer)
 
 ## License
 

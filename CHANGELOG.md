@@ -2,6 +2,10 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **Vitest 4.** The unit tests move from Vitest 3.2 to 4.1 (the next major, maintained since October
+  2025); the configuration needed no change and all tests pass as before. Vitest 5 (September 2026)
+  needs Node 22.12 or later and is the next step once it has settled.
+
 - **The Disk I/O chart draws again.** It showed its axes and nothing else. `@mantine/charts` 8 wraps
   each area in a Fragment, and recharts 2 finds its children with its own `react-is` 18, which does
   not recognise React 19 elements, so the areas were never seen. recharts now gets `react-is` 19
