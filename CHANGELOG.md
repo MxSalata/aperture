@@ -25,6 +25,11 @@ differently; the evidence is in `docs/verification/`.
   for a request sent before a refresh finished is retried with the new token instead of
   refreshing again, which cascaded; token expiry is counted on the browser's clock from the
   token's lifetime. The mock rotates tokens with IRIS's lifetimes and rules.
+- **Screens the walk against IRIS flagged**: the Logs hub read the audit log and task history for
+  accounts that may not (403s in the console; its cards now query only what they may show); the
+  journal settings form rendered empty and editable before the settings arrived, and its inputs
+  switched from uncontrolled to controlled; a table's empty message and a Logs statistic nested
+  block elements in `<p>`.
 - **The mock answers as IRIS does**: `/info` enveloped, `/login` and `/refresh` not; errors in
   `status.errors` as `{ error, code, domain, id, params }`; a 403 with no text; a 401 with no body
   and a Bearer challenge; a 202 with the task id only in a `Location` that names `/v1`; logout

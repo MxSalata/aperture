@@ -33,6 +33,21 @@ import { formatBytes, formatDateTime } from '@/lib/format';
 import { useJobs } from '@/stores/jobs';
 
 type FileRow = JournalFileList[number];
+const EMPTY_SETTINGS: JournalSettings = {
+  CurrentDirectory: '',
+  AlternateDirectory: '',
+  JournalFilePrefix: '',
+  FileSizeLimit: 0,
+  DaysBeforePurge: 0,
+  BackupsBeforePurge: 0,
+  wijdir: '',
+  targwijsz: 0,
+  FreezeOnError: false,
+  CompressFiles: false,
+  JournalcspSession: false,
+  PurgeArchived: false,
+};
+
 /**
  * Journal records shown per read. IRIS 2026.2 returns half the maxRows it is given (200 → 100,
  * the default 1000 → 500; quirk journal-records-half-maxrows), so the request asks for twice as
@@ -203,7 +218,9 @@ export default function JournalPage() {
     (body: JournalSettings) => run(api().PUT('/v2/journal/settings', { body }), 'PUT'),
     { invalidate: [keys.settings] },
   );
-  const form = useForm<JournalSettings>({ initialValues: {} });
+  // Every field the form shows starts defined, so its inputs are controlled from the first render
+  // (the settings arrive in the effect below, after it).
+  const form = useForm<JournalSettings>({ initialValues: EMPTY_SETTINGS });
   // Every read of the settings becomes the form's baseline; the fields follow it (e.g. after a
   // switch of directory) unless someone is editing them, whose typing a refetch must not undo.
   useEffect(() => {
@@ -292,62 +309,73 @@ export default function JournalPage() {
               Journal settings
             </Title>
             {settings.isError ? <ErrorAlert error={settings.error} /> : null}
-            <form
-              onSubmit={form.onSubmit((v) =>
-                reviewChanges({
-                  title: 'Review journal settings',
-                  before: settings.data as Record<string, unknown>,
-                  after: v as Record<string, unknown>,
-                  refetch: () =>
-                    result(api().GET('/v2/journal/settings')) as Promise<Record<string, unknown>>,
-                  onConfirm: () => save.mutateAsync(v),
-                }),
-              )}
-            >
-              <Stack gap="sm">
-                <TextInput label="Current directory" {...form.getInputProps('CurrentDirectory')} />
-                <TextInput label="Alternate directory" {...form.getInputProps('AlternateDirectory')} />
-                <TextInput label="Journal file prefix" {...form.getInputProps('JournalFilePrefix')} />
-                <Group grow>
-                  <NumberInput
-                    label="File size limit (MB)"
-                    min={1}
-                    {...form.getInputProps('FileSizeLimit')}
+            {settings.data ? (
+              // Fields appear with the values they edit: an empty form would be editable, and saveable.
+              <form
+                onSubmit={form.onSubmit((v) =>
+                  reviewChanges({
+                    title: 'Review journal settings',
+                    before: settings.data as Record<string, unknown>,
+                    after: v as Record<string, unknown>,
+                    refetch: () =>
+                      result(api().GET('/v2/journal/settings')) as Promise<Record<string, unknown>>,
+                    onConfirm: () => save.mutateAsync(v),
+                  }),
+                )}
+              >
+                <Stack gap="sm">
+                  <TextInput label="Current directory" {...form.getInputProps('CurrentDirectory')} />
+                  <TextInput label="Alternate directory" {...form.getInputProps('AlternateDirectory')} />
+                  <TextInput label="Journal file prefix" {...form.getInputProps('JournalFilePrefix')} />
+                  <Group grow>
+                    <NumberInput
+                      label="File size limit (MB)"
+                      min={1}
+                      {...form.getInputProps('FileSizeLimit')}
+                    />
+                    <NumberInput
+                      label="Days before purge"
+                      min={0}
+                      {...form.getInputProps('DaysBeforePurge')}
+                    />
+                    <NumberInput
+                      label="Backups before purge"
+                      min={0}
+                      {...form.getInputProps('BackupsBeforePurge')}
+                    />
+                  </Group>
+                  <Group grow>
+                    <TextInput label="WIJ directory" {...form.getInputProps('wijdir')} />
+                    <NumberInput label="Target WIJ size (MB)" min={0} {...form.getInputProps('targwijsz')} />
+                  </Group>
+                  <Checkbox
+                    label="Freeze on journal error"
+                    {...form.getInputProps('FreezeOnError', { type: 'checkbox' })}
                   />
-                  <NumberInput label="Days before purge" min={0} {...form.getInputProps('DaysBeforePurge')} />
-                  <NumberInput
-                    label="Backups before purge"
-                    min={0}
-                    {...form.getInputProps('BackupsBeforePurge')}
+                  <Checkbox
+                    label="Compress journal files"
+                    {...form.getInputProps('CompressFiles', { type: 'checkbox' })}
                   />
-                </Group>
-                <Group grow>
-                  <TextInput label="WIJ directory" {...form.getInputProps('wijdir')} />
-                  <NumberInput label="Target WIJ size (MB)" min={0} {...form.getInputProps('targwijsz')} />
-                </Group>
-                <Checkbox
-                  label="Freeze on journal error"
-                  {...form.getInputProps('FreezeOnError', { type: 'checkbox' })}
-                />
-                <Checkbox
-                  label="Compress journal files"
-                  {...form.getInputProps('CompressFiles', { type: 'checkbox' })}
-                />
-                <Checkbox
-                  label="Journal CSP session data"
-                  {...form.getInputProps('JournalcspSession', { type: 'checkbox' })}
-                />
-                <Checkbox
-                  label="Purge archived files"
-                  {...form.getInputProps('PurgeArchived', { type: 'checkbox' })}
-                />
-                <Group justify="flex-end">
-                  <Button type="submit" loading={save.isPending}>
-                    Save settings
-                  </Button>
-                </Group>
-              </Stack>
-            </form>
+                  <Checkbox
+                    label="Journal CSP session data"
+                    {...form.getInputProps('JournalcspSession', { type: 'checkbox' })}
+                  />
+                  <Checkbox
+                    label="Purge archived files"
+                    {...form.getInputProps('PurgeArchived', { type: 'checkbox' })}
+                  />
+                  <Group justify="flex-end">
+                    <Button type="submit" loading={save.isPending}>
+                      Save settings
+                    </Button>
+                  </Group>
+                </Stack>
+              </form>
+            ) : settings.isPending ? (
+              <Text size="sm" c="dimmed">
+                Loading…
+              </Text>
+            ) : null}
           </Paper>
         </Tabs.Panel>
       </Tabs>

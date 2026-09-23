@@ -468,7 +468,8 @@ export function DataTable<T>({
                 <Table.Td colSpan={columns.length}>
                   <Center py="xl">
                     {rows.length === 0 ? (
-                      <Text c="dimmed" size="sm" role="status">
+                      // A div: callers pass their own paragraphs, and <p> cannot hold <p>.
+                      <Text component="div" c="dimmed" size="sm" role="status">
                         {emptyMessage}
                       </Text>
                     ) : (

@@ -25,9 +25,18 @@ interface CardProps {
   children: ReactNode;
 }
 
-function LogCard({ title, source, to, privileges, children }: CardProps) {
+/** Whether this account may read what a card shows; its queries do not run otherwise. */
+function useCanRead(privileges: readonly string[]): boolean {
   const info = useSession((s) => s.info);
-  const allowed = canUse(info, privileges);
+  return canUse(info, privileges);
+}
+
+const AUDIT = ['%Admin_Secure:U'] as const;
+const JOURNAL = ['%Admin_Operate:U', '%Admin_Journal:U'] as const;
+const TASKS = ['%Admin_Operate:U', '%Admin_Task:U'] as const;
+
+function LogCard({ title, source, to, privileges, children }: CardProps) {
+  const allowed = useCanRead(privileges);
   return (
     <Paper p="md" withBorder h="100%">
       <Stack gap="xs" h="100%" justify="space-between">
@@ -73,7 +82,9 @@ function Stat({ label, value }: { label: string; value: ReactNode }) {
       <Text size="xs" c="dimmed" tt="uppercase" fw={500} style={{ letterSpacing: 0.3 }}>
         {label}
       </Text>
-      <Text size="sm">{value}</Text>
+      <Text size="sm" component="div">
+        {value}
+      </Text>
     </div>
   );
 }
@@ -89,13 +100,16 @@ function Pending({ error, children }: { error?: unknown; children: ReactNode }) 
 }
 
 function AuditCard() {
+  const allowed = useCanRead(AUDIT);
   const enabled = useQuery({
     queryKey: secKeys.auditEnabled,
     queryFn: () => result(api().GET('/v2/security/audit/enabled')),
+    enabled: allowed,
   });
   const events = useQuery({
     queryKey: secKeys.auditEvents,
     queryFn: () => result(api().GET('/v2/security/audit/events')),
+    enabled: allowed,
   });
   const on = (enabled.data as { Enabled?: boolean } | undefined)?.Enabled;
   const list = events.data ?? [];
@@ -107,7 +121,7 @@ function AuditCard() {
       title="Audit log"
       source="POST /v2/security/audit/records → 202 · GET /v2/security/audit/events"
       to="/security/audit"
-      privileges={['%Admin_Secure:U']}
+      privileges={AUDIT}
     >
       <Pending error={enabled.error ?? events.error}>
         <Group gap="lg" wrap="wrap">
@@ -146,9 +160,11 @@ function AuditCard() {
 }
 
 function JournalCard() {
+  const allowed = useCanRead(JOURNAL);
   const files = useQuery({
     queryKey: ['journal', 'files'],
     queryFn: () => result(api().GET('/v2/journal/files')),
+    enabled: allowed,
   });
   const list = (files.data ?? []) as { Name?: string; Size?: number; DataSize?: number }[];
   const current = list.length ? list[list.length - 1] : null;
@@ -158,7 +174,7 @@ function JournalCard() {
       title="Journal"
       source="GET /v2/journal/files · POST /v2/journal/file/records → 202"
       to="/journal"
-      privileges={['%Admin_Operate:U', '%Admin_Journal:U']}
+      privileges={JOURNAL}
     >
       <Pending error={files.error}>
         <Group gap="lg" wrap="wrap">
@@ -230,9 +246,11 @@ function AlertsCard() {
 }
 
 function TaskHistoryCard() {
+  const allowed = useCanRead(TASKS);
   const history = useQuery({
     queryKey: ['tasks', 'history', 'all'],
     queryFn: () => result(api().GET('/v2/task/history')),
+    enabled: allowed,
   });
   // The 24-hour cutoff is fixed when the card mounts; the query refetches, the clock does not need to.
   const [openedAt] = useState(() => Date.now());
@@ -247,12 +265,7 @@ function TaskHistoryCard() {
     };
   }, [history.data, openedAt]);
   return (
-    <LogCard
-      title="Task history"
-      source="GET /v2/task/history"
-      to="/tasks"
-      privileges={['%Admin_Operate:U', '%Admin_Task:U']}
-    >
+    <LogCard title="Task history" source="GET /v2/task/history" to="/tasks" privileges={TASKS}>
       <Pending error={history.error}>
         <Group gap="lg" wrap="wrap">
           <Stat label="Runs, last 24 h" value={history.isPending ? '…' : formatNumber(recent.length)} />
