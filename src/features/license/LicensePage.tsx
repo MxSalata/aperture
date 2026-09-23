@@ -97,7 +97,7 @@ export default function LicensePage() {
                     <Table.Th>Name</Table.Th>
                     <Table.Th>Address</Table.Th>
                     <Table.Th>Port</Table.Th>
-                    <Table.Th>Description</Table.Th>
+                    <Table.Th>Key directory</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -106,7 +106,7 @@ export default function LicensePage() {
                       <Table.Td>{String(s.Name ?? '')}</Table.Td>
                       <Table.Td className="mono">{String(s.Address ?? '')}</Table.Td>
                       <Table.Td>{String(s.Port ?? '')}</Table.Td>
-                      <Table.Td>{String(s.Description ?? '')}</Table.Td>
+                      <Table.Td className="mono">{String(s.KeyDirectory ?? '')}</Table.Td>
                     </Table.Tr>
                   ))}
                 </Table.Tbody>

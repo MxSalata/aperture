@@ -8,6 +8,12 @@ function findFile(request: Request) {
   return mockDb.journals.find((j) => j.Name === file);
 }
 
+const neighbour = (File: string) => ({
+  File,
+  End: 1_048_576,
+  GUID: '9C8497B0-28D5-11F1-A0FB-603E5F3B8305',
+});
+
 function journalRecords(file: string, n: number) {
   const globals = [
     '^Ens.MessageHeaderD',
@@ -74,8 +80,9 @@ export const journalHandlers = [
       CreationTime: f.CreationTime,
       EncryptionKeyID: '',
       MirrorInfo: {},
-      PrevFile: idx > 0 ? { Name: mockDb.journals[idx - 1].Name } : {},
-      NextFile: idx < mockDb.journals.length - 1 ? { Name: mockDb.journals[idx + 1].Name } : {},
+      // IRIS: { File, End, GUID } of the neighbouring file, {} when there is none.
+      PrevFile: idx > 0 ? neighbour(mockDb.journals[idx - 1].Name) : {},
+      NextFile: idx < mockDb.journals.length - 1 ? neighbour(mockDb.journals[idx + 1].Name) : {},
     });
   }),
 

@@ -107,7 +107,8 @@ export interface ProcessRec {
 }
 
 export interface LockRec {
-  Pid: string;
+  /** An integer on IRIS 2026.2 (the spec says string). */
+  Pid: number;
   ModeCount: string;
   Reference: string;
   Directory: string;
@@ -725,7 +726,7 @@ function seedLocks(processes: ProcessRec[]): LockRec[] {
     OSUserName: string,
     Removable = true,
   ): LockRec => ({
-    Pid: String(Pid),
+    Pid,
     ModeCount,
     Reference,
     Directory,

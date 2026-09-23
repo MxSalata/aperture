@@ -112,7 +112,7 @@ export const processHandlers = [
     if (!p) return notFound('Process');
     if (!p.CanBeTerminated) return fail(409, 'System processes cannot be terminated');
     mockDb.processes = mockDb.processes.filter((x) => x.Pid !== p.Pid);
-    mockDb.locks = mockDb.locks.filter((l) => l.Pid !== String(p.Pid));
+    mockDb.locks = mockDb.locks.filter((l) => l.Pid !== p.Pid);
     return ok({}, { summary: `Process ${p.Pid} terminated` });
   }),
 
@@ -139,7 +139,7 @@ export const processHandlers = [
     if (i < 0) return notFound('Lock');
     if (!mockDb.locks[i].Removable) return fail(409, 'This lock cannot be removed');
     const checkTxn = requireParam(request, 'checkTxn') !== 'false';
-    const owner = mockDb.processes.find((p) => String(p.Pid) === mockDb.locks[i].Pid);
+    const owner = mockDb.processes.find((p) => p.Pid === mockDb.locks[i].Pid);
     if (checkTxn && owner?.InTransaction) {
       return fail(
         409,

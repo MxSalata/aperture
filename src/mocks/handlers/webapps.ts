@@ -59,7 +59,6 @@ export const webAppHandlers = [
       ServeFilesTimeout: 3600,
       SuperClass: '',
       TwoFactorEnabled: false,
-      UseSessionCookie: 2,
     });
   }),
 
@@ -112,7 +111,7 @@ export const webAppHandlers = [
   }),
 
   route('get', '/v2/web-app/pct-accesses', SECURE, () =>
-    ok([{ Name: '/csp/sys', AllowType: 'Prefix', Class: '%CSP.UI.', Namespace: '%SYS' }]),
+    ok([{ Name: '/csp/sys', AllowType: 'Prefix', Class: '%CSP.UI.', AllowAccess: true, System: true }]),
   ),
   route('get', '/v2/web-app/pct-access', SECURE, ({ request }) =>
     ok({

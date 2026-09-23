@@ -306,12 +306,18 @@ install test of the IPM package.
 The same handlers run under Node for Vitest (`src/test/setup.ts`) and in Chromium for Playwright.
 
 Because the mock is the oracle of both test suites and of the demo, `src/mocks/__tests__/contract.test.ts`
-checks its answers against the specification: every parameterless GET and the detail reads the
-screens edit are validated against their response schemas (type, enum, items, properties). A mock
-that drifted from the spec would otherwise make the tests agree with the mock and not with IRIS,
-which is how a role editor written for `Resources: string[]` survived while the API sends
-`[{ Name, Permissions }]`. The one allow-listed divergence is `database-dirs`, where real servers
-differ from the spec and the mock follows the servers.
+checks its answers against two oracles. The specification: every parameterless GET and the detail
+reads the screens edit are validated against their response schemas (type, enum, items,
+properties). A mock that drifted from the spec would otherwise make the tests agree with the mock
+and not with IRIS, which is how a role editor written for `Resources: string[]` survived while the
+API sends `[{ Name, Permissions }]`. And a real instance: `iris-shapes.json` holds the JSON paths
+and types (no values) that IRIS for Health 2026.2 answered with, recorded by
+`scripts/live/shapes.mjs`; the mock may send no field IRIS does not and no type IRIS did not. The
+second oracle exists because the spec is wrong in places (`EnabledBoolean`, `EXEName`, SQL
+privileges' `Name`/`Privilege`, `BusyProcesses`), and a mock that followed the spec there hid
+screens that were broken against every real instance. Where the server contradicts the spec, the
+mock follows the server and `DOCUMENTED_DIVERGENCE` names the answer paths and the evidence; an
+entry the mock no longer needs fails the test.
 
 `e2e/a11y.spec.ts` runs axe-core (WCAG 2.1 A/AA) over the sign-in page and nine screens in light,
 dark, and both high-contrast modes (Playwright emulates `prefers-color-scheme` and

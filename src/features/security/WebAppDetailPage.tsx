@@ -117,7 +117,6 @@ export default function WebAppDetailPage() {
         'JWTRefreshTokenTimeout',
         'TwoFactorEnabled',
         'UseCookies',
-        'UseSessionCookie',
         'CookiePath',
         'CSRFToken',
       ],

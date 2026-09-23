@@ -2,8 +2,8 @@ import { ok, jsonBody, badRequest, created, notFound, requireParam } from '../ut
 import { route, MANAGE } from '../secure';
 
 let licenseServers = [
-  { Name: 'LOCAL', Address: '127.0.0.1', Port: 4002, Description: 'Local license server' },
-  { Name: 'DR-SITE', Address: '10.0.9.20', Port: 4002, Description: 'Disaster-recovery license server' },
+  { Name: 'LOCAL', Address: '127.0.0.1', Port: 4002, KeyDirectory: '' },
+  { Name: 'DR-SITE', Address: '10.0.9.20', Port: 4002, KeyDirectory: '/usr/irissys/mgr/' },
 ];
 
 export const licenseHandlers = [
@@ -22,10 +22,7 @@ export const licenseHandlers = [
       CoresEnforced: 8,
       ExpirationDate: '2027-09-14 23:59:59',
       ExtendedFeaturesList: ['Interoperability', 'BI User', 'Vector Search', 'Web Add-on'],
-      AuthorizedFeatures: ['Interoperability', 'BI User'],
-      MachineID: 'iris-demo',
-      KeyFile: '/usr/irissys/mgr/iris.key',
-      Status: 'Community edition',
+      AuthorizedApplications: [],
     }),
   ),
   route('put', '/v2/license/key', MANAGE, async ({ request }) => {
@@ -51,7 +48,7 @@ export const licenseHandlers = [
   route('put', '/v2/license/server', MANAGE, async ({ request }) => {
     const name = requireParam(request, 'name');
     if (!name) return badRequest('Missing name');
-    const body = await jsonBody<{ Address?: string; Port?: number; Description?: string }>(request);
+    const body = await jsonBody<{ Address?: string; Port?: number; KeyDirectory?: string }>(request);
     const existing = licenseServers.find((x) => x.Name === name);
     if (existing) {
       Object.assign(existing, body);
@@ -61,7 +58,7 @@ export const licenseHandlers = [
       Name: name,
       Address: body.Address ?? '',
       Port: body.Port ?? 4002,
-      Description: body.Description ?? '',
+      KeyDirectory: body.KeyDirectory ?? '',
     });
     return created({}, [`License server ${name} created`]);
   }),

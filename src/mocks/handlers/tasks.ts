@@ -29,11 +29,24 @@ const listShape = (t: TaskRec) => ({
   NextScheduled: t.NextScheduled,
 });
 
+/** GET /v2/task as IRIS 2026.2 answers it: Expires* are strings, TimePeriodEvery an integer. */
 const detailShape = (t: TaskRec) => {
-  const { Id: _i, Type: _t, Status: _s, Error: _e, LastFinished: _l, NextScheduled: _n, ...rest } = t;
+  const {
+    Id: _i,
+    Type: _t,
+    Status: _s,
+    Error: _e,
+    LastFinished: _l,
+    NextScheduled: _n,
+    Namespace,
+    Suspended: _u,
+    ...rest
+  } = t;
   return {
     ...rest,
-    NameSpace: t.Namespace,
+    NameSpace: Namespace,
+    TimePeriodEvery: Number(t.TimePeriodEvery) || 1,
+    ExpiresDays: String(t.ExpiresDays),
     IsBatch: false,
     EmailOnCompletion: [],
     EmailOnError: t.Id === 12 ? ['ops@example.org'] : [],
@@ -47,8 +60,8 @@ const detailShape = (t: TaskRec) => {
     DailyFrequencyTime: '',
     DailyIncrement: '',
     RunAfterGUID: '',
-    ExpiresHours: 0,
-    ExpiresMinutes: 0,
+    ExpiresHours: '0',
+    ExpiresMinutes: '0',
   };
 };
 

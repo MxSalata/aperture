@@ -28,8 +28,8 @@ const userListShape = (u: UserRec) => ({
   Routine: u.Routine,
 });
 const userDetailShape = (u: UserRec) => {
-  const { Name: _n, Type: _t, password: _p, ...rest } = u;
-  return { ...rest, NameSpace: u.Namespace };
+  const { Name: _n, Type: _t, password: _p, Namespace, ...rest } = u;
+  return { ...rest, NameSpace: Namespace };
 };
 const findUser = (name: string | null) =>
   name ? mockDb.users.find((u) => u.Name.toLowerCase() === name.toLowerCase()) : undefined;
@@ -203,17 +203,17 @@ export const securityHandlers = [
   route('get', '/v2/security/role/owners', SECURE, ({ request }) => {
     const r = findRole(requireParam(request, 'name'));
     if (!r) return notFound('Role');
-    // RoleOwnerList: direct holders only, users and roles alike (as IRIS 2026.2 answers).
+    // RoleOwnerList: direct holders only, users and roles alike; AdminOption is "0" or "1" (a string).
     return ok([
       ...mockDb.users
         .filter((u) => u.Roles.includes(r.Name))
-        .map((u) => ({ Name: u.Name, Type: 'User', AdminOption: false })),
+        .map((u) => ({ Name: u.Name, Type: 'User', AdminOption: '0' })),
       ...mockDb.users
         .filter((u) => u.EscalationRoles.includes(r.Name))
-        .map((u) => ({ Name: u.Name, Type: 'User (escalation)', AdminOption: false })),
+        .map((u) => ({ Name: u.Name, Type: 'User (escalation)', AdminOption: '0' })),
       ...mockDb.roles
         .filter((x) => x.GrantedRoles.includes(r.Name))
-        .map((x) => ({ Name: x.Name, Type: 'Role', AdminOption: false })),
+        .map((x) => ({ Name: x.Name, Type: 'Role', AdminOption: '0' })),
     ]);
   }),
   route('put', '/v2/security/role', SECURE, async ({ request, account }) => {

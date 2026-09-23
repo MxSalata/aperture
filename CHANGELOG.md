@@ -32,6 +32,12 @@ differently; the evidence is in `docs/verification/`.
   for a request sent before a refresh finished is retried with the new token instead of
   refreshing again, which cascaded; token expiry is counted on the browser's clock from the
   token's lifetime. The mock rotates tokens with IRIS's lifetimes and rules.
+- **The mock is held to a real instance, not only to the spec.** `iris-shapes.json` records the
+  shapes (paths and types, no values) IRIS for Health 2026.2 answered with; the contract test fails
+  on any field the mock invents or type it changes. Aligning the mock surfaced the licence servers'
+  `KeyDirectory` (the screen showed an invented Description column), owners' `AdminOption` as
+  `"0"`/`"1"`, lock `Pid` as an integer, task `Expires*` as strings and `TimePeriodEvery` as an
+  integer; divergences from the spec are listed per field with their evidence.
 - **SQL privileges: empty columns, and Revoke sent the wrong privilege.** IRIS answers `Object` and
   `Action` where the spec says `Name` and `Privilege`; the screen read the spec's names, showed
   empty columns and revoked `SELECT` on an empty object name. It reads either now.

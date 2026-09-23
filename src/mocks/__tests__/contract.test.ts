@@ -3,7 +3,11 @@
  * mock that answers in a shape the specification does not declare hides exactly the bugs a
  * real IRIS would expose (a role editor written against `Resources: string[]` while the API
  * sends `{ Name, Permissions }[]`). This walks the hand-written handlers and checks every
- * answer against the response schema of its operation.
+ * answer against two oracles: the response schema of its operation, and the shapes a real
+ * IRIS for Health 2026.2 answered in (iris-shapes.json, recorded by scripts/live/shapes.mjs).
+ * The second exists because the spec is wrong in places, and a mock that follows the spec there
+ * hid real bugs: a Services screen reading `EnabledBoolean` (IRIS sends none), a Processes column
+ * bound to `EXEName` (IRIS writes `EXEname`), SQL privileges read as `Name`/`Privilege`.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { resetDb } from '@/mocks/db';
@@ -11,6 +15,7 @@ import { useSession } from '@/stores/session';
 import { resetClients } from '@/api/client';
 import { loadSpec, resolveSchema, resultSchema, type JsonSchema, type OpenApiDoc } from '@/lib/openapi';
 import { index } from '@/lib/specIndex';
+import iris from './iris-shapes.json';
 
 const BASE = 'http://iris.test';
 
@@ -27,6 +32,28 @@ const DOCUMENTED_DIVERGENCE: Record<string, { paths: RegExp; evidence: string }[
       evidence: 'an array on every server (quirk local-database-list-shape)',
     },
   ],
+  '/v2/locks': [
+    {
+      paths: /^result\[\d+\]\.Pid: spec says string, mock sent integer/,
+      evidence: 'an integer on IRIS 2026.2 (iris-shapes.json)',
+    },
+  ],
+  '/v2/security/role/owners': [
+    {
+      paths: /^result\[\d+\]\.AdminOption: spec says boolean, mock sent string/,
+      evidence: '"0" or "1" on IRIS 2026.2 (iris-shapes.json, b-role-owners.json)',
+    },
+  ],
+  '/v2/task': [
+    {
+      paths: /^result\.Expires(Days|Hours|Minutes): spec says integer, mock sent string/,
+      evidence: 'strings on IRIS 2026.2 (iris-shapes.json)',
+    },
+    {
+      paths: /^result\.TimePeriodEvery: spec says string, mock sent integer/,
+      evidence: 'an integer on IRIS 2026.2 (iris-shapes.json)',
+    },
+  ],
   '/v2/monitor/dashboard/main': [
     {
       paths: /^result\.SystemUsage\.BusyProcesses\[\d+\]\.Process: spec says integer, mock sent string ""/,
@@ -41,6 +68,9 @@ const DOCUMENTED_DIVERGENCE: Record<string, { paths: RegExp; evidence: string }[
     },
   ],
 };
+
+/** The divergences some answer needed, across the tests of this file. */
+const used = new Set<string>();
 
 /** Problems the documented divergences do not cover; marks the divergences that were used. */
 function undocumented(path: string, problems: string[], used: Set<string>): string[] {
@@ -141,7 +171,6 @@ async function read(
 describe('mock ⇄ specification contract', () => {
   it('answers every parameterless GET in the declared shape', async () => {
     const problems: string[] = [];
-    const used = new Set<string>();
     const ops = index.operations.filter(
       (o) => o.method === 'GET' && o.path.startsWith('/v2/') && !o.params.some((p) => p.required),
     );
@@ -154,13 +183,6 @@ describe('mock ⇄ specification contract', () => {
       problems.push(...undocumented(op.path, out, used).map((p) => `GET ${op.path} ${p}`));
     }
     expect(problems).toEqual([]);
-    const declared = Object.entries(DOCUMENTED_DIVERGENCE).flatMap(([p, ds]) =>
-      ds.map((d) => `${p} ${d.paths}`),
-    );
-    expect(
-      declared.filter((d) => !used.has(d)),
-      'documented divergences the mock no longer shows',
-    ).toEqual([]);
   }, 60_000);
 
   it('answers the parameterised reads of the screens in the declared shape', async () => {
@@ -171,8 +193,73 @@ describe('mock ⇄ specification contract', () => {
       expect(status, `${path} ${JSON.stringify(query)}`).toBe(200);
       const out: string[] = [];
       check(resultSchema(doc, 'GET', path), result, 'result', out);
-      problems.push(...undocumented(path, out, new Set()).map((p) => `GET ${path} ${p}`));
+      problems.push(...undocumented(path, out, used).map((p) => `GET ${path} ${p}`));
     }
     expect(problems).toEqual([]);
   });
+
+  it('needs every documented divergence it lists', () => {
+    const declared = Object.entries(DOCUMENTED_DIVERGENCE).flatMap(([p, ds]) =>
+      ds.map((d) => `${p} ${d.paths}`),
+    );
+    expect(
+      declared.filter((d) => !used.has(d)),
+      'documented divergences the mock no longer shows',
+    ).toEqual([]);
+  });
+
+  it('answers in the shapes a real IRIS sends', async () => {
+    // The spec is wrong in places (Enabled, EXEname, BusyProcesses…), so the mock is also held to
+    // what IRIS for Health 2026.2 answered (iris-shapes.json, scripts/live/shapes.mjs): no field
+    // IRIS does not send, no type IRIS did not send there.
+    const queries = new Map(await detailReads());
+    const problems: string[] = [];
+    for (const [path, real] of Object.entries(iris.shapes as Record<string, Record<string, string[]>>)) {
+      const { status, result } = await read(path, queries.get(path) ?? {});
+      if (status !== 200) continue; // not seeded in the mock
+      for (const [p, types] of Object.entries(shapeOf(result))) {
+        const at = realAt(real, p);
+        const known = at === 'unseen' || !at ? at : [...at, ...(SEEN_ELSEWHERE[path]?.[p]?.types ?? [])];
+        if (known === 'unseen') continue; // IRIS's array was empty: nothing to compare with
+        if (!known) problems.push(`GET ${path} ${p}: IRIS sends no such field`);
+        else if (!types.every((t) => known.includes(t) || (t === 'integer' && known.includes('number'))))
+          problems.push(`GET ${path} ${p}: mock sent ${types.join('|')}, IRIS ${known.join('|')}`);
+      }
+    }
+    expect(problems).toEqual([]);
+  }, 60_000);
 });
+
+/** JSON path (array items as []) → the types of the values found there. */
+function shapeOf(v: unknown, path = 'result', out: Record<string, string[]> = {}): Record<string, string[]> {
+  const t = typeOf(v);
+  if (!(out[path] ??= []).includes(t)) out[path].push(t);
+  if (t === 'array') for (const item of v as unknown[]) shapeOf(item, `${path}[]`, out);
+  else if (t === 'object')
+    for (const [k, x] of Object.entries(v as Record<string, unknown>)) shapeOf(x, `${path}.${k}`, out);
+  return out;
+}
+
+/**
+ * Types IRIS sends at a path at other times than when iris-shapes.json was recorded (a snapshot
+ * holds only the values of that moment), with where they were seen.
+ */
+const SEEN_ELSEWHERE: Record<string, Record<string, { types: string[]; evidence: string }>> = {
+  '/v2/monitor/dashboard/main': {
+    'result.SystemUsage.BusyProcesses[].Process': {
+      types: ['integer'],
+      evidence: 'a busy process is { Process: 1054, Commands: 777266 } (docs/verification)',
+    },
+  },
+};
+
+/** The types IRIS sent at a path; 'unseen' when it lies inside an array IRIS returned empty. */
+function realAt(real: Record<string, string[]>, path: string): string[] | 'unseen' | undefined {
+  const own = real[path];
+  if (own) return own.length === 1 && own[0] === 'unseen' ? 'unseen' : own;
+  for (let i = path.lastIndexOf('[]'); i > 0; i = path.lastIndexOf('[]', i - 1)) {
+    const items = real[path.slice(0, i + 2)];
+    if (items) return items.length === 1 && items[0] === 'unseen' ? 'unseen' : undefined;
+  }
+  return undefined;
+}
