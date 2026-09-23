@@ -10,6 +10,7 @@ import { useActivity } from '@/stores/activity';
 import { useHealth } from '@/stores/health';
 import { queryClient } from '@/query';
 import { forgetEndedTasks } from '@/api/endedTasks';
+import { claimSession, newSessionKey, releaseSession } from './sessionLock';
 
 /**
  * Session store: who we are, on which instance, and how we authenticate.
@@ -59,6 +60,8 @@ export interface SessionState {
   endedReason: string | null;
   /** When false, credentials stay in memory only and a reload signs you out. */
   persistTokens: boolean;
+  /** Names this tab's JWT session for the one-tab-per-session lock (`sessionLock.ts`). */
+  sessionKey: string | null;
 
   login(args: LoginArgs): Promise<void>;
   refresh(): Promise<boolean>;
@@ -96,16 +99,27 @@ function errorFromBody(res: Response, body: Record<string, unknown> | null, fall
   });
 }
 
+/**
+ * When the access token expires, on this browser's clock. IRIS 2026.2 issues 60-second access
+ * tokens; read as an absolute `exp`, a browser clock a minute fast would refresh before every
+ * request. The token's lifetime (`exp - iat`) counted from now is immune to clock skew.
+ */
+function expiryFrom(result: Record<string, unknown> | undefined, accessToken: string): number | null {
+  const claims = decodeJwtPayload(accessToken) ?? {};
+  const exp = typeof result?.exp === 'number' ? result.exp : (claims.exp as number | undefined);
+  const iat = typeof result?.iat === 'number' ? result.iat : (claims.iat as number | undefined);
+  if (exp && iat && exp > iat) return Date.now() + (exp - iat) * 1000;
+  return exp ? exp * 1000 : null;
+}
+
 function tokensFromLoginBody(body: Record<string, unknown> | null): JwtTokens | null {
   const result = (body?.result ?? body) as Record<string, unknown> | undefined;
   const accessToken = result?.access_token;
   if (typeof accessToken !== 'string' || !accessToken) return null;
-  const exp =
-    typeof result?.exp === 'number' ? result.exp : (decodeJwtPayload(accessToken)?.exp as number | undefined);
   return {
     accessToken,
     refreshToken: typeof result?.refresh_token === 'string' ? result.refresh_token : null,
-    expiresAt: exp ? exp * 1000 : null,
+    expiresAt: expiryFrom(result, accessToken),
     subject: typeof result?.sub === 'string' ? result.sub : undefined,
   };
 }
@@ -217,6 +231,7 @@ const anonymous = {
   basicCredentials: null,
   expiresAt: null,
   info: null,
+  sessionKey: null,
 };
 
 export const useSession = create<SessionState>()(
@@ -287,6 +302,7 @@ export const useSession = create<SessionState>()(
             return;
           }
 
+          const sessionKey = newSessionKey();
           set({
             status: 'authenticated',
             mode: 'jwt',
@@ -296,7 +312,9 @@ export const useSession = create<SessionState>()(
             refreshToken: outcome.refreshToken,
             expiresAt: outcome.expiresAt,
             basicCredentials: null,
+            sessionKey,
           });
+          await claimSession(sessionKey);
           assertSupportedApi(await get().loadInfo(), `${base}/info`);
         } catch (e) {
           // A token issued to a session that cannot start (e.g. /info refuses the account) is revoked.
@@ -353,6 +371,7 @@ export const useSession = create<SessionState>()(
           }
         }
         set({ ...anonymous, endedReason: opts?.reason ?? null });
+        releaseSession();
         // Everything cached belongs to the user/instance that just ended.
         resetInstanceState();
       },
@@ -383,6 +402,7 @@ export const useSession = create<SessionState>()(
           refreshToken: s.persistTokens ? s.refreshToken : null,
           basicCredentials: s.persistTokens ? s.basicCredentials : null,
           expiresAt: s.persistTokens ? s.expiresAt : null,
+          sessionKey: s.persistTokens ? s.sessionKey : null,
           info: s.persistTokens ? s.info : null,
         }) as SessionState,
     },

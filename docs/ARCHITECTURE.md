@@ -93,11 +93,23 @@ login(auth = auto)
   └─ GET /info with Authorization: Basic   → 200 Info                                          → mode = basic
 ```
 
-- **JWT (IRIS ≥ 2026.2).** The access token goes into `Authorization: Bearer …`. The middleware
-  refreshes proactively when `exp` is less than 20 s away, and reactively once on a `401`
-  (the original body is stashed per request id so the retry can resend it). Concurrent refreshes are
-  de-duplicated with a shared promise. If the refresh fails the session ends with a reason that the
-  login page shows.
+- **JWT (IRIS ≥ 2026.2).** The access token goes into `Authorization: Bearer …`. On IRIS 2026.2
+  (defaults of the `/api/admin` web application) access tokens live 60 s and refresh tokens 900 s;
+  a refresh issues a new pair and the previous access token stops working at once, and presenting a
+  refresh token that was already used revokes the whole session. So:
+  - the middleware refreshes proactively when the token has less than 20 s left, counted from the
+    token's lifetime (`exp - iat`) on the browser's clock, so clock skew cannot make every request
+    refresh; and reactively once on a `401` (the original body is stashed per request id so the
+    retry can resend it). Concurrent refreshes are de-duplicated with a shared promise;
+  - a `401` for a request sent with a token that is no longer the current one is stale (a refresh
+    finished while it was in flight): it is retried with the current token, never answered with a
+    second refresh, which would revoke the token every other request just switched to;
+  - one browser tab per session (`stores/sessionLock.ts`): duplicating a tab copies its
+    sessionStorage and so the refresh token, and the second tab to refresh would get both sessions
+    revoked. The tab that signed in holds a Web Lock named after its session; a copy finds it taken
+    and drops its tokens locally (no remote logout, which would end the original too). A restored
+    JWT session is not used before this is settled.
+  If the refresh fails the session ends with a reason that the login page shows.
 - **Basic.** Credentials are sent on every request. Because the browser would otherwise show its
   native login dialog on a `401` with `WWW-Authenticate: Basic`, nginx strips that header
   (`proxy_hide_header WWW-Authenticate`) and fetches are made with `credentials: 'omit'`.

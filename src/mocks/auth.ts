@@ -53,6 +53,8 @@ export interface TokenPayload {
   exp: number;
   typ: 'access' | 'refresh';
   sid: string;
+  /** Which refresh of the session issued it: only the latest pair is valid. */
+  gen: number;
 }
 
 export function issueToken(
@@ -60,9 +62,10 @@ export function issueToken(
   typ: 'access' | 'refresh',
   ttlSeconds: number,
   sid: string,
+  gen = currentGeneration(sid),
 ): string {
   const iat = Date.now() / 1000;
-  const payload: TokenPayload = { sub: username, iat, exp: Math.floor(iat + ttlSeconds), typ, sid };
+  const payload: TokenPayload = { sub: username, iat, exp: Math.floor(iat + ttlSeconds), typ, sid, gen };
   return `${b64({ alg: 'ES256', typ: 'JWT' })}.${b64(payload)}.${b64('mock-signature-' + sid)}`;
 }
 
@@ -80,6 +83,29 @@ export function parseToken(token: string): TokenPayload | null {
 
 const revokedSessions = new Set<string>();
 
+/**
+ * Token rotation as IRIS 2026.2 does it: a refresh issues a new pair and the previous access and
+ * refresh tokens stop working at once; presenting a refresh token of an earlier pair again revokes
+ * the whole session (every token issued to it), the usual defence against a stolen refresh token.
+ */
+const generations = new Map<string, number>();
+
+export function currentGeneration(sid: string): number {
+  return generations.get(sid) ?? 0;
+}
+
+/** The next pair of a session, or null when the refresh token presented is not the latest. */
+export function rotate(payload: TokenPayload): number | null {
+  if (isRevoked(payload.sid)) return null;
+  if ((payload.gen ?? 0) !== currentGeneration(payload.sid)) {
+    revokeSession(payload.sid);
+    return null;
+  }
+  const next = currentGeneration(payload.sid) + 1;
+  generations.set(payload.sid, next);
+  return next;
+}
+
 export function revokeSession(sid: string) {
   revokedSessions.add(sid);
 }
@@ -96,6 +122,7 @@ export function authenticate(request: Request): MockAccount | null {
     if (!payload || payload.typ !== 'access') return null;
     if (payload.exp * 1000 < Date.now()) return null;
     if (isRevoked(payload.sid)) return null;
+    if ((payload.gen ?? 0) !== currentGeneration(payload.sid)) return null;
     return findAccount(payload.sub) ?? null;
   }
   if (header.startsWith('Basic ')) {

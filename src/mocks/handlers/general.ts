@@ -1,14 +1,27 @@
 import { http, HttpResponse } from 'msw';
-import { accounts, findAccount, infoFor, issueToken, parseToken, revokeSession, authenticate } from '../auth';
+import {
+  accounts,
+  findAccount,
+  infoFor,
+  issueToken,
+  parseToken,
+  revokeSession,
+  rotate,
+  authenticate,
+} from '../auth';
 import { mockDb } from '../db';
 import { jsonBody, unauthorized } from '../util';
 
-const ACCESS_TTL = 15 * 60;
-const REFRESH_TTL = 24 * 60 * 60;
+/**
+ * IRIS 2026.2's defaults for /api/admin (JWTAccessTokenTimeout, JWTRefreshTokenTimeout): the
+ * portal refreshes every 40 s, and a session idle for 15 minutes ends.
+ */
+const ACCESS_TTL = 60;
+const REFRESH_TTL = 900;
 
-function loginResponse(username: string, sid: string) {
-  const access = issueToken(username, 'access', ACCESS_TTL, sid);
-  const refresh = issueToken(username, 'refresh', REFRESH_TTL, sid);
+function loginResponse(username: string, sid: string, gen = 0) {
+  const access = issueToken(username, 'access', ACCESS_TTL, sid, gen);
+  const refresh = issueToken(username, 'refresh', REFRESH_TTL, sid, gen);
   const payload = parseToken(access)!;
   // Not enveloped on IRIS 2026.2 (unlike every /v2 answer and /info).
   return HttpResponse.json({
@@ -44,7 +57,9 @@ export const generalHandlers = [
     const payload = body.refresh_token ? parseToken(body.refresh_token) : null;
     if (!payload || payload.typ !== 'refresh' || payload.exp * 1000 < Date.now()) return unauthorized();
     if (!accounts.some((a) => a.username === payload.sub)) return unauthorized();
-    return loginResponse(payload.sub, payload.sid);
+    const gen = rotate(payload);
+    if (gen === null) return unauthorized();
+    return loginResponse(payload.sub, payload.sid, gen);
   }),
 
   http.post('*/api/admin/logout', async ({ request }) => {

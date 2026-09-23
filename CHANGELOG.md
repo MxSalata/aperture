@@ -18,6 +18,13 @@ differently; the evidence is in `docs/verification/`.
   processes are the `{ Process, Commands }` rows IRIS sends, without its ten-row padding: the list
   showed blank rows and "10 busy" for one. The globals-and-routines panel says its values are
   totals.
+- **JWT sessions against real token rotation.** IRIS issues 60-second access tokens, revokes the
+  previous access token on every refresh and revokes the whole session when a used refresh token
+  comes back. A duplicated tab (which copies sessionStorage) therefore signed both tabs out within
+  a minute: the copy now gives up its tokens locally (a Web Lock names the owning tab). A `401`
+  for a request sent before a refresh finished is retried with the new token instead of
+  refreshing again, which cascaded; token expiry is counted on the browser's clock from the
+  token's lifetime. The mock rotates tokens with IRIS's lifetimes and rules.
 - **The mock answers as IRIS does**: `/info` enveloped, `/login` and `/refresh` not; errors in
   `status.errors` as `{ error, code, domain, id, params }`; a 403 with no text; a 401 with no body
   and a Bearer challenge; a 202 with the task id only in a `Location` that names `/v1`; logout

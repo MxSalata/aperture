@@ -174,7 +174,12 @@ const middleware: Middleware = {
       const session = useSession.getState();
       if (session.status !== 'authenticated') return response;
       if (session.mode === 'jwt') {
-        const refreshed = await session.refresh();
+        // IRIS revokes an access token the moment it issues the next one, so a request sent just
+        // before a refresh finished comes back 401 although the session is fine. Retry it with the
+        // current token: refreshing again would revoke the token every other request just moved to.
+        const sentWith = request.headers.get('Authorization');
+        const current = session.authorizationHeader();
+        const refreshed = sentWith && current && sentWith !== current ? true : await session.refresh();
         if (refreshed) {
           const headers = new Headers(request.headers);
           headers.set('Authorization', useSession.getState().authorizationHeader() ?? '');
