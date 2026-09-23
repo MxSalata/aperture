@@ -4,6 +4,7 @@
 //
 //   node --env-file=$HOME/.aperture/iris-live.env scripts/live/mgmnt.mjs --out docs/verification/<run>
 //     --keep-lan   keep LAN addresses and host names (scratch runs that are not committed)
+// Writes o-mgmnt.json and o-api-admin-routes.json (every route of /api/admin, v1 and v2).
 import { account, basicHeader, evidenceWriter, http, IRIS_URL, signIn } from './lib.mjs';
 
 const argv = process.argv.slice(2);
@@ -64,6 +65,21 @@ for (const [kind, acct] of [
         }))
       : null;
     const spec = await http('GET', '/v1/%25SYS/spec/api/admin', { auth: basic, base });
+    // Every route %Api.Admin declares, v1 and v2 alike: what a v1-only instance (2026.1) could serve.
+    const routes = { v1: [], v2: [], other: [] };
+    for (const [path, ops] of Object.entries(spec.json?.paths ?? {}))
+      for (const method of Object.keys(ops)) {
+        const route = `${method.toUpperCase()} ${path}`;
+        (path.startsWith('/v1/') ? routes.v1 : path.startsWith('/v2/') ? routes.v2 : routes.other).push(
+          route,
+        );
+      }
+    for (const list of Object.values(routes)) list.sort();
+    save('o-api-admin-routes', {
+      assumption: 'the routes %Api.Admin serves, as /api/mgmnt generates them from its dispatch class',
+      counts: Object.fromEntries(Object.entries(routes).map(([k, v]) => [k, v.length])),
+      routes,
+    });
     accounts[kind].specOfApiAdmin = {
       status: spec.status,
       swagger: spec.json?.swagger,

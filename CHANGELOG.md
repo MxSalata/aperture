@@ -2,6 +2,13 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **The Explorer sends the OAuth token revocation where IRIS serves it.** The spec documents
+  `POST /v2/security/oauth2/revoke`; IRIS 2026.2 has no such route (404 to every method) and serves
+  the operation at `/v2/security/oauth2/server/revoke`. Found by comparing the routes `%Api.Admin`
+  declares (from `/api/mgmnt`) with the spec, and checked with a GET on each path (404 against 405
+  `Allow: POST`). A quirk now carries the served path; the Explorer uses it and the mock answers
+  like IRIS. README spec finding 19.
+
 - **Vitest 4.** The unit tests move from Vitest 3.2 to 4.1 (the next major, maintained since October
   2025); the configuration needed no change and all tests pass as before. Vitest 5 (September 2026)
   needs Node 22.12 or later and is the next step once it has settled.

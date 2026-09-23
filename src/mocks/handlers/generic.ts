@@ -5,6 +5,7 @@ import { apiBasePath } from '../secure';
 import { exampleFromSchema, loadSpec, resultSchema } from '@/lib/openapi';
 import { findIndexedOperation } from '@/lib/specIndex';
 import { startAsyncTask } from '../async';
+import { documentedPath } from '@/lib/quirks';
 
 /**
  * Fallback for every operation without a dedicated handler: authenticate,
@@ -15,7 +16,9 @@ export const genericHandler = http.all('*/api/admin/v2/*', async ({ request }) =
   const url = new URL(request.url);
   const i = url.pathname.indexOf('/api/admin');
   const path = url.pathname.slice(i + '/api/admin'.length).replace(/\/+$/, '');
-  const op = findIndexedOperation(request.method, path);
+  // Like IRIS: a moved operation answers at the path it is served at, not the documented one.
+  const documented = documentedPath(request.method, path);
+  const op = documented ? findIndexedOperation(request.method, documented) : undefined;
   if (!op) {
     return fail(404, `No such endpoint: ${request.method} ${path}`);
   }

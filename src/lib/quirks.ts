@@ -10,9 +10,28 @@ export interface SpecQuirk {
   note: string;
   source: string;
   transformBody?: (body: Record<string, unknown>) => Record<string, unknown>;
+  /** Where IRIS really serves the operation, when that is not the documented path. */
+  servedAt?: string;
 }
 
+/**
+ * Operations IRIS serves at another path than the spec documents. Checked with GET on both paths:
+ * %CSP.REST answers 405 (Allow: POST) where a route exists for another method, and 404 where none
+ * does; the routes %Api.Admin declares are in docs/verification/…/o-api-admin-routes.json.
+ */
+const MOVED: { method: string; path: string; servedAt: string }[] = [
+  { method: 'POST', path: '/v2/security/oauth2/revoke', servedAt: '/v2/security/oauth2/server/revoke' },
+];
+
 export const SPEC_QUIRKS: SpecQuirk[] = [
+  ...MOVED.map((m) => ({
+    id: 'oauth2-revoke-path',
+    appliesTo: (op: { method: string; path: string }) => op.method === m.method && op.path === m.path,
+    note: `IRIS 2026.2 serves this operation at ${m.servedAt}; the documented path answers 404 to every method. The Explorer sends it there.`,
+    source:
+      'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification, o-api-admin-routes.json)',
+    servedAt: m.servedAt,
+  })),
   {
     id: 'oauth-client-server-definition',
     appliesTo: (op) =>
@@ -129,6 +148,20 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
 
 export function quirksFor(op: { method: string; path: string }): SpecQuirk[] {
   return SPEC_QUIRKS.filter((q) => q.appliesTo(op));
+}
+
+/** The path to send an operation to: where IRIS serves it. */
+export function servedPath(op: { method: string; path: string }): string {
+  return quirksFor(op).find((q) => q.servedAt)?.servedAt ?? op.path;
+}
+
+/**
+ * For the mock: the documented operation a request reaches. A moved operation answers at its
+ * served path, and its documented path is a 404, as on IRIS.
+ */
+export function documentedPath(method: string, path: string): string | null {
+  if (MOVED.some((m) => m.method === method && m.path === path)) return null;
+  return MOVED.find((m) => m.method === method && m.servedAt === path)?.path ?? path;
 }
 
 export function applyQuirks(

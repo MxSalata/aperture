@@ -51,7 +51,7 @@ import { canUse } from '@/api/privileges';
 import { isReadOperation } from '@/api/readOnly';
 import { useJobs } from '@/stores/jobs';
 import { jobIdFromResponse } from '@/api/client';
-import { applyQuirks, quirksFor } from '@/lib/quirks';
+import { applyQuirks, quirksFor, servedPath } from '@/lib/quirks';
 import { humanize } from '@/components/KeyValueList';
 
 const METHOD_COLOR: Record<string, string> = {
@@ -369,7 +369,8 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
       try {
         fetched = (await api().request(
           op.method as 'get',
-          op.path as never,
+          // Where IRIS serves it, when that is not the documented path (quirks.ts).
+          servedPath(op) as never,
           {
             params: { query: q },
             ...(parsedBody !== undefined ? { body: parsedBody } : {}),
