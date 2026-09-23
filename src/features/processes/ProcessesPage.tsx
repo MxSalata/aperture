@@ -9,7 +9,7 @@ import type { ProcessList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
-import { formatCompact } from '@/lib/format';
+import { elapsedSeconds, formatCompact } from '@/lib/format';
 
 type Row = ProcessList[number];
 export const procKeys = { list: ['processes'] as const, one: (pid: string) => ['processes', pid] as const };
@@ -36,7 +36,12 @@ const columns: ColumnDef<Row, unknown>[] = [
   },
   { accessorKey: 'ClientName', header: 'Client' },
   { accessorKey: 'IPAddress', header: 'IP' },
-  { accessorKey: 'EXEName', header: 'Executable' },
+  {
+    // IRIS 2026.2 spells it EXEname; the spec (and so the generated type) says EXEName.
+    id: 'Executable',
+    accessorFn: (r) => (r as { EXEname?: string }).EXEname ?? r.EXEName ?? '',
+    header: 'Executable',
+  },
   {
     accessorKey: 'Commands',
     header: 'Commands',
@@ -52,7 +57,12 @@ const columns: ColumnDef<Row, unknown>[] = [
     header: 'CPU (ms)',
     cell: (c) => <span className="tabular">{formatCompact(c.getValue() as number)}</span>,
   },
-  { accessorKey: 'ElapsedTime', header: 'Elapsed' },
+  {
+    accessorKey: 'ElapsedTime',
+    header: 'Elapsed',
+    // "hh:mm:ss", hours unpadded past 99: sort by the duration, not the text.
+    sortingFn: (a, b) => elapsedSeconds(a.original.ElapsedTime) - elapsedSeconds(b.original.ElapsedTime),
+  },
   { accessorKey: 'OSUserName', header: 'OS user' },
 ];
 

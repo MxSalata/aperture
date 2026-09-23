@@ -83,7 +83,8 @@ export interface ProcessRec {
   Globals: number;
   State: string;
   ClientName: string;
-  EXEName: string;
+  /** Spelled EXEname by IRIS 2026.2 (the spec says EXEName). */
+  EXEname: string;
   IPAddress: string;
   CanBeExamined: boolean;
   CanBeSuspended: boolean;
@@ -505,6 +506,8 @@ function seedProcesses(): ProcessRec[] {
     const elapsedMs = Date.now() - started.getTime();
     const h = Math.floor(elapsedMs / 3_600_000);
     const m = Math.floor((elapsedMs % 3_600_000) / 60_000);
+    const s = Math.floor((elapsedMs % 60_000) / 1000);
+    const two = (n: number) => String(n).padStart(2, '0');
     return {
       Job: list.length + 1,
       Pid: pid,
@@ -516,7 +519,7 @@ function seedProcesses(): ProcessRec[] {
       Globals: Math.floor(rnd() * 2_000_000),
       State: 'RUNW',
       ClientName: '',
-      EXEName: '',
+      EXEname: '',
       IPAddress: '',
       CanBeExamined: true,
       CanBeSuspended: true,
@@ -526,7 +529,8 @@ function seedProcesses(): ProcessRec[] {
       OSUserName: 'irisowner',
       CPUTime: Math.floor(rnd() * 200_000),
       ParentPid: 5301,
-      ElapsedTime: `${h}h ${m}m`,
+      // IRIS writes hh:mm:ss ("00:35:18").
+      ElapsedTime: `${two(h)}:${two(m)}:${two(s)}`,
       StartTimeUTC: started.toISOString().replace('T', ' ').slice(0, 19),
       MemoryAllocated: 262144,
       MemoryUsed: Math.floor(rnd() * 200_000),
@@ -604,7 +608,7 @@ function seedProcesses(): ProcessRec[] {
       State: 'RUNW',
       Device: '|TCP|127.0.0.1:52773|54211',
       ClientName: 'devbox',
-      EXEName: 'CSPa24.so',
+      EXEname: 'CSPa24.so',
       IPAddress: '10.0.0.41',
       CanReceiveBroadcast: true,
       OSUserName: 'jdoe',
@@ -619,7 +623,7 @@ function seedProcesses(): ProcessRec[] {
       State: 'RUNW',
       Device: '|TCP|1972|61023',
       ClientName: 'devbox',
-      EXEName: 'code',
+      EXEname: 'code',
       IPAddress: '10.0.0.41',
       CanReceiveBroadcast: true,
       OSUserName: 'jdoe',
@@ -634,7 +638,7 @@ function seedProcesses(): ProcessRec[] {
       State: 'RUNW',
       Device: '|TCP|1972|61102',
       ClientName: 'bi-server',
-      EXEName: 'java',
+      EXEname: 'java',
       IPAddress: '10.0.0.77',
       CanReceiveBroadcast: true,
       OSUserName: 'tomcat',
@@ -652,7 +656,7 @@ function seedProcesses(): ProcessRec[] {
       State: 'RUNW',
       Device: '|TCP|1972|61105',
       ClientName: 'bi-server',
-      EXEName: 'python3',
+      EXEname: 'python3',
       IPAddress: '10.0.0.77',
       CanReceiveBroadcast: true,
       OSUserName: 'tomcat',
@@ -667,7 +671,7 @@ function seedProcesses(): ProcessRec[] {
       State: 'RUNW',
       Device: '|TCP|127.0.0.1:52773|54310',
       ClientName: 'localhost',
-      EXEName: 'CSPa24.so',
+      EXEname: 'CSPa24.so',
       IPAddress: '127.0.0.1',
       CanReceiveBroadcast: true,
       OSUserName: 'irisowner',
@@ -681,7 +685,7 @@ function seedProcesses(): ProcessRec[] {
       State: 'RUNW',
       Device: '/dev/pts/0',
       ClientName: 'container',
-      EXEName: 'iris',
+      EXEname: 'iris',
       IPAddress: '',
       CanReceiveBroadcast: true,
       OSUserName: 'irisowner',
@@ -695,7 +699,7 @@ function seedProcesses(): ProcessRec[] {
       State: 'LOCK',
       Device: '/dev/pts/1',
       ClientName: 'container',
-      EXEName: 'irissession',
+      EXEname: 'irissession',
       CanReceiveBroadcast: true,
       OSUserName: 'ops',
       Location: '+12^MYREPORT',

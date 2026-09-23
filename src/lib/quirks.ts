@@ -38,6 +38,12 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
     source: 'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification)',
   },
   {
+    id: 'process-list-exename',
+    appliesTo: (op) => op.path === '/v2/processes' && op.method === 'GET',
+    note: 'IRIS 2026.2 spells the executable field EXEname; the spec says EXEName. ElapsedTime arrives as hh:mm:ss.',
+    source: 'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification)',
+  },
+  {
     id: 'info-without-envelope',
     appliesTo: (op) => op.path === '/info',
     note: 'Returned without the standard {status, console, result} envelope.',

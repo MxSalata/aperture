@@ -125,6 +125,15 @@ export function formatDurationMs(ms: number): string {
   return `${Math.floor(d.asHours())}h ${d.minutes()}m`;
 }
 
+/**
+ * A process's ElapsedTime ("00:35:18", hours unpadded past 99) in seconds, for sorting; -1 when
+ * it is not in that form.
+ */
+export function elapsedSeconds(s: string | null | undefined): number {
+  const m = /^\s*(\d+):(\d{1,2}):(\d{1,2})\s*$/.exec(s ?? '');
+  return m ? Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]) : -1;
+}
+
 export function truncate(s: string, max = 80): string {
   return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 }

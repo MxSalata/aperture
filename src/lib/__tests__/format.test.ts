@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  elapsedSeconds,
   formatBytes,
   formatMB,
   formatNumber,
@@ -69,5 +70,20 @@ describe('parseIrisDate with a zone designator', () => {
     } finally {
       setInstanceTimezone(null);
     }
+  });
+});
+
+describe('process elapsed time', () => {
+  it('reads the hh:mm:ss IRIS writes, hours unpadded past 99', () => {
+    expect(elapsedSeconds('00:35:18')).toBe(35 * 60 + 18);
+    expect(elapsedSeconds('123:00:01')).toBe(123 * 3600 + 1);
+    // Sorting by the value, not the text: 100 hours is longer than 99.
+    expect(elapsedSeconds('100:00:00')).toBeGreaterThan(elapsedSeconds('99:59:59'));
+  });
+
+  it('is -1 for anything else', () => {
+    expect(elapsedSeconds('0h 35m')).toBe(-1);
+    expect(elapsedSeconds('')).toBe(-1);
+    expect(elapsedSeconds(undefined)).toBe(-1);
   });
 });

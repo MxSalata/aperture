@@ -11,6 +11,8 @@ differently; the evidence is in `docs/verification/`.
   read only `EnabledBoolean`. The mock now serves the services of a 2026.2 container with their
   real `AutheEnabled` values and names authentication methods as IRIS does
   ("Operating System", no invented "JWT"); the contract test lists divergences per field.
+- **Processes: the Executable column was always empty.** IRIS spells the field `EXEname` (the spec
+  says `EXEName`). Elapsed time sorts by duration (`hh:mm:ss`, as IRIS writes it) instead of as text.
 
 ## Unreleased - code review
 

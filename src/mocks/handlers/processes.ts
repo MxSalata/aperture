@@ -44,7 +44,7 @@ export const processHandlers = [
       PrincipalDevice: p.Device,
       ClientNodeName: p.ClientName,
       ClientIPAddress: p.IPAddress,
-      ClientExecutableName: p.EXEName,
+      ClientExecutableName: p.EXEname,
       StartupClientIPAddress: p.IPAddress,
       StartupClientNodeName: p.ClientName,
       CommandsExecuted: p.Commands,
