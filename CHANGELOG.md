@@ -32,6 +32,9 @@ differently; the evidence is in `docs/verification/`.
   for a request sent before a refresh finished is retried with the new token instead of
   refreshing again, which cascaded; token expiry is counted on the browser's clock from the
   token's lifetime. The mock rotates tokens with IRIS's lifetimes and rules.
+- **SQL privileges: empty columns, and Revoke sent the wrong privilege.** IRIS answers `Object` and
+  `Action` where the spec says `Name` and `Privilege`; the screen read the spec's names, showed
+  empty columns and revoked `SELECT` on an empty object name. It reads either now.
 - **Screens the walk against IRIS flagged**: the Logs hub read the audit log and task history for
   accounts that may not (403s in the console; its cards now query only what they may show); the
   journal settings form rendered empty and editable before the settings arrived, and its inputs

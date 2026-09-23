@@ -26,7 +26,15 @@ import { confirmDanger } from '@/components/ConfirmDanger';
 import { useSession } from '@/stores/session';
 import { secKeys } from './keys';
 
-type Row = SQLPrivilegeList[number];
+type Row = SQLPrivilegeList[number] & { Object?: string; Action?: string };
+
+/**
+ * IRIS 2026.2 answers GET /v2/security/sql-privileges with Object and Action; the spec (and so
+ * the generated type) says Name and Privilege. Reading only the spec's names left the columns
+ * empty and made Revoke send an empty object and the default action.
+ */
+const objectOf = (r: Row) => r.Object ?? r.Name ?? '';
+const actionOf = (r: Row) => r.Action ?? r.Privilege ?? '';
 type GrantQuery = NonNullable<Paths['/v2/security/sql-privilege/grant']['post']['parameters']['query']>;
 type ObjectType = GrantQuery['type'];
 type Action = GrantQuery['action'];
@@ -138,8 +146,8 @@ export default function SqlPrivilegesPage() {
               namespace,
               grantee,
               type: (r.Type ?? 'TABLE') as ObjectType,
-              object: r.Name ?? '',
-              action: (r.Privilege ?? 'SELECT') as Action,
+              object: objectOf(r),
+              action: actionOf(r) as Action,
             },
           },
         }),
@@ -168,11 +176,12 @@ export default function SqlPrivilegesPage() {
   const columns: ColumnDef<Row, unknown>[] = [
     { accessorKey: 'Type', header: 'Type' },
     {
-      accessorKey: 'Name',
+      id: 'Object',
+      accessorFn: objectOf,
       header: 'Object',
       cell: (c) => <span className="mono">{String(c.getValue() ?? '')}</span>,
     },
-    { accessorKey: 'Privilege', header: 'Privilege' },
+    { id: 'Action', accessorFn: actionOf, header: 'Privilege' },
     { accessorKey: 'GrantedBy', header: 'Granted by' },
     { accessorKey: 'GrantedVia', header: 'Via role' },
     {
@@ -202,7 +211,7 @@ export default function SqlPrivilegesPage() {
                 title: 'Revoke privilege',
                 message: (
                   <>
-                    Revoke {row.original.Privilege} on <code>{row.original.Name}</code> from {grantee}?
+                    Revoke {actionOf(row.original)} on <code>{objectOf(row.original)}</code> from {grantee}?
                   </>
                 ),
                 confirmLabel: 'Revoke',

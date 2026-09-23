@@ -592,11 +592,12 @@ export const securityHandlers = [
     const q = new URL(request.url).searchParams;
     const grantee = q.get('grantee') ?? '';
     const ns = q.get('namespace') ?? 'USER';
+    // IRIS 2026.2 names the object and the action Object and Action; the spec says Name and Privilege.
     const base = [
       {
         Type: 'TABLE',
-        Name: 'SQLUser.Person',
-        Privilege: 'SELECT',
+        Object: 'SQLUser.Person',
+        Action: 'SELECT',
         GrantedBy: '_SYSTEM',
         GrantOption: false,
         GrantedVia: grantee,
@@ -604,8 +605,8 @@ export const securityHandlers = [
       },
       {
         Type: 'TABLE',
-        Name: 'SQLUser.Person',
-        Privilege: 'INSERT',
+        Object: 'SQLUser.Person',
+        Action: 'INSERT',
         GrantedBy: '_SYSTEM',
         GrantOption: false,
         GrantedVia: grantee,
@@ -613,8 +614,8 @@ export const securityHandlers = [
       },
       {
         Type: 'TABLE',
-        Name: 'DICOM.Study',
-        Privilege: 'SELECT',
+        Object: 'DICOM.Study',
+        Action: 'SELECT',
         GrantedBy: 'Admin',
         GrantOption: true,
         GrantedVia: '%SQL',
@@ -622,8 +623,8 @@ export const securityHandlers = [
       },
       {
         Type: 'VIEW',
-        Name: 'HL7.Archive_View',
-        Privilege: 'SELECT',
+        Object: 'HL7.Archive_View',
+        Action: 'SELECT',
         GrantedBy: 'Admin',
         GrantOption: false,
         GrantedVia: grantee,
@@ -631,8 +632,8 @@ export const securityHandlers = [
       },
       {
         Type: 'STORED PROCEDURE',
-        Name: 'dc.Reports_Nightly',
-        Privilege: 'EXECUTE',
+        Object: 'dc.Reports_Nightly',
+        Action: 'EXECUTE',
         GrantedBy: '_SYSTEM',
         GrantOption: false,
         GrantedVia: grantee,
@@ -640,7 +641,9 @@ export const securityHandlers = [
       },
     ];
     return ok(
-      ns === 'CLINICAL' ? base.filter((b) => b.Name.startsWith('DICOM') || b.Name.startsWith('HL7')) : base,
+      ns === 'CLINICAL'
+        ? base.filter((b) => b.Object.startsWith('DICOM') || b.Object.startsWith('HL7'))
+        : base,
     );
   }),
   route('post', '/v2/security/sql-privilege/grant', SECURE, ({ request }) => {

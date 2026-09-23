@@ -70,6 +70,12 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
       'Aperture live verification, IRIS for Health 2026.2 Build 221U (reproduced: 1 alert per re-read, 0 for a single read)',
   },
   {
+    id: 'sql-privileges-object-action',
+    appliesTo: (op) => op.path === '/v2/security/sql-privileges' && op.method === 'GET',
+    note: 'IRIS 2026.2 names the object and the action Object and Action; the spec says Name and Privilege. The SQL privileges screen reads either.',
+    source: 'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification)',
+  },
+  {
     id: 'info-envelope',
     appliesTo: (op) => op.path === '/info',
     note: 'The spec documents Info without the {status, console, result} envelope; IRIS 2026.2 wraps it like every /v2 answer. /login and /refresh are not wrapped, as the spec says. Aperture accepts both forms.',
