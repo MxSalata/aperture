@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/node';
 import { useSession } from '../session';
 import { resetClients, api, result } from '@/api/client';
-import { resetDb } from '@/mocks/db';
+import { mockDb, resetDb } from '@/mocks/db';
 import { queryClient } from '@/query';
 import { useActivity } from '@/stores/activity';
 import { useHealth } from '@/stores/health';
@@ -57,6 +57,49 @@ describe('session', () => {
     expect(s.mode).toBe('basic');
     expect(s.authorizationHeader()).toBe(`Basic ${btoa('operator:SYS')}`);
     expect(s.info?.privileges?.Secure?.use).toBe(false);
+  });
+
+  it('falls back to Basic when JWT authentication is switched off on /api/admin', async () => {
+    // IRIS then asks for a password before /login is reached: 401 with WWW-Authenticate: Basic.
+    mockDb.webApps.find((w) => w.Name === '/api/admin')!.JWTAuthEnabled = false;
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: 'operator', password: 'SYS' });
+    expect(useSession.getState().mode).toBe('basic');
+  });
+
+  it('reads the scheme from the renamed header a proxy passes on', async () => {
+    server.use(
+      http.post(
+        `${BASE}/api/admin/login`,
+        () => new HttpResponse(null, { status: 401, headers: { 'X-Aperture-WWW-Authenticate': 'Basic' } }),
+      ),
+    );
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: 'operator', password: 'SYS' });
+    expect(useSession.getState().mode).toBe('basic');
+  });
+
+  it('does not try Basic after a wrong password on a JWT server, and hints when it cannot tell', async () => {
+    let basicTries = 0;
+    server.events.on('request:start', ({ request }) => {
+      if (request.url.endsWith('/info') && request.headers.get('authorization')?.startsWith('Basic '))
+        basicTries++;
+    });
+    await expect(
+      useSession
+        .getState()
+        .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'nope' }),
+    ).rejects.toThrow(/^Invalid username or password\.$/);
+    expect(basicTries).toBe(0);
+    server.events.removeAllListeners();
+    server.use(http.post(`${BASE}/api/admin/login`, () => new HttpResponse(null, { status: 401 })));
+    await expect(
+      useSession
+        .getState()
+        .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'nope' }),
+    ).rejects.toThrow(/sign in with Basic/);
   });
 
   it('refreshes an expired access token transparently', async () => {

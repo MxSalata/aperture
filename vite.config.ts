@@ -44,8 +44,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
           // A 401 with WWW-Authenticate: Basic would make the browser show its own login dialog.
+          // The scheme still matters to sign-in (Basic means JWT is off), so it is passed on renamed.
           configure: (proxy) => {
             proxy.on('proxyRes', (proxyRes) => {
+              const challenge = proxyRes.headers['www-authenticate'];
+              if (challenge) proxyRes.headers['x-aperture-www-authenticate'] = challenge;
               delete proxyRes.headers['www-authenticate'];
             });
           },

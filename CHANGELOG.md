@@ -2,6 +2,14 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **Sign-in falls back to Basic when JWT is switched off on /api/admin, as the README promised.** It
+  did not: with JWT off, IRIS answers `POST /login` with a bodiless 401 naming `Basic` (it asks for a
+  password before the API is reached), and Aperture fell back only on 404, so it reported a wrong
+  password. A wrong password with JWT on is the same 401 naming `Bearer`: the scheme now decides,
+  and a wrong password is still never tried twice. nginx and the dev server pass the scheme on as
+  `X-Aperture-WWW-Authenticate` (they hide `WWW-Authenticate` to keep the browser's login dialog
+  away); where it cannot be read, the error says to choose Basic. The mock can switch JWT off.
+  Found on a local IRIS Community 2026.2 container; README spec finding 20.
 - **A limited mode for IRIS 2026.1 is scoped, not built** (docs/SCOPE-2026.1.md). 2026.1 serves
   SysAdmin API v1 only, over Basic. Mapped by v1's own conventions, 74 of the 112 operations
   Aperture calls have a v1 route: all of security, tasks, processes, the dashboard and the license.

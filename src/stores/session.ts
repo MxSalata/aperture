@@ -126,6 +126,17 @@ function tokensFromLoginBody(body: Record<string, unknown> | null): JwtTokens | 
   };
 }
 
+/**
+ * The scheme a 401 asks for. IRIS names what its web application takes: `Bearer` when JWT
+ * authentication is on, `Basic` when it is off, and then POST /login is no JWT endpoint at all:
+ * IRIS asks for a password before the request reaches it, so its 401 says nothing about the one in
+ * the body. nginx and the dev server hide WWW-Authenticate (it would open the browser's own login
+ * dialog) and pass it on as X-Aperture-WWW-Authenticate; a cross-origin answer shows neither.
+ */
+function challengeOf(res: Response): string {
+  return (res.headers.get('WWW-Authenticate') ?? res.headers.get('X-Aperture-WWW-Authenticate') ?? '').trim();
+}
+
 async function jwtLogin(base: string, args: LoginArgs): Promise<LoginOutcome> {
   const url = `${base}/login`;
   let res: Response;
@@ -148,8 +159,19 @@ async function jwtLogin(base: string, args: LoginArgs): Promise<LoginOutcome> {
       summary: 'Cannot reach the server. Check the URL and that IRIS is running.',
     });
   }
-  if (res.status === 401)
-    throw new ApiError({ status: 401, url, method: 'POST', summary: 'Invalid username or password.' });
+  if (res.status === 401) {
+    const challenge = challengeOf(res);
+    // JWT authentication is switched off on the web application: sign in with Basic instead.
+    if (/^basic\b/i.test(challenge)) return 'unsupported';
+    throw new ApiError({
+      status: 401,
+      url,
+      method: 'POST',
+      summary: challenge
+        ? 'Invalid username or password.'
+        : 'Invalid username or password. If JWT authentication is switched off on /api/admin, sign in with Basic.',
+    });
+  }
   if (res.status === 404 || res.status === 405 || res.status === 501) return 'unsupported';
   const body = await readJson(res);
   if (!res.ok) throw errorFromBody(res, body, `Login failed (HTTP ${res.status})`);

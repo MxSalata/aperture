@@ -35,6 +35,13 @@ function loginResponse(username: string, sid: string, gen = 0) {
 
 export const generalHandlers = [
   http.post('*/api/admin/login', async ({ request }) => {
+    // With JWT authentication switched off on /api/admin, IRIS asks for a password before /login
+    // is reached: 401, no body, WWW-Authenticate: Basic, whatever the body carries.
+    if (mockDb.webApps.find((w) => w.Name === '/api/admin')?.JWTAuthEnabled === false)
+      return new HttpResponse(null, {
+        status: 401,
+        headers: { 'Content-Type': 'text/html; charset=utf-8', 'WWW-Authenticate': 'Basic' },
+      });
     const body = await jsonBody<{ user?: string; password?: string; role?: string }>(request);
     let account = body.user ? findAccount(body.user, body.password ?? '') : undefined;
     // Basic auth on /login is also allowed by IRIS.

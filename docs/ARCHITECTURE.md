@@ -89,7 +89,7 @@ Non-2xx responses become `ApiError` with `status`, `summary`, `errors[]` and `co
 ```
 login(auth = auto)
   ├─ POST /login {user, password, role?}   → 200 {result:{access_token, refresh_token, exp}}  → mode = jwt
-  │                                        → 404/405/501 or non-JSON                          → fall back
+  │                                        → 404/405/501, non-JSON, or 401 naming Basic       → fall back
   └─ GET /info with Authorization: Basic   → 200 Info                                          → mode = basic
 ```
 
@@ -118,7 +118,15 @@ login(auth = auto)
   Basic session lives in memory only and a reload signs it out, saying why; storage written by an
   earlier version is migrated without them. `RequireAuth` re-validates a restored session with
   `GET /info` before rendering anything.
+- **JWT switched off on `/api/admin`.** IRIS then asks for a password before `POST /login` is
+  reached: 401, empty body, `WWW-Authenticate: Basic`, whatever the body carries. A wrong password
+  with JWT on is also a bodiless 401, but names `Bearer`. So the scheme decides: Basic falls back
+  to Basic sign-in, Bearer is a wrong password and nothing else is tried (a second attempt would
+  count against the account's invalid-login limit). nginx and the Vite proxy hide
+  `WWW-Authenticate` and pass it on as `X-Aperture-WWW-Authenticate`; where neither can be read
+  (a cross-origin answer), the error says to choose Basic if JWT is off.
 - `role` is passed through to `/login` for **escalation roles**.
+
 
 ### 2.4 Asynchronous operations (202)
 
