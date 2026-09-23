@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - backlog after the real-instance pass
+
+- **Basic credentials are never stored.** With "keep me signed in", a Basic session wrote
+  `user:password` in Base64 to sessionStorage (finding F11 of 0.2.0, left partial). Only JWT
+  sessions are persisted now, whose tokens expire and can be revoked; a reload of a Basic session
+  signs it out and the sign-in page says why; credentials stored by an earlier version are dropped.
+
 ## Unreleased - checked against a real IRIS for Health 2026.2
 
 The review below was done against the specification and the mock. This pass ran the portal

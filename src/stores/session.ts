@@ -206,6 +206,10 @@ function assertSupportedApi(info: Info, url: string): void {
     });
 }
 
+/** Shown after a reload ended a Basic session, whose credentials are never stored. */
+export const BASIC_NOT_KEPT =
+  'Signed out by the reload: with Basic authentication the password is kept in memory only. JWT sessions (IRIS 2026.2) survive a reload.';
+
 let refreshInFlight: Promise<boolean> | null = null;
 
 /**
@@ -390,24 +394,45 @@ export const useSession = create<SessionState>()(
     }),
     {
       name: 'aperture.session',
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => safeSessionStorage),
-      partialize: (s) =>
-        ({
-          status: s.status === 'authenticated' && s.persistTokens ? 'authenticated' : 'anonymous',
-          mode: s.mode,
+      // Only a JWT session survives a reload. Basic credentials are the password itself (Base64 of
+      // user:password), so they stay in memory, whatever the checkbox says; tokens expire (60 s
+      // access, 900 s refresh on IRIS 2026.2) and can be revoked, a password cannot.
+      partialize: (s) => {
+        const keep = s.persistTokens && s.mode === 'jwt';
+        const basicInMemory = s.status === 'authenticated' && s.mode === 'basic';
+        return {
+          status: s.status === 'authenticated' && keep ? 'authenticated' : 'anonymous',
+          mode: keep ? s.mode : null,
           baseUrl: s.baseUrl,
           connectionId: s.connectionId,
           username: s.username,
           role: s.role,
           persistTokens: s.persistTokens,
-          accessToken: s.persistTokens ? s.accessToken : null,
-          refreshToken: s.persistTokens ? s.refreshToken : null,
-          basicCredentials: s.persistTokens ? s.basicCredentials : null,
-          expiresAt: s.persistTokens ? s.expiresAt : null,
-          sessionKey: s.persistTokens ? s.sessionKey : null,
-          info: s.persistTokens ? s.info : null,
-        }) as SessionState,
+          accessToken: keep ? s.accessToken : null,
+          refreshToken: keep ? s.refreshToken : null,
+          basicCredentials: null,
+          expiresAt: keep ? s.expiresAt : null,
+          sessionKey: keep ? s.sessionKey : null,
+          info: keep ? s.info : null,
+          // What the sign-in page says after the reload of a Basic session.
+          ...(basicInMemory ? { endedReason: BASIC_NOT_KEPT } : {}),
+        } as SessionState;
+      },
+      // Version 1 stored Basic credentials when "keep me signed in" was ticked: drop them.
+      migrate: (persisted, version) => {
+        const p = (persisted ?? {}) as Partial<SessionState>;
+        if (version < 2 && (p.basicCredentials || p.mode === 'basic'))
+          return {
+            ...p,
+            basicCredentials: null,
+            mode: null,
+            status: 'anonymous',
+            info: null,
+          } as SessionState;
+        return p as SessionState;
+      },
     },
   ),
 );

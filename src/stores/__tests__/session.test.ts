@@ -181,3 +181,52 @@ describe('the instance clock and the session', () => {
     expect(getMeasuredOffset()).toBeNull();
   });
 });
+
+describe('what a reload keeps', () => {
+  const stored = () =>
+    (JSON.parse(sessionStorage.getItem('aperture.session') ?? '{}') as { state?: Record<string, unknown> })
+      .state ?? {};
+
+  it('never stores Basic credentials, even with "keep me signed in"', async () => {
+    const { BASIC_NOT_KEPT } = await import('../session');
+    server.use(http.post(`${BASE}/api/admin/login`, () => new HttpResponse('Not Found', { status: 404 })));
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: 'operator', password: 'SYS', persist: true });
+    expect(useSession.getState().mode).toBe('basic');
+    expect(sessionStorage.getItem('aperture.session')).not.toContain(btoa('operator:SYS'));
+    expect(stored().basicCredentials).toBeNull();
+    expect(stored().status).toBe('anonymous');
+    expect(stored().endedReason).toBe(BASIC_NOT_KEPT);
+  });
+
+  it('keeps a JWT session across a reload when asked', async () => {
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS', persist: true });
+    expect(stored().status).toBe('authenticated');
+    expect(stored().accessToken).toBeTruthy();
+    expect(stored().basicCredentials).toBeNull();
+  });
+
+  it('drops the Basic credentials an earlier version stored', async () => {
+    const creds = btoa('operator:SYS');
+    sessionStorage.setItem(
+      'aperture.session',
+      JSON.stringify({
+        state: {
+          status: 'authenticated',
+          mode: 'basic',
+          basicCredentials: creds,
+          persistTokens: true,
+          baseUrl: BASE,
+        },
+        version: 1,
+      }),
+    );
+    await useSession.persist.rehydrate();
+    expect(useSession.getState().basicCredentials).toBeNull();
+    expect(useSession.getState().status).toBe('anonymous');
+    expect(sessionStorage.getItem('aperture.session') ?? '').not.toContain(creds);
+  });
+});

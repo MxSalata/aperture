@@ -268,7 +268,7 @@ export default function LoginPage() {
               <Checkbox
                 size="xs"
                 label="Keep me signed in for this browser tab"
-                description="Off: credentials stay in memory only and a reload signs you out"
+                description="A JWT session survives a reload of this tab; a Basic password is never stored, so a reload asks for it again"
                 {...form.getInputProps('persist', { type: 'checkbox' })}
               />
 

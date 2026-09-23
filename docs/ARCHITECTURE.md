@@ -113,8 +113,11 @@ login(auth = auto)
 - **Basic.** Credentials are sent on every request. Because the browser would otherwise show its
   native login dialog on a `401` with `WWW-Authenticate: Basic`, nginx strips that header
   (`proxy_hide_header WWW-Authenticate`) and fetches are made with `credentials: 'omit'`.
-- Tokens live in `sessionStorage` (per tab, gone when the tab closes). `RequireAuth` re-validates a
-  restored session with `GET /info` before rendering anything.
+- JWT tokens live in `sessionStorage` (per tab, gone when the tab closes) when "keep me signed in"
+  is ticked. Basic credentials never do: they are the password (Base64 of `user:password`), so a
+  Basic session lives in memory only and a reload signs it out, saying why; storage written by an
+  earlier version is migrated without them. `RequireAuth` re-validates a restored session with
+  `GET /info` before rendering anything.
 - `role` is passed through to `/login` for **escalation roles**.
 
 ### 2.4 Asynchronous operations (202)
@@ -209,7 +212,7 @@ on unmount (React's StrictMode runs unmount cleanups right after mounting).
 
 | Store | Persisted in | Holds |
 | --- | --- | --- |
-| `session` | sessionStorage | connection, mode, tokens, `/info` |
+| `session` | sessionStorage (JWT sessions only) | connection, mode, tokens, `/info`; never Basic credentials |
 | `connections` | localStorage | saved IRIS instances |
 | `jobs` | sessionStorage | followed async tasks |
 | `metrics` | sessionStorage | ring buffer of dashboard samples (120 × 3 s) |
