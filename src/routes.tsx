@@ -34,6 +34,7 @@ const AuditPage = lazy(() => import('./features/security/AuditPage'));
 const SslPage = lazy(() => import('./features/security/SslPage'));
 const SqlPrivilegesPage = lazy(() => import('./features/security/SqlPrivilegesPage'));
 const ExplorerPage = lazy(() => import('./features/explorer/ExplorerPage'));
+const RestServicesPage = lazy(() => import('./features/rest/RestServicesPage'));
 const ConnectionsPage = lazy(() => import('./features/settings/ConnectionsPage'));
 const AboutPage = lazy(() => import('./features/shell/AboutPage'));
 const ActivityPage = lazy(() => import('./features/activity/ActivityPage'));
@@ -81,6 +82,7 @@ export const router = createRouter(
             { path: 'security/resources', element: <ResourcesPage /> },
             { path: 'security/services', element: <ServicesPage /> },
             { path: 'security/web-apps', element: <WebAppsPage /> },
+            { path: 'rest-services', element: <RestServicesPage /> },
             { path: 'security/web-apps/detail', element: <WebAppDetailPage /> },
             { path: 'security/audit', element: <AuditPage /> },
             { path: 'security/ssl', element: <SslPage /> },

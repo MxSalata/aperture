@@ -27,6 +27,17 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         '/api/monitor': { target: irisUrl, changeOrigin: true, secure: false },
+        // REST management API (REST services screen); a 401 there names Basic, like /api/admin's.
+        '/api/mgmnt': {
+          target: irisUrl,
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy) => {
+            proxy.on('proxyRes', (proxyRes) => {
+              delete proxyRes.headers['www-authenticate'];
+            });
+          },
+        },
         // Avoids CORS during development: the browser talks to Vite, Vite talks to IRIS.
         '/api/admin': {
           target: irisUrl,

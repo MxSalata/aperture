@@ -2,6 +2,7 @@ import {
   IconActivity,
   IconAddressBook,
   IconAppWindow,
+  IconApi,
   IconArrowsExchange,
   IconBook,
   IconCertificate,
@@ -225,6 +226,14 @@ export const NAV: NavSection[] = [
         privileges: [],
         description: 'Every operation in the SysAdmin API, generated from the OpenAPI spec',
         keywords: ['openapi', 'swagger', 'spec', 'ecp', 'wallet', 'oauth', 'ldap', 'device', 'docdb'],
+      },
+      {
+        label: 'REST services',
+        to: '/rest-services',
+        icon: IconApi,
+        privileges: [],
+        description: 'The REST applications of the instance and their routes, from /api/mgmnt',
+        keywords: ['rest', 'openapi', 'swagger', 'mgmnt', 'routes', 'endpoints', 'dispatch'],
       },
       {
         label: 'Connections',

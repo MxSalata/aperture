@@ -190,4 +190,16 @@ test.describe('Aperture (demo mode)', () => {
     await page.reload();
     await expect(page.getByRole('banner').getByLabel('Read-only tab')).toBeVisible();
   });
+
+  test('REST services lists the applications and the routes of each', async ({ page }) => {
+    await loginDemo(page);
+    await go(page, '/rest-services');
+    // The demo signs in with a JWT, which /api/mgmnt does not take: it asks for the password.
+    await page.getByLabel(/Password for/).fill('SYS');
+    await page.getByRole('button', { name: 'Read REST services' }).click();
+    await page.getByRole('button', { name: 'Routes of /api/atelier' }).click();
+    await expect(
+      page.getByRole('dialog').getByText('/api/atelier/v1/{namespace}/doc/{docname}').first(),
+    ).toBeVisible();
+  });
 });

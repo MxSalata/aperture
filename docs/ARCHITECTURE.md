@@ -180,6 +180,20 @@ invalidation fetches it), reads it when the Host monitor's *Read new alerts* is 
 every batch for the session. Counts come from `/metrics`, which is not consumed:
 `iris_system_alerts_log` (alerts in the log) and `iris_system_alerts_new` (new alerts waiting).
 
+### 2.7a REST management API
+
+`api/mgmnt.ts` reads `/api/mgmnt`, which ships with every IRIS outside the SysAdmin spec, for the
+**REST services** screen: `/v1/%SYS/restapps` lists the REST web applications of the whole
+instance (whatever namespace the URL names, so %SYS, which %Operator may use), `/v2/` the
+spec-first REST classes of every namespace, and each entry's `swaggerSpec` link serves Swagger 2.0
+generated from the dispatch class's routes; `routesOf` turns it into method, path and summary.
+Only links into `/api/mgmnt` are followed. The web application takes a password only
+(`JWTAuthEnabled` off, `AutheEnabled` 32), and a token from `/api/admin/login` gets a 401 there, so
+a Basic session's credentials are sent and a JWT session asks for the password once
+(`stores/mgmntAuth.ts`: memory only, cleared at sign-out and on a 401). Its queries never retry: a
+refused password counts toward the account's invalid-login limit. nginx and the Vite dev server
+proxy `/api/mgmnt/` and drop its `WWW-Authenticate: Basic`.
+
 ### 2.8 Spec quirks
 
 `lib/quirks.ts` lists known differences between the specification and running instances with their

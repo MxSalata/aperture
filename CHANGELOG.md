@@ -2,6 +2,14 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **REST services: every REST application and its routes.** A new screen reads `/api/mgmnt`
+  (outside the SysAdmin API): the REST web applications of the instance with their dispatch class,
+  the spec-first classes no web application serves, and, for each, the routes its dispatch class
+  declares (method, path, summary; searchable and exportable). Checked on the real instance:
+  `/api/mgmnt` takes a password only, and the `/api/admin` token gets a 401 there, so a JWT session
+  asks for the password once and keeps it in the tab's memory until sign-out; a refused password is
+  forgotten at once and never retried. The Docker nginx and the dev server proxy `/api/mgmnt/`.
+
 - **Editing a role or a user's roles shows who loses what.** The review lists, per enabled account
   the change reaches (holders of the role and of every role granting it), the privileges lost and
   gained, as `%DB_USER:W`. A privilege is only listed as lost when no other role, granted role or

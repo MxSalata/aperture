@@ -33,6 +33,7 @@ const SCREENS: [path: string, heading: string][] = [
   ['/monitor', 'Host monitor'],
   ['/security/users', 'Users'],
   ['/security/web-apps', 'Web applications'],
+  ['/rest-services', 'REST services'],
   ['/activity', 'Activity'],
 ];
 

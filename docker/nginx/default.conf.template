@@ -50,6 +50,14 @@ server {
     proxy_hide_header WWW-Authenticate;
   }
 
+  # REST management API (REST services screen). It takes a password; its 401 names Basic.
+  location /api/mgmnt/ {
+    proxy_pass ${IRIS_UPSTREAM}/api/mgmnt/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_hide_header WWW-Authenticate;
+  }
+
   # Static assets are content-hashed: cache hard.
   location /assets/ {
     add_header Cache-Control "public, max-age=31536000, immutable";
