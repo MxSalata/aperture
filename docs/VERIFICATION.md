@@ -14,7 +14,7 @@ verified by two mechanisms instead of by hand:
    you point it at and saves `docs/verification/latest.json` as evidence.
 
 ```bash
-IRIS_URL=http://iris.lan:52773 IRIS_USER=_SYSTEM IRIS_PASSWORD=SYS \
+IRIS_URL=http://iris.lan:52773 IRIS_USER=_SYSTEM IRIS_PASSWORD='…' \
 PORTAL_URL=http://iris.lan:52773/aperture/index.html npm run verify:live
 ```
 

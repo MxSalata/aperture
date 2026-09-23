@@ -19,8 +19,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -43,7 +43,7 @@ jobs:
       - run: npm run test:e2e
         env:
           CI: 'true'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:
           name: playwright-report
@@ -53,11 +53,11 @@ jobs:
       # Every run keeps the demo build as a plain artifact (download, unzip, serve with any static
       # server). The Pages artifact and the deployment below are opt-in through the repository
       # variable DEPLOY_DEMO, because GitHub Pages is not available while the repository is private.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: demo-site
           path: dist-demo
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         if: vars.DEPLOY_DEMO == 'true'
         with:
           path: dist-demo
@@ -71,10 +71,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
+      # The image has no well-known password: the build takes one as a BuildKit secret.
+      - name: Generate the image's administrator password
+        run: |
+          mkdir -p .secrets
+          pw=$(openssl rand -base64 18 | tr '+/' '-_')
+          echo "::add-mask::$pw"
+          printf '%s\n' "$pw" > .secrets/iris-password
+          echo "IRIS_PASSWORD=$pw" >> "$GITHUB_ENV"
       - name: Build the IRIS image (zpm "load" of the package, Embedded Python installer)
         run: docker compose --progress plain build iris
       - name: Start IRIS
@@ -83,7 +91,7 @@ jobs:
         run: |
           code=
           for i in $(seq 1 60); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' -u _SYSTEM:SYS http://localhost:52773/api/admin/info || true)
+            code=$(curl -s -o /dev/null -w '%{http_code}' -u "_SYSTEM:$IRIS_PASSWORD" http://localhost:52773/api/admin/info || true)
             if [ "$code" = "200" ]; then echo "API up after $((i*5))s"; exit 0; fi
             sleep 5
           done
@@ -97,12 +105,11 @@ jobs:
         env:
           IRIS_URL: http://localhost:52773
           IRIS_USER: _SYSTEM
-          IRIS_PASSWORD: SYS
           PORTAL_URL: http://localhost:52773/aperture/index.html
       - name: Readiness report (Embedded Python, inside the running container)
         if: always()
         run: docker exec aperture-iris iris session IRIS -U USER "##class(Aperture.Installer).Doctor()" || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: iris-verification
@@ -130,6 +137,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

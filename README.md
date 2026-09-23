@@ -45,20 +45,25 @@ Every real deployment also has a **Try the demo** button on the login page.
 ```bash
 git clone https://github.com/MxSalata/intersystems-frontend-contest.git
 cd intersystems-frontend-contest
+npm run iris:password   # or write any password of 12+ characters to .secrets/iris-password
 docker compose up --build
 ```
 
 - http://localhost:8080 - Aperture behind nginx (proxies `/api/admin` to IRIS, no CORS, no Basic-auth pop-ups; sends a Content-Security-Policy, set `IRIS_ALLOWED_ORIGINS="https://other.iris:52773"` on the `portal` service to let the browser call further instances directly)
 - http://localhost:52773/aperture/index.html - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`; the built-in web server needs the file name, a bare `/aperture/` answers 404)
-- Sign in with `_SYSTEM` / `SYS`
+- Sign in as `_SYSTEM` (or `SuperUser`) with the password in `.secrets/iris-password`. The image has no well-known password: the build sets it on every enabled account from that file, passed as a BuildKit secret, so it is in no image layer, build context or log. `CSPSystem`, the account the image's own Web Gateway signs in with, keeps its own password and holds no role.
 - On a host with more than 20 CPU cores, IRIS Community stops at start-up with _Invalid Community Edition license, may have exceeded core limit_ (reported by the IRIS Atrium entry). Restrict the container's CPUs with a `docker-compose.override.yml` next to the compose file: `services: { iris: { cpuset: "0-19" } }`.
-- The ports are published on `127.0.0.1` only, because the image ships these well-known credentials. To use it from other machines, change the passwords, then start with `APERTURE_BIND=0.0.0.0 docker compose up`, and put TLS in front of nginx: it serves plain HTTP.
+- The ports are published on `127.0.0.1` only by default. To use it from other machines, put TLS in front of nginx (it serves plain HTTP), then start with `APERTURE_BIND=0.0.0.0 docker compose up`.
 
 The `iris` service is built from [`docker/iris/Dockerfile`](docker/iris/Dockerfile) on top of
-`intersystems/iris-community:2026.2` (put `IRIS_IMAGE=intersystems/irishealth-community:2026.2`
-in a `.env` file next to the compose file for IRIS for Health Community). At build time
+`intersystems/iris-community:2026.2`, pinned by digest (`sha256:cd2ebcab…50bdaa`, Build 221U).
+IRIS for Health Community 2026.2 is tested too, against a real instance
+([evidence](docs/verification/2026-09-23-irishealth-2026.2/)): put
+`IRIS_IMAGE=containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3`
+in a `.env` file next to the compose file. The portal image pins `node:22-alpine` and
+`nginx:1.30-alpine` by digest, and CI pins every GitHub Action to a commit. At build time
 [`docker/iris/init.script`](docker/iris/init.script) fetches the InterSystems Package Manager from the
-community registry and installs Aperture through its own IPM package (`zpm "load"` of [`module.xml`](module.xml)): the built portal is copied under the instance's `csp/`
+community registry (installer 0.10.9, checked against its SHA-256) and installs Aperture through its own IPM package (`zpm "load"` of [`module.xml`](module.xml)): the built portal is copied under the instance's `csp/`
 directory, the `/aperture` web application is created, and [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls),
 written in Embedded Python, enables `/api/admin` with password + JWT authentication. The build log
 ends with the installer's readiness report; you can print it again at any time:

@@ -10,5 +10,8 @@ blob-report/
 *.tsbuildinfo
 *.log
 .DS_Store
+.env
 .env.local
 .env.*.local
+# The Docker image's administrator password (npm run iris:password)
+.secrets/

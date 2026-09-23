@@ -4,17 +4,26 @@
 // One statement per line: `iris session` reads stdin line by line, so { } blocks cannot span lines.
 zn "%SYS"
 Write "IRIS version: ",$zversion,!
-// Development convenience for this throwaway image: Community images ship their accounts with
-// expired passwords, which would block the first sign-in. Every account is un-expired here.
-// Do not reuse this script against an instance that holds real accounts.
-Write "Aperture image: un-expiring the passwords of all accounts (development image)",!
-Do ##class(Security.Users).UnExpireUserPasswords("*")
+// No well-known password: Community images ship their accounts with SYS. Every enabled account
+// but CSPSystem gets the password passed to the build as the secret iris_password (npm run
+// iris:password), read from the secret's file so it never enters a layer or the log. CSPSystem is
+// how the image's own Web Gateway signs in (its password is in CSP.ini) and holds no role.
+Set pwfile=$System.Util.GetEnviron("APERTURE_PASSWORD_FILE"),pw=""
+If pwfile'="",##class(%File).Exists(pwfile) Set f=##class(%Stream.FileCharacter).%New(),sc=f.LinkToFile(pwfile),pw=$ZStrip(f.ReadLine(),"<>W")
+If $Length(pw)<12 Write "No build secret iris_password of 12 characters or more: run npm run iris:password, then build again",! Do $system.Process.Terminate($job,1)
+Set rs=##class(%SQL.Statement).%ExecDirect(,"SELECT Name FROM Security.Users WHERE Enabled = 1 AND Name NOT IN ('CSPSystem','UnknownUser')"),n=0
+While rs.%Next() { Kill p  Set u=rs.%Get("Name"),p("Password")=pw,p("ChangePassword")=0,sc=##class(Security.Users).Modify(u,.p)  If 'sc { Write "Cannot set the password of ",u,": ",$system.Status.GetErrorText(sc),!  Do $system.Process.Terminate($job,1) }  Set n=n+1 }
+Write "Aperture image: the build secret is now the password of ",n," enabled accounts (CSPSystem, the Web Gateway's, keeps its own)",!
+Kill pw,p
 // IPM is preinstalled in the intersystemsdc "-zpm" tags; the official image needs the
 // installer from the community registry (the same step the InterSystems templates use)
 Set hasIPM=##class(%Dictionary.CompiledClass).%ExistsId("%IPM.Main"),sc=1
-If 'hasIPM Write "IPM not present in this image, downloading the installer from pm.community.intersystems.com ...",!
-If 'hasIPM Set req=##class(%Net.HttpRequest).%New(),req.Server="pm.community.intersystems.com",req.Https=1,req.SSLConfiguration="ISC.FeatureTracker.SSL.Config",sc=req.Get("/packages/zpm/latest/installer")
+// Pinned by version and by content: the SHA-256 of the 0.10.9 installer; anything else stops the build.
+If 'hasIPM Write "IPM not present in this image, downloading installer 0.10.9 from pm.community.intersystems.com ...",!
+If 'hasIPM Set req=##class(%Net.HttpRequest).%New(),req.Server="pm.community.intersystems.com",req.Https=1,req.ReadRawMode=1,req.SSLConfiguration="ISC.FeatureTracker.SSL.Config",sc=req.Get("/packages/zpm/0.10.9/installer")
 If 'hasIPM,sc,req.HttpResponse.StatusCode'=200 Set sc=$system.Status.Error(5001,"IPM installer download answered HTTP "_req.HttpResponse.StatusCode)
+If 'hasIPM,sc Set digest=$ZConvert(##class(%xsd.hexBinary).LogicalToXSD($System.Encryption.SHAHashStream(256,req.HttpResponse.Data,.sc)),"L")  Do req.HttpResponse.Data.Rewind()
+If 'hasIPM,sc,digest'="65d52082aace513daa1ecf30fb04b7d1b198530cb1d4ee59b688dbadaf0dd00f" Set sc=$system.Status.Error(5001,"IPM installer SHA-256 is "_digest_", not the pinned 0.10.9")
 If 'hasIPM,sc Set sc=$system.OBJ.LoadStream(req.HttpResponse.Data,"ck")
 If 'sc Write "IPM installer failed: ",$system.Status.GetErrorText(sc),! Do $system.Process.Terminate($job,1)
 // a fresh IPM lives in %SYS only; map it into every namespace (idempotent on the -zpm images)

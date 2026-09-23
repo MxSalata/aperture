@@ -5,19 +5,29 @@
 // /info shape, list endpoints, the 202 + Location / GUID pattern, error envelopes
 // and the known spec quirks. Prints a report and optionally saves JSON evidence.
 //
-//   IRIS_URL=http://localhost:52773 IRIS_USER=_SYSTEM IRIS_PASSWORD=SYS node scripts/live-check.mjs [--save docs/verification/latest.json]
+//   IRIS_URL=http://localhost:52773 IRIS_USER=_SYSTEM IRIS_PASSWORD=… node scripts/live-check.mjs [--save docs/verification/latest.json]
+//   (without IRIS_PASSWORD, the password of the Docker image is read from .secrets/iris-password)
 //   PORTAL_URL=http://localhost:52773/aperture/   (optional: also check the portal is served)
 //   IRIS_API_PREFIX=/api/admin                    (or /iris/api/admin behind a web gateway)
 //   --mutate                                      (opt-in: suspend and resume one task to check
 //                                                  that the read-back reflects the change; CI passes it,
 //                                                  a production instance should not)
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 const IRIS_URL = (process.env.IRIS_URL ?? 'http://localhost:52773').replace(/\/+$/, '');
 const PREFIX = process.env.IRIS_API_PREFIX ?? '/api/admin';
 const USER = process.env.IRIS_USER ?? '_SYSTEM';
-const PASSWORD = process.env.IRIS_PASSWORD ?? 'SYS';
+// No default password: the Docker image has none that is well known (npm run iris:password).
+const PASSWORD =
+  process.env.IRIS_PASSWORD ??
+  (existsSync('.secrets/iris-password') ? readFileSync('.secrets/iris-password', 'utf8').trim() : undefined);
+if (!PASSWORD) {
+  console.error(
+    'Set IRIS_PASSWORD (or create .secrets/iris-password with npm run iris:password for the Docker image).',
+  );
+  process.exit(2);
+}
 const PORTAL_URL = process.env.PORTAL_URL;
 const MUTATE = process.argv.includes('--mutate');
 const saveIdx = process.argv.indexOf('--save');

@@ -13,3 +13,6 @@ docs
 e2e
 playwright.config.ts
 *.md
+# Secrets reach a build only as BuildKit secrets, never through the context
+.secrets
+.env

@@ -286,7 +286,7 @@ There is one installation path. `module.xml` copies `www/` to `{$cspdir}aperture
 `/aperture` web application and invokes `Aperture.Installer` (`ipm/cls/Aperture/Installer.cls`),
 whose Embedded Python `Configure` sets `Enabled=1`, adds password authentication to `AutheEnabled`
 (bit 32) and sets `JWTAuthEnabled=1` on `/api/admin` through `Security.Applications`; its `Doctor`
-prints a readiness report. The Docker image (`docker/iris/Dockerfile`, official Community image plus the package manager) runs that same package with
+prints a readiness report. The Docker image (`docker/iris/Dockerfile`, the official Community image pinned by digest, plus the package manager pinned by version and SHA-256) has no well-known password (the build sets one from a BuildKit secret, `npm run iris:password`) and runs that same package with
 `zpm "load"` at build time (`docker/iris/init.script`), so a `docker compose build` is also an
 install test of the IPM package.
 

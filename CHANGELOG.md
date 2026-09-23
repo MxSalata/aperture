@@ -2,6 +2,17 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **Docker: no well-known password, pinned supply chain.** The IRIS image used to un-expire every
+  account and keep `_SYSTEM`/`SYS`. `npm run iris:password` now writes a generated password to
+  `.secrets/iris-password` (git- and docker-ignored), compose passes it to the build as a BuildKit
+  secret, and `init.script` sets it on every enabled account except `CSPSystem` (the account the
+  image's own Web Gateway signs in with; it holds no role). `SYS` is refused; the password is in
+  no layer, context or log. Base images are pinned by digest (`iris-community:2026.2`,
+  `node:22-alpine`, nginx moved from 1.27 to `1.30-alpine`), every GitHub Action by commit, and
+  the IPM installer by version (0.10.9) and SHA-256. CI generates a masked password per run. IRIS
+  for Health 2026.2 is documented as a tested base with its digest. Verified locally: build log
+  without the password, `SYS` refused, the portal served through the Web Gateway, 26/26 checks.
+
 - **Basic credentials are never stored.** With "keep me signed in", a Basic session wrote
   `user:password` in Base64 to sessionStorage (finding F11 of 0.2.0, left partial). Only JWT
   sessions are persisted now, whose tokens expire and can be revoked; a reload of a Basic session

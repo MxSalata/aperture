@@ -1,25 +1,30 @@
-# One command to try Aperture against a real IRIS:
+# Two commands to try Aperture against a real IRIS:
+#   npm run iris:password        (or write a password of 12+ characters to .secrets/iris-password)
 #   docker compose up --build
 # then open http://localhost:8080 (nginx, browser routing) or
 #           http://localhost:52773/aperture/index.html (served by IRIS itself, hash routing).
-# Login: _SYSTEM / SYS  (or SuperUser / SYS)
+# Sign in as _SYSTEM (or SuperUser) with the password in .secrets/iris-password: the image has
+# no well-known password (the build sets it from that file, passed as a BuildKit secret).
 
 services:
   iris:
     # IRIS Community 2026.2 with Aperture pre-installed through its IPM package
-    # (docker/iris/Dockerfile). Override the base image in a .env file, e.g.
-    #   IRIS_IMAGE=intersystems/irishealth-community:2026.2
+    # (docker/iris/Dockerfile), pinned by digest. Override the base image in a .env file; IRIS for
+    # Health Community 2026.2 (Build 221U) is tested too (docs/verification/2026-09-23-irishealth-2026.2):
+    #   IRIS_IMAGE=containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3
     build:
       context: .
       dockerfile: docker/iris/Dockerfile
       args:
-        IRIS_IMAGE: ${IRIS_IMAGE:-intersystems/iris-community:2026.2}
+        IRIS_IMAGE: ${IRIS_IMAGE:-intersystems/iris-community:2026.2@sha256:cd2ebcab02d1ef80ec155def4418399f353d867162688c36a3705760e750bdaa}
+      secrets:
+        - iris_password
     image: aperture-iris:local
     container_name: aperture-iris
     command: --check-caps false --ISCAgent false
-    # Published on this machine only: the image ships well-known credentials (_SYSTEM / SYS,
-    # every password un-expired at build time). To reach it from other hosts, change the
-    # passwords first, then start with APERTURE_BIND=0.0.0.0 (or a specific interface address).
+    # Published on this machine only by default. The accounts have your generated password, not
+    # SYS, but nginx serves plain HTTP: to reach it from other hosts, put TLS in front and start
+    # with APERTURE_BIND=0.0.0.0 (or a specific interface address).
     ports:
       - '${APERTURE_BIND:-127.0.0.1}:1972:1972'
       - '${APERTURE_BIND:-127.0.0.1}:52773:52773'
@@ -50,3 +55,8 @@ services:
     depends_on:
       iris:
         condition: service_healthy
+
+secrets:
+  # Created by npm run iris:password (git- and docker-ignored); read by the image build only.
+  iris_password:
+    file: ./.secrets/iris-password
