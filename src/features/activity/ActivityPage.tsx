@@ -239,6 +239,7 @@ export default function ActivityPage() {
                   title: 'Clear activity',
                   message: 'Forget the recorded changes of this tab?',
                   confirmLabel: 'Clear',
+                  changesInstance: false,
                   onConfirm: clear,
                 })
               }

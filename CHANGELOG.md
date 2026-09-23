@@ -2,6 +2,13 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **A tab can be read-only.** Turn it on in the account menu or at sign-in; a READ-ONLY badge shows
+  in the header, and the setting survives a reload of that tab only. The tab then sends nothing that
+  changes the instance: the request middleware refuses every write before it leaves the browser
+  (reads the API takes as POST, such as audit records and database info, still go through), and
+  the review and confirm dialogs disable their action and explain why. The Explorer no longer asks
+  for confirmation before those POST reads.
+
 - **X.509 certificates are read at a steady pace.** The API has no batch read, so the tab reads one
   certificate per credential; it fired all of them at once. At most four are in flight now, each
   kept ten minutes, and only while the tab is shown.

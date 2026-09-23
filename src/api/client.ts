@@ -4,8 +4,10 @@ import { useSession } from '@/stores/session';
 import { jobIdFromLocation, useJobs } from '@/stores/jobs';
 import { useActivity } from '@/stores/activity';
 import { useHealth } from '@/stores/health';
-import { ApiError, normalizeErrors } from '@/lib/errors';
+import { useReadOnly } from '@/stores/readOnly';
+import { ApiError, NotSentError, normalizeErrors } from '@/lib/errors';
 import { API_PREFIX } from './base';
+import { allowedWhenReadOnly, READ_ONLY_REFUSAL } from './readOnly';
 
 export { API_PREFIX };
 
@@ -127,6 +129,15 @@ async function finalize(request: Request, response: Response, entry: Inflight | 
 
 const middleware: Middleware = {
   async onRequest({ request, id }) {
+    // A read-only tab sends nothing that changes the instance (sign-in and sign-out do not come here).
+    if (useReadOnly.getState().readOnly) {
+      const { path } = relativePath(request);
+      const query = new URL(request.url, 'http://placeholder.local').searchParams;
+      const taskPath = (task: string) => useJobs.getState().jobs[task]?.path;
+      if (!allowedWhenReadOnly(request.method, path, query, taskPath))
+        throw new NotSentError(READ_ONLY_REFUSAL, path);
+    }
+
     const session = useSession.getState();
 
     // Proactive refresh shortly before the access token expires.
@@ -269,6 +280,7 @@ export async function call<D, E>(
   try {
     res = await promise;
   } catch (e) {
+    if (e instanceof NotSentError) throw new ApiError({ status: 0, url: e.path, method, summary: e.message });
     const message = e instanceof Error ? e.message : 'Network error';
     useHealth.getState().markFail(message);
     throw new ApiError({ status: 0, url: '', method, summary: `Cannot reach the server: ${message}` });

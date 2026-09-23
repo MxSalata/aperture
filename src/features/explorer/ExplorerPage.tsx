@@ -48,6 +48,7 @@ import {
 import { index, operationsByGroup } from '@/lib/specIndex';
 import { useSession } from '@/stores/session';
 import { canUse } from '@/api/privileges';
+import { isReadOperation } from '@/api/readOnly';
 import { useJobs } from '@/stores/jobs';
 import { jobIdFromResponse } from '@/api/client';
 import { applyQuirks, quirksFor } from '@/lib/quirks';
@@ -415,8 +416,9 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
   };
 
   const quirks = quirksFor(op);
-  // Every non-GET call changes the instance and is confirmed; the path words only escalate the wording.
-  const mutating = op.method !== 'GET';
+  // Every call that changes the instance is confirmed (some reads are POSTs); the path words only
+  // escalate the wording.
+  const mutating = !isReadOperation(op.method, op.path);
   const dangerous =
     op.method === 'DELETE' ||
     /terminate|purge|truncate|dismount|revoke|delete|stop|kill|remove/i.test(op.path);

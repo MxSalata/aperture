@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { humanize } from './KeyValueList';
 import { redactDeep } from '@/lib/redact';
 import { useAdminGuard, type GuardOutcome } from './AdminGuard';
+import { ReadOnlyNotice } from './ReadOnlyNotice';
+import { useReadOnly } from '@/stores/readOnly';
 
 export interface FieldChange {
   key: string;
@@ -71,6 +73,7 @@ function Body<T extends Record<string, unknown>>({
   guardConfirmText,
 }: ReviewOptions<T> & { id: string; changes: FieldChange[] }) {
   const admin = useAdminGuard(guard, guardConfirmText ?? 'apply');
+  const readOnly = useReadOnly((s) => s.readOnly);
   const [busy, setBusy] = useState(false);
   const [drift, setDrift] = useState<FieldChange[] | null>(refetch ? null : []);
   const [checking, setChecking] = useState(!!refetch);
@@ -164,12 +167,13 @@ function Body<T extends Record<string, unknown>>({
         </Text>
       ) : null}
       {admin.notice}
+      {readOnly ? <ReadOnlyNotice /> : null}
       <Group justify="flex-end" gap="xs">
         <Button variant="default" onClick={() => modals.close(id)}>
           Cancel
         </Button>
         <Button
-          disabled={checking || blocked || !admin.allowed}
+          disabled={checking || blocked || !admin.allowed || readOnly}
           loading={busy}
           onClick={async () => {
             setBusy(true);

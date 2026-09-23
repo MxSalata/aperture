@@ -2,6 +2,8 @@ import { Button, Group, Stack, Text, TextInput } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { useState } from 'react';
 import { useAdminGuard, type GuardOutcome } from './AdminGuard';
+import { ReadOnlyNotice } from './ReadOnlyNotice';
+import { useReadOnly } from '@/stores/readOnly';
 
 interface Options {
   title: string;
@@ -13,13 +15,25 @@ interface Options {
   onConfirm: () => unknown | Promise<unknown>;
   /** A check that may forbid the action (last-admin protection); judged when the dialog opens. */
   guard?: () => Promise<GuardOutcome>;
+  /** False for an action that stays in the browser (forget a saved connection): a read-only tab allows it. */
+  changesInstance?: boolean;
 }
 
-function Body({ message, confirmText, confirmLabel, color, onConfirm, guard, id }: Options & { id: string }) {
+function Body({
+  message,
+  confirmText,
+  confirmLabel,
+  color,
+  onConfirm,
+  guard,
+  changesInstance = true,
+  id,
+}: Options & { id: string }) {
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
   const admin = useAdminGuard(guard, confirmText ?? 'confirm');
-  const ready = (!confirmText || typed.trim() === confirmText) && admin.allowed;
+  const readOnly = useReadOnly((s) => s.readOnly) && changesInstance;
+  const ready = (!confirmText || typed.trim() === confirmText) && admin.allowed && !readOnly;
   return (
     <Stack gap="sm">
       <Text size="sm">{message}</Text>
@@ -37,6 +51,7 @@ function Body({ message, confirmText, confirmLabel, color, onConfirm, guard, id 
         />
       ) : null}
       {admin.notice}
+      {readOnly ? <ReadOnlyNotice /> : null}
       <Group justify="flex-end" gap="xs">
         <Button variant="default" onClick={() => modals.close(id)}>
           Cancel

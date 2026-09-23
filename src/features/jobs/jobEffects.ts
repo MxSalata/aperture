@@ -1,4 +1,5 @@
 import type { QueryKey } from '@tanstack/react-query';
+import { isReadOperation } from '@/api/readOnly';
 
 /**
  * What a finished async task may have changed, as the query-key prefixes to refetch. Refetching
@@ -8,11 +9,6 @@ import type { QueryKey } from '@tanstack/react-query';
  * polls and the session, as before.
  */
 const EFFECTS: [RegExp, QueryKey[]][] = [
-  // Reads: their result is on the task.
-  [/^\/v2\/database-dir\/(info|integrity-check)$/, []],
-  [/^\/v2\/journal\/file\/(integrity-check|records)$/, []],
-  [/^\/v2\/security\/audit\/records$/, []],
-  [/^\/v2\/security\/ldap\/test$/, []],
   // Database maintenance: sizes, free space and the dashboard's view of them.
   [
     /^\/v2\/database-dir\/(compact|defragment|expand-volume|modify-size|truncate)$/,
@@ -25,6 +21,8 @@ const EFFECTS: [RegExp, QueryKey[]][] = [
 /** The query-key prefixes a task queued by `path` may have changed, or 'all' when unknown. */
 export function affectedBy(path: string | undefined): QueryKey[] | 'all' {
   if (!path) return 'all';
+  // Reads: their result is on the task.
+  if (isReadOperation('POST', path)) return [];
   const hit = EFFECTS.find(([re]) => re.test(path));
   return hit ? hit[1] : 'all';
 }

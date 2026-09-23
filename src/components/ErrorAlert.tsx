@@ -22,7 +22,7 @@ export function ErrorAlert({ error, title, onRetry }: Props) {
       title={
         title ??
         (api
-          ? `${api.method} ${api.url.replace(/^.*\/api\/admin/, '') || 'request'} → HTTP ${api.status}`
+          ? `${api.method} ${api.url.replace(/^.*\/api\/admin/, '') || 'request'} → ${api.status ? `HTTP ${api.status}` : 'no response'}`
           : 'Something went wrong')
       }
     >

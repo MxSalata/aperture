@@ -16,6 +16,16 @@ export interface ApiErrorInit {
   message?: string;
 }
 
+/** A request the client refused to send (a read-only tab); it never reached the network. */
+export class NotSentError extends Error {
+  readonly path: string;
+  constructor(message: string, path: string) {
+    super(message);
+    this.name = 'NotSentError';
+    this.path = path;
+  }
+}
+
 export class ApiError extends Error {
   readonly status: number;
   readonly url: string;

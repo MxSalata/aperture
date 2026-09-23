@@ -23,6 +23,7 @@ import { IconAlertCircle, IconFlask, IconInfoCircle, IconLogin, IconServer } fro
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useSession } from '@/stores/session';
+import { useReadOnly } from '@/stores/readOnly';
 import {
   baseUrlProblem,
   normalizeBaseUrl,
@@ -53,6 +54,8 @@ export default function LoginPage() {
   const disableDemo = useDemo((s) => s.disable);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const readOnly = useReadOnly((s) => s.readOnly);
+  const setReadOnly = useReadOnly((s) => s.setReadOnly);
   // A retried sign-in to a new connection updates the profile the first attempt saved.
   const [pendingProfileId, setPendingProfileId] = useState<string | null>(null);
 
@@ -270,6 +273,13 @@ export default function LoginPage() {
                 label="Keep me signed in for this browser tab"
                 description="A JWT session survives a reload of this tab; a Basic password is never stored, so a reload asks for it again"
                 {...form.getInputProps('persist', { type: 'checkbox' })}
+              />
+              <Checkbox
+                size="xs"
+                label="Read-only tab"
+                description="This tab sends nothing that changes the instance, until you turn it off in the account menu"
+                checked={readOnly}
+                onChange={(e) => setReadOnly(e.currentTarget.checked)}
               />
 
               <Button type="submit" leftSection={<IconLogin size={16} />} loading={busy} fullWidth mt="xs">

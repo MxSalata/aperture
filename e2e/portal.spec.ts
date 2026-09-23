@@ -175,4 +175,19 @@ test.describe('Aperture (demo mode)', () => {
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   });
+
+  test('a read-only tab shows it, and a change cannot be confirmed', async ({ page }) => {
+    await loginDemo(page);
+    await page.getByRole('button', { name: 'Account menu' }).click();
+    await page.getByRole('menuitem', { name: 'Make this tab read-only' }).click();
+    await expect(page.getByRole('banner').getByLabel('Read-only tab')).toBeVisible();
+    await go(page, '/locks');
+    await page.getByRole('button', { name: 'Remove lock' }).and(page.locator(':enabled')).first().click();
+    await expect(page.getByText('This tab is read-only')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Remove', exact: true })).toBeDisabled();
+    // A reload of the tab keeps it.
+    await page.keyboard.press('Escape');
+    await page.reload();
+    await expect(page.getByRole('banner').getByLabel('Read-only tab')).toBeVisible();
+  });
 });

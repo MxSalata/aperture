@@ -32,6 +32,8 @@ import {
   IconUserCircle,
   IconShieldCheck,
   IconFlask,
+  IconLock,
+  IconLockOpen,
 } from '@tabler/icons-react';
 import { Suspense } from 'react';
 import { useShallow } from 'zustand/react/shallow';
@@ -41,6 +43,7 @@ import { CommandPalette } from './CommandPalette';
 import { useSession } from '@/stores/session';
 import { useDemo } from '@/stores/demo';
 import { useHealth } from '@/stores/health';
+import { useReadOnly } from '@/stores/readOnly';
 import { selectActiveJobs, useJobs } from '@/stores/jobs';
 import { canUse, heldPrivileges } from '@/api/privileges';
 import { APP_NAME } from '@/theme';
@@ -81,6 +84,7 @@ function ServerChip() {
   const demo = useDemo((s) => s.enabled);
   const reachable = useHealth((s) => s.reachable);
   const lastError = useHealth((s) => s.lastError);
+  const readOnly = useReadOnly((s) => s.readOnly);
   const instance = useInstanceLabel();
   const version = info?.serverVersion?.match(/\d{4}\.\d+(?:\.\d+)?/)?.[0];
   const product =
@@ -116,6 +120,20 @@ function ServerChip() {
           {info.systemMode}
         </Badge>
       ) : null}
+      {readOnly ? (
+        <Tooltip label="This tab sends nothing that changes the instance; turn it off in the account menu">
+          <Badge
+            size="xs"
+            variant="filled"
+            color="orange"
+            leftSection={<IconLock size={10} />}
+            tabIndex={0}
+            aria-label="Read-only tab"
+          >
+            READ-ONLY
+          </Badge>
+        </Tooltip>
+      ) : null}
       {demo ? (
         <Badge size="xs" variant="filled" color="grape" leftSection={<IconFlask size={10} />}>
           DEMO
@@ -143,6 +161,8 @@ function UserMenu() {
   const mode = useSession((s) => s.mode);
   const info = useSession((s) => s.info);
   const logout = useSession((s) => s.logout);
+  const readOnly = useReadOnly((s) => s.readOnly);
+  const setReadOnly = useReadOnly((s) => s.setReadOnly);
   const navigate = useNavigate();
   const held = heldPrivileges(info);
   return (
@@ -184,6 +204,12 @@ function UserMenu() {
           </Group>
         </Box>
         <Menu.Divider />
+        <Menu.Item
+          leftSection={readOnly ? <IconLockOpen size={16} /> : <IconLock size={16} />}
+          onClick={() => setReadOnly(!readOnly)}
+        >
+          {readOnly ? 'Allow changes in this tab' : 'Make this tab read-only'}
+        </Menu.Item>
         <Menu.Item leftSection={<IconServer size={16} />} onClick={() => navigate('/settings/connections')}>
           Connections
         </Menu.Item>

@@ -155,6 +155,15 @@ object against the form values, lists old → new per field, re-reads the object
 detect concurrent edits (an "Apply anyway" checkbox overrides), and only then runs the mutation.
 No dialog is shown when nothing changed.
 
+**Read-only tab.** A tab can be made read-only (account menu, or at sign-in); the flag lives in
+sessionStorage (`stores/readOnly.ts`), so it survives a reload of that tab and no other tab sees
+it. The middleware then refuses, before anything is sent, every request that is not a read
+(`api/readOnly.ts`: GET, HEAD, the reads the API takes as POST such as audit records and database
+info, and cancelling or pausing a task that is itself a read). The refusal is an `ApiError` with
+status 0 and says why; it does not count against reachability. The review and confirm dialogs
+disable their action and say so. It is a safety catch, not a security control: the account's
+privileges on the server are what decide.
+
 ### 2.7 Native monitor API
 
 `api/monitor.ts` reads `/api/monitor/metrics` (OpenMetrics text, parsed by `parsePrometheus`) and

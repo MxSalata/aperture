@@ -173,6 +173,7 @@ export default function ConnectionsPage() {
                             title: 'Delete connection',
                             message: `Forget ${p.name}?`,
                             confirmLabel: 'Delete',
+                            changesInstance: false,
                             onConfirm: () => remove(p.id),
                           })
                         }
