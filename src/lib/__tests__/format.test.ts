@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   elapsedSeconds,
+  formatClock,
+  formatOffset,
+  getMeasuredOffset,
+  offsetFromWallClock,
+  setMeasuredOffset,
+  toIrisDateTime,
   formatBytes,
   formatMB,
   formatNumber,
@@ -85,5 +91,62 @@ describe('process elapsed time', () => {
     expect(elapsedSeconds('0h 35m')).toBe(-1);
     expect(elapsedSeconds('')).toBe(-1);
     expect(elapsedSeconds(undefined)).toBe(-1);
+  });
+});
+
+describe('the instance clock, measured', () => {
+  // LastUpdate of /v2/monitor/system-usage read at 11:13:05Z from a London instance in summer.
+  const now = Date.UTC(2026, 8, 23, 11, 13, 5);
+
+  it('reads the offset from a wall-clock reading of this moment', () => {
+    expect(offsetFromWallClock('2026-09-23 12:13:06', now)).toBe(60); // Europe/London, BST
+    expect(offsetFromWallClock('2026-09-23 07:13:04', now)).toBe(-240); // America/New_York, EDT
+    expect(offsetFromWallClock('2026-09-23 16:43:05', now)).toBe(330); // Asia/Kolkata
+    expect(offsetFromWallClock('2026-09-23 16:58:05', now)).toBe(345); // Asia/Kathmandu
+  });
+
+  it('does not trust a reading that is not of this moment', () => {
+    expect(offsetFromWallClock('2026-09-23 11:21:05', now)).toBeNull(); // 8 minutes: stale, no zone
+    expect(offsetFromWallClock('2026-09-23 11:53:05', now)).toBeNull(); // 5 minutes from +00:45
+    expect(offsetFromWallClock('not a time', now)).toBeNull();
+    expect(offsetFromWallClock(undefined, now)).toBeNull();
+    expect(offsetFromWallClock('2026-09-24 03:13:05', now)).toBeNull(); // +16 h: no such zone
+  });
+
+  it('names offsets the way the notice and tooltips do', () => {
+    expect(formatOffset(60)).toBe('UTC+01:00');
+    expect(formatOffset(-240)).toBe('UTC−04:00');
+    expect(formatOffset(345)).toBe('UTC+05:45');
+  });
+
+  it('reads instance times at the measured offset when no zone is named, whatever the browser zone', () => {
+    setInstanceTimezone(null);
+    setMeasuredOffset(60);
+    try {
+      expect(getMeasuredOffset()).toBe(60);
+      // The text stays verbatim; the instant is the one the instance meant.
+      expect(formatDateTime('2026-09-23 12:10:00')).toBe('2026-09-23 12:10:00');
+      expect(parseIrisDate('2026-09-23 12:10:00')?.valueOf()).toBe(Date.UTC(2026, 8, 23, 11, 10, 0));
+      // The audit window is asked for in the instance's clock.
+      expect(toIrisDateTime(Date.UTC(2026, 8, 23, 11, 10, 0))).toBe('2026-09-23 12:10:00');
+      // The portal's own instants and alerts.log's UTC times are shown on the same clock.
+      expect(formatDateTime(Date.UTC(2026, 8, 23, 11, 10, 0))).toBe('2026-09-23 12:10:00');
+      expect(formatDateTime('2026-09-23T12:02:14.473Z')).toBe('2026-09-23 13:02:14');
+      expect(formatClock(Date.UTC(2026, 8, 23, 11, 10, 0))).toBe('12:10:00');
+    } finally {
+      setMeasuredOffset(null);
+    }
+  });
+
+  it('prefers a named zone, which also knows about daylight saving', () => {
+    setInstanceTimezone('Europe/London');
+    setMeasuredOffset(60);
+    try {
+      // After the clocks go back (25 October 2026), London is UTC+0: the zone knows, the offset does not.
+      expect(parseIrisDate('2026-10-26 12:00:00')?.valueOf()).toBe(Date.UTC(2026, 9, 26, 12, 0, 0));
+    } finally {
+      setInstanceTimezone(null);
+      setMeasuredOffset(null);
+    }
   });
 });

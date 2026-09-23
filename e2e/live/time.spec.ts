@@ -61,6 +61,14 @@ test('timestamps in a browser five hours from the instance', async ({ page }, te
   const offset = await instanceOffset(admin!);
   const browserOffset = await page.evaluate(() => -new Date().getTimezoneOffset());
   await signIn(page, admin!);
+  // Without a named zone the portal measures the instance's offset, and says once that it differs.
+  const notice = await page
+    .getByText("The instance's clock is not this browser's")
+    .waitFor({ state: 'visible', timeout: 10_000 })
+    .then(
+      () => true,
+      () => false,
+    );
 
   const before: Reading[] = [];
   for (const r of ROUTES) before.push(...(await readings(page, r, offset)));
@@ -88,6 +96,7 @@ test('timestamps in a browser five hours from the instance', async ({ page }, te
     instanceOffset: offset,
     browserOffset,
     zone,
+    notice,
     before,
     after,
   });
@@ -99,8 +108,10 @@ test('timestamps in a browser five hours from the instance', async ({ page }, te
     console.log(`  relative, no zone: ${r.page} “${r.text}”`);
   for (const r of after.filter((x) => x.errorMinutes === null).slice(0, 8))
     console.log(`  relative, ${zone}: ${r.page} “${r.text}”`);
+  expect(worst(before), 'with no zone named, the measured offset makes every instant right').toBe(0);
   expect(
     worst(after),
     'with the zone named, every absolute timestamp is the instant the instance meant',
   ).toBe(0);
+  if (offset !== browserOffset) expect(notice, 'the clock notice when the offsets differ').toBe(true);
 });

@@ -18,6 +18,13 @@ differently; the evidence is in `docs/verification/`.
   processes are the `{ Process, Commands }` rows IRIS sends, without its ten-row padding: the list
   showed blank rows and "10 busy" for one. The globals-and-routines panel says its values are
   totals.
+- **Times from an instance in another zone were hours off.** With no zone named on the connection,
+  instance times were read in the browser's zone: from New York, a London instance's tasks
+  "finished in 5 hours", and the Activity screen queried the audit log five hours away from the
+  change it looked for. The instance's offset is now measured from its clock and used when no
+  zone is named (a named zone still wins, and knows about daylight saving; a one-time notice
+  suggests naming it); the portal's own times are shown on the same clock. Checked live from
+  America/New_York: 0 minutes off, with and without a named zone.
 - **JWT sessions against real token rotation.** IRIS issues 60-second access tokens, revokes the
   previous access token on every refresh and revokes the whole session when a used refresh token
   comes back. A duplicated tab (which copies sessionStorage) therefore signed both tabs out within

@@ -168,3 +168,16 @@ describe('credential encoding', () => {
     expect(decodeJwtPayload(`h.${part}.s`)?.sub).toBe('Mikołaj');
   });
 });
+
+describe('the instance clock and the session', () => {
+  it('forgets the instance zone and measured offset when the session ends', async () => {
+    const { setInstanceTimezone, setMeasuredOffset, getInstanceTimezone, getMeasuredOffset } =
+      await import('@/lib/format');
+    const { resetInstanceState } = await import('../session');
+    setInstanceTimezone('Europe/London');
+    setMeasuredOffset(60);
+    resetInstanceState();
+    expect(getInstanceTimezone()).toBeNull();
+    expect(getMeasuredOffset()).toBeNull();
+  });
+});

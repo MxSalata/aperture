@@ -33,7 +33,7 @@ import {
   IconShieldCheck,
   IconFlask,
 } from '@tabler/icons-react';
-import { Suspense, useEffect } from 'react';
+import { Suspense } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { NAV } from './nav';
@@ -47,6 +47,7 @@ import { APP_NAME } from '@/theme';
 import { PageSkeleton } from '@/components/PageSkeleton';
 import { setInstanceTimezone } from '@/lib/format';
 import { useInstanceLabel } from './useInstanceLabel';
+import { useInstanceClock } from './useInstanceClock';
 import { useAppearance, type ContrastSetting } from '@/stores/appearance';
 import { useResolvedContrast } from './useApplyAppearance';
 import { JobsDrawer } from '@/features/jobs/JobsDrawer';
@@ -295,8 +296,11 @@ export function AppLayout() {
   // Timestamps are parsed in the instance's zone once the profile names one. Set while
   // rendering, before the page below renders its first timestamp (an effect runs after the
   // children have already rendered in the browser's zone); idempotent, so safe to repeat.
+  // Cleared when the session ends (resetInstanceState), not on unmount: StrictMode runs unmount
+  // cleanups right after the first mount, which left the zone unset until the next render.
   setInstanceTimezone(instance.timezone);
-  useEffect(() => () => setInstanceTimezone(null), []);
+  // Without a named zone, the instance's offset is measured instead of assuming the browser's.
+  useInstanceClock(instance.timezone);
 
   return (
     <AppShell

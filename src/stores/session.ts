@@ -10,6 +10,7 @@ import { useActivity } from '@/stores/activity';
 import { useHealth } from '@/stores/health';
 import { queryClient } from '@/query';
 import { forgetEndedTasks } from '@/api/endedTasks';
+import { setInstanceTimezone, setMeasuredOffset } from '@/lib/format';
 import { claimSession, newSessionKey, releaseSession } from './sessionLock';
 
 /**
@@ -215,6 +216,8 @@ let refreshInFlight: Promise<boolean> | null = null;
 export function resetInstanceState(): void {
   queryClient.clear();
   forgetEndedTasks();
+  setInstanceTimezone(null);
+  setMeasuredOffset(null);
   useJobs.getState().clearAll();
   useMetrics.getState().clear();
   useActivity.getState().clear();

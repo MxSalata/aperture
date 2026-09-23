@@ -184,11 +184,26 @@ and the Explorer all use it.
 ### 2.10 Time
 
 IRIS reports timestamps as the wall-clock time of the instance, with no zone designator
-(`2026-12-31 23:59:59`). Aperture never converts them: what the API says is what the screen shows.
-Relative times ("3 hours ago") need an instant, so the timestamp is interpreted in the time zone the
-connection profile names (an IANA zone, chosen in Connections); with none configured the browser's
-zone is assumed, which is right for a server next door and is said so in every `Timestamp` tooltip.
-`lib/format.ts` holds the policy; `Timestamp` shows one reading and the other in a tooltip.
+(`2026-12-31 23:59:59`); on IRIS 2026.2 every timestamp field is of that form, except the audit
+log's `UTCTimeStamp` and a process's `StartTimeUTC` (UTC, also without a designator) and the
+entries of `/api/monitor/alerts` (`…Z`). Aperture never converts the text: what the API says is
+what the screen shows. Relative times ("3 hours ago"), sorting by instant and the audit window of
+the Activity screen need an instant, read on the instance's clock:
+
+1. the IANA zone the connection profile names (Connections), exact across daylight-saving changes;
+2. else the instance's UTC offset measured from its clock (`LastUpdate` of
+   `/v2/monitor/system-usage` is its wall clock of this moment; `offsetFromWallClock` accepts only
+   a reading within 3 minutes of a whole quarter hour, and it is re-measured every 30 minutes);
+   right until the next daylight-saving change, and the portal says once per session that naming
+   the zone makes it exact;
+3. else (no `%Admin_Operate` to measure with) the browser's zone.
+
+Checked by `e2e/live/time.spec.ts` in a browser in New York against an instance in London: without
+the measurement every instant was 300 minutes off ("finished in 5 hours" for a task that ran
+minutes ago). The portal's own instants (when a change was sent, chart axes) are shown on the same
+clock, so a screen never mixes two zones. `lib/format.ts` holds the policy; `Timestamp` shows one
+reading and the other in a tooltip that names the clock used. Both are reset with the session, not
+on unmount (React's StrictMode runs unmount cleanups right after mounting).
 
 ## 3. State
 

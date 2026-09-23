@@ -13,10 +13,15 @@ dayjs.extend(timezone);
  * Time zone policy. IRIS reports wall-clock timestamps of the instance with no zone
  * designator. Aperture renders them verbatim (never converted), and interprets them in
  * the zone the connection profile names so that relative times ("3 hours ago") are exact
- * when the operator sits in another zone. With no zone configured the browser's zone is
- * assumed, which is right for the common case of a server next door.
+ * when the operator sits in another zone. With no zone named, the instance's UTC offset is
+ * measured from its clock (`offsetFromWallClock`) and used instead: right until the next
+ * daylight-saving change, where the browser's zone (the last resort) is wrong all year for an
+ * instance in another zone. The portal's own instants (when a change was sent, chart axes) are
+ * shown on the same clock, so one screen never mixes two zones.
  */
 let instanceZone: string | null = null;
+/** The instance's UTC offset in minutes, measured when no zone is named; null when unknown. */
+let measuredOffset: number | null = null;
 
 export function isValidTimezone(zone: string): boolean {
   try {
@@ -33,6 +38,56 @@ export function setInstanceTimezone(zone: string | null | undefined): void {
 
 export function getInstanceTimezone(): string | null {
   return instanceZone;
+}
+
+export function setMeasuredOffset(minutes: number | null | undefined): void {
+  measuredOffset = typeof minutes === 'number' && Number.isFinite(minutes) ? minutes : null;
+}
+
+export function getMeasuredOffset(): number | null {
+  return measuredOffset;
+}
+
+/**
+ * The instance's UTC offset right now, in minutes, from its wall-clock reading of this moment
+ * (`LastUpdate` of GET /v2/monitor/system-usage), or null when the reading cannot be trusted.
+ * Real offsets are whole quarter hours; a reading more than 3 minutes off one is stale.
+ */
+export function offsetFromWallClock(wall: string | null | undefined, now = Date.now()): number | null {
+  const t = wall ? Date.parse(`${wall.trim().replace(' ', 'T')}Z`) : NaN;
+  if (!Number.isFinite(t)) return null;
+  const minutes = (t - now) / 60_000;
+  const quarters = Math.round(minutes / 15) * 15;
+  if (Math.abs(minutes - quarters) > 3 || Math.abs(quarters) > 14 * 60) return null;
+  return quarters;
+}
+
+/** "UTC+01:00" for an offset in minutes. */
+export function formatOffset(minutes: number): string {
+  const sign = minutes < 0 ? '−' : '+';
+  const m = Math.abs(minutes);
+  return `UTC${sign}${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
+/**
+ * A wall-clock reading taken at a UTC offset. Built from the instant (the reading as UTC, less the
+ * offset): dayjs's utcOffset(offset, true) keeps the text but not the instant.
+ */
+function atOffset(iso: string, offset: number): dayjs.Dayjs {
+  const asUtc = dayjs.utc(iso);
+  return asUtc.isValid() ? dayjs(asUtc.valueOf() - offset * 60_000).utcOffset(offset) : asUtc;
+}
+
+/** An instant on the instance's clock: its named zone, else its measured offset, else the browser's. */
+function onInstanceClock(d: dayjs.Dayjs): dayjs.Dayjs {
+  if (instanceZone) return d.tz(instanceZone);
+  if (measuredOffset !== null) return d.utcOffset(measuredOffset);
+  return d;
+}
+
+/** An epoch in milliseconds as the instance's wall clock would read it (chart axes use HH:mm:ss). */
+export function formatClock(ms: number, pattern = 'HH:mm:ss'): string {
+  return Number.isFinite(ms) ? onInstanceClock(dayjs(ms)).format(pattern) : '-';
 }
 
 const numberFmt = new Intl.NumberFormat(undefined);
@@ -87,26 +142,29 @@ export function parseIrisDate(s: string | null | undefined): dayjs.Dayjs | null 
   if (!s) return null;
   if (ZONED.test(s.trim())) {
     const d = dayjs(s.trim());
-    return d.isValid() ? (instanceZone ? d.tz(instanceZone) : d) : null;
+    return d.isValid() ? onInstanceClock(d) : null;
   }
   const iso = s.replace(' ', 'T');
-  const d = instanceZone ? dayjs.tz(iso, instanceZone) : dayjs(iso);
+  const d = instanceZone
+    ? dayjs.tz(iso, instanceZone)
+    : measuredOffset !== null
+      ? atOffset(iso, measuredOffset)
+      : dayjs(iso);
   return d.isValid() ? d : null;
 }
 
 /**
- * An epoch in milliseconds as the instance would write it (`YYYY-MM-DD HH:mm:ss` in the
- * instance's zone when the connection sets one, otherwise in the browser's), for query
+ * An epoch in milliseconds as the instance would write it (`YYYY-MM-DD HH:mm:ss` on the
+ * instance's clock: its named zone, else its measured offset, else the browser's), for query
  * parameters such as the audit log's `beginDateTime`.
  */
 export function toIrisDateTime(ms: number): string {
-  const d = instanceZone ? dayjs(ms).tz(instanceZone) : dayjs(ms);
-  return d.format('YYYY-MM-DD HH:mm:ss');
+  return onInstanceClock(dayjs(ms)).format('YYYY-MM-DD HH:mm:ss');
 }
 
 /** Absolute wall-clock rendering of an IRIS timestamp, or of an epoch in milliseconds. */
 export function formatDateTime(s: string | number | null | undefined): string {
-  if (typeof s === 'number') return Number.isFinite(s) ? dayjs(s).format('YYYY-MM-DD HH:mm:ss') : '-';
+  if (typeof s === 'number') return formatClock(s, 'YYYY-MM-DD HH:mm:ss');
   const d = parseIrisDate(s);
   return d ? d.format('YYYY-MM-DD HH:mm:ss') : s || '-';
 }

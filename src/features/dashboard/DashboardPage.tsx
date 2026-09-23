@@ -26,14 +26,13 @@ import {
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import dayjs from 'dayjs';
 import { api, result } from '@/api/client';
 import { PageHeader } from '@/components/PageHeader';
 import { Timestamp } from '@/components/Timestamp';
 import { StatTile } from '@/components/StatTile';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { StatusBadge } from '@/components/StatusBadge';
-import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
+import { formatClock, formatCompact, formatNumber, formatPercent } from '@/lib/format';
 import { useMetrics, type MetricSample } from '@/stores/metrics';
 import { useSession } from '@/stores/session';
 import { useSeriesColors } from './useSeriesColors';
@@ -125,7 +124,8 @@ export default function DashboardPage() {
 
   // DiskReads, LogicalRequests & co. are totals since startup: the screen shows their rates.
   const chartData = useMemo(
-    () => withRates(samples).map((s) => ({ ...s, time: dayjs(s.t).format('HH:mm:ss') })),
+    // On the instance's clock, like every other time on the screen.
+    () => withRates(samples).map((s) => ({ ...s, time: formatClock(s.t) })),
     [samples],
   );
   const last = chartData[chartData.length - 1];

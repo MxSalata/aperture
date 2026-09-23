@@ -1,5 +1,5 @@
 import { Tooltip } from '@mantine/core';
-import { getInstanceTimezone, parseIrisDate } from '@/lib/format';
+import { formatOffset, getInstanceTimezone, getMeasuredOffset, parseIrisDate } from '@/lib/format';
 
 interface Props {
   value: string | null | undefined;
@@ -19,12 +19,16 @@ export function Timestamp({ value, mode = 'absolute', className }: Props) {
   const absolute = d.format('YYYY-MM-DD HH:mm:ss');
   const relative = d.fromNow();
   const zone = getInstanceTimezone();
+  const offset = getMeasuredOffset();
+  const clock = zone
+    ? `instance time zone ${zone}`
+    : offset !== null
+      ? `instance clock at ${formatOffset(offset)}, measured (name its time zone in Connections for exact times across daylight-saving changes)`
+      : 'instance clock, assumed to be in your time zone';
   const primary = mode === 'relative' ? relative : absolute;
   const secondary = mode === 'relative' ? absolute : relative;
   return (
-    <Tooltip
-      label={`${secondary} · ${zone ? `instance time zone ${zone}` : 'instance clock, assumed to be in your time zone'}`}
-    >
+    <Tooltip label={`${secondary} · ${clock}`}>
       <time dateTime={d.toISOString()} className={className ?? 'tabular'} style={{ cursor: 'help' }}>
         {primary}
       </time>
