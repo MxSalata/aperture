@@ -316,6 +316,14 @@ export const useSession = create<SessionState>()(
                   'JWT login is not available on this server (requires IRIS 2026.2+). Try Basic authentication.',
               });
             }
+            // Escalation exists only at POST /login: a Basic session would run with the
+            // account's own roles while the portal said otherwise.
+            if (args.role)
+              throw new ApiError({
+                status: 400,
+                url: `${base}/login`,
+                summary: `Escalation to ${args.role} needs JWT sign-in (POST /login), which this server does not offer. Sign in without an escalation role.`,
+              });
             const credentials = basicCredentials(args.username, args.password);
             const info = await basicProbe(base, credentials);
             assertSupportedApi(info, `${base}/info`);
@@ -323,7 +331,7 @@ export const useSession = create<SessionState>()(
               status: 'authenticated',
               mode: 'basic',
               username: info.username ?? args.username,
-              role: args.role ?? null,
+              role: null,
               basicCredentials: credentials,
               accessToken: null,
               refreshToken: null,

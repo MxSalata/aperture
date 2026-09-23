@@ -102,6 +102,16 @@ describe('session', () => {
     ).rejects.toThrow(/sign in with Basic/);
   });
 
+  it('refuses an escalation role when only Basic is on offer, instead of pretending', async () => {
+    server.use(http.post(`${BASE}/api/admin/login`, () => new HttpResponse('Not Found', { status: 404 })));
+    await expect(
+      useSession
+        .getState()
+        .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS', role: '%All' }),
+    ).rejects.toThrow(/Escalation to %All needs JWT sign-in/);
+    expect(useSession.getState().status).not.toBe('authenticated');
+  });
+
   it('refreshes an expired access token transparently', async () => {
     await useSession
       .getState()

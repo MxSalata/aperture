@@ -125,8 +125,9 @@ login(auth = auto)
   count against the account's invalid-login limit). nginx and the Vite proxy hide
   `WWW-Authenticate` and pass it on as `X-Aperture-WWW-Authenticate`; where neither can be read
   (a cross-origin answer), the error says to choose Basic if JWT is off.
-- `role` is passed through to `/login` for **escalation roles**.
-
+- `role` is passed through to `/login` for **escalation roles**. Escalation exists only there: a
+  sign-in that ends in Basic with a role asked for is refused, instead of showing an escalation the
+  session does not have.
 
 ### 2.4 Asynchronous operations (202)
 

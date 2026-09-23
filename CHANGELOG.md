@@ -10,6 +10,10 @@
   `X-Aperture-WWW-Authenticate` (they hide `WWW-Authenticate` to keep the browser's login dialog
   away); where it cannot be read, the error says to choose Basic. The mock can switch JWT off.
   Found on a local IRIS Community 2026.2 container; README spec finding 20.
+- **An escalation role is refused when sign-in ends in Basic.** Escalation exists only at
+  `POST /login`; the Basic session ran with the account's own roles while the account menu said
+  "escalated to …".
+
 - **A limited mode for IRIS 2026.1 is scoped, not built** (docs/SCOPE-2026.1.md). 2026.1 serves
   SysAdmin API v1 only, over Basic. Mapped by v1's own conventions, 74 of the 112 operations
   Aperture calls have a v1 route: all of security, tasks, processes, the dashboard and the license.
