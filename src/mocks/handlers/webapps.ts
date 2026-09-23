@@ -1,6 +1,16 @@
 import { mockDb, type WebAppRec } from '../db';
 import { recordAudit } from '../audit';
-import { ok, created, notFound, badRequest, requireParam, jsonBody, filterRows, fail } from '../util';
+import {
+  ok,
+  created,
+  notFound,
+  badRequest,
+  requireParam,
+  jsonBody,
+  filterRows,
+  fail,
+  autheMethodNames,
+} from '../util';
 import { route, SECURE } from '../secure';
 
 const listShape = (w: WebAppRec) => ({
@@ -10,7 +20,7 @@ const listShape = (w: WebAppRec) => ({
   Enabled: w.Enabled,
   Type: w.Type,
   Resource: w.Resource,
-  AuthenticationMethods: w.AuthenticationMethods,
+  AuthenticationMethods: autheMethodNames(w.AutheEnabled),
   IsSystemApp: w.IsSystemApp,
   DispatchClass: w.DispatchClass,
 });
@@ -26,15 +36,7 @@ export const webAppHandlers = [
   route('get', '/v2/web-app', SECURE, ({ request }) => {
     const w = find(requireParam(request, 'name'));
     if (!w) return notFound('Web application');
-    const {
-      Name: _n,
-      Namespace,
-      NamespaceDefault,
-      Type: _t,
-      AuthenticationMethods: _a,
-      IsSystemApp: _s,
-      ...rest
-    } = w;
+    const { Name: _n, Namespace, NamespaceDefault, Type: _t, IsSystemApp: _s, ...rest } = w;
     return ok({
       ...rest,
       NameSpace: Namespace,
@@ -67,18 +69,11 @@ export const webAppHandlers = [
     if (!name.startsWith('/')) return badRequest('Web application names must start with /');
     const body = await jsonBody<Record<string, unknown>>(request);
     const existing = find(name);
-    const authe = Number(body.AutheEnabled ?? existing?.AutheEnabled ?? 32);
-    const methods: string[] = [];
-    if (authe & 32) methods.push('Password');
-    if (authe & 64) methods.push('Unauthenticated');
-    if (authe & 16) methods.push('OS');
-    if (body.JWTAuthEnabled ?? existing?.JWTAuthEnabled) methods.push('JWT');
     if (existing) {
       const { NameSpace, IsNameSpaceDefault, ...rest } = body;
       Object.assign(existing, rest);
       if (NameSpace) existing.Namespace = String(NameSpace);
       if (IsNameSpaceDefault !== undefined) existing.NamespaceDefault = !!IsNameSpaceDefault;
-      existing.AuthenticationMethods = methods;
       recordAudit(
         account,
         'ApplicationChange',
@@ -96,7 +91,6 @@ export const webAppHandlers = [
       Namespace: ns,
       NamespaceDefault: !!body.IsNameSpaceDefault,
       Type: body.DispatchClass ? 'REST' : 'CSP',
-      AuthenticationMethods: methods,
       IsSystemApp: false,
       Description: String(body.Description ?? ''),
       DispatchClass: String(body.DispatchClass ?? ''),

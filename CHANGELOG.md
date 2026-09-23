@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased - checked against a real IRIS for Health 2026.2
+
+The review below was done against the specification and the mock. This pass ran the portal
+against IRIS for Health Community 2026.2 (Build 221U) and fixed what the real instance answered
+differently; the evidence is in `docs/verification/`.
+
+- **Services showed every service as disabled.** The list answers `Enabled` as a boolean and has
+  no `EnabledBoolean` (the spec declares `Enabled: string` plus `EnabledBoolean`); the screen
+  read only `EnabledBoolean`. The mock now serves the services of a 2026.2 container with their
+  real `AutheEnabled` values and names authentication methods as IRIS does
+  ("Operating System", no invented "JWT"); the contract test lists divergences per field.
+
 ## Unreleased - code review
 
 A full review of the codebase (every screen, store and the mock, with probes that reproduced

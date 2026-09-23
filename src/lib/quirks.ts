@@ -32,6 +32,12 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
     source: 'spec/mainspec_v2.json (LocalDatabaseList)',
   },
   {
+    id: 'service-list-enabled-boolean',
+    appliesTo: (op) => op.path === '/v2/security/services' && op.method === 'GET',
+    note: 'The spec declares Enabled as a string next to a boolean EnabledBoolean; IRIS 2026.2 answers Enabled as a boolean and sends no EnabledBoolean. The Services screen reads either.',
+    source: 'Aperture live verification, IRIS for Health 2026.2 Build 221U (docs/verification)',
+  },
+  {
     id: 'info-without-envelope',
     appliesTo: (op) => op.path === '/info',
     note: 'Returned without the standard {status, console, result} envelope.',

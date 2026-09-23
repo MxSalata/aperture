@@ -14,8 +14,36 @@ import { index } from '@/lib/specIndex';
 
 const BASE = 'http://iris.test';
 
-/** Where real servers are known to differ from the spec, and the mock follows the servers (lib/quirks.ts). */
-const DOCUMENTED_DIVERGENCE = new Set(['/v2/database-dirs']);
+/**
+ * Where real servers are known to differ from the spec, the mock follows the servers. Each entry
+ * names the answer paths that may differ and where the server's behaviour was recorded
+ * (docs/verification/, lib/quirks.ts). An entry the mock no longer needs fails the test, so the
+ * list cannot outlive the divergence.
+ */
+const DOCUMENTED_DIVERGENCE: Record<string, { paths: RegExp; evidence: string }[]> = {
+  '/v2/database-dirs': [
+    {
+      paths: /^result: spec says object/,
+      evidence: 'an array on every server (quirk local-database-list-shape)',
+    },
+  ],
+  '/v2/security/services': [
+    {
+      paths: /^result\[\d+\]\.Enabled: spec says string, mock sent boolean/,
+      evidence: 'a boolean on IRIS 2026.2, and no EnabledBoolean (docs/verification, d-authe-enabled.json)',
+    },
+  ],
+};
+
+/** Problems the documented divergences do not cover; marks the divergences that were used. */
+function undocumented(path: string, problems: string[], used: Set<string>): string[] {
+  const allowed = DOCUMENTED_DIVERGENCE[path] ?? [];
+  return problems.filter((p) => {
+    const hit = allowed.find((d) => d.paths.test(p));
+    if (hit) used.add(`${path} ${hit.paths}`);
+    return !hit;
+  });
+}
 
 /**
  * Every parameterised read a screen makes, with an identifier taken from the seeded instance
@@ -106,19 +134,26 @@ async function read(
 describe('mock ⇄ specification contract', () => {
   it('answers every parameterless GET in the declared shape', async () => {
     const problems: string[] = [];
+    const used = new Set<string>();
     const ops = index.operations.filter(
       (o) => o.method === 'GET' && o.path.startsWith('/v2/') && !o.params.some((p) => p.required),
     );
     expect(ops.length).toBeGreaterThan(50);
     for (const op of ops) {
-      if (DOCUMENTED_DIVERGENCE.has(op.path)) continue;
       const { status, result } = await read(op.path);
       if (status !== 200) continue; // privilege-gated or not seeded: nothing to compare
       const out: string[] = [];
       check(resultSchema(doc, 'GET', op.path), result, 'result', out);
-      problems.push(...out.map((p) => `GET ${op.path} ${p}`));
+      problems.push(...undocumented(op.path, out, used).map((p) => `GET ${op.path} ${p}`));
     }
     expect(problems).toEqual([]);
+    const declared = Object.entries(DOCUMENTED_DIVERGENCE).flatMap(([p, ds]) =>
+      ds.map((d) => `${p} ${d.paths}`),
+    );
+    expect(
+      declared.filter((d) => !used.has(d)),
+      'documented divergences the mock no longer shows',
+    ).toEqual([]);
   }, 60_000);
 
   it('answers the parameterised reads of the screens in the declared shape', async () => {
@@ -129,7 +164,7 @@ describe('mock ⇄ specification contract', () => {
       expect(status, `${path} ${JSON.stringify(query)}`).toBe(200);
       const out: string[] = [];
       check(resultSchema(doc, 'GET', path), result, 'result', out);
-      problems.push(...out.map((p) => `GET ${path} ${p}`));
+      problems.push(...undocumented(path, out, new Set()).map((p) => `GET ${path} ${p}`));
     }
     expect(problems).toEqual([]);
   });

@@ -21,7 +21,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { renderValue } from '@/components/KeyValueList';
 import { notifyError } from '@/lib/notify';
-import { AUTHE_FLAGS, applyFlags, bitsToFlags, secKeys } from './keys';
+import { AUTHE_FLAGS, applyFlags, bitsToFlags, secKeys, serviceEnabled } from './keys';
 import { reviewChanges } from '@/components/ReviewChanges';
 
 type Row = ServiceList[number];
@@ -69,12 +69,13 @@ export default function ServicesPage() {
   const columns: ColumnDef<Row, unknown>[] = [
     { accessorKey: 'Name', header: 'Service', cell: (c) => <b className="mono">{String(c.getValue())}</b> },
     {
-      accessorKey: 'EnabledBoolean',
+      id: 'Enabled',
+      accessorFn: (r) => serviceEnabled(r),
       header: 'Enabled',
       cell: ({ row }) => (
         <Switch
           size="xs"
-          checked={!!row.original.EnabledBoolean}
+          checked={serviceEnabled(row.original)}
           onClick={stop}
           onChange={(e) => toggle.mutate({ name: row.original.Name ?? '', enabled: e.currentTarget.checked })}
           aria-label="Toggle service"

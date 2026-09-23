@@ -197,13 +197,16 @@ export interface ResourceRec {
   AllowDelete: boolean;
 }
 
+/**
+ * A service as IRIS 2026.2 keeps it. The list (GET /v2/security/services) answers `Enabled` as a
+ * boolean and has no `EnabledBoolean`, although the spec declares `Enabled: string` plus
+ * `EnabledBoolean`; `AllowedConnections` in the list is `ClientSystems` of the detail.
+ */
 export interface ServiceRec {
   Name: string;
-  Enabled: string;
-  EnabledBoolean: boolean;
+  Enabled: boolean;
+  /** "Yes", "No" or "N/A" (services that take no connections from outside). */
   Public: string;
-  AuthenticationMethods: string[];
-  AllowedConnections: string[];
   Description: string;
   HttpOnlyCookies: boolean;
   TwoFactorEnabled: boolean;
@@ -218,7 +221,6 @@ export interface WebAppRec {
   Enabled: boolean;
   Type: string;
   Resource: string;
-  AuthenticationMethods: string[];
   IsSystemApp: boolean;
   DispatchClass: string;
   Description: string;
@@ -1204,44 +1206,45 @@ function seedResources(): ResourceRec[] {
 function service(
   Name: string,
   Description: string,
-  enabled: boolean,
-  methods: string[],
+  Enabled: boolean,
+  AutheEnabled: number,
+  Public: string,
   extra: Partial<ServiceRec> = {},
 ): ServiceRec {
   return {
     Name,
     Description,
-    Enabled: enabled ? 'Yes' : 'No',
-    EnabledBoolean: enabled,
-    Public: 'No',
-    AuthenticationMethods: methods,
-    AllowedConnections: [],
-    HttpOnlyCookies: true,
+    Enabled,
+    Public,
+    HttpOnlyCookies: false,
     TwoFactorEnabled: false,
-    AutheEnabled: methods.includes('Unauthenticated') ? 96 : 32,
+    AutheEnabled,
     ClientSystems: [],
     ...extra,
   };
 }
 
+/** The services of an IRIS 2026.2 container, with the AutheEnabled values it ships with. */
 function seedServices(): ServiceRec[] {
   return [
-    service('%Service_Bindings', 'Language bindings (JDBC/ODBC/Native)', true, ['Password']),
-    service('%Service_CallIn', 'Call-in from external processes', true, ['Password', 'OS']),
-    service('%Service_Console', 'Console', true, ['Password', 'OS']),
-    service('%Service_DataCheck', 'DataCheck', false, ['Password']),
-    service('%Service_DocDB', 'Document database', false, ['Password']),
-    service('%Service_ECP', 'Enterprise cache protocol', false, ['Password']),
-    service('%Service_Login', 'Login', true, ['Password', 'OS']),
-    service('%Service_Mirror', 'Mirroring', false, ['Password']),
-    service('%Service_Monitor', 'SNMP monitor', false, ['Password']),
-    service('%Service_Native', 'Native API', true, ['Password']),
-    service('%Service_Sharding', 'Sharding', false, ['Password']),
-    service('%Service_Telnet', 'Telnet', false, ['Password']),
-    service('%Service_Terminal', 'Terminal', true, ['Password', 'OS']),
-    service('%Service_WebGateway', 'Web gateway', true, ['Password'], {
-      AllowedConnections: ['127.0.0.1', '10.0.0.0/8'],
+    service('%Service_Bindings', 'Controls SQL or Objects', true, 32, 'N/A'),
+    service('%Service_CacheDirect', 'Controls Cache Direct', false, 32, 'Yes'),
+    service('%Service_CallIn', 'Controls the Call-In Interface', false, 48, 'Yes'),
+    service('%Service_DataCheck', 'Controls this system as a DataCheck source', false, 1024, 'N/A'),
+    service('%Service_DocDB', 'Controls Doc DB applications', false, 1024, 'No'),
+    service('%Service_ECP', 'Controls Enterprise Cache Protocol (ECP)', false, 1024, 'N/A'),
+    service('%Service_EscalateLogin', 'Controls Escalated logins', true, 1056, 'Yes'),
+    service('%Service_Login', 'Controls SYSTEM.Security.Login', true, 1056, 'No'),
+    service('%Service_Mirror', 'Controls Mirroring', false, 1024, 'N/A'),
+    service('%Service_Monitor', 'Controls SNMP and remote Monitor commands', false, 1024, 'N/A'),
+    service('%Service_Shadow', 'Controls if this system can be the source of a shadow', false, 1024, 'N/A'),
+    service('%Service_Sharding', 'Controls this system as a Shard Server', false, 1024, 'N/A'),
+    service('%Service_Terminal', 'Controls terminal session on Unix', true, 48, 'Yes'),
+    service('%Service_WebGateway', 'Controls Web Gateway access', true, 32, 'Yes', {
+      HttpOnlyCookies: true,
+      ClientSystems: ['127.0.0.1', '10.0.0.0/8'],
     }),
+    service('%Service_Weblink', 'Controls WebLink', false, 64, 'N/A'),
   ];
 }
 
@@ -1253,7 +1256,6 @@ function webApp(Name: string, Namespace: string, Type: string, extra: Partial<We
     Enabled: true,
     Type,
     Resource: '',
-    AuthenticationMethods: ['Password'],
     IsSystemApp: Name.startsWith('/csp/sys') || Name.startsWith('/api/'),
     DispatchClass: '',
     Description: '',
@@ -1281,7 +1283,6 @@ function seedWebApps(): WebAppRec[] {
       Resource: '%Development',
       Description: 'System Management Portal',
       Path: `${MGR}../csp/sys/`,
-      AuthenticationMethods: ['Password', 'Unauthenticated'],
       AutheEnabled: 96,
     }),
     webApp('/csp/sys/mgr', '%SYS', 'CSP', {
@@ -1307,7 +1308,6 @@ function seedWebApps(): WebAppRec[] {
     webApp('/csp/broker', '%SYS', 'CSP', {
       Description: 'Zen broker',
       Path: `${MGR}../csp/broker/`,
-      AuthenticationMethods: ['Unauthenticated'],
       AutheEnabled: 64,
     }),
     webApp('/csp/user', 'USER', 'CSP', { NamespaceDefault: true, Path: `${MGR}../csp/user/` }),
@@ -1316,19 +1316,16 @@ function seedWebApps(): WebAppRec[] {
       Description: 'System administration REST API',
       DispatchClass: '%Api.Admin.v2.Dispatch',
       JWTAuthEnabled: true,
-      AuthenticationMethods: ['Password', 'JWT'],
       CorsAllowlist: ['http://localhost:5173'],
     }),
     webApp('/api/atelier', '%SYS', 'REST', {
       Description: 'Source code REST API',
       DispatchClass: '%Api.Atelier',
-      AuthenticationMethods: ['Password', 'Unauthenticated'],
       AutheEnabled: 96,
     }),
     webApp('/api/monitor', '%SYS', 'REST', {
       Description: 'Prometheus metrics',
       DispatchClass: '%Api.Monitor',
-      AuthenticationMethods: ['Unauthenticated'],
       AutheEnabled: 64,
     }),
     webApp('/api/docdb', '%SYS', 'REST', {
@@ -1356,13 +1353,11 @@ function seedWebApps(): WebAppRec[] {
       Description: 'HL7 archive REST API',
       Resource: 'HL7.Archive',
       JWTAuthEnabled: true,
-      AuthenticationMethods: ['Password', 'JWT'],
     }),
     webApp('/aperture', '%SYS', 'CSP', {
       Description: 'Aperture management portal (this app)',
       Path: `${MGR}../csp/aperture/`,
       ServeFiles: 'Always',
-      AuthenticationMethods: ['Unauthenticated'],
       AutheEnabled: 64,
       Resource: '',
     }),

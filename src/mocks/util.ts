@@ -1,5 +1,22 @@
 import { HttpResponse, type DefaultBodyType } from 'msw';
 
+/**
+ * The names IRIS 2026.2 lists in `AuthenticationMethods` for the bits of an `AutheEnabled`
+ * value, in the order it lists them (web applications and services alike). AutheSystem (1024)
+ * has no name: %Service_ECP and friends answer `[]` for 1024. JWT is not a bit; /api/admin with
+ * JWTAuthEnabled still lists only "Password".
+ */
+export function autheMethodNames(bits: number): string[] {
+  const names: [number, string][] = [
+    [64, 'Unauthenticated'],
+    [32, 'Password'],
+    [16, 'Operating System'],
+    [8192, 'Delegated'],
+    [2048, 'LDAP'],
+  ];
+  return names.filter(([bit]) => (bits & bit) === bit).map(([, name]) => name);
+}
+
 /** Standard SysAdmin API envelope. */
 export function ok<T>(result: T, extra?: { console?: string[]; summary?: string; status?: number }) {
   return HttpResponse.json(

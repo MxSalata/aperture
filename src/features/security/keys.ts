@@ -53,6 +53,18 @@ export function applyFlags(original: number | undefined, flags: number[]): numbe
   return ((original ?? 0) & ~SHOWN_BITS) | flagsToBits(flags);
 }
 
+/**
+ * Whether a row of GET /v2/security/services is enabled. IRIS 2026.2 answers `Enabled` as a
+ * boolean and sends no `EnabledBoolean`; the specification declares `Enabled` as a string
+ * ("Yes" / "No") next to a boolean `EnabledBoolean`. Reading only `EnabledBoolean` showed every
+ * service of a real instance as disabled.
+ */
+export function serviceEnabled(row: { Enabled?: unknown; EnabledBoolean?: unknown }): boolean {
+  if (typeof row.Enabled === 'boolean') return row.Enabled;
+  if (typeof row.EnabledBoolean === 'boolean') return row.EnabledBoolean;
+  return /^(yes|true|1)$/i.test(String(row.Enabled ?? ''));
+}
+
 export type Exposure = 'open' | 'gated' | null;
 
 /**

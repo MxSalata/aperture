@@ -13,6 +13,7 @@ import {
   hoursAgo,
   seeded,
   pick,
+  autheMethodNames,
 } from '../util';
 import { route, SECURE, apiBasePath } from '../secure';
 import { startAsyncTask } from '../async';
@@ -286,7 +287,21 @@ export const securityHandlers = [
 
   // ---- services -----------------------------------------------------------
   route('get', '/v2/security/services', SECURE, ({ request }) =>
-    ok(filterRows(mockDb.services as unknown as Record<string, unknown>[], request)),
+    ok(
+      filterRows(
+        mockDb.services.map((s) => ({
+          Name: s.Name,
+          Enabled: s.Enabled,
+          Public: s.Public,
+          AuthenticationMethods: autheMethodNames(s.AutheEnabled),
+          AllowedConnections: s.ClientSystems,
+          Description: s.Description,
+          HttpOnlyCookies: s.HttpOnlyCookies,
+          TwoFactorEnabled: s.TwoFactorEnabled,
+        })),
+        request,
+      ),
+    ),
   ),
   route('get', '/v2/security/service', SECURE, ({ request }) => {
     const s = mockDb.services.find((x) => x.Name === requireParam(request, 'name'));
@@ -295,7 +310,7 @@ export const securityHandlers = [
           AutheEnabled: s.AutheEnabled,
           ClientSystems: s.ClientSystems,
           Description: s.Description,
-          Enabled: s.EnabledBoolean,
+          Enabled: s.Enabled,
         })
       : notFound('Service');
   }),
@@ -308,13 +323,10 @@ export const securityHandlers = [
       AutheEnabled?: number;
       ClientSystems?: string[];
     }>(request);
-    if (body.Enabled !== undefined) {
-      s.EnabledBoolean = !!body.Enabled;
-      s.Enabled = body.Enabled ? 'Yes' : 'No';
-    }
+    if (body.Enabled !== undefined) s.Enabled = !!body.Enabled;
     if (body.Description !== undefined) s.Description = body.Description;
     if (body.AutheEnabled !== undefined) s.AutheEnabled = body.AutheEnabled;
-    if (body.ClientSystems !== undefined) s.AllowedConnections = body.ClientSystems;
+    if (body.ClientSystems !== undefined) s.ClientSystems = body.ClientSystems;
     recordAudit(account, 'ServiceChange', `Service ${s.Name} modified`, Object.keys(body).join(', '));
     return ok({}, { summary: `Service ${s.Name} updated` });
   }),
