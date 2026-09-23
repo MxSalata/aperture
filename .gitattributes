@@ -1,0 +1,4 @@
+# Check out text files with LF on every platform: Prettier (format:check) and the committed
+# www/ build compare byte for byte, and a Windows checkout with core.autocrlf=true would
+# otherwise turn every file into a style violation.
+* text=auto eol=lf
