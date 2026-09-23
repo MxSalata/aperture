@@ -79,5 +79,10 @@
     "workerDirectory": [
       "public"
     ]
+  },
+  "overrides": {
+    "recharts": {
+      "react-is": "^19.2.0"
+    }
   }
 }

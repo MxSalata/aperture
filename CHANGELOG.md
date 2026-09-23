@@ -2,6 +2,13 @@
 
 ## Unreleased - backlog after the real-instance pass
 
+- **The Disk I/O chart draws again.** It showed its axes and nothing else. `@mantine/charts` 8 wraps
+  each area in a Fragment, and recharts 2 finds its children with its own `react-is` 18, which does
+  not recognise React 19 elements, so the areas were never seen. recharts now gets `react-is` 19
+  through an npm override (recharts' documented fix for React 19), and an e2e test checks that
+  both dashboard charts draw their series. Recharts stays on 2 (deprecated): recharts 3 under
+  `@mantine/charts` 8 draws no areas either; it comes with `@mantine/charts` 9.
+
 - **REST services: every REST application and its routes.** A new screen reads `/api/mgmnt`
   (outside the SysAdmin API): the REST web applications of the instance with their dispatch class,
   the spec-first classes no web application serves, and, for each, the routes its dispatch class

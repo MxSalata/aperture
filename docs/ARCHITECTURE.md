@@ -373,3 +373,9 @@ surfaces it sits on, so any `color="…"` prop is legible without a local overri
   privileges.
 - **New API version:** replace `spec/mainspec_v2.json`, run `npm run gen:api`, fix type errors.
 - **Charts:** colors come from `lib/chartColors.ts` (validated categorical palettes for light and dark).
+  `@mantine/charts` 8 draws with recharts 2, whose own `react-is` 18 does not recognise React 19
+  elements: recharts then misses the areas Mantine wraps in Fragments and an `AreaChart` shows axes
+  and nothing else. `package.json` overrides recharts' `react-is` to 19 (recharts' documented fix);
+  an e2e test checks that the dashboard's charts draw their series. Recharts 2 is deprecated, but
+  recharts 3 under `@mantine/charts` 8 draws no areas either (tried: axes, legend, no area); the move
+  to recharts 3 comes with `@mantine/charts` 9, which requires it.

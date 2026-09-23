@@ -162,6 +162,15 @@ test.describe('Aperture (demo mode)', () => {
     await expect(page.getByText(/\d+ hidden/).first()).toBeVisible();
   });
 
+  test('dashboard charts draw their series', async ({ page }) => {
+    await loginDemo(page);
+    // Rates need two samples; the dashboard polls every 3 s.
+    await expect(page.locator('.mantine-LineChart-root .recharts-line')).toHaveCount(1, { timeout: 15_000 });
+    // Mantine wraps each area in a Fragment: with a react-is older than React, recharts 2 does
+    // not see them and the chart stays empty (axes, no areas).
+    await expect(page.locator('.mantine-AreaChart-root .recharts-area')).toHaveCount(2, { timeout: 15_000 });
+  });
+
   test('host monitor reads native metrics and the header shows LIVE', async ({ page }) => {
     await loginDemo(page);
     await expect(page.getByRole('banner').getByText('DEMO', { exact: true })).toBeVisible();
