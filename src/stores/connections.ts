@@ -4,10 +4,16 @@ import { persist } from 'zustand/middleware';
 /**
  * A connection profile points at one IRIS instance.
  *
- * `baseUrl` is the origin (and optional path prefix) *in front of* `/api/admin`:
- *   ''                          → same origin (nginx proxy, IPM install, Vite dev proxy)
- *   'http://iris.lan:52773'     → private web server of a remote instance (needs CORS on /api/admin)
- *   'https://gw.example.com/iris' → web gateway with an instance prefix
+ * `baseUrl` is what comes *in front of* `/api/admin`:
+ *   ''                            → same origin (nginx proxy, IPM install, Vite dev proxy)
+ *   '/iris-b'                     → another instance behind the same reverse proxy, under a path prefix
+ *   'https://gw.example.com/iris' → a web gateway with an instance prefix, when it is this page's origin
+ *
+ * A different origin cannot be used from a browser: `/api/admin/v2` sends no CORS headers, by
+ * design (InterSystems, contest announcement thread, 22 September 2026), so a cross-origin request
+ * is refused before it reaches IRIS. An `http(s)://` base URL is accepted for a gateway that is
+ * this page's origin, or a proxy of your own that adds CORS headers; nginx's template documents the
+ * path-prefix pattern, which needs neither.
  */
 export interface ConnectionProfile {
   id: string;
@@ -106,11 +112,18 @@ export function newProfileId() {
  * fragment would be glued in front of every API path.
  */
 export function baseUrlProblem(url: string): string | null {
+  const text = url.trim();
+  // A path prefix on this page's origin: another instance behind the same reverse proxy.
+  if (text.startsWith('/')) {
+    if (text.startsWith('//')) return 'A path prefix starts with a single slash, such as /iris-b';
+    if (/[?#\s]/.test(text)) return 'The base URL cannot carry a query (?) or a fragment (#)';
+    return null;
+  }
   let parsed: URL;
   try {
-    parsed = new URL(url.trim());
+    parsed = new URL(text);
   } catch {
-    return 'Enter a URL such as http://iris.lan:52773';
+    return 'Enter a path prefix such as /iris-b (an instance behind the same proxy) or a URL such as https://gateway.example.org/iris';
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return 'Use an http:// or https:// URL';
   if (parsed.username || parsed.password)

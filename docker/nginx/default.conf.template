@@ -3,8 +3,27 @@
 #
 # IRIS_UPSTREAM        e.g. http://iris:52773        (compose default)
 # IRIS_API_PREFIX      e.g. /api/admin  or  /iris/api/admin  (behind a web gateway with an instance prefix)
-# IRIS_ALLOWED_ORIGINS extra origins the browser may call directly (remote connection profiles),
-#                      space separated, e.g. "https://iris.lan:52773"; empty = same origin only
+# IRIS_ALLOWED_ORIGINS extra origins the Content-Security-Policy lets the browser call directly,
+#                      space separated; empty = same origin only. Rarely useful: /api/admin/v2
+#                      sends no CORS headers (by design, InterSystems, 22 September 2026), so a
+#                      browser cannot call another IRIS directly. Only a proxy of your own that adds
+#                      CORS headers in front of that instance would need to be listed here.
+#
+# Several instances behind this one nginx: give each its own path prefix and proxy it like
+# /api/admin/ below, then save a connection profile in Aperture whose base URL is the prefix
+# (Connections → Add → Base URL "/iris-b"). Same origin, so no CORS and no browser dialogs:
+#
+#   location /iris-b/api/admin/ {
+#     proxy_pass http://iris-b:52773/api/admin/;
+#     proxy_http_version 1.1;
+#     proxy_set_header Host $host;
+#     proxy_read_timeout 300s;
+#     proxy_hide_header WWW-Authenticate;
+#     add_header X-Aperture-WWW-Authenticate $upstream_http_www_authenticate always;
+#     proxy_redirect off;
+#   }
+#   location /iris-b/api/monitor/ { proxy_pass http://iris-b:52773/api/monitor/; proxy_hide_header WWW-Authenticate; }
+#   location /iris-b/api/mgmnt/   { proxy_pass http://iris-b:52773/api/mgmnt/;   proxy_hide_header WWW-Authenticate; }
 
 map $http_upgrade $connection_upgrade {
   default upgrade;

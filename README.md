@@ -23,6 +23,12 @@ instances, and the 20 places where the specification and IRIS disagree are liste
 
 ![Dashboard](docs/screenshots/02-dashboard.png)
 
+## Evaluate in two minutes
+
+1. **Without an IRIS:** open the [online demo](https://mxsalata.github.io/intersystems-frontend-contest/) and press **Try the demo**. Press <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>K</kbd>, type `integrity`, run the check on `USER`: the `202 Accepted` lands in the Job Center with console output and progress. Open _Security → Users → jdoe_, remove a role and press Save: the review lists old → new and who loses which privilege. Open _Logs_ for every log in one place, _REST services_ for every REST route on the instance. Sign out and sign in as `operator` / `SYS`: the security area is gone and every disabled action names the resource it needs.
+2. **Against a real IRIS (five minutes, Docker):** `npm run iris:password && docker compose up --build`, then http://localhost:8080 with `_SYSTEM` and the password in `.secrets/iris-password`. The build log ends with the readiness report of the Embedded Python installer; `npm run verify:live` re-checks the API contract against the running instance.
+3. **In the code:** the fetch middleware that adds the token, refreshes it and captures every `202` ([`src/api/client.ts`](src/api/client.ts)); the guard that refuses a change leaving nobody able to administer security ([`src/features/security/adminGuard.ts`](src/features/security/adminGuard.ts)); the mock instance that powers the demo and both test suites ([`src/mocks`](src/mocks)); the Embedded Python installer and log reader ([`ipm/cls/Aperture`](ipm/cls/Aperture)).
+
 ## Online demo
 
 **No IRIS required.** The demo build serves the entire SysAdmin API from a mock inside your browser
@@ -52,7 +58,7 @@ npm run iris:password   # or write any password of 12+ characters to .secrets/ir
 docker compose up --build
 ```
 
-- http://localhost:8080 - Aperture behind nginx (proxies `/api/admin` to IRIS, no CORS, no Basic-auth pop-ups; sends a Content-Security-Policy, set `IRIS_ALLOWED_ORIGINS="https://other.iris:52773"` on the `portal` service to let the browser call further instances directly)
+- http://localhost:8080 - Aperture behind nginx (proxies `/api/admin`, `/api/monitor` and `/api/mgmnt` to IRIS: same origin, so no CORS and no Basic-auth pop-ups; sends a Content-Security-Policy). A second instance goes behind the same nginx under a path prefix (`/iris-b`, the pattern is documented in [`docker/nginx/default.conf.template`](docker/nginx/default.conf.template)) and gets a connection profile with that prefix as its base URL
 - http://localhost:52773/aperture/index.html - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`; the built-in web server needs the file name, a bare `/aperture/` answers 404)
 - Sign in as `_SYSTEM` (or `SuperUser`) with the password in `.secrets/iris-password`. The image has no well-known password: the build sets it on every enabled account from that file, passed as a BuildKit secret, so it is in no image layer, build context or log. `CSPSystem`, the account the image's own Web Gateway signs in with, keeps its own password and holds no role.
 - On a host with more than 20 CPU cores, IRIS Community stops at start-up with _Invalid Community Edition license, may have exceeded core limit_ (reported by the IRIS Atrium entry). Restrict the container's CPUs with a `docker-compose.override.yml` next to the compose file: `services: { iris: { cpuset: "0-19" } }`.
@@ -113,7 +119,7 @@ Other scripts:
 
 - IRIS or IRIS for Health **2026.2+** with the `/api/admin` web application. Aperture speaks SysAdmin API v2, which ships with 2026.2; IRIS 2026.1 serves only v1 (every `/v2` path answers 404) and older releases have no SysAdmin API, so sign-in there stops with an explanation. Sign-in uses JWT and falls back to HTTP Basic when `/login` is unavailable (for example with JWT authentication switched off on `/api/admin`).
 - The account needs at least one `%Admin_*` privilege (`GET /info` refuses everyone else).
-- If the portal is served from a different origin than IRIS, add that origin to the CORS allow-list of `/api/admin` (Aperture can do that itself under _Security → Web applications → /api/admin_).
+- The portal must be served from the same origin as the API it talks to: `/api/admin/v2` sends no CORS headers, by design (InterSystems, in the contest announcement thread, 22 September 2026), so a browser cannot call it across origins whatever the web application's allow-list says. The three supported topologies are all same-origin: nginx in front of IRIS (compose), the `/aperture` web application served by IRIS itself (IPM), and the Vite dev server's proxy. Further instances go behind the same nginx under a path prefix.
 
 ## The six contest areas
 

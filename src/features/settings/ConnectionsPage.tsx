@@ -106,7 +106,7 @@ export default function ConnectionsPage() {
     <>
       <PageHeader
         title="Connections"
-        description="Saved IRIS instances. A base URL is the origin in front of /api/admin. Cross-origin instances need CORS enabled on their /api/admin web application (or put this portal behind the same reverse proxy)."
+        description="Saved IRIS instances. A base URL is what comes before /api/admin: nothing for the instance this portal is served from, or a path prefix such as /iris-b for another instance behind the same reverse proxy. Another origin cannot be reached from a browser: /api/admin/v2 sends no CORS headers, by design."
         actions={
           <Button size="xs" leftSection={<IconPlus size={14} />} onClick={() => startEdit(null)}>
             Add connection
@@ -200,7 +200,7 @@ export default function ConnectionsPage() {
             <TextInput
               label="Base URL"
               disabled={editing?.id === SAME_ORIGIN_ID}
-              description="e.g. http://iris.lan:52773 or https://gateway.example.org/iris"
+              description="e.g. /iris-b (an instance behind the same proxy) or https://gateway.example.org/iris (a gateway that is this page's origin)"
               {...form.getInputProps('baseUrl')}
             />
             <Group grow>
