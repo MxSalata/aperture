@@ -50,7 +50,9 @@
 
       <!-- The log reader's web application, in the namespace the package is installed in (where
            Aperture.API is compiled): password authentication only, like /api/mgmnt, and the
-           %Admin_Operate resource, which is what reading messages.log needs. -->
+           %Admin_Operate resource, which is what reading messages.log needs. Unlike /aperture
+           above it runs a class, so CSPZENEnabled stays at its default (1): with it off, IRIS
+           answers 404 to every request for a dispatch class (CI run 36070001055). -->
       <WebApplication
         Name="/api/aperture"
         Description="Aperture log reader (read-only REST API over messages.log, alerts.log, SystemMonitor.log)"
@@ -61,7 +63,7 @@
         UseCookies="1"
         CookiePath="/api/aperture/"
         Recurse="1"
-        CSPZENEnabled="0"
+        CSPZENEnabled="1"
       />
 
       <!-- Enable /api/admin with password + JWT authentication, then print the readiness report -->

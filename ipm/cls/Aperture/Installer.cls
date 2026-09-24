@@ -156,8 +156,11 @@ ClassMethod DoctorPython(api As %String, portal As %String, logapi As %String = 
             check(False, logapi + " log reader", "web application missing; the Logs screen cannot read messages.log")
         else:
             dispatch = str(reader.DispatchClass or "")
-            ok = int(reader.Enabled or 0) == 1 and dispatch == "Aperture.API"
-            check(ok, logapi + " log reader", "dispatch class " + (dispatch or "(none)") + ", namespace " + str(reader.NameSpace or ""))
+            # A dispatch class only runs where CSP/ZEN is enabled: with CSPZENEnabled off, IRIS
+            # answers 404 to every request, whatever the class (CI run 36070001055).
+            zen = int(getattr(reader, "CSPZENEnabled", 1) or 0) == 1
+            ok = int(reader.Enabled or 0) == 1 and dispatch == "Aperture.API" and zen
+            check(ok, logapi + " log reader", "dispatch class " + (dispatch or "(none)") + ", namespace " + str(reader.NameSpace or "") + ("" if zen else ", CSPZENEnabled off: classes cannot run"))
             # The catalogue itself: what the Logs screen will list, read through the same code.
             if catalog_error is not None:
                 check(False, "log files readable", catalog_error)
