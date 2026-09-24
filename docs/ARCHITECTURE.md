@@ -231,7 +231,9 @@ alone read; every route checks `%Admin_Operate:USE`, and the web application req
 resource. Authentication is a password only (`AutheEnabled=32`, like `/api/mgmnt`): a Basic session
 sends its credentials, a JWT session gives the password once (`stores/mgmntAuth.ts`, shared with
 `/api/mgmnt`; `components/PasswordGate.tsx`). nginx and the Vite dev server proxy the path and hide
-its `WWW-Authenticate` header.
+its `WWW-Authenticate` header. The application keeps `CSPZENEnabled` at its default: with it off,
+as on the static `/aperture` application, IRIS answers 404 to every request for a dispatch class
+(found by CI run 36070001055; run 36070924998 passed with the default).
 
 The browser does the rest (`api/logs.ts`, `lib/messagesLog.ts`): it parses each line's stamp
 (`MM/DD/YY-HH:MM:SS:mmm (pid) severity [Category] message`, the category absent on older writers),

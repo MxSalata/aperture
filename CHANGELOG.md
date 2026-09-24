@@ -14,7 +14,11 @@
   says where each log comes from. nginx and the dev server proxy the path; the mock generates the
   same files with the same algorithm; `npm run verify:live` reads the catalogue and a window; the
   readiness report checks the web application and lists the files it can read. On an instance
-  without the package the screen says so and nothing else depends on it.
+  without the package the screen says so and nothing else depends on it. Verified on IRIS
+  Community 2026.2 (CI run 36070924998): the catalogue and a 201-line window of `messages.log`
+  read over HTTP, 28/28 checks. The first run had found the web application answering 404 because
+  it was declared with `CSPZENEnabled="0"` (copied from the static `/aperture` application); a
+  dispatch class only runs with CSP/ZEN enabled, and the readiness report now says when it is off.
 - **Wallet & OAuth 2.0 (Security).** A Wallet tab: collections with their use and edit resources
   and the names and types of their secrets; create and edit a collection; add or replace a secret
   as a write-only value (`Collection.Secret`, the `%Wallet.Secret` name form) with its usage,

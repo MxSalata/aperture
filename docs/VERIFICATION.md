@@ -44,6 +44,7 @@ and commit the JSON report next to this file.
 | 2026-09-22 | same image, run 35719716417 (`--mutate`) | JWT | 25/25: the previous 22 plus a suspend/resume round trip; the read-back showed `/v2/task/info` correct and `/v2/tasks` lagging (recorded, not a failure) | `iris-verification` artifact of the run |
 | 2026-09-19 | same image, both runs, inside the container | - | `Aperture.Installer.Doctor()` (Embedded Python): 7/7 ok (version, JWT available, `/api/admin` enabled + password + JWT, `/aperture` web app, files on disk) | job log, step "Readiness report" |
 | 2026-09-23 | IRIS for Health 2026.2 (Build 221U), `containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3…62cf3`, a real instance on a LAN | JWT | 22/22, and 25/25 with `--mutate` (the task list lags the task object again) | [`2026-09-23-irishealth-2026.2/`](2026-09-23-irishealth-2026.2/) |
+| 2026-09-24 | IRIS Community 2026.2 (Build 221U), CI run 36070924998 on the 1.0.0 branch (`verify-iris` green) | JWT | 28/28 (`--mutate`): the previous 25 plus the log reader: `GET /api/aperture/logs` listed 2 files (`messages.log`, `SystemMonitor.log`; a stock instance writes no `alerts.log`) and a window of `messages.log` returned 201 whole lines from bytes 28522-44904 of 44904; the readiness report's rows `/api/aperture log reader (dispatch class Aperture.API, namespace USER)` and `log files readable` are ok | `iris-verification` artifact of the run |
 
 ## Findings from the `--mutate` probe (22 September 2026, run 35718557061)
 
@@ -56,6 +57,19 @@ and commit the JSON report next to this file.
   `Content-Type: application/json`; the same applies to `database-dir/mount`, `database-dir/truncate`
   and `journal/file/integrity-check`, and the Explorer always sends `{}` for an operation that
   declares a body. Recorded as `optional-body-415` in `src/lib/quirks.ts`.
+
+## Findings from the log reader's first run (24 September 2026, runs 36070001055 and 36070924998)
+
+- **A web application with `CSPZENEnabled` off answers 404 to every request for its dispatch
+  class.** The first run installed the package, compiled `Aperture.API` and `Aperture.Logs`, and
+  the readiness report read the catalogue through the Embedded Python (`messages.log`,
+  `SystemMonitor.log`), yet `GET /api/aperture/logs` was a 404: `/api/aperture` had been declared
+  with `CSPZENEnabled="0"`, copied from the static `/aperture` application, which serves files
+  only. With the default (1) the second run passed 28/28. The readiness report now says when the
+  setting is off.
+- The Embedded Python file reader behaves on IRIS as it did in the local harness: the catalogue
+  lists the manager directory's logs by kind, and a window read returns whole lines ending at the
+  end of the file with `start` pointing at the previous window.
 
 ## A real instance, 23 September 2026
 
