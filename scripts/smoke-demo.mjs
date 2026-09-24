@@ -212,6 +212,44 @@ await step('REST services and their routes', async () => {
   await shot('23-rest-services');
   await page.keyboard.press('Escape');
 });
+await step('wallet collections and secrets', async () => {
+  await page.goto(url(`/security/secrets`));
+  await page.getByRole('cell', { name: 'HL7Interfaces' }).first().waitFor({ timeout: 15000 });
+  await page
+    .getByRole('row', { name: /HL7Interfaces/ })
+    .getByRole('button', { name: 'Open' })
+    .click();
+  await page.getByRole('dialog').getByRole('cell', { name: 'lab-sftp' }).waitFor({ timeout: 15000 });
+  await page.waitForTimeout(400);
+  await shot('26-wallet');
+  await page.keyboard.press('Escape');
+});
+await step('OAuth 2.0 roles', async () => {
+  await page.goto(url(`/security/secrets?tab=oauth`));
+  await page.getByRole('cell', { name: 'aperture-portal' }).first().waitFor({ timeout: 15000 });
+  await page.waitForTimeout(400);
+  await shot('27-oauth');
+});
+await step('devices', async () => {
+  await page.goto(url(`/devices`));
+  await page.getByRole('cell', { name: '|PRN|' }).first().waitFor({ timeout: 15000 });
+  await page.waitForTimeout(400);
+  await shot('28-devices');
+});
+await step('messages log through the reader', async () => {
+  await page.goto(url(`/logs/messages`));
+  const gate = page.getByLabel(/Password for/);
+  if (await gate.isVisible().catch(() => false)) {
+    await gate.fill('SYS');
+    await page.getByRole('button', { name: 'Read the logs' }).click();
+  }
+  await page.getByText(/entries from the last/).waitFor({ timeout: 15000 });
+  await page.getByRole('button', { name: 'Older lines' }).click();
+  await page.waitForTimeout(800);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(200);
+  await shot('29-messages-log');
+});
 await step('read-only tab', async () => {
   await page.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('menuitem', { name: 'Make this tab read-only' }).click();

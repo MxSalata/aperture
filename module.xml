@@ -4,8 +4,8 @@
     <Module>
       <Name>iris-aperture</Name>
       <Version>1.0.0</Version>
-      <Description>Aperture: a modern management portal for InterSystems IRIS built on the SysAdmin REST API (/api/admin v2). Dashboard, databases, namespaces, processes, journals, tasks, security, a Job Center for asynchronous operations and a spec-driven explorer for all 273 API operations.</Description>
-      <Keywords>management portal,sysadmin,rest,admin,dashboard,contest,react,embedded python</Keywords>
+      <Description>Aperture: a modern management portal for InterSystems IRIS built on the SysAdmin REST API (/api/admin v2). Dashboard, databases, namespaces, processes, devices, journals, tasks, security (users, roles, web applications, TLS, X.509, wallet, OAuth 2.0), a Job Center for asynchronous operations, a spec-driven explorer for all 273 API operations, and a read-only Embedded Python log reader (/api/aperture) for messages.log, alerts.log and SystemMonitor.log, which the SysAdmin API does not expose.</Description>
+      <Keywords>management portal,sysadmin,rest,admin,dashboard,logs,contest,react,embedded python</Keywords>
       <Author>
         <Person>MxSalata</Person>
         <CopyrightDate>2026</CopyrightDate>
@@ -20,6 +20,11 @@
       <!-- Post-install hook and readiness report, written in Embedded Python
            (ipm/cls/Aperture/Installer.cls) -->
       <Resource Name="Aperture.Installer.CLS"/>
+
+      <!-- The log reader: a %CSP.REST dispatch class (ipm/cls/Aperture/API.cls) over an Embedded
+           Python file reader (ipm/cls/Aperture/Logs.cls). Read-only; needs %Admin_Operate:USE. -->
+      <Resource Name="Aperture.API.CLS"/>
+      <Resource Name="Aperture.Logs.CLS"/>
 
       <!-- The built portal (www/, from `npm run build:www`) is copied under the instance's
            csp directory ... -->
@@ -40,6 +45,22 @@
         AutheEnabled="64"
         UseCookies="2"
         CookiePath="/aperture/"
+        CSPZENEnabled="0"
+      />
+
+      <!-- The log reader's web application, in the namespace the package is installed in (where
+           Aperture.API is compiled): password authentication only, like /api/mgmnt, and the
+           %Admin_Operate resource, which is what reading messages.log needs. -->
+      <WebApplication
+        Name="/api/aperture"
+        Description="Aperture log reader (read-only REST API over messages.log, alerts.log, SystemMonitor.log)"
+        DispatchClass="Aperture.API"
+        Enabled="1"
+        AutheEnabled="32"
+        Resource="%Admin_Operate"
+        UseCookies="1"
+        CookiePath="/api/aperture/"
+        Recurse="1"
         CSPZENEnabled="0"
       />
 

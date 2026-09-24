@@ -18,10 +18,16 @@ const SECRET_KEY =
 const NOT_SECRET =
   /(interval|timeout|page|class|file|type|neverexpires|isjwt|expires|length|len|enabled|allowed|required|policy|method|url|endpoint|display|alg|enc|supported)$/i;
 
+/**
+ * Whole keys that end in a secret word and are still settings: the OAuth 2.0 authorization
+ * server's `ReturnRefreshToken` is a policy letter ("a" for always), not a token.
+ */
+const SETTING_KEYS = /^(returnrefreshtoken)$/i;
+
 export function isSecretKey(key: string): boolean {
   // OAuth and JWT payloads spell the same words in snake_case (`access_token`, `refresh_token`).
   const k = key.replace(/[_-]/g, '');
-  return SECRET_KEY.test(k) && !NOT_SECRET.test(k);
+  return SECRET_KEY.test(k) && !NOT_SECRET.test(k) && !SETTING_KEYS.test(k);
 }
 
 /** Redact one field: strings under a secret key become the placeholder; everything else passes. */

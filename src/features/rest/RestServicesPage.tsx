@@ -1,24 +1,13 @@
 import { useState } from 'react';
-import {
-  Anchor,
-  Badge,
-  Button,
-  Drawer,
-  Group,
-  Paper,
-  PasswordInput,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { IconKey, IconRefresh } from '@tabler/icons-react';
+import { Anchor, Badge, Button, Drawer, Group, Stack, Text, Title } from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
+import { IconRefresh } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { BoolBadge } from '@/components/StatusBadge';
 import { ErrorAlert } from '@/components/ErrorAlert';
-import { basicCredentials } from '@/api/base';
+import { PasswordGate } from '@/components/PasswordGate';
 import {
   fetchRestApps,
   fetchRoutes,
@@ -106,50 +95,6 @@ function RoutesDrawer({ app, onClose }: { app: Described | null; onClose: () => 
         />
       </Stack>
     </Drawer>
-  );
-}
-
-/** A JWT session has no password to send: ask for it once, for this tab's memory only. */
-function PasswordGate() {
-  const username = useSession((s) => s.username) ?? '';
-  const set = useMgmntAuth((s) => s.set);
-  const queryClient = useQueryClient();
-  const [password, setPassword] = useState('');
-  return (
-    <Paper withBorder p="md" maw={520}>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!password) return;
-          set(basicCredentials(username, password));
-          setPassword('');
-          // Start over: the previous attempt may have ended in a refusal.
-          void queryClient.resetQueries({ queryKey: ['mgmnt'] });
-        }}
-      >
-        <Stack gap="sm">
-          <Group gap={6}>
-            <IconKey size={18} />
-            <Title order={5}>/api/mgmnt needs your password</Title>
-          </Group>
-          <Text size="sm">
-            Its web application accepts a password only; the token of this session is not valid there. The
-            password stays in this tab&apos;s memory until you sign out, and is never stored.
-          </Text>
-          <PasswordInput
-            label={`Password for ${username}`}
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.currentTarget.value)}
-          />
-          <Group justify="flex-end">
-            <Button type="submit" disabled={!password}>
-              Read REST services
-            </Button>
-          </Group>
-        </Stack>
-      </form>
-    </Paper>
   );
 }
 
@@ -258,7 +203,9 @@ export default function RestServicesPage() {
       />
       <Stack gap="lg">
         {refused ? <ErrorAlert error={apps.error} /> : null}
-        {!ready && mode === 'jwt' ? <PasswordGate /> : null}
+        {!ready && mode === 'jwt' ? (
+          <PasswordGate application="/api/mgmnt" action="Read REST services" resetKeys={[['mgmnt']]} />
+        ) : null}
         {ready ? (
           <>
             <DataTable

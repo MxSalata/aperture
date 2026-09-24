@@ -1,8 +1,10 @@
 # Architecture
 
-Aperture is a pure front-end: there is no server-side code of its own. Everything it shows or
-changes goes through the InterSystems IRIS **SysAdmin REST API v2** (`/api/admin`). This document
-explains how the pieces fit, in enough detail to extend the portal or reuse the patterns.
+Aperture is a front-end: everything it shows or changes goes through the InterSystems IRIS
+**SysAdmin REST API v2** (`/api/admin`), with two native services beside it (`/api/monitor` for host
+metrics, `/api/mgmnt` for REST routes) and one small read-only REST class of its own on the instance
+for the log files the API has no route for (§2.7b). This document explains how the pieces fit, in
+enough detail to extend the portal or reuse the patterns.
 
 ## 1. Layers
 
@@ -208,6 +210,37 @@ a Basic session's credentials are sent and a JWT session asks for the password o
 refused password counts toward the account's invalid-login limit. nginx and the Vite dev server
 proxy `/api/mgmnt/` and drop its `WWW-Authenticate: Basic`.
 
+### 2.7b Aperture's log reader (/api/aperture)
+
+The SysAdmin API has no route for `messages.log`, the log every administrator reads first, nor for
+`alerts.log` or `SystemMonitor.log`. The IPM package therefore creates one web application of its
+own, `/api/aperture`, dispatching to `Aperture.API` (`ipm/cls/Aperture/API.cls`, `%CSP.REST`, no
+session) over `Aperture.Logs` (`Logs.cls`), whose file work is Embedded Python:
+
+| Route | Answer |
+| --- | --- |
+| `GET /api/aperture/` | what it is, its version, the resource it needs, the maximum window |
+| `GET /api/aperture/logs` | the catalogue: `messages.log` wherever `Config.config`'s `ConsoleFile` puts it, `alerts.log` and `SystemMonitor.log` in the manager directory, and their rotations (`messages.old_*`, `messages.log.N`, `messages_<date>.log`), each with `id` (the file name), `kind`, `path`, `size`, `modified` (instance wall-clock) and `current` |
+| `GET /api/aperture/logs/read?file=&before=&bytes=` | one window of whole lines: at most `bytes` (64 KiB by default, 256 KiB at most) ending at byte `before` (0: the end of the file), moved forward to the first whole line; `start` is the `before` of the previous window, `hasMore` whether one exists |
+
+Three properties hold by construction. **Read-only**: no route writes. **Bounded**: a window is
+capped on the server, so a 100 MB log pages at the same cost as a small one, and nothing is ever
+read whole. **Confined**: a request names a file by its catalogue id and the server resolves the
+path from the catalogue it rebuilds, so nothing outside the two log directories can be named, let
+alone read; every route checks `%Admin_Operate:USE`, and the web application requires the same
+resource. Authentication is a password only (`AutheEnabled=32`, like `/api/mgmnt`): a Basic session
+sends its credentials, a JWT session gives the password once (`stores/mgmntAuth.ts`, shared with
+`/api/mgmnt`; `components/PasswordGate.tsx`). nginx and the Vite dev server proxy the path and hide
+its `WWW-Authenticate` header.
+
+The browser does the rest (`api/logs.ts`, `lib/messagesLog.ts`): it parses each line's stamp
+(`MM/DD/YY-HH:MM:SS:mmm (pid) severity [Category] message`, the category absent on older writers),
+folds unstamped banner and continuation lines into the entry before them, shows the newest window
+first and prepends older ones on request (`features/logs/MessagesLogPage.tsx`). On an instance
+without the package the reader answers 404 and the screen says so; nothing else depends on it. The
+mock (`mocks/handlers/logs.ts`) generates the same files with the same window algorithm, and
+`scripts/live-check.mjs` reads the catalogue and one window from a real instance.
+
 ### 2.8 Spec quirks
 
 `lib/quirks.ts` lists known differences between the specification and running instances with their
@@ -317,10 +350,18 @@ Three rules sit at the render boundary rather than in individual screens:
   An account's privileges are the union of its roles, the roles they grant and the public
   permissions, so a privilege the role drops is not listed for an account that still holds it
   another way. The preview informs; unlike the lock-out check it never blocks.
-- **Every log the API exposes has one door.** The **Logs** hub (`features/logs`) lists the audit
-  database, journal files, `alerts.log` from the native monitor service, task history and this tab's
-  changes with counts and the latest entry, gates each card on the privilege it needs, and says
-  which logs (`messages.log`, `^ERRORS`, SQL diagnostics) have no API route.
+- **Every log has one door.** The **Logs** hub (`features/logs`) lists `messages.log` through the
+  package's reader (§2.7b), the audit database, journal files, `alerts.log` from the native monitor
+  service, task history and this tab's changes with counts and the latest entry, gates each card on
+  the privilege it needs, and says where each log comes from and which (`^ERRORS`, SQL diagnostics)
+  stay in the classic portal.
+- **Secrets are written, never read.** The Wallet tab (`features/security/WalletTab.tsx`) lists
+  collections with the names and types of their secrets, which is all `GET /v2/wallet/secrets`
+  returns; a secret is created or replaced as `Collection.Secret` (the `%Wallet.Secret` name form)
+  with its value sent once and never asked for again. OAuth 2.0 (`OAuthTab.tsx`) reads the three
+  roles and deletes by typed name; every other write is a link into the Explorer, whose form is
+  built from the schema and carries the quirk note (IRIS 2026.2 names the client's server field
+  `ServerDefinition`).
 
 ## 5. Deployment topologies
 
@@ -334,10 +375,13 @@ Three rules sit at the render boundary rather than in individual screens:
 Hash routing is used wherever there is no server to rewrite deep links to `index.html`.
 
 There is one installation path. `module.xml` copies `www/` to `{$cspdir}aperture/`, creates the
-`/aperture` web application and invokes `Aperture.Installer` (`ipm/cls/Aperture/Installer.cls`),
-whose Embedded Python `Configure` sets `Enabled=1`, adds password authentication to `AutheEnabled`
-(bit 32) and sets `JWTAuthEnabled=1` on `/api/admin` through `Security.Applications`; its `Doctor`
-prints a readiness report. The Docker image (`docker/iris/Dockerfile`, the official Community image pinned by digest, plus the package manager pinned by version and SHA-256) has no well-known password (the build sets one from a BuildKit secret, `npm run iris:password`) and runs that same package with
+`/aperture` web application, compiles `Aperture.API` and `Aperture.Logs` and creates the
+`/api/aperture` web application for them (in the namespace the package is installed in, password
+authentication, resource `%Admin_Operate`), and invokes `Aperture.Installer`
+(`ipm/cls/Aperture/Installer.cls`), whose Embedded Python `Configure` sets `Enabled=1`, adds
+password authentication to `AutheEnabled` (bit 32) and sets `JWTAuthEnabled=1` on `/api/admin`
+through `Security.Applications`; its `Doctor` prints a readiness report that includes the log
+reader and the files it can read. The Docker image (`docker/iris/Dockerfile`, the official Community image pinned by digest, plus the package manager pinned by version and SHA-256) has no well-known password (the build sets one from a BuildKit secret, `npm run iris:password`) and runs that same package with
 `zpm "load"` at build time (`docker/iris/init.script`), so a `docker compose build` is also an
 install test of the IPM package.
 

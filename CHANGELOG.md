@@ -1,6 +1,42 @@
 # Changelog
 
-## Unreleased - backlog after the real-instance pass
+## 1.0.0 - the submission (25 September 2026)
+
+- **The log files, through a reader of Aperture's own.** The SysAdmin API has no route for
+  `messages.log`, `alerts.log` or `SystemMonitor.log`. The IPM package now creates `/api/aperture`,
+  a read-only `%CSP.REST` class (`ipm/cls/Aperture/API.cls`) over an Embedded Python file reader
+  (`Logs.cls`): a catalogue of the log files and their rotations (wherever `ConsoleFile` puts
+  messages.log), and windows of whole lines of at most 256 KiB ending at a byte offset, so a
+  100 MB log pages at the same cost as a small one and nothing is read whole. A file is named by its
+  catalogue id, never by a path; every route needs `%Admin_Operate:USE`. Logs → Messages log shows
+  the newest window first, older ones on request, with a severity filter, the raw line of every
+  entry and unstamped lines folded into the entry before them; the Logs hub has a card for it and
+  says where each log comes from. nginx and the dev server proxy the path; the mock generates the
+  same files with the same algorithm; `npm run verify:live` reads the catalogue and a window; the
+  readiness report checks the web application and lists the files it can read. On an instance
+  without the package the screen says so and nothing else depends on it.
+- **Wallet & OAuth 2.0 (Security).** A Wallet tab: collections with their use and edit resources
+  and the names and types of their secrets; create and edit a collection; add or replace a secret
+  as a write-only value (`Collection.Secret`, the `%Wallet.Secret` name form) with its usage,
+  allowed hosts and TLS requirement; delete either with the name typed. An OAuth 2.0 tab in the
+  API's three roles: this instance as an authorization server with its registered clients, the
+  servers it is a client of with each one's client configurations, and its resource servers;
+  details in drawers with secrets redacted, deletes by typed name, every other write one link away
+  in the Explorer. The demo seeds all of it.
+- **Devices (Operations).** The devices with the instance's telnet and default-device settings,
+  each one's detail, and links into the Explorer to create, edit or delete.
+- **`/api/admin/v2` sends no CORS headers, by design** (InterSystems, contest announcement thread,
+  22 September). The README, the Connections screen, the connections store and the nginx template
+  stop advising an allow-list for a cross-origin instance and document the same-origin pattern: a
+  second instance behind the same nginx under a path prefix, which a connection profile can now
+  name as its base URL (`/iris-b`).
+- **Bonus facts as the organisers answered them** (21-22 September): Vector Search is 2 points,
+  only the first eligible YouTube video is awarded (the three storyboards are the three acts of one
+  video), and the dark-mode idea DPI-I-768 does not carry the "Community Opportunity" status.
+- **A two-minute evaluation path for the jury** at the top of the README; version 1.0.0 in
+  `package.json` and `module.xml`.
+
+### Before 1.0.0 - backlog after the real-instance pass
 
 - **Edits send only what changed, where IRIS merges a PUT.** The review dialog now hands the write
   the changed fields. For the local database, the database configuration and the journal settings

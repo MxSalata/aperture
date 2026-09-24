@@ -5,6 +5,8 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 import { api, result } from '@/api/hooks';
+import { fetchLogSources, isReaderMissing } from '@/api/logs';
+import { mgmntCredentials } from '@/api/mgmnt';
 import { metric } from '@/api/monitor';
 import { canUse } from '@/api/privileges';
 import { PageHeader } from '@/components/PageHeader';
@@ -13,6 +15,7 @@ import { formatBytes, formatNumber, parseIrisDate } from '@/lib/format';
 import { useHostMetrics } from '@/features/monitor/useHostMetrics';
 import { useAlertLog } from '@/features/monitor/useAlertLog';
 import { useActivity } from '@/stores/activity';
+import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useSession } from '@/stores/session';
 import { secKeys } from '@/features/security/keys';
 
@@ -303,6 +306,78 @@ function TaskHistoryCard() {
   );
 }
 
+/**
+ * messages.log through Aperture's own log reader (/api/aperture): the SysAdmin API has no route
+ * for it. The reader takes a password only, like /api/mgmnt: a JWT session that has not given
+ * it yet sees a prompt on the screen the card opens.
+ */
+function MessagesLogCard() {
+  useMgmntAuth((s) => s.basic);
+  const ready = !!mgmntCredentials();
+  const sources = useQuery({
+    queryKey: ['aperture-logs', 'sources'],
+    queryFn: fetchLogSources,
+    enabled: ready,
+    retry: false,
+  });
+  const messages = sources.data?.find((f) => f.kind === 'messages' && f.current);
+  const rotations = (sources.data ?? []).filter((f) => !f.current).length;
+  const missing = isReaderMissing(sources.error);
+  return (
+    <LogCard
+      title="messages.log"
+      source="GET /api/aperture/logs · /logs/read (Aperture's log reader, Embedded Python)"
+      to="/logs/messages"
+      privileges={['%Admin_Operate:U']}
+    >
+      {!ready ? (
+        <Text size="sm" c="dimmed">
+          The reader takes a password; the Messages log screen asks for it once.
+        </Text>
+      ) : missing ? (
+        <Text size="sm" c="dimmed">
+          Not installed on this instance: the iris-aperture package creates{' '}
+          <span className="mono">/api/aperture</span>.
+        </Text>
+      ) : (
+        <Pending error={sources.error}>
+          <Group gap="lg" wrap="wrap">
+            <Stat
+              label="Size"
+              value={sources.isPending ? '…' : messages ? formatBytes(messages.size) : '-'}
+            />
+            <Stat
+              label="Last write"
+              value={
+                sources.isPending ? (
+                  '…'
+                ) : messages ? (
+                  <Timestamp value={messages.modified} mode="relative" />
+                ) : (
+                  '-'
+                )
+              }
+            />
+            <Stat
+              label="Also readable"
+              value={
+                sources.isPending
+                  ? '…'
+                  : [
+                      ...(sources.data ?? [])
+                        .filter((f) => f.current && f.kind !== 'messages')
+                        .map((f) => f.id),
+                      ...(rotations ? [`${rotations} rotation${rotations === 1 ? '' : 's'}`] : []),
+                    ].join(', ') || '-'
+              }
+            />
+          </Group>
+        </Pending>
+      )}
+    </LogCard>
+  );
+}
+
 function ActivityCard() {
   const entries = useActivity(useShallow((s) => s.entries));
   const last = entries[0];
@@ -345,26 +420,31 @@ export default function LogsPage() {
     <>
       <PageHeader
         title="Logs"
-        description="Every log reachable through the API, in one place: the audit database, journal records, alerts.log, task history and the changes this tab sent."
+        description="Every log of the instance in one place: messages.log, alerts.log and SystemMonitor.log through Aperture's reader, the audit database, journal records, task history and the changes this tab sent."
       />
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+        <MessagesLogCard />
         <AuditCard />
-        <JournalCard />
         <AlertsCard />
+        <JournalCard />
         <TaskHistoryCard />
         <ActivityCard />
-        <Paper p="md" withBorder h="100%">
-          <Title order={5} mb={4}>
-            Not reachable through the API
-          </Title>
-          <Text size="sm" c="dimmed">
-            <span className="mono">messages.log</span>, the application error log (
-            <span className="mono">^ERRORS</span>) and the SQL diagnostics log have no route in the SysAdmin
-            API v2. Read them on the host under the instance's <span className="mono">mgr/</span> directory or
-            in the classic portal; Aperture does not add server-side code to fetch them.
-          </Text>
-        </Paper>
       </SimpleGrid>
+      <Paper p="md" withBorder mt="md">
+        <Title order={5} mb={4}>
+          Where each log comes from
+        </Title>
+        <Text size="sm" c="dimmed">
+          The audit database, journal records and task history come from the SysAdmin API; the counts of{' '}
+          <span className="mono">alerts.log</span> from the native monitor service. The SysAdmin API has no
+          route for the log files themselves, so <span className="mono">messages.log</span>,{' '}
+          <span className="mono">alerts.log</span>, <span className="mono">SystemMonitor.log</span> and their
+          rotations are read by Aperture&apos;s own read-only REST class on the instance (
+          <span className="mono">/api/aperture</span>, Embedded Python, created by the IPM package), in
+          bounded windows and never whole. The application error log (<span className="mono">^ERRORS</span>)
+          and the SQL diagnostics log stay in the classic portal.
+        </Text>
+      </Paper>
     </>
   );
 }

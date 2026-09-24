@@ -305,6 +305,53 @@ try {
     }
   }
 
+  // 5c. The log reader the IPM package creates (/api/aperture, Aperture.API over Embedded Python).
+  // A 404 means the package is not installed on this instance; with the portal deployed it must be.
+  {
+    const basic = `Basic ${Buffer.from(`${USER}:${PASSWORD}`).toString('base64')}`;
+    const catalog = await fetch(`${IRIS_URL}/api/aperture/logs`, {
+      headers: { Accept: 'application/json', Authorization: basic },
+    });
+    const text = await catalog.text();
+    let sources = null;
+    try {
+      sources = JSON.parse(text);
+    } catch {
+      /* not JSON */
+    }
+    const ok = catalog.status === 200 && Array.isArray(sources) && sources.length > 0;
+    report.quirks.logReader = catalog.status === 200 ? 'installed' : `HTTP ${catalog.status}`;
+    const required = !!PORTAL_URL;
+    if (required) hardFailure |= !ok;
+    record(
+      'Log reader GET /api/aperture/logs',
+      ok || !required,
+      ok
+        ? `${sources.length} file(s): ${sources
+            .map((s) => s.id)
+            .slice(0, 4)
+            .join(', ')}`
+        : catalog.status === 404
+          ? 'HTTP 404 - not installed (the iris-aperture package 1.0.0 creates it)'
+          : `HTTP ${catalog.status} ${text.slice(0, 120)}`,
+      { status: catalog.status },
+    );
+    if (ok) {
+      const first = sources.find((s) => s.kind === 'messages' && s.current) ?? sources[0];
+      const read = await fetch(
+        `${IRIS_URL}/api/aperture/logs/read?file=${encodeURIComponent(first.id)}&before=0&bytes=16384`,
+        { headers: { Accept: 'application/json', Authorization: basic } },
+      );
+      const win = read.status === 200 ? await read.json() : null;
+      const lines = Array.isArray(win?.lines) ? win.lines.length : 0;
+      hardFailure |= !record(
+        `Log reader window of ${first.id}`,
+        read.status === 200 && lines > 0,
+        `HTTP ${read.status}, ${lines} whole lines from bytes ${win?.start ?? '?'}-${win?.end ?? '?'} of ${win?.size ?? '?'}`,
+      );
+    }
+  }
+
   // 6. Optional: the portal itself
   if (PORTAL_URL) {
     // IRIS's built-in web server does not map a directory URL to index.html, so the

@@ -27,6 +27,18 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         '/api/monitor': { target: irisUrl, changeOrigin: true, secure: false },
+        // Aperture's own log reader (the /api/aperture web application of the IPM package); a
+        // 401 there names Basic too, and the browser must never see it.
+        '/api/aperture': {
+          target: irisUrl,
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy) => {
+            proxy.on('proxyRes', (proxyRes) => {
+              delete proxyRes.headers['www-authenticate'];
+            });
+          },
+        },
         // REST management API (REST services screen); a 401 there names Basic, like /api/admin's.
         '/api/mgmnt': {
           target: irisUrl,

@@ -136,6 +136,28 @@ test.describe('Aperture (demo mode)', () => {
     await expect(page.getByRole('dialog').getByText('Physical device')).toBeVisible();
   });
 
+  test('messages.log is read in windows through the log reader, newest first, older on request', async ({
+    page,
+  }) => {
+    await loginDemo(page);
+    await go(page, '/logs');
+    await expect(page.getByRole('heading', { name: 'messages.log' })).toBeVisible();
+    await go(page, '/logs/messages');
+    await expect(page.getByRole('heading', { name: 'Messages log' })).toBeVisible();
+    // The demo signs in with a JWT, which /api/aperture does not take: it asks for the password once.
+    await page.getByLabel(/Password for/).fill('SYS');
+    await page.getByRole('button', { name: 'Read the logs' }).click();
+    const rows = page.getByRole('table').getByRole('row');
+    await expect(rows.nth(1)).toBeVisible();
+    await expect(page.getByText(/entries from the last/)).toBeVisible();
+    const before = await page.getByText(/entries from the last/).textContent();
+    await page.getByRole('button', { name: 'Older lines' }).click();
+    await expect(page.getByText(/entries from the last/)).not.toHaveText(before ?? '', { timeout: 10_000 });
+    // A severity filter narrows what was read; the file is never fetched whole.
+    await page.getByRole('textbox', { name: 'Filter rows' }).fill('SFTP');
+    await expect(page.getByRole('cell', { name: /SFTP/ }).first()).toBeVisible();
+  });
+
   test('command palette jumps to a screen', async ({ page }) => {
     await loginDemo(page);
     await page.keyboard.press('Control+K');
@@ -196,7 +218,8 @@ test.describe('Aperture (demo mode)', () => {
     await expect(page.getByRole('heading', { name: 'Journal' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'alerts.log' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Task history' })).toBeVisible();
-    await expect(page.getByText('Not reachable through the API')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'messages.log' })).toBeVisible();
+    await expect(page.getByText('Where each log comes from')).toBeVisible();
   });
 
   test('secrets are redacted in raw JSON panels', async ({ page }) => {

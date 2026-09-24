@@ -18,6 +18,9 @@ Parameter API = "/api/admin";
 /// Web application module.xml creates for the portal itself.
 Parameter PORTAL = "/aperture";
 
+/// Web application module.xml creates for the log reader (Aperture.API, read-only).
+Parameter LOGAPI = "/api/aperture";
+
 /// Makes sure /api/admin is enabled with password and JWT authentication so the portal can
 /// sign in straight after `zpm "install iris-aperture"`. Python first, ObjectScript fallback.
 ClassMethod Configure() As %Status
@@ -41,7 +44,7 @@ ClassMethod Doctor() As %Status
 {
     Set sc = $$$OK
     Try {
-        Set sc = ..DoctorPython(..#API, ..#PORTAL)
+        Set sc = ..DoctorPython(..#API, ..#PORTAL, ..#LOGAPI)
     } Catch ex {
         Write !, "Aperture: readiness report skipped, Embedded Python is not usable here (", ex.DisplayString(), ")", !
     }
@@ -90,13 +93,22 @@ ClassMethod ConfigurePython(api As %String) As %Status [ Language = python ]
 }
 
 /// Embedded Python implementation of <method>Doctor</method>.
-ClassMethod DoctorPython(api As %String, portal As %String) As %Status [ Language = python ]
+ClassMethod DoctorPython(api As %String, portal As %String, logapi As %String = "/api/aperture") As %Status [ Language = python ]
 {
     import iris
     import os
 
     process = iris.system.Process
     previous = process.NameSpace()
+    # The log reader's classes live in the namespace the package was installed in (this one), so its
+    # catalogue is read before switching to %SYS for the Security.Applications checks.
+    catalog_names = []
+    catalog_error = None
+    try:
+        import json
+        catalog_names = [e["id"] for e in json.loads(iris.cls("Aperture.Logs").Catalog())]
+    except Exception as ex:
+        catalog_error = str(ex)
     process.SetNamespace("%SYS")
     try:
         applications = iris.cls("Security.Applications")
@@ -138,6 +150,19 @@ ClassMethod DoctorPython(api As %String, portal As %String) As %Status [ Languag
             check(int(site.Enabled or 0) == 1 and int(site.ServeFiles or 0) == 1, portal + " web application", "serves files from " + path)
             index = os.path.join(path, "index.html")
             check(os.path.isfile(index), portal + " files on disk", index)
+
+        reader = open_app(logapi)
+        if reader is None:
+            check(False, logapi + " log reader", "web application missing; the Logs screen cannot read messages.log")
+        else:
+            dispatch = str(reader.DispatchClass or "")
+            ok = int(reader.Enabled or 0) == 1 and dispatch == "Aperture.API"
+            check(ok, logapi + " log reader", "dispatch class " + (dispatch or "(none)") + ", namespace " + str(reader.NameSpace or ""))
+            # The catalogue itself: what the Logs screen will list, read through the same code.
+            if catalog_error is not None:
+                check(False, "log files readable", catalog_error)
+            else:
+                check(len(catalog_names) > 0, "log files readable", ", ".join(catalog_names[:5]) + (" …" if len(catalog_names) > 5 else ""))
 
         print("\nAperture readiness report")
         for mark, label, detail in rows:

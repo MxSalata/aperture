@@ -30,6 +30,7 @@ const SCREENS: [path: string, heading: string][] = [
   ['/processes', 'Processes'],
   ['/tasks', 'Tasks'],
   ['/logs', 'Logs'],
+  ['/logs/messages', 'Messages log'],
   ['/monitor', 'Host monitor'],
   ['/security/users', 'Users'],
   ['/security/web-apps', 'Web applications'],

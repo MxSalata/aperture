@@ -245,7 +245,7 @@ export function WalletTab() {
             {[...new Set(row.original.secrets.map((s) => (s.Type ?? '').replace(/^%Wallet\./, '')))]
               .filter(Boolean)
               .map((t) => (
-                <Badge key={t} size="xs" variant="light">
+                <Badge key={t} size="xs" variant="light" tt="none">
                   {t}
                 </Badge>
               ))}

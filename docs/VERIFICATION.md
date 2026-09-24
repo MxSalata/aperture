@@ -29,6 +29,7 @@ PORTAL_URL=http://iris.lan:52773/aperture/index.html npm run verify:live
 | error envelope on a missing namespace | `status.Errors` (documented), `status.errors` objects (observed) or top-level `errors` |
 | `POST /v2/database-dir/info` → `202`, task id from the `Location` header (2026.2 sends no body), polling to `Finished` | the Job Center's contract |
 | `POST /v2/task/suspend` + `resume` (opt-in `--mutate`) | the read-back after a change; whether the task list reflects the suspend at once; a bodiless suspend answers 415 |
+| `GET /api/aperture/logs` and one window of `messages.log` (1.0.0) | the package's log reader: installed, catalogue non-empty, whole lines read; with `PORTAL_URL` set a 404 fails the run |
 | portal HTML served (optional) | the IPM / init-script deployment path |
 
 ## Latest results

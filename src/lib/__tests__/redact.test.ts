@@ -124,3 +124,11 @@ describe('redactDeep', () => {
     expect(redactDeep(null)).toEqual({ value: null, count: 0 });
   });
 });
+
+describe('settings that end in a secret word', () => {
+  it('keeps the authorization server policy ReturnRefreshToken and still hides a refresh token', () => {
+    expect(isSecretKey('ReturnRefreshToken')).toBe(false);
+    expect(isSecretKey('refresh_token')).toBe(true);
+    expect(isSecretKey('RefreshToken')).toBe(true);
+  });
+});
