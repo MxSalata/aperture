@@ -17,6 +17,7 @@ const NamespaceDetailPage = lazy(() => import('./features/namespaces/NamespaceDe
 const ProcessesPage = lazy(() => import('./features/processes/ProcessesPage'));
 const ProcessDetailPage = lazy(() => import('./features/processes/ProcessDetailPage'));
 const LocksPage = lazy(() => import('./features/locks/LocksPage'));
+const DevicesPage = lazy(() => import('./features/devices/DevicesPage'));
 const JournalPage = lazy(() => import('./features/journal/JournalPage'));
 const TasksPage = lazy(() => import('./features/tasks/TasksPage'));
 const TaskDetailPage = lazy(() => import('./features/tasks/TaskDetailPage'));
@@ -33,6 +34,7 @@ const WebAppDetailPage = lazy(() => import('./features/security/WebAppDetailPage
 const AuditPage = lazy(() => import('./features/security/AuditPage'));
 const SslPage = lazy(() => import('./features/security/SslPage'));
 const SqlPrivilegesPage = lazy(() => import('./features/security/SqlPrivilegesPage'));
+const SecretsPage = lazy(() => import('./features/security/SecretsPage'));
 const ExplorerPage = lazy(() => import('./features/explorer/ExplorerPage'));
 const RestServicesPage = lazy(() => import('./features/rest/RestServicesPage'));
 const ConnectionsPage = lazy(() => import('./features/settings/ConnectionsPage'));
@@ -69,6 +71,7 @@ export const router = createRouter(
             { path: 'processes', element: <ProcessesPage /> },
             { path: 'processes/:pid', element: <ProcessDetailPage /> },
             { path: 'locks', element: <LocksPage /> },
+            { path: 'devices', element: <DevicesPage /> },
             { path: 'journal', element: <JournalPage /> },
             { path: 'tasks', element: <TasksPage /> },
             { path: 'tasks/:id', element: <TaskDetailPage /> },
@@ -87,6 +90,7 @@ export const router = createRouter(
             { path: 'security/audit', element: <AuditPage /> },
             { path: 'security/ssl', element: <SslPage /> },
             { path: 'security/sql', element: <SqlPrivilegesPage /> },
+            { path: 'security/secrets', element: <SecretsPage /> },
             { path: 'explorer', element: <ExplorerPage /> },
             { path: 'explorer/:group', element: <ExplorerPage /> },
             { path: 'settings/connections', element: <ConnectionsPage /> },

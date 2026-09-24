@@ -87,6 +87,55 @@ test.describe('Aperture (demo mode)', () => {
     await expect(page.getByText('HTTP 200')).toBeVisible();
   });
 
+  test('wallet: a secret is created write-only and listed by name and type', async ({ page }) => {
+    await loginDemo(page);
+    await go(page, '/security/secrets');
+    await expect(page.getByRole('heading', { name: 'Wallet & OAuth 2.0' })).toBeVisible();
+    await page
+      .getByRole('row', { name: /CloudBackups/ })
+      .getByRole('button', { name: 'Open' })
+      .click();
+    const drawer = page.getByRole('dialog');
+    await expect(drawer.getByRole('cell', { name: 's3-archive' })).toBeVisible();
+    await drawer.getByRole('button', { name: 'Add secret' }).click();
+    const modal = page.getByRole('dialog', { name: /Add a secret to CloudBackups/ });
+    await modal.getByLabel('Secret name').fill('glacier-restore');
+    await modal.getByLabel('Key 1').fill('user');
+    await modal.getByLabel('Value 1').fill('restore-bot');
+    await modal.getByRole('button', { name: 'Create' }).click();
+    await expect(page.getByText(/Wallet secret CloudBackups.glacier-restore created/)).toBeVisible();
+    await expect(drawer.getByRole('cell', { name: 'glacier-restore' })).toBeVisible();
+    // The value never comes back: nothing on the page carries it.
+    await expect(page.getByText('restore-bot')).toHaveCount(0);
+  });
+
+  test('OAuth 2.0: the authorization server, its clients and the client side are inventoried', async ({
+    page,
+  }) => {
+    await loginDemo(page);
+    await go(page, '/security/secrets?tab=oauth');
+    await expect(page.getByText('https://iris.example.org/oauth2').first()).toBeVisible();
+    await page
+      .getByRole('row', { name: /aperture-portal/ })
+      .getByRole('button', { name: 'Details' })
+      .click();
+    const drawer = page.getByRole('dialog');
+    await expect(drawer.getByText('Client secret')).toBeVisible();
+    await expect(drawer.getByText('k9T2xq7VwPZm3LcH1nRb8sYd0uFa5GeJ')).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await page.getByRole('tab', { name: 'Client side' }).click();
+    await expect(page.getByRole('cell', { name: 'login.example.org' }).first()).toBeVisible();
+  });
+
+  test('devices are listed with their settings, and a device opens its detail', async ({ page }) => {
+    await loginDemo(page);
+    await go(page, '/devices');
+    await expect(page.getByRole('heading', { name: 'Devices', exact: true })).toBeVisible();
+    await expect(page.getByText('Telnet settings')).toBeVisible();
+    await page.getByRole('cell', { name: '|PRN|' }).first().click();
+    await expect(page.getByRole('dialog').getByText('Physical device')).toBeVisible();
+  });
+
   test('command palette jumps to a screen', async ({ page }) => {
     await loginDemo(page);
     await page.keyboard.press('Control+K');

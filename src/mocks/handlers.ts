@@ -7,6 +7,7 @@ import { processHandlers } from './handlers/processes';
 import { journalHandlers } from './handlers/journal';
 import { taskHandlers } from './handlers/tasks';
 import { securityHandlers } from './handlers/security';
+import { secretsHandlers } from './handlers/secrets';
 import { webAppHandlers } from './handlers/webapps';
 import { licenseHandlers } from './handlers/license';
 import { mgmntHandlers } from './handlers/mgmnt';
@@ -23,6 +24,7 @@ export const handlers = [
   ...processHandlers,
   ...journalHandlers,
   ...taskHandlers,
+  ...secretsHandlers,
   ...securityHandlers,
   ...webAppHandlers,
   ...licenseHandlers,

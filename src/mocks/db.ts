@@ -293,6 +293,87 @@ export interface X509Rec {
   ValidityNotAfter: string;
 }
 
+export interface WalletSecretRec {
+  /** Full name, as %Wallet.Secret keeps it: "Collection.Secret". */
+  Name: string;
+  Type: string;
+}
+
+/** A wallet collection with the names and types of its secrets; values are never kept (write-only). */
+export interface WalletCollectionRec {
+  Name: string;
+  EditResource: string;
+  UseResource: string;
+  secrets: WalletSecretRec[];
+}
+
+export interface OAuthServerDefinitionRec {
+  ID: string;
+  IssuerEndpoint: string;
+  SSLConfiguration: string;
+  ServerCredentials: string;
+  Metadata: Record<string, unknown>;
+}
+
+export interface OAuthClientConfigRec {
+  ApplicationName: string;
+  /** The server definition's ID; IRIS 2026.2 names the field ServerDefinition (quirk oauth-client-server-definition). */
+  ServerDefinition: string;
+  Enabled: boolean;
+  Description: string;
+  ClientType: string;
+  SSLConfiguration: string;
+  RedirectionEndpoint: string;
+  DefaultScope: string;
+  JWTAudience: string;
+  ClientCredentials: string;
+  Metadata: Record<string, unknown>;
+}
+
+export interface OAuthResourceServerRec {
+  Name: string;
+  ServerDefinition: string;
+  Enabled: boolean;
+  Description: string;
+  IssuerEndpoint: string;
+  ScopeRequiredToConnect: string;
+  Audiences: string[];
+  AccessTokenIsJWT: boolean;
+  AlwaysCallIntrospection: boolean;
+  ClientId: string;
+  IntrospectionAuthMethod: string;
+  UseOIDC: boolean;
+  Authenticator: Record<string, unknown>;
+}
+
+export interface OAuthServerClientRec {
+  Name: string;
+  ClientId: string;
+  /** Carried so the demo has a secret for the render boundary to hide. */
+  ClientSecret: string;
+  ClientType: string;
+  RedirectURL: string[];
+  LaunchURL: string;
+  DefaultScope: string;
+  Description: string;
+  ClientCredentials: string;
+  Metadata: Record<string, unknown>;
+  Enabled: boolean;
+}
+
+/** A device as GET /v2/devices lists it on IRIS 2026.2 (every field a string, Prompt included). */
+export interface DeviceRec {
+  Name: string;
+  PhysicalDevice: string;
+  Type: string;
+  SubType: string;
+  Prompt: string;
+  OpenParameters: string;
+  AlternateDevice: string;
+  Description: string;
+  Alias: string;
+}
+
 /** One row of the audit log written by a mutation in the mock (real IRIS writes these itself). */
 export type AuditRecordRec = Record<string, unknown> & {
   AuditIndex: number;
@@ -325,6 +406,14 @@ export interface MockDb {
   webSessions: WebSessionRec[];
   sslConfigs: SslRec[];
   x509: X509Rec[];
+  walletCollections: WalletCollectionRec[];
+  /** This instance as an OAuth 2.0 authorization server; null when not configured (GET answers 404). */
+  oauthServer: Record<string, unknown> | null;
+  oauthServerDefinitions: OAuthServerDefinitionRec[];
+  oauthClientConfigs: OAuthClientConfigRec[];
+  oauthResourceServers: OAuthResourceServerRec[];
+  oauthServerClients: OAuthServerClientRec[];
+  devices: DeviceRec[];
   /** Audit records produced by writes made through the mock, newest first. */
   auditLog: AuditRecordRec[];
   startedAt: number;
@@ -1549,8 +1638,221 @@ function seedX509(): X509Rec[] {
   ];
 }
 
+function seedWallet(): WalletCollectionRec[] {
+  return [
+    {
+      Name: 'HL7Interfaces',
+      UseResource: '%Admin_Manage:USE',
+      EditResource: '%Admin_Secure:USE',
+      secrets: [
+        { Name: 'HL7Interfaces.pacs-dicom-aet', Type: '%Wallet.KeyValue' },
+        { Name: 'HL7Interfaces.lab-sftp', Type: '%Wallet.KeyValue' },
+        { Name: 'HL7Interfaces.hl7-signing', Type: '%Wallet.RSA' },
+      ],
+    },
+    {
+      Name: 'CloudBackups',
+      UseResource: '%Admin_Operate:USE',
+      EditResource: '%Admin_Manage:USE',
+      secrets: [{ Name: 'CloudBackups.s3-archive', Type: '%Wallet.KeyValue' }],
+    },
+    {
+      Name: 'TokenSigning',
+      UseResource: '%Admin_Secure:USE',
+      EditResource: '%Admin_Secure:USE',
+      secrets: [{ Name: 'TokenSigning.jwt-hs256', Type: '%Wallet.SymmetricKey' }],
+    },
+  ];
+}
+
+function seedOAuthServer(): Record<string, unknown> {
+  return {
+    IssuerEndpoint: 'https://iris.example.org/oauth2',
+    Description: 'Hospital identity broker (this instance)',
+    AccessTokenInterval: 3600,
+    AuthorizationCodeInterval: 60,
+    RefreshTokenInterval: 86_400,
+    SessionInterval: 86_400,
+    ClientSecretInterval: 0,
+    SupportedScopes: [
+      { Scope: 'openid', Description: 'OpenID Connect sign-in' },
+      { Scope: 'profile', Description: 'Name and department' },
+      { Scope: 'fhir/read', Description: 'Read access to the FHIR repository' },
+    ],
+    DefaultScope: 'openid profile',
+    AllowUnsupportedScope: false,
+    ReturnRefreshToken: 'a',
+    SupportSession: true,
+    AudRequired: false,
+    AllowPublicClientRefresh: false,
+    ForcePKCEForPublicClients: true,
+    ForcePKCEForConfidentialClients: false,
+    CustomizationRoles: ['%DB_IRISSYS', '%Manager'],
+    CustomizationNamespace: '%SYS',
+    AuthenticateClass: '%OAuth2.Server.Authenticate',
+    SessionClass: '%OAuth2.Server.Session',
+    ValidateUserClass: '%OAuth2.Server.Validate',
+    GenerateTokenClass: '%OAuth2.Server.JWT',
+    RevokeTokenClass: '',
+    ServerCredentials: 'OAuthIssuerPublic',
+    SigningAlgorithm: 'RS256',
+    EncryptionAlgorithm: '',
+    KeyAlgorithm: '',
+    SSLConfiguration: '%SuperServer',
+    Metadata: {
+      issuer: 'https://iris.example.org/oauth2',
+      token_endpoint: 'https://iris.example.org/oauth2/token',
+    },
+  };
+}
+
+function seedOAuthServerDefinitions(): OAuthServerDefinitionRec[] {
+  return [
+    {
+      ID: 'login.example.org',
+      IssuerEndpoint: 'https://login.example.org/oauth2',
+      SSLConfiguration: 'OAuthClientTLS',
+      ServerCredentials: 'OAuthIssuerPublic',
+      Metadata: {
+        issuer: 'https://login.example.org/oauth2',
+        authorization_endpoint: 'https://login.example.org/oauth2/authorize',
+        token_endpoint: 'https://login.example.org/oauth2/token',
+      },
+    },
+  ];
+}
+
+function seedOAuthClientConfigs(): OAuthClientConfigRec[] {
+  return [
+    {
+      ApplicationName: 'aperture-portal',
+      ServerDefinition: 'login.example.org',
+      Enabled: true,
+      Description: 'Aperture signing in through the hospital identity provider',
+      ClientType: 'confidential',
+      SSLConfiguration: 'OAuthClientTLS',
+      RedirectionEndpoint: 'https://iris.example.org/aperture/oauth2/callback',
+      DefaultScope: 'openid profile',
+      JWTAudience: '',
+      ClientCredentials: '',
+      Metadata: { client_id: 'aperture-portal', client_secret: 'H7k2Pq9vXz4mLr8wTn3bYd6sGf1jCe5a' },
+    },
+    {
+      ApplicationName: 'fhir-gateway',
+      ServerDefinition: 'login.example.org',
+      Enabled: true,
+      Description: 'FHIR gateway validating tokens for the FHIR repository',
+      ClientType: 'resource',
+      SSLConfiguration: 'OAuthClientTLS',
+      RedirectionEndpoint: '',
+      DefaultScope: 'user/*.read',
+      JWTAudience: 'fhir-api',
+      ClientCredentials: '',
+      Metadata: { client_id: 'fhir-gateway' },
+    },
+  ];
+}
+
+function seedOAuthResourceServers(): OAuthResourceServerRec[] {
+  return [
+    {
+      Name: 'fhir-api',
+      ServerDefinition: 'login.example.org',
+      Enabled: true,
+      Description: 'FHIR repository (/csp/healthshare/fhir)',
+      IssuerEndpoint: 'https://login.example.org/oauth2',
+      ScopeRequiredToConnect: 'user/*.read',
+      Audiences: ['fhir-api'],
+      AccessTokenIsJWT: true,
+      AlwaysCallIntrospection: false,
+      ClientId: 'fhir-gateway',
+      IntrospectionAuthMethod: 'client_secret_basic',
+      UseOIDC: false,
+      Authenticator: {},
+    },
+  ];
+}
+
+function seedOAuthServerClients(): OAuthServerClientRec[] {
+  return [
+    {
+      Name: 'aperture-portal',
+      ClientId: 'aperture-portal',
+      ClientSecret: 'k9T2xq7VwPZm3LcH1nRb8sYd0uFa5GeJ',
+      ClientType: 'confidential',
+      RedirectURL: ['https://iris.example.org/aperture/'],
+      LaunchURL: 'https://iris.example.org/aperture/',
+      DefaultScope: 'openid profile',
+      Description: 'Aperture management portal',
+      ClientCredentials: '',
+      Metadata: { client_name: 'Aperture', grant_types: ['authorization_code', 'refresh_token'] },
+      Enabled: true,
+    },
+    {
+      Name: 'hl7-router',
+      ClientId: 'hl7-router',
+      ClientSecret: 'Q4vB7nM2xR9tL0kP6sW3yE8uC1hZ5aGd',
+      ClientType: 'confidential',
+      RedirectURL: ['https://hl7-gw.hospital.local/callback'],
+      LaunchURL: '',
+      DefaultScope: 'fhir/read',
+      Description: 'Interoperability HL7 router',
+      ClientCredentials: '',
+      Metadata: { client_name: 'HL7 router', grant_types: ['client_credentials'] },
+      Enabled: true,
+    },
+  ];
+}
+
+function seedDevices(): DeviceRec[] {
+  const dev = (
+    Name: string,
+    Type: string,
+    SubType: string,
+    Description: string,
+    extra: Partial<DeviceRec> = {},
+  ): DeviceRec => ({
+    Name,
+    PhysicalDevice: Name,
+    Type,
+    SubType,
+    Prompt: '2',
+    OpenParameters: '',
+    AlternateDevice: '',
+    Description,
+    Alias: '',
+    ...extra,
+  });
+  return [
+    dev('0', 'TRM', 'C-VT220', 'Principal device (the terminal)', { PhysicalDevice: '0' }),
+    dev('|TRM|', 'TRM', 'C-VT220', 'Terminal', { PhysicalDevice: '|TRM|' }),
+    dev('|TNT|', 'TRM', 'C-VT220', 'Telnet', { PhysicalDevice: '|TNT|' }),
+    dev('|LAT|', 'TRM', 'C-VT220', 'LAT terminal server', { PhysicalDevice: '|LAT|' }),
+    dev('|PRN|', 'SPL', 'PK-DEC', 'System printer', { PhysicalDevice: '|PRN|', OpenParameters: '"WNS"' }),
+    dev('|SPL|', 'SPL', 'PK-DEC', 'Spool device', { PhysicalDevice: '|SPL|' }),
+    dev('2', 'TRM', 'C-VT220', 'Second console', { PhysicalDevice: '/dev/tty2', AlternateDevice: '0' }),
+    dev('47', 'MT', 'MT-DEC', 'Tape drive 1', { PhysicalDevice: '/dev/nst0', OpenParameters: '"AU"' }),
+    dev('48', 'MT', 'MT-DEC', 'Tape drive 2', { PhysicalDevice: '/dev/nst1', OpenParameters: '"AU"' }),
+    dev('49', 'TRM', 'C-VT220', 'Modem line', { PhysicalDevice: '/dev/ttyS0', Alias: 'MODEM' }),
+  ];
+}
+
 function seedSsl(): SslRec[] {
   return [
+    {
+      Name: 'OAuthClientTLS',
+      Description: 'Client TLS for the OAuth 2.0 identity provider',
+      Enabled: true,
+      Type: 'Client',
+      CAFile: '/usr/irissys/mgr/certs/ca.pem',
+      CertificateFile: '',
+      PrivateKeyFile: '',
+      TLSMinVersion: 16,
+      TLSMaxVersion: 32,
+      VerifyPeer: 1,
+      CipherList: ['ALL', '!aNULL', '!eNULL', '!EXP', '!SSLv2'],
+      Ciphersuites: ['TLS_AES_256_GCM_SHA384', 'TLS_AES_128_GCM_SHA256'],
+    },
     {
       Name: '%SuperServer',
       Description: 'Superserver TLS',
@@ -1649,6 +1951,13 @@ export function createDb(): MockDb {
     webSessions: seedWebSessions(),
     sslConfigs: seedSsl(),
     x509: seedX509(),
+    walletCollections: seedWallet(),
+    oauthServer: seedOAuthServer(),
+    oauthServerDefinitions: seedOAuthServerDefinitions(),
+    oauthClientConfigs: seedOAuthClientConfigs(),
+    oauthResourceServers: seedOAuthResourceServers(),
+    oauthServerClients: seedOAuthServerClients(),
+    devices: seedDevices(),
     auditLog: [],
     startedAt: Date.now() - 3 * 86_400_000 - 4 * 3_600_000 - 17 * 60_000,
     broadcasts: [],

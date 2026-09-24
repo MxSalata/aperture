@@ -439,35 +439,6 @@ export const securityHandlers = [
     return ok({ Copied: 4_210 }, { summary: `Copied audit records to ${body.Namespace ?? 'USER'}` });
   }),
 
-  // ---- OAuth 2.0 server clients (explicit so the demo carries a secret to redact) ------
-  route('get', '/v2/security/oauth2/server/clients', SECURE, ({ request }) =>
-    ok(
-      filterRows(
-        [
-          {
-            Name: 'aperture-portal',
-            ClientId: 'aperture-portal',
-            ClientSecret: 'k9T2xq7VwPZm3LcH1nRb8sYd0uFa5GeJ',
-            ClientType: 'confidential',
-            RedirectURL: ['https://iris.example.org/aperture/'],
-            Description: 'Aperture management portal',
-            Enabled: true,
-          },
-          {
-            Name: 'hl7-router',
-            ClientId: 'hl7-router',
-            ClientSecret: 'Q4vB7nM2xR9tL0kP6sW3yE8uC1hZ5aGd',
-            ClientType: 'confidential',
-            RedirectURL: ['https://hl7-gw.hospital.local/callback'],
-            Description: 'Interoperability HL7 router',
-            Enabled: true,
-          },
-        ],
-        request,
-      ),
-    ),
-  ),
-
   // ---- X.509 credentials --------------------------------------------------
   route('get', '/v2/security/x509-credentials', SECURE, ({ request }) =>
     ok(

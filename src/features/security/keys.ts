@@ -14,6 +14,18 @@ export const secKeys = {
   x509: ['security', 'x509'] as const,
   x509Cert: (alias: string) => ['security', 'x509', alias, 'certificate'] as const,
   sqlPrivs: (ns: string, grantee: string) => ['security', 'sql', ns, grantee] as const,
+  walletCollections: ['security', 'wallet', 'collections'] as const,
+  walletSecrets: (collection: string) => ['security', 'wallet', 'secrets', collection] as const,
+  oauthServer: ['security', 'oauth2', 'server'] as const,
+  oauthServerClients: ['security', 'oauth2', 'server', 'clients'] as const,
+  oauthServerClient: (id: string) => ['security', 'oauth2', 'server', 'clients', id] as const,
+  oauthDefinitions: ['security', 'oauth2', 'definitions'] as const,
+  oauthDefinition: (id: string) => ['security', 'oauth2', 'definitions', id] as const,
+  oauthClientConfigs: (serverId: string) =>
+    ['security', 'oauth2', 'client-configurations', serverId] as const,
+  oauthClientConfig: (name: string) => ['security', 'oauth2', 'client-configuration', name] as const,
+  oauthResourceServers: ['security', 'oauth2', 'resource-servers'] as const,
+  oauthResourceServer: (name: string) => ['security', 'oauth2', 'resource-servers', name] as const,
 };
 
 /**

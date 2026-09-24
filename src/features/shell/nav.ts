@@ -9,6 +9,7 @@ import {
   IconClipboardList,
   IconCpu,
   IconDatabase,
+  IconDevices,
   IconFileText,
   IconGauge,
   IconHistory,
@@ -24,6 +25,7 @@ import {
   IconTable,
   IconUsers,
   IconUserShield,
+  IconWallet,
   IconWorld,
   IconPlug,
   type Icon,
@@ -99,6 +101,14 @@ export const NAV: NavSection[] = [
         icon: IconCpu,
         privileges: ['%Admin_Operate:U'],
         description: 'Running processes: examine, suspend, terminate, broadcast',
+      },
+      {
+        label: 'Devices',
+        to: '/devices',
+        icon: IconDevices,
+        privileges: ['%Admin_Manage:U'],
+        description: 'Terminal, printer, spool and tape devices and their settings',
+        keywords: ['terminal', 'printer', 'spool', 'tape', 'telnet'],
       },
       {
         label: 'Locks',
@@ -206,6 +216,21 @@ export const NAV: NavSection[] = [
         privileges: ['%Admin_Secure:U'],
         description: 'SSL/TLS configurations and X.509 credentials with certificate expiry',
         keywords: ['ssl', 'x509', 'certificate', 'expiry', 'expired'],
+      },
+      {
+        label: 'Wallet & OAuth',
+        to: '/security/secrets',
+        icon: IconWallet,
+        privileges: [
+          '%Admin_Wallet:U',
+          '%Admin_OAuth2_Client:U',
+          '%Admin_OAuth2_Server:U',
+          '%Admin_OAuth2_Registration:U',
+          '%Admin_Secure:U',
+        ],
+        description:
+          'Wallet collections and write-only secrets; OAuth 2.0 server, client and resource server configurations',
+        keywords: ['wallet', 'secret', 'oauth', 'oauth2', 'oidc', 'client', 'resource server', 'issuer'],
       },
       {
         label: 'SQL privileges',
