@@ -36,7 +36,22 @@ const SPEC_CLASSES = [
   { name: 'clinical.api', dispatchClass: 'clinical.api.disp', namespace: 'CLINICAL' },
 ];
 
-type Op = { summary?: string; operationId?: string };
+type Param = {
+  name: string;
+  in: 'path' | 'query' | 'body';
+  required?: boolean;
+  type?: string;
+  description?: string;
+  'x-example'?: unknown;
+  schema?: unknown;
+};
+type Op = { summary?: string; operationId?: string; parameters?: Param[] };
+
+/** The `{name}` segments of a path, as the generated description declares them. */
+const pathParams = (path: string): Param[] =>
+  [...path.matchAll(/\{([^}]+)\}/g)].map((m) => ({ name: m[1], in: 'path', required: true, type: 'string' }));
+
+const bodyParam = (schema: unknown): Param => ({ name: 'payload', in: 'body', required: true, schema });
 
 /** A small, plausible description for a web application the mock has no spec for. */
 const ROUTES: Record<string, [string, string, string][]> = {
@@ -61,7 +76,14 @@ const ROUTES: Record<string, [string, string, string][]> = {
 
 function describe(title: string, basePath: string, routes: [string, string, string][]) {
   const paths: Record<string, Record<string, Op>> = {};
-  for (const [method, path, summary] of routes) (paths[path] ??= {})[method] = { summary };
+  for (const [method, path, summary] of routes)
+    (paths[path] ??= {})[method] = {
+      summary,
+      parameters: [
+        ...pathParams(path),
+        ...(method === 'post' || method === 'put' ? [bodyParam({ type: 'object' })] : []),
+      ],
+    };
   return { swagger: '2.0', info: { title, version: '1' }, basePath, paths };
 }
 
@@ -69,7 +91,30 @@ function describeWebApp(name: string) {
   if (name === '/api/admin') {
     const paths: Record<string, Record<string, Op>> = {};
     for (const op of specIndex.operations)
-      (paths[op.path] ??= {})[op.method.toLowerCase()] = { operationId: op.id, summary: op.summary };
+      (paths[op.path] ??= {})[op.method.toLowerCase()] = {
+        operationId: op.id,
+        summary: op.summary,
+        parameters: [
+          ...op.params.map((p) => ({
+            name: p.name,
+            in: 'query' as const,
+            required: p.required,
+            type: p.type,
+            description: p.description,
+            ...('example' in p && p.example !== undefined ? { 'x-example': p.example } : {}),
+          })),
+          ...(op.body
+            ? [
+                bodyParam({
+                  type: 'object',
+                  properties: Object.fromEntries(
+                    (op.body.properties ?? []).map((n) => [n, { type: 'string' }]),
+                  ),
+                }),
+              ]
+            : []),
+        ],
+      };
     return { swagger: '2.0', info: { title: specIndex.title, version: '2' }, basePath: name, paths };
   }
   return describe(name, name, ROUTES[name] ?? [['get', '/', 'Dispatch root']]);

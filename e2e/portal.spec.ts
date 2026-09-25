@@ -85,6 +85,15 @@ test.describe('Aperture (demo mode)', () => {
     );
     await page.getByRole('button', { name: 'Execute' }).click();
     await expect(page.getByText('HTTP 200')).toBeVisible();
+    // The same request for the tools outside the browser, generated from the document.
+    await page.getByRole('button', { name: 'Request for curl, VS Code and Postman' }).click();
+    await expect(page.getByText("curl -u '_SYSTEM'")).toBeVisible();
+    await page.getByRole('tab', { name: /\.http/ }).click();
+    await expect(page.getByText('GET {{baseUrl}}/api/admin/v2/wqm-categories HTTP/1.1')).toBeVisible();
+    const download = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Export', exact: true }).click();
+    await page.getByRole('menuitem', { name: /HTTP file · Work queue manager/ }).click();
+    expect((await download).suggestedFilename()).toBe('sysadmin-api-v2-work-queue-manager.http');
   });
 
   test('wallet: a secret is created write-only and listed by name and type', async ({ page }) => {
@@ -147,8 +156,8 @@ test.describe('Aperture (demo mode)', () => {
     // The demo signs in with a JWT, which /api/aperture does not take: it asks for the password once.
     await page.getByLabel(/Password for/).fill('SYS');
     await page.getByRole('button', { name: 'Read the logs' }).click();
-    const rows = page.getByRole('table').getByRole('row');
-    await expect(rows.nth(1)).toBeVisible();
+    // Clickable rows are buttons named by the entry's time (DataTable's getRowLabel).
+    await expect(page.getByRole('button', { name: /^Log entry / }).first()).toBeVisible();
     await expect(page.getByText(/entries from the last/)).toBeVisible();
     const before = await page.getByText(/entries from the last/).textContent();
     await page.getByRole('button', { name: 'Older lines' }).click();
@@ -279,8 +288,17 @@ test.describe('Aperture (demo mode)', () => {
     await page.getByLabel(/Password for/).fill('SYS');
     await page.getByRole('button', { name: 'Read REST services' }).click();
     await page.getByRole('button', { name: 'Routes of /api/atelier' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText('/api/atelier/v1/{namespace}/doc/{docname}').first()).toBeVisible();
+    // What a route takes, from the description: its path parameters, and a body for a write.
+    await expect(dialog.getByText('{namespace} {docname} + body')).toBeVisible();
     await expect(
-      page.getByRole('dialog').getByText('/api/atelier/v1/{namespace}/doc/{docname}').first(),
+      dialog.getByRole('button', { name: 'Copy PUT /api/atelier/v1/{namespace}/doc/{docname} as curl' }),
     ).toBeVisible();
+    // The routes as a Postman collection: a file, generated in the browser.
+    const download = page.waitForEvent('download');
+    await dialog.getByRole('button', { name: 'Export', exact: true }).click();
+    await page.getByRole('menuitem', { name: /Postman collection/ }).click();
+    expect((await download).suggestedFilename()).toBe('api-atelier.postman_collection.json');
   });
 });

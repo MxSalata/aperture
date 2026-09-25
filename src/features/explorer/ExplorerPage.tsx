@@ -6,8 +6,10 @@ import {
   Button,
   Checkbox,
   Code,
+  CopyButton,
   Grid,
   Group,
+  Menu,
   NavLink,
   NumberInput,
   Paper,
@@ -20,7 +22,14 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
-import { IconPlayerPlay, IconAlertTriangle } from '@tabler/icons-react';
+import {
+  IconPlayerPlay,
+  IconAlertTriangle,
+  IconCheck,
+  IconChevronDown,
+  IconCopy,
+  IconDownload,
+} from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
@@ -53,6 +62,108 @@ import { useJobs } from '@/stores/jobs';
 import { jobIdFromResponse } from '@/api/client';
 import { applyQuirks, quirksFor, servedPath } from '@/lib/quirks';
 import { humanize } from '@/components/KeyValueList';
+import {
+  absoluteBaseUrl,
+  curlCommand,
+  fileStem,
+  httpFile,
+  postmanCollection,
+  type ExportTarget,
+} from '@/lib/requestExport';
+import { downloadText } from '@/lib/download';
+import { notifySuccess } from '@/lib/notify';
+import { operationRequest, operationRequests } from './requests';
+
+const SOURCE = `the SysAdmin API document (${index.title} v${index.version})`;
+
+/** The export target of this session: where the instance is and who signs in. */
+function useExportTarget(): Pick<ExportTarget, 'baseUrl' | 'username' | 'source'> {
+  const baseUrl = useSession((s) => s.baseUrl);
+  const username = useSession((s) => s.username);
+  return useMemo(
+    () => ({ baseUrl: absoluteBaseUrl(baseUrl), username: username ?? '_SYSTEM', source: SOURCE }),
+    [baseUrl, username],
+  );
+}
+
+/** A generated text with a copy button and, for a file, a download button. */
+function RequestText({ text, filename, type }: { text: string; filename?: string; type?: string }) {
+  return (
+    <Stack gap="xs">
+      <Code block style={{ fontSize: 12, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+        {text}
+      </Code>
+      <Group gap="xs">
+        <CopyButton value={text}>
+          {({ copied, copy }) => (
+            <Button
+              size="xs"
+              variant="default"
+              leftSection={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+              onClick={copy}
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          )}
+        </CopyButton>
+        {filename ? (
+          <Button
+            size="xs"
+            variant="default"
+            leftSection={<IconDownload size={14} />}
+            onClick={() => downloadText(filename, text, type)}
+          >
+            Save {filename}
+          </Button>
+        ) : null}
+      </Group>
+    </Stack>
+  );
+}
+
+/**
+ * The operation as the tools outside the browser take it, with the values in the panel: a curl
+ * command (which asks for the password), one block of a `.http` file, a one-item Postman
+ * collection.
+ */
+function RequestForTools({
+  op,
+  doc,
+  query,
+  body,
+}: {
+  op: IndexedOperation;
+  doc: OpenApiDoc | null;
+  query: Record<string, string>;
+  body: string;
+}) {
+  const session = useExportTarget();
+  const request = useMemo(() => operationRequest(op, doc, query, body), [op, doc, query, body]);
+  const target: ExportTarget = { ...session, name: `${op.method} ${op.path}`, description: op.summary };
+  const stem = fileStem(`${op.method} ${op.path.replace(/^\/v2\//, '')}`);
+  return (
+    <Tabs defaultValue="curl" keepMounted={false}>
+      <Tabs.List>
+        <Tabs.Tab value="curl">curl</Tabs.Tab>
+        <Tabs.Tab value="http">.http (VS Code, JetBrains)</Tabs.Tab>
+        <Tabs.Tab value="postman">Postman</Tabs.Tab>
+      </Tabs.List>
+      <Tabs.Panel value="curl" pt="xs">
+        <RequestText text={curlCommand(target, request)} />
+      </Tabs.Panel>
+      <Tabs.Panel value="http" pt="xs">
+        <RequestText text={httpFile(target, [request])} filename={`${stem}.http`} />
+      </Tabs.Panel>
+      <Tabs.Panel value="postman" pt="xs">
+        <RequestText
+          text={JSON.stringify(postmanCollection(target, [request]), null, 2)}
+          filename={`${stem}.postman_collection.json`}
+          type="application/json"
+        />
+      </Tabs.Panel>
+    </Tabs>
+  );
+}
 
 const METHOD_COLOR: Record<string, string> = {
   GET: 'teal',
@@ -549,6 +660,18 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
         </Paper>
       ) : null}
       <Accordion variant="contained">
+        <Accordion.Item value="request">
+          <Accordion.Control>Request for curl, VS Code and Postman</Accordion.Control>
+          <Accordion.Panel>
+            <Stack gap="xs">
+              <Text size="xs" c="dimmed">
+                The same request with the values above, generated from the OpenAPI document. Secret values are
+                redacted; the password is asked for, never written.
+              </Text>
+              <RequestForTools op={op} doc={doc} query={query} body={body} />
+            </Stack>
+          </Accordion.Panel>
+        </Accordion.Item>
         <Accordion.Item value="responses">
           <Accordion.Control>Documented responses</Accordion.Control>
           <Accordion.Panel>
@@ -604,11 +727,80 @@ export default function ExplorerPage() {
   const schemaOf = (name?: string): JsonSchema | undefined =>
     doc && name ? doc.components.schemas[name] : undefined;
 
+  const session = useExportTarget();
+  const stem = `sysadmin-api-v${index.version}`;
+  const exportAll = (kind: 'postman' | 'http') => {
+    const requests = operationRequests(index.operations, doc);
+    const target: ExportTarget = {
+      ...session,
+      name: `${index.title} v${index.version}`,
+      description: `Every operation of the SysAdmin API, one folder per group, as Aperture's Explorer sends them.`,
+    };
+    if (kind === 'postman') {
+      const name = `${stem}.postman_collection.json`;
+      downloadText(name, JSON.stringify(postmanCollection(target, requests), null, 2), 'application/json');
+      notifySuccess(`${requests.length} requests in ${name}; import it into Postman.`, 'Collection saved');
+    } else {
+      const name = `${stem}.http`;
+      downloadText(name, httpFile(target, requests));
+      notifySuccess(
+        `${requests.length} requests in ${name}; open it in VS Code or a JetBrains IDE.`,
+        'File saved',
+      );
+    }
+  };
+  const exportGroup = () => {
+    if (!selectedGroup) return;
+    const label = groupLabel(selectedGroup);
+    const requests = operationRequests(operationsByGroup[selectedGroup] ?? [], doc);
+    const name = `${stem}-${fileStem(label)}.http`;
+    downloadText(
+      name,
+      httpFile(
+        {
+          ...session,
+          name: `${index.title} v${index.version} · ${label}`,
+          description: `The ${label} operations.`,
+        },
+        requests,
+      ),
+    );
+    notifySuccess(
+      `${requests.length} requests in ${name}; open it in VS Code or a JetBrains IDE.`,
+      'File saved',
+    );
+  };
+
   return (
     <>
       <PageHeader
         title="API Explorer"
         description={`Every operation of the SysAdmin API v${index.version} (${index.operations.length} operations in ${groups.length} groups), rendered straight from the OpenAPI document. Privilege badges reflect your account.`}
+        actions={
+          <Menu shadow="md" withinPortal>
+            <Menu.Target>
+              <Button
+                size="xs"
+                variant="default"
+                leftSection={<IconDownload size={14} />}
+                rightSection={<IconChevronDown size={14} />}
+                disabled={!doc}
+              >
+                Export
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Requests generated from the document</Menu.Label>
+              <Menu.Item onClick={() => exportAll('postman')}>
+                Postman collection · all {index.operations.length} operations
+              </Menu.Item>
+              <Menu.Item onClick={() => exportAll('http')}>HTTP file · all operations (.http)</Menu.Item>
+              <Menu.Item disabled={!selectedGroup} onClick={exportGroup}>
+                HTTP file · {selectedGroup ? groupLabel(selectedGroup) : 'this group'} (.http)
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        }
       />
       <Grid gutter="md">
         <Grid.Col span={{ base: 12, md: 3 }}>

@@ -1,6 +1,9 @@
 import { useSession } from '@/stores/session';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { ApiError } from '@/lib/errors';
+import { exampleFromSchema, type JsonSchema, type OpenApiDoc } from '@/lib/openapi';
+import { redactDeep } from '@/lib/redact';
+import { pathParamsOf, type GeneratedRequest } from '@/lib/requestExport';
 
 /**
  * The REST management API (`/api/mgmnt`) ships with every IRIS, outside the SysAdmin spec. It lists
@@ -34,10 +37,23 @@ export interface SpecClass {
   webApplications?: string;
 }
 
+export interface RouteParam {
+  name: string;
+  in: 'path' | 'query' | 'header' | 'formData';
+  required: boolean;
+  type: string;
+  description: string;
+  example?: string;
+}
+
 export interface Route {
   method: string;
   path: string;
   summary: string;
+  /** The declared parameters, and the path's `{name}` segments when it declares none. */
+  params: RouteParam[];
+  /** An example JSON body from the body parameter's schema; `{}` for a write without one. */
+  body?: string;
 }
 
 export interface RestDescription {
@@ -96,25 +112,101 @@ export const fetchRestApps = () => mgmntFetch<RestApp[]>('/v1/%25SYS/restapps');
 export const fetchSpecClasses = () => mgmntFetch<SpecClass[]>('/v2/');
 
 const METHODS = ['get', 'put', 'post', 'delete', 'patch', 'head', 'options'];
+const WRITES = ['put', 'post', 'patch'];
 
-interface Swagger2 {
+/**
+ * A parameter as Swagger 2.0 declares it (`type` beside `in`), with the OpenAPI 3 spelling
+ * (`schema.type`, `example`) accepted too, since a spec-first class serves the document it was
+ * generated from.
+ */
+interface DescribedParam {
+  name: string;
+  in: string;
+  required?: boolean;
+  type?: string;
+  description?: string;
+  default?: unknown;
+  example?: unknown;
+  'x-example'?: unknown;
+  enum?: unknown[];
+  schema?: JsonSchema;
+}
+
+interface DescribedOp {
+  summary?: string;
+  description?: string;
+  operationId?: string;
+  parameters?: DescribedParam[];
+  requestBody?: { content?: Record<string, { schema?: JsonSchema }> };
+}
+
+/** An OpenAPI 2.0 (or 3.0) description, as far as the routes need it. */
+export interface Swagger2 {
   info?: { title?: string };
   basePath?: string;
-  paths?: Record<string, Record<string, { summary?: string; description?: string; operationId?: string }>>;
+  paths?: Record<string, Record<string, DescribedOp | DescribedParam[] | undefined>>;
+  definitions?: Record<string, JsonSchema>;
+  components?: { schemas?: Record<string, JsonSchema> };
+}
+
+function paramType(p: DescribedParam): string {
+  const t = p.type ?? p.schema?.type;
+  return Array.isArray(t) ? t[0] : (t ?? 'string');
+}
+
+function paramExample(p: DescribedParam): string | undefined {
+  const v = p.example ?? p['x-example'] ?? p.default ?? p.schema?.example ?? p.schema?.default;
+  return v === undefined || v === null ? undefined : String(v);
+}
+
+/** The example body of a write: the body parameter's schema, or `{}` when none is declared. */
+function exampleBody(spec: Swagger2, op: DescribedOp, params: DescribedParam[]): string {
+  const schema =
+    params.find((p) => p.in === 'body')?.schema ?? op.requestBody?.content?.['application/json']?.schema;
+  const value = schema ? exampleFromSchema(spec as unknown as OpenApiDoc, schema) : {};
+  return JSON.stringify(redactDeep(value && typeof value === 'object' ? value : {}).value, null, 2);
 }
 
 /** The routes of an OpenAPI 2.0 description, sorted by path, then method. */
 export function routesOf(spec: Swagger2): RestDescription {
   const basePath = (spec.basePath ?? '').replace(/\/+$/, '');
   const routes: Route[] = [];
-  for (const [path, ops] of Object.entries(spec.paths ?? {}))
-    for (const [method, op] of Object.entries(ops ?? {}))
-      if (METHODS.includes(method))
-        routes.push({
-          method: method.toUpperCase(),
-          path: `${basePath}${path}`,
-          summary: (op.summary ?? op.description ?? op.operationId ?? '').replace(/\s+/g, ' ').trim(),
-        });
+  for (const [path, ops] of Object.entries(spec.paths ?? {})) {
+    const shared = Array.isArray(ops?.parameters) ? ops.parameters : [];
+    for (const [method, op] of Object.entries(ops ?? {})) {
+      if (!METHODS.includes(method) || !op || Array.isArray(op)) continue;
+      // An operation's parameter overrides the path-level one of the same name and place.
+      const own = op.parameters ?? [];
+      const declared = [
+        ...shared.filter((s) => !own.some((o) => o.name === s.name && o.in === s.in)),
+        ...own,
+      ];
+      const params: RouteParam[] = declared
+        .filter((p): p is DescribedParam & { in: RouteParam['in'] } =>
+          ['path', 'query', 'header', 'formData'].includes(p.in),
+        )
+        .map((p) => ({
+          name: p.name,
+          in: p.in,
+          required: p.in === 'path' || !!p.required,
+          type: paramType(p),
+          description: (p.description ?? '').replace(/\s+/g, ' ').trim(),
+          ...(paramExample(p) !== undefined ? { example: paramExample(p) } : {}),
+        }));
+      for (const name of pathParamsOf(path))
+        if (!params.some((p) => p.in === 'path' && p.name === name))
+          params.push({ name, in: 'path', required: true, type: 'string', description: '' });
+      routes.push({
+        method: method.toUpperCase(),
+        path: `${basePath}${path}`,
+        summary: (op.summary ?? op.description ?? op.operationId ?? '').replace(/\s+/g, ' ').trim(),
+        params,
+        ...(WRITES.includes(method) || declared.some((p) => p.in === 'body') || op.requestBody
+          ? { body: exampleBody(spec, op, declared) }
+          : {}),
+      });
+    }
+  }
   routes.sort(
     (a, b) =>
       a.path.localeCompare(b.path) ||
@@ -128,4 +220,32 @@ export async function fetchRoutes(swaggerSpec: string): Promise<RestDescription>
   // Only ever follow a link into /api/mgmnt itself: the lists come from the server.
   if (!swaggerSpec.startsWith(`${PREFIX}/`)) throw new Error(`Not an /api/mgmnt description: ${swaggerSpec}`);
   return routesOf(await mgmntFetch<Swagger2>(swaggerSpec.slice(PREFIX.length)));
+}
+
+/** The routes of a description as requests for Postman, a `.http` file or curl (`lib/requestExport.ts`). */
+export function routeRequests(d: RestDescription): GeneratedRequest[] {
+  return d.routes.map((r) => {
+    const notes: string[] = [];
+    const inPath = r.params.filter((p) => p.in === 'path').map((p) => p.name);
+    if (inPath.length) notes.push(`Path parameters to replace in the URL: ${inPath.join(', ')}`);
+    const headers = r.params.filter((p) => p.in === 'header').map((p) => p.name);
+    if (headers.length) notes.push(`Headers it reads: ${headers.join(', ')}`);
+    return {
+      name: `${r.method} ${r.path.slice(d.basePath.length) || '/'}`,
+      method: r.method,
+      path: r.path,
+      ...(r.summary ? { summary: r.summary } : {}),
+      notes,
+      query: r.params
+        .filter((p) => p.in === 'query')
+        .map((p) => ({
+          name: p.name,
+          value: p.example ?? '',
+          required: p.required,
+          ...(p.description ? { description: p.description } : {}),
+          type: p.type,
+        })),
+      ...(r.body !== undefined ? { body: r.body } : {}),
+    };
+  });
 }

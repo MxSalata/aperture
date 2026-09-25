@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fetchRestApps, fetchRoutes, fetchSpecClasses, routesOf } from '../mgmnt';
+import { fetchRestApps, fetchRoutes, fetchSpecClasses, routeRequests, routesOf } from '../mgmnt';
 import { basicCredentials } from '../base';
 import { resetClients } from '../client';
 import { resetDb } from '@/mocks/db';
@@ -28,10 +28,79 @@ describe('an OpenAPI 2.0 description as routes', () => {
     });
     expect(d.title).toBe('Demo');
     expect(d.routes).toEqual([
-      { method: 'DELETE', path: '/api/demo/a', summary: 'DropA' },
-      { method: 'GET', path: '/api/demo/items', summary: 'List all' },
-      { method: 'POST', path: '/api/demo/items', summary: 'Create' },
+      { method: 'DELETE', path: '/api/demo/a', summary: 'DropA', params: [] },
+      { method: 'GET', path: '/api/demo/items', summary: 'List all', params: [] },
+      // A write without a declared body still gets a skeleton to fill in.
+      { method: 'POST', path: '/api/demo/items', summary: 'Create', params: [], body: '{}' },
     ]);
+  });
+
+  it('keeps the declared parameters, the path segments and an example body from the definitions', () => {
+    const d = routesOf({
+      basePath: '/api/demo',
+      definitions: {
+        Item: {
+          type: 'object',
+          properties: { Name: { type: 'string', example: 'first' }, Password: { type: 'string' } },
+        },
+      },
+      paths: {
+        '/items/{id}': {
+          parameters: [{ name: 'id', in: 'path', required: true, type: 'integer', description: 'The id' }],
+          get: {
+            parameters: [
+              { name: 'verbose', in: 'query', type: 'boolean', default: false, description: ' Say  more ' },
+              { name: 'X-Trace', in: 'header', type: 'string' },
+            ],
+          },
+          put: {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                type: 'string',
+                description: 'Overrides the shared one',
+              },
+              { name: 'item', in: 'body', required: true, schema: { $ref: '#/definitions/Item' } },
+            ],
+          },
+        },
+        '/ns/{namespace}/docs': { get: { summary: 'Undeclared path parameter' } },
+      },
+    });
+    const [get, put, docs] = d.routes;
+    expect(get.params).toEqual([
+      { name: 'id', in: 'path', required: true, type: 'integer', description: 'The id' },
+      {
+        name: 'verbose',
+        in: 'query',
+        required: false,
+        type: 'boolean',
+        description: 'Say more',
+        example: 'false',
+      },
+      { name: 'X-Trace', in: 'header', required: false, type: 'string', description: '' },
+    ]);
+    expect(get.body).toBeUndefined();
+    expect(put.params).toEqual([
+      { name: 'id', in: 'path', required: true, type: 'string', description: 'Overrides the shared one' },
+    ]);
+    expect(JSON.parse(put.body!)).toEqual({ Name: 'first', Password: '' });
+    expect(docs.params).toEqual([
+      { name: 'namespace', in: 'path', required: true, type: 'string', description: '' },
+    ]);
+
+    const [rGet, rPut, rDocs] = routeRequests(d);
+    expect(rGet).toEqual({
+      name: 'GET /items/{id}',
+      method: 'GET',
+      path: '/api/demo/items/{id}',
+      notes: ['Path parameters to replace in the URL: id', 'Headers it reads: X-Trace'],
+      query: [{ name: 'verbose', value: 'false', required: false, description: 'Say more', type: 'boolean' }],
+    });
+    expect(rPut.body).toBe(put.body);
+    expect(rDocs.summary).toBe('Undeclared path parameter');
   });
 });
 

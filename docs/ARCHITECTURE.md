@@ -202,8 +202,12 @@ every batch for the session. Counts come from `/metrics`, which is not consumed:
 **REST services** screen: `/v1/%SYS/restapps` lists the REST web applications of the whole
 instance (whatever namespace the URL names, so %SYS, which %Operator may use), `/v2/` the
 spec-first REST classes of every namespace, and each entry's `swaggerSpec` link serves Swagger 2.0
-generated from the dispatch class's routes; `routesOf` turns it into method, path and summary.
-Only links into `/api/mgmnt` are followed. The web application takes a password only
+generated from the dispatch class's routes; `routesOf` turns it into method, path, summary, the
+declared parameters (path, query, header, formData; the path's `{name}` segments when none are
+declared; the OpenAPI 3 spellings `schema.type` and `example` accepted beside the Swagger 2.0 ones)
+and, for a write, an example body from the body parameter's schema, with `#/definitions` resolved
+by the same `deref` the Explorer uses. `routeRequests` turns a description into the generated
+requests of §2.7c. Only links into `/api/mgmnt` are followed. The web application takes a password only
 (`JWTAuthEnabled` off, `AutheEnabled` 32), and a token from `/api/admin/login` gets a 401 there, so
 a Basic session's credentials are sent and a JWT session asks for the password once
 (`stores/mgmntAuth.ts`: memory only, cleared at sign-out and on a 401). Its queries never retry: a
@@ -242,6 +246,26 @@ first and prepends older ones on request (`features/logs/MessagesLogPage.tsx`). 
 without the package the reader answers 404 and the screen says so; nothing else depends on it. The
 mock (`mocks/handlers/logs.ts`) generates the same files with the same window algorithm, and
 `scripts/live-check.mjs` reads the catalogue and one window from a real instance.
+
+### 2.7c Requests for other tools (lib/requestExport.ts)
+
+`GeneratedRequest` is a request as a description implies it: method, absolute path (`{name}` for
+a path parameter), query parameters with value, required flag, type and description, a serialised
+JSON body, notes (privileges, a 202, what to replace in the path) and a folder. Two builders make
+them: `features/explorer/requests.ts` from an `IndexedOperation` (the panel's typed values where
+there are any, the spec's examples for required parameters, an example body from the schema with
+the quirk adapters applied, the served path of a moved operation) and `routeRequests` in
+`api/mgmnt.ts` from a REST application's description. Three writers take a list of them:
+`postmanCollection` (Postman format v2.1: one folder per group, `:name` path variables, optional
+parameters present but disabled, Basic auth from `{{username}}` and an empty secret `{{password}}`
+variable, `{{baseUrl}}` for the instance), `httpFile` (one `###` block per request with file
+variables; the VS Code REST Client extension and the JetBrains HTTP client both take
+`Authorization: Basic {{username}} {{password}}`) and `curlCommand` (`-u user`, which asks for the
+password). The base URL of a connection profile is made absolute against the page origin, so the
+same-origin deployments export a usable URL. The password never leaves the browser, and the
+builders pass a body through `redactDeep` first. This is Ideas Portal idea DPI-I-813 done in the
+portal; the REST services drawer and the Explorer (page header, and one section per operation)
+are its screens.
 
 ### 2.8 Spec quirks
 
@@ -316,7 +340,9 @@ The **Explorer** (`features/explorer`) is generic: it lists groups from the inde
 parameters as inputs (enums as selects, booleans as selects), builds a request-body form from the
 resolved JSON schema (flat fields) with a JSON tab for nested ones, pre-fills examples from the spec,
 executes through the same client (so 202s land in the Job Center) and shows the result as a table,
-fields or JSON.
+fields or JSON. Under each operation, "Request for curl, VS Code and Postman" writes the same
+request with the values in the panel for the tools outside the browser, and the page's Export menu
+writes the whole API or a group as a Postman collection or a `.http` file (§2.7c).
 
 Three rules sit at the render boundary rather than in individual screens:
 

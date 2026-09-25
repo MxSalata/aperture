@@ -39,6 +39,24 @@
   video), and the dark-mode idea DPI-I-768 does not carry the "Community Opportunity" status.
 - **A two-minute evaluation path for the jury** at the top of the README; version 1.0.0 in
   `package.json` and `module.xml`.
+- **Requests for curl, VS Code and Postman (Ideas Portal DPI-I-813).** The REST services drawer
+  now shows what each route takes (path and query parameters, a body for a write), copies any
+  route as curl and exports an application's routes as a Postman collection (format v2.1) or a
+  `.http` file for the VS Code REST Client extension and JetBrains IDEs, generated from the
+  `/api/mgmnt` description with parameters, types, examples and an example body from the schema
+  (`routesOf` keeps the declared parameters and the path's `{name}` segments; `routeRequests`
+  builds the requests). The Explorer does the same for the 273 SysAdmin operations with the values
+  typed into the panel ("Request for curl, VS Code and Postman" under each operation, in three
+  tabs with copy and save), and exports the whole API or a group from its header. The password is
+  never written into a file: the files carry `{{username}}` and an empty `{{password}}`, curl asks
+  for it; a secret typed into a body is redacted. `src/lib/requestExport.ts` holds the three
+  writers, with unit tests; the demo's `/api/mgmnt` descriptions now declare parameters and bodies;
+  the smoke run adds `30-request-export.png`.
+- **Ideas Portal.** The README names the two "Community Opportunity" ideas Aperture implements,
+  with what each asks and where it is done: DPI-I-966 (any rotated `messages.old_*` file readable
+  in the portal, which the log reader and Logs → Messages log do) and DPI-I-813 (above). The
+  bonus pages, the listing copy, the checklist and the article say which link to paste into the
+  Open Exchange form and which idea pages to comment on.
 
 ### Before 1.0.0 - backlog after the real-instance pass
 

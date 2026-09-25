@@ -272,6 +272,20 @@ await step('explorer executes GET', async () => {
   await page.getByText('HTTP 200').waitFor({ timeout: 15000 });
   await shot('11-explorer');
 });
+await step('explorer writes the request for curl, VS Code and Postman', async () => {
+  await page.goto(
+    url(
+      `/explorer/${encodeURIComponent('/v2/database-dir')}?op=${encodeURIComponent('POST /v2/database-dir/compact')}`,
+    ),
+  );
+  await page.getByRole('button', { name: 'Request for curl, VS Code and Postman' }).click();
+  await page.getByRole('tab', { name: /\.http/ }).click();
+  await page.getByText('POST {{baseUrl}}/api/admin/v2/database-dir/compact').waitFor({ timeout: 15000 });
+  // The request block sits below the fold: bring its body into the shot.
+  await page.getByRole('button', { name: /^Save .*\.http$/ }).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(300);
+  await shot('30-request-export');
+});
 await step('command palette', async () => {
   await page.keyboard.press('Control+K');
   await page.getByPlaceholder(/Jump to a screen/).fill('locks');

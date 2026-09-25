@@ -1,7 +1,20 @@
-import { useState } from 'react';
-import { Anchor, Badge, Button, Drawer, Group, Stack, Text, Title } from '@mantine/core';
+import { useMemo, useState } from 'react';
+import {
+  ActionIcon,
+  Anchor,
+  Badge,
+  Button,
+  CopyButton,
+  Drawer,
+  Group,
+  Menu,
+  Stack,
+  Text,
+  Title,
+  Tooltip,
+} from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { IconRefresh } from '@tabler/icons-react';
+import { IconCheck, IconChevronDown, IconCopy, IconDownload, IconRefresh } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
@@ -13,10 +26,21 @@ import {
   fetchRoutes,
   fetchSpecClasses,
   mgmntCredentials,
+  routeRequests,
   type RestApp,
   type Route,
   type SpecClass,
 } from '@/api/mgmnt';
+import {
+  absoluteBaseUrl,
+  curlCommand,
+  fileStem,
+  httpFile,
+  postmanCollection,
+  type ExportTarget,
+} from '@/lib/requestExport';
+import { downloadText } from '@/lib/download';
+import { notifySuccess } from '@/lib/notify';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useSession } from '@/stores/session';
 
@@ -36,30 +60,36 @@ interface Described {
   swaggerSpec: string;
 }
 
-const routeColumns: ColumnDef<Route, unknown>[] = [
-  {
-    accessorKey: 'method',
-    header: 'Method',
-    cell: (c) => (
-      <Badge size="xs" variant="light" color={METHOD_COLOR[String(c.getValue())] ?? 'gray'}>
-        {String(c.getValue())}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: 'path',
-    header: 'Path',
-    // A path wrapped at its hyphens reads as two paths.
-    cell: (c) => (
-      <span className="mono" style={{ whiteSpace: 'nowrap' }}>
-        {String(c.getValue())}
-      </span>
-    ),
-  },
-  { accessorKey: 'summary', header: 'Summary' },
-];
+/** `{ns} ?filter* + body`: what a route takes, at a glance. */
+function paramsSummary(r: Route): string {
+  const parts = r.params.map((p) =>
+    p.in === 'path'
+      ? `{${p.name}}`
+      : p.in === 'query'
+        ? `?${p.name}${p.required ? '*' : ''}`
+        : `${p.in}:${p.name}`,
+  );
+  if (r.body !== undefined) parts.push(parts.length ? '+ body' : 'body');
+  return parts.join(' ');
+}
+
+function CopyCurl({ command, label }: { command: string; label: string }) {
+  return (
+    <CopyButton value={command}>
+      {({ copied, copy }) => (
+        <Tooltip label={copied ? 'Copied' : 'Copy as curl'}>
+          <ActionIcon variant="subtle" color="gray" size="sm" aria-label={label} onClick={copy}>
+            {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+          </ActionIcon>
+        </Tooltip>
+      )}
+    </CopyButton>
+  );
+}
 
 function RoutesDrawer({ app, onClose }: { app: Described | null; onClose: () => void }) {
+  const baseUrl = useSession((s) => s.baseUrl);
+  const username = useSession((s) => s.username);
   const routes = useQuery({
     queryKey: ['mgmnt', 'routes', app?.swaggerSpec],
     queryFn: () => fetchRoutes(app!.swaggerSpec),
@@ -67,6 +97,88 @@ function RoutesDrawer({ app, onClose }: { app: Described | null; onClose: () => 
     retry: false,
     staleTime: 10 * 60_000,
   });
+  const target = useMemo<ExportTarget>(
+    () => ({
+      baseUrl: absoluteBaseUrl(baseUrl),
+      username: username ?? '_SYSTEM',
+      name: app?.title ?? '',
+      description: routes.data?.title
+        ? `${routes.data.title}: the routes of ${app?.title}, as /api/mgmnt describes them.`
+        : `The routes of ${app?.title}, as /api/mgmnt describes them.`,
+      source: `${app?.swaggerSpec ?? '/api/mgmnt'} on ${absoluteBaseUrl(baseUrl)}`,
+    }),
+    [app, baseUrl, username, routes.data?.title],
+  );
+  const columns = useMemo<ColumnDef<Route, unknown>[]>(
+    () => [
+      {
+        accessorKey: 'method',
+        header: 'Method',
+        cell: (c) => (
+          <Badge size="xs" variant="light" color={METHOD_COLOR[String(c.getValue())] ?? 'gray'}>
+            {String(c.getValue())}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: 'path',
+        header: 'Path',
+        // A path wrapped at its hyphens reads as two paths.
+        cell: (c) => (
+          <span className="mono" style={{ whiteSpace: 'nowrap' }}>
+            {String(c.getValue())}
+          </span>
+        ),
+      },
+      {
+        id: 'takes',
+        header: 'Takes',
+        accessorFn: (r) => paramsSummary(r),
+        cell: (c) => (
+          <Text size="xs" c="dimmed" className="mono" style={{ whiteSpace: 'nowrap' }}>
+            {String(c.getValue())}
+          </Text>
+        ),
+      },
+      { accessorKey: 'summary', header: 'Summary' },
+      {
+        id: 'curl',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const [request] = routeRequests({
+            title: '',
+            basePath: routes.data?.basePath ?? '',
+            routes: [row.original],
+          });
+          return (
+            <CopyCurl
+              command={curlCommand(target, request)}
+              label={`Copy ${row.original.method} ${row.original.path} as curl`}
+            />
+          );
+        },
+      },
+    ],
+    [routes.data?.basePath, target],
+  );
+  const save = (kind: 'postman' | 'http') => {
+    if (!routes.data || !app) return;
+    const requests = routeRequests(routes.data);
+    const stem = fileStem(app.title);
+    if (kind === 'postman') {
+      const name = `${stem}.postman_collection.json`;
+      downloadText(name, JSON.stringify(postmanCollection(target, requests), null, 2), 'application/json');
+      notifySuccess(`${requests.length} requests in ${name}; import it into Postman.`, 'Collection saved');
+    } else {
+      const name = `${stem}.http`;
+      downloadText(name, httpFile(target, requests));
+      notifySuccess(
+        `${requests.length} requests in ${name}; open it in VS Code or a JetBrains IDE.`,
+        'File saved',
+      );
+    }
+  };
   return (
     <Drawer
       opened={!!app}
@@ -76,14 +188,34 @@ function RoutesDrawer({ app, onClose }: { app: Described | null; onClose: () => 
       title={<b className="mono">{app?.title}</b>}
     >
       <Stack gap="sm">
-        <Text size="sm" c="dimmed">
-          {routes.data
-            ? `${routes.data.routes.length} routes${routes.data.title ? ` · ${routes.data.title}` : ''}, as /api/mgmnt describes them from the dispatch class.`
-            : 'Reading the OpenAPI 2.0 description…'}
-        </Text>
+        <Group justify="space-between" align="flex-start" wrap="nowrap">
+          <Text size="sm" c="dimmed">
+            {routes.data
+              ? `${routes.data.routes.length} routes${routes.data.title ? ` · ${routes.data.title}` : ''}, as /api/mgmnt describes them from the dispatch class. Export writes every route as a ready request; the password stays in the browser.`
+              : 'Reading the OpenAPI 2.0 description…'}
+          </Text>
+          <Menu shadow="md" withinPortal>
+            <Menu.Target>
+              <Button
+                size="xs"
+                variant="default"
+                leftSection={<IconDownload size={14} />}
+                rightSection={<IconChevronDown size={14} />}
+                disabled={!routes.data}
+              >
+                Export
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Requests generated from the description</Menu.Label>
+              <Menu.Item onClick={() => save('postman')}>Postman collection (.json)</Menu.Item>
+              <Menu.Item onClick={() => save('http')}>HTTP file for VS Code and JetBrains (.http)</Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        </Group>
         <DataTable
           data={routes.data?.routes}
-          columns={routeColumns}
+          columns={columns}
           loading={routes.isLoading}
           error={routes.error}
           searchable
@@ -184,7 +316,7 @@ export default function RestServicesPage() {
     <>
       <PageHeader
         title="REST services"
-        description="The REST applications of this instance and the routes each one serves, from /api/mgmnt (outside the SysAdmin API)."
+        description="The REST applications of this instance and the routes each one serves, from /api/mgmnt (outside the SysAdmin API). Each application's routes export as a Postman collection or a .http file, and any route copies as curl."
         actions={
           ready ? (
             <Button
