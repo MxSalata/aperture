@@ -22,6 +22,15 @@
   outside, so a half-filled form survives a stray click; the palette is a Mantine modal too and
   inherited the rule, so only Escape or a pick closed it. It now closes on its backdrop, while edit
   dialogs keep the rule (an end-to-end test checks both).
+- **Disk space on the Databases screen.** A card above the table shows each disk that holds
+  database files: its path, the free space IRIS reports, and the databases on it with their size;
+  the table has a "Disk free" column. A disk is marked low under 10 GiB or under a tenth of the data
+  on it, and critical under 2 GiB, in words as well as colour. The figures are the `DiskFree` of GET
+  `/v2/database-dir/volumes`, read for every database four at a time; directories reporting the
+  same free space are one disk. It works in a container too: on IRIS for Health 2026.2 with durable
+  %SYS the screen shows the host disk behind `/durable/iris/mgr/` (2.6 TiB free, 12 databases) apart
+  from the image's own file system under `/usr/irissys/mgr/` (77 GiB free, the three read-only
+  libraries). The demo puts its application databases on a second disk that is running low.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 

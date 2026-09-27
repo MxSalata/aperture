@@ -9,6 +9,13 @@ import { daysAgo, hoursAgo, minutesAgo, seeded, pick, inMinutes, inDays } from '
 import { resetAsyncTasks, seedEndedTask } from './async';
 
 export const MGR = '/usr/irissys/mgr/';
+/** A second disk, for the application databases; it is running low, so the Databases screen says so. */
+export const DATA = '/irisdata/';
+
+/** Free space on the disk that holds `dir`, in MB, as GET /v2/database-dir/volumes reports it. */
+export function diskFreeMB(dir: string): number {
+  return dir.startsWith(DATA) ? 9_421 : 184_320;
+}
 
 export interface DbConfig {
   Name: string;
@@ -469,7 +476,8 @@ function db(
       Full: false,
       LastExpansionTime: daysAgo(3),
       AvailableSpace: Math.round(opts.size * 0.23),
-      DiskFree: '41.2 GB',
+      // The metrics give it as text with its unit, like IRIS ("322.64GB").
+      DiskFree: `${(diskFreeMB(dir) / 1024).toFixed(2)}GB`,
       EndFree: Math.round(opts.size * 0.11),
       Mounted: true,
     },
@@ -485,9 +493,9 @@ function seedDatabases() {
     db('IRISAUDIT', `${MGR}irisaudit/`, { size: 34, resource: '%DB_IRISAUDIT' }),
     db('ENSLIB', `${MGR}enslib/`, { size: 466, ro: true, resource: '%DB_ENSLIB' }),
     db('USER', `${MGR}user/`, { size: 97, max: '4096', resource: '%DB_USER' }),
-    db('IRISAPP', `${MGR}irisapp/`, { size: 512, resource: '%DB_IRISAPP' }),
-    db('INTEROP', `${MGR}interop/`, { size: 1290, max: '8192', resource: '%DB_INTEROP' }),
-    db('CLINICAL', `${MGR}clinical/`, {
+    db('IRISAPP', `${DATA}irisapp/`, { size: 512, resource: '%DB_IRISAPP' }),
+    db('INTEROP', `${DATA}interop/`, { size: 1290, max: '8192', resource: '%DB_INTEROP' }),
+    db('CLINICAL', `${DATA}clinical/`, {
       size: 2048,
       max: '16384',
       resource: '%DB_CLINICAL',

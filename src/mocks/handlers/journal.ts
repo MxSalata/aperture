@@ -1,4 +1,4 @@
-import { mockDb } from '../db';
+import { mockDb, DATA } from '../db';
 import { ok, notFound, requireParam, jsonBody, accepted, filterRows, now, hoursAgo } from '../util';
 import { route, OPERATE, JOURNAL, apiBasePath } from '../secure';
 import { startAsyncTask } from '../async';
@@ -43,7 +43,7 @@ function journalRecords(file: string, n: number) {
       RemoteSystemID: 0,
       ECPSystemID: null,
       GlobalNode: type === 'SET' || type === 'KILL' ? `${g}(${1000 + i})` : '',
-      Database: file.includes('journal') ? '/usr/irissys/mgr/interop/' : '',
+      Database: file.includes('journal') ? `${DATA}interop/` : '',
       NewValue: type === 'SET' ? `value-${i}` : '',
       OldValue: type === 'SET' && i % 3 === 0 ? `value-${i - 1}` : '',
     });
@@ -64,12 +64,9 @@ export const journalHandlers = [
     return ok({
       FirstRecordAddress: '131072',
       LastRecordAddress: String(f.DataSize),
-      Databases: [
-        '/usr/irissys/mgr/',
-        '/usr/irissys/mgr/user/',
-        '/usr/irissys/mgr/interop/',
-        '/usr/irissys/mgr/clinical/',
-      ].map((DatabasePathOrAlias, SFN) => ({ SFN, DatabasePathOrAlias })),
+      Databases: ['/usr/irissys/mgr/', '/usr/irissys/mgr/user/', `${DATA}interop/`, `${DATA}clinical/`].map(
+        (DatabasePathOrAlias, SFN) => ({ SFN, DatabasePathOrAlias }),
+      ),
       ClusterStartTime: '',
       End: f.DataSize,
       FileCount: mockDb.journals.length,

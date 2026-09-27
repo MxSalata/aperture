@@ -5,7 +5,9 @@ import {
   Group,
   Modal,
   NumberInput,
+  Paper,
   Select,
+  SimpleGrid,
   Stack,
   Text,
   TextInput,
@@ -25,18 +27,68 @@ import { StatusBadge, BoolBadge } from '@/components/StatusBadge';
 import { formatMB } from '@/lib/format';
 import {
   dbKeys,
+  dirKey,
   joinDatabases,
   suggestDirectory,
   useConfigDatabases,
+  useDatabaseVolumes,
   useLocalDatabases,
   type DatabaseRow,
 } from './useDatabases';
+import { diskFreeOf, storageLocations, type SpaceLevel, type StorageLocation } from './storage';
 
 export function databaseDetailUrl(row: { Name?: string; Directory?: string }) {
   const q = new URLSearchParams();
   if (row.Directory) q.set('dir', row.Directory);
   if (row.Name) q.set('name', row.Name);
   return `/databases/detail?${q.toString()}`;
+}
+
+/** Says in words, not colour alone, that a disk is running out of space. */
+function SpaceBadge({ level }: { level?: SpaceLevel }) {
+  if (level !== 'low' && level !== 'critical') return null;
+  return (
+    <Badge size="xs" color={level === 'critical' ? 'red' : 'orange'}>
+      {level === 'critical' ? 'critical' : 'low'}
+    </Badge>
+  );
+}
+
+/** Where the database files live and how much room each disk has left. */
+function DiskSpace({ locations }: { locations: StorageLocation[] }) {
+  if (!locations.length) return null;
+  return (
+    <Paper p="sm" mb="md">
+      <Group justify="space-between" mb="xs" gap="xs">
+        <Text fw={600} size="sm">
+          Disk space
+        </Text>
+        <Text size="xs" c="dimmed">
+          Free space IRIS reports on the disks that hold the database files
+        </Text>
+      </Group>
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+        {locations.map((l) => (
+          <Stack key={l.path} gap={2}>
+            <Group gap={6} wrap="nowrap">
+              <Text size="sm" className="mono" truncate title={l.path}>
+                {l.path}
+              </Text>
+              <SpaceBadge level={l.level} />
+            </Group>
+            <Text size="lg" fw={650} className="tabular">
+              {formatMB(l.freeMB)} free
+            </Text>
+            <Text size="xs" c="dimmed">
+              {l.databases.length} database{l.databases.length === 1 ? '' : 's'} · {formatMB(l.usedMB)}:{' '}
+              {l.databases.slice(0, 6).join(', ')}
+              {l.databases.length > 6 ? ` and ${l.databases.length - 6} more` : ''}
+            </Text>
+          </Stack>
+        ))}
+      </SimpleGrid>
+    </Paper>
+  );
 }
 
 const columns: ColumnDef<DatabaseRow, unknown>[] = [
@@ -68,6 +120,16 @@ const columns: ColumnDef<DatabaseRow, unknown>[] = [
     accessorKey: 'MaxSize',
     header: 'Max size',
     cell: (c) => <span className="tabular">{formatMB(c.getValue() as string)}</span>,
+  },
+  {
+    accessorKey: 'DiskFreeMB',
+    header: 'Disk free',
+    cell: ({ row }) => (
+      <Group gap={6} wrap="nowrap">
+        <span className="tabular">{formatMB(row.original.DiskFreeMB)}</span>
+        <SpaceBadge level={row.original.DiskLevel} />
+      </Group>
+    ),
   },
   {
     accessorKey: 'Resource',
@@ -262,7 +324,30 @@ export default function DatabasesPage() {
   const local = useLocalDatabases();
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
-  const rows = useMemo(() => joinDatabases(config.data, local.data), [config.data, local.data]);
+  const joined = useMemo(() => joinDatabases(config.data, local.data), [config.data, local.data]);
+  const dirs = useMemo(() => joined.flatMap((r) => (r.Directory && r.local ? [r.Directory] : [])), [joined]);
+  const volumes = useDatabaseVolumes(dirs);
+  const locations = useMemo(
+    () =>
+      storageLocations(
+        joined.map((r) => ({
+          name: r.Name || r.Directory || '',
+          volumes: (r.Directory && volumes.data?.get(dirKey(r.Directory))) || [],
+        })),
+      ),
+    [joined, volumes.data],
+  );
+  const rows = useMemo(
+    () =>
+      joined.map((r) => {
+        const free = diskFreeOf(r.Directory ? volumes.data?.get(dirKey(r.Directory)) : undefined);
+        const name = r.Name || r.Directory || '';
+        return free === undefined
+          ? r
+          : { ...r, DiskFreeMB: free, DiskLevel: locations.find((l) => l.databases.includes(name))?.level };
+      }),
+    [joined, volumes.data, locations],
+  );
   const totalMB = rows.reduce((a, r) => a + (r.SizeMB ?? 0), 0);
 
   return (
@@ -280,8 +365,9 @@ export default function DatabasesPage() {
               onClick={() => {
                 config.refetch();
                 local.refetch();
+                volumes.refetch();
               }}
-              loading={config.isFetching || local.isFetching}
+              loading={config.isFetching || local.isFetching || volumes.isFetching}
             >
               Refresh
             </Button>
@@ -291,6 +377,7 @@ export default function DatabasesPage() {
           </>
         }
       />
+      <DiskSpace locations={locations} />
       <DataTable
         stateKey="databases"
         exportName="databases"
