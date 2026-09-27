@@ -199,6 +199,20 @@ body {
   cursor: pointer;
 }
 
+/*
+ * A badge in a table cell keeps its whole label. Mantine ends a badge's label with an ellipsis,
+ * which lets an auto-sized column shrink below it ("RU…", "Sche…").
+ */
+.mantine-Table-td .mantine-Badge-root {
+  max-width: none;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.mantine-Table-td .mantine-Badge-label {
+  overflow: visible;
+  text-overflow: clip;
+}
+
 /* Sticky table header inside scroll areas. */
 .sticky-thead thead {
   position: sticky;

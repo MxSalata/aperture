@@ -477,7 +477,7 @@ export default function DashboardPage() {
                         </Text>
                       </Table.Td>
                       <Table.Td>
-                        <Text size="xs" c="dimmed" className="tabular">
+                        <Text size="xs" c="dimmed" className="tabular" style={{ whiteSpace: 'nowrap' }}>
                           {t.Time}
                         </Text>
                       </Table.Td>
