@@ -92,7 +92,7 @@
   refreshes the screen every 5, 15, 30 or 60 seconds. It is off by default, the choice is remembered
   per screen on this device, and a hidden tab does not poll the instance: it refreshes the moment it
   comes back and counts from there. The "Live (5s)" switch of the Processes, Locks and Web sessions
-  screens is replaced by it (Processes no longer polls unless asked to).
+  screens is replaced by it; Processes still polls every 5 seconds until told otherwise.
 - **The host figures on the dashboard read at a glance.** The line "CPU · Memory · Fullest DB
   disk" is now three gauges: a ring that fills with the percentage, green up to 75 %, amber to 90 %
   and red above, the number beside it and what it measures under it. The "Host monitor" link stays
@@ -103,7 +103,8 @@
   references, processes and web sessions, and license use. The two interoperability charts read the
   `iris_interop_*` series of `/api/monitor` (one line per namespace whose production reports; IRIS
   publishes them once `##class(Ens.Util.Statistics).EnableSAMForNamespace()` was run there and the
-  production is running, and the card says so until then); the demo's two productions report.
+  production is running, and the card says so until then); the demo's two productions report. A
+  fresh device shows the two interoperability charts.
 - **All 273 operations accounted for on a real IRIS.** `docs/COVERAGE.md` lists every operation of
   the specification with the screen that calls it, what IRIS for Health 2026.2 answered and whether
   the demo answers it: 139 verified on that instance (100 of the 115 reads, called with objects taken

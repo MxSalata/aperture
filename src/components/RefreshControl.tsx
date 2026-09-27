@@ -8,6 +8,8 @@ interface Props {
   screen: string;
   onRefresh(): void;
   loading?: boolean;
+  /** The interval until the user picks one; off (0) unless the screen says otherwise. */
+  defaultSeconds?: number;
 }
 
 /**
@@ -15,8 +17,12 @@ interface Props {
  * instance; when it comes back it refreshes at once and starts counting again, so what it shows is
  * never older than one interval.
  */
-export function useAutoRefreshInterval(screen: string, onRefresh: () => void): [number, (s: number) => void] {
-  const seconds = useAutoRefresh((s) => s.intervals[screen] ?? 0);
+export function useAutoRefreshInterval(
+  screen: string,
+  onRefresh: () => void,
+  defaultSeconds = 0,
+): [number, (s: number) => void] {
+  const seconds = useAutoRefresh((s) => s.intervals[screen] ?? defaultSeconds);
   const setSeconds = useAutoRefresh((s) => s.set);
   const latest = useRef(onRefresh);
   useEffect(() => {
@@ -53,8 +59,8 @@ export function useAutoRefreshInterval(screen: string, onRefresh: () => void): [
  * The Refresh button of a screen, joined to a menu that sets an interval for it: off by default,
  * or every 5, 15, 30 or 60 seconds, remembered per screen on this device.
  */
-export function RefreshControl({ screen, onRefresh, loading }: Props) {
-  const [seconds, setSeconds] = useAutoRefreshInterval(screen, onRefresh);
+export function RefreshControl({ screen, onRefresh, loading, defaultSeconds }: Props) {
+  const [seconds, setSeconds] = useAutoRefreshInterval(screen, onRefresh, defaultSeconds);
   return (
     <Button.Group>
       <Button

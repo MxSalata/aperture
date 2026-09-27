@@ -5,7 +5,10 @@ import { persist } from 'zustand/middleware';
 export const REFRESH_INTERVALS = [5, 15, 30, 60] as const;
 
 interface AutoRefreshState {
-  /** Seconds between refreshes, per screen; a screen that is not listed refreshes by hand only. */
+  /**
+   * Seconds between refreshes, per screen, 0 for off. A screen that is not listed takes its own
+   * default: off for all but Processes, which polls every 5 seconds as its switch used to.
+   */
   intervals: Record<string, number>;
   set(screen: string, seconds: number): void;
 }
@@ -16,12 +19,7 @@ export const useAutoRefresh = create<AutoRefreshState>()(
     (set) => ({
       intervals: {},
       set: (screen, seconds) =>
-        set((s) => {
-          const intervals = { ...s.intervals };
-          if (seconds > 0) intervals[screen] = seconds;
-          else delete intervals[screen];
-          return { intervals };
-        }),
+        set((s) => ({ intervals: { ...s.intervals, [screen]: Math.max(0, seconds) } })),
     }),
     { name: 'aperture.refresh', partialize: (s) => ({ intervals: s.intervals }) },
   ),

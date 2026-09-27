@@ -6,18 +6,19 @@ describe('dashboard chart selection', () => {
     vi.resetModules();
   });
 
-  it('starts with the two original charts, toggles in catalogue order, persists, and resets', async () => {
+  it('starts with the two interoperability charts, toggles in catalogue order, persists, and resets', async () => {
     const { useDashboard, DEFAULT_CHARTS } = await import('../dashboard');
     expect(useDashboard.getState().charts).toEqual(DEFAULT_CHARTS);
+    expect(DEFAULT_CHARTS).toEqual(['interopMessages', 'interopQueued']);
+    useDashboard.getState().toggle('globalRefs');
     useDashboard.getState().toggle('interopMessages');
-    useDashboard.getState().toggle('globalRefs');
-    expect(useDashboard.getState().charts).toEqual(['diskIo', 'interopMessages']);
-    useDashboard.getState().toggle('globalRefs');
-    expect(useDashboard.getState().charts).toEqual(['globalRefs', 'diskIo', 'interopMessages']);
+    expect(useDashboard.getState().charts).toEqual(['globalRefs', 'interopQueued']);
+    useDashboard.getState().toggle('interopMessages');
+    expect(useDashboard.getState().charts).toEqual(['globalRefs', 'interopMessages', 'interopQueued']);
     expect(JSON.parse(localStorage.getItem('aperture.dashboard')!).state.charts).toEqual([
       'globalRefs',
-      'diskIo',
       'interopMessages',
+      'interopQueued',
     ]);
     useDashboard.getState().reset();
     expect(useDashboard.getState().charts).toEqual(DEFAULT_CHARTS);

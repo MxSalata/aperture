@@ -106,7 +106,12 @@ export default function ProcessesPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           <>
-            <RefreshControl screen="processes" onRefresh={() => list.refetch()} loading={list.isFetching} />
+            <RefreshControl
+              screen="processes"
+              onRefresh={() => list.refetch()}
+              loading={list.isFetching}
+              defaultSeconds={5}
+            />
             <Button size="xs" variant="light" leftSection={<IconBroadcast size={14} />} onClick={open}>
               Broadcast message
             </Button>
