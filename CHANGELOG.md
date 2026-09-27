@@ -88,6 +88,11 @@
   group, announced to screen readers. "Reset menu order" at the foot of the menu puts everything
   back. Screens the account may not use are left out as before, and a screen added by a later
   version appears where the menu puts it.
+- **Auto-refresh beside every Refresh button.** The button is now a pair: Refresh, and a menu that
+  refreshes the screen every 5, 15, 30 or 60 seconds. It is off by default, the choice is remembered
+  per screen on this device, and a hidden tab does not poll the instance: it refreshes the moment it
+  comes back and counts from there. The "Live (5s)" switch of the Processes, Locks and Web sessions
+  screens is replaced by it (Processes no longer polls unless asked to).
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 

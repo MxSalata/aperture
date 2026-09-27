@@ -1,11 +1,12 @@
-import { ActionIcon, Button, Checkbox, Group, Text, Tooltip } from '@mantine/core';
-import { IconRefresh, IconTrash } from '@tabler/icons-react';
+import { ActionIcon, Checkbox, Group, Text, Tooltip } from '@mantine/core';
+import { IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
-import { useLiveQuery } from '@/api/useLiveQuery';
 import type { LockList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { useQuery } from '@tanstack/react-query';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { BoolBadge } from '@/components/StatusBadge';
 import { confirmDanger } from '@/components/ConfirmDanger';
@@ -14,7 +15,7 @@ type Row = LockList[number];
 
 export default function LocksPage() {
   const [checkTxn, setCheckTxn] = useState(true);
-  const { query: list, control: liveControl } = useLiveQuery({
+  const list = useQuery({
     queryKey: ['locks'],
     queryFn: () => result(api().GET('/v2/locks')),
   });
@@ -104,16 +105,7 @@ export default function LocksPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           <>
-            {liveControl}
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => list.refetch()}
-              loading={list.isFetching}
-            >
-              Refresh
-            </Button>
+            <RefreshControl screen="locks" onRefresh={() => list.refetch()} loading={list.isFetching} />
           </>
         }
       />

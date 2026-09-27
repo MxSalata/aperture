@@ -1,9 +1,9 @@
 import { Button, Grid, Group, Paper, Stack, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { IconRefresh } from '@tabler/icons-react';
 import { useShallow } from 'zustand/react/shallow';
 import { api, result } from '@/api/client';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { formatDateTime } from '@/lib/format';
@@ -45,15 +45,11 @@ export default function JobsPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           <>
-            <Button
-              variant="default"
-              size="xs"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => serverJobs.refetch()}
+            <RefreshControl
+              screen="jobs"
+              onRefresh={() => serverJobs.refetch()}
               loading={serverJobs.isFetching}
-            >
-              Refresh
-            </Button>
+            />
             <Button variant="subtle" size="xs" onClick={clearFinished}>
               Clear finished
             </Button>

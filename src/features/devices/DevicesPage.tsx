@@ -1,6 +1,6 @@
 import { Badge, Button, Drawer, Group, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { IconExternalLink, IconRefresh } from '@tabler/icons-react';
+import { IconExternalLink } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { api, result } from '@/api/hooks';
@@ -10,6 +10,7 @@ import { ErrorAlert } from '@/components/ErrorAlert';
 import { JsonViewer } from '@/components/JsonViewer';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 
 type Row = Schemas['DeviceList'][number];
 
@@ -87,15 +88,7 @@ export default function DevicesPage() {
         privileges={['%Admin_Manage:U']}
         actions={
           <>
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => list.refetch()}
-              loading={list.isFetching}
-            >
-              Refresh
-            </Button>
+            <RefreshControl screen="devices" onRefresh={() => list.refetch()} loading={list.isFetching} />
             <Button
               component={Link}
               to={explorer('PUT /v2/device')}

@@ -2,11 +2,12 @@ import { Button, Group, Modal, Select, Stack, TextInput } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconPlus, IconRefresh } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import type { NamespaceList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { useConfigDatabases } from '@/features/databases/useDatabases';
 
@@ -63,15 +64,7 @@ export default function NamespacesPage() {
         privileges={['%Admin_Manage:U']}
         actions={
           <>
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => list.refetch()}
-              loading={list.isFetching}
-            >
-              Refresh
-            </Button>
+            <RefreshControl screen="namespaces" onRefresh={() => list.refetch()} loading={list.isFetching} />
             <Button size="xs" leftSection={<IconPlus size={14} />} onClick={open}>
               Create namespace
             </Button>

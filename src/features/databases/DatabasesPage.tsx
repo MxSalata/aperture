@@ -14,7 +14,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
-import { IconPlus, IconRefresh } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { describeError } from '@/lib/errors';
@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router';
 import { api, run } from '@/api/hooks';
 import { useApiMutation } from '@/api/hooks';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { StatusBadge, BoolBadge } from '@/components/StatusBadge';
 import { formatMB } from '@/lib/format';
@@ -358,19 +359,15 @@ export default function DatabasesPage() {
         privileges={['%Admin_Manage:U']}
         actions={
           <>
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => {
+            <RefreshControl
+              screen="databases"
+              onRefresh={() => {
                 config.refetch();
                 local.refetch();
                 volumes.refetch();
               }}
               loading={config.isFetching || local.isFetching || volumes.isFetching}
-            >
-              Refresh
-            </Button>
+            />
             <Button size="xs" leftSection={<IconPlus size={14} />} onClick={open}>
               Create database
             </Button>

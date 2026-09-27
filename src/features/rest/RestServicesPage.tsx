@@ -14,9 +14,10 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { IconCheck, IconChevronDown, IconCopy, IconDownload, IconRefresh } from '@tabler/icons-react';
+import { IconCheck, IconChevronDown, IconCopy, IconDownload } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { BoolBadge } from '@/components/StatusBadge';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -319,17 +320,13 @@ export default function RestServicesPage() {
         description="The REST applications of this instance and the routes each one serves, from /api/mgmnt (outside the SysAdmin API). Each application's routes export as a Postman collection or a .http file, and any route copies as curl."
         actions={
           ready ? (
-            <Button
-              variant="default"
-              size="xs"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => {
+            <RefreshControl
+              screen="rest-services"
+              onRefresh={() => {
                 void apps.refetch();
                 void classes.refetch();
               }}
-            >
-              Refresh
-            </Button>
+            />
           ) : null
         }
       />
