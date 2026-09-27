@@ -32,7 +32,7 @@ import {
   useConnections,
   SAME_ORIGIN_ID,
 } from '@/stores/connections';
-import { DEMO_BUILD, useDemo } from '@/stores/demo';
+import { DEMO_BUILD, DEMO_PASSWORD, useDemo } from '@/stores/demo';
 import { describeError } from '@/lib/errors';
 import { APP_NAME, APP_TAGLINE } from '@/theme';
 
@@ -135,7 +135,7 @@ export default function LoginPage() {
         connectionId: SAME_ORIGIN_ID,
         baseUrl: '',
         username: '_SYSTEM',
-        password: 'SYS',
+        password: DEMO_PASSWORD,
         auth: 'jwt',
       });
     } catch (e) {
@@ -144,6 +144,26 @@ export default function LoginPage() {
       setBusy(false);
     }
   };
+
+  const demoButton = (
+    <Button
+      variant={DEMO_BUILD ? 'filled' : 'light'}
+      color="grape"
+      size={DEMO_BUILD ? 'md' : 'sm'}
+      leftSection={<IconFlask size={16} />}
+      onClick={tryDemo}
+      loading={busy}
+      fullWidth
+    >
+      Try the demo (no IRIS needed)
+    </Button>
+  );
+  const demoAccounts = (
+    <Text size="xs" c="dimmed" ta="center">
+      Demo accounts: <code>_SYSTEM</code>, <code>operator</code>, <code>auditor</code> - password{' '}
+      <code>{DEMO_PASSWORD}</code>
+    </Text>
+  );
 
   const selectData = [
     ...profiles.map((p) => ({
@@ -204,6 +224,17 @@ export default function LoginPage() {
                 </Alert>
               ) : null}
 
+              {DEMO_BUILD ? (
+                <>
+                  <Text size="sm">
+                    This is the online demo: the whole SysAdmin API runs in your browser with a realistic
+                    instance behind it, and nothing is sent anywhere.
+                  </Text>
+                  {demoButton}
+                  {demoAccounts}
+                  <Divider label="or sign in to an IRIS instance" labelPosition="center" my={4} />
+                </>
+              ) : null}
               <Select
                 label="IRIS instance"
                 leftSection={<IconServer size={16} />}
@@ -286,28 +317,19 @@ export default function LoginPage() {
                 Sign in
               </Button>
 
-              <Divider label="or" labelPosition="center" />
-
-              <Tooltip
-                label="Runs the whole API in your browser with realistic fake data. Nothing is sent anywhere."
-                multiline
-                maw={300}
-              >
-                <Button
-                  variant="light"
-                  color="grape"
-                  leftSection={<IconFlask size={16} />}
-                  onClick={tryDemo}
-                  loading={busy}
-                  fullWidth
-                >
-                  Try the demo (no IRIS needed)
-                </Button>
-              </Tooltip>
-              <Text size="xs" c="dimmed" ta="center">
-                Demo accounts: <code>_SYSTEM</code>, <code>operator</code>, <code>auditor</code> - password{' '}
-                <code>SYS</code>
-              </Text>
+              {DEMO_BUILD ? null : (
+                <>
+                  <Divider label="or" labelPosition="center" />
+                  <Tooltip
+                    label="Runs the whole API in your browser with realistic fake data. Nothing is sent anywhere."
+                    multiline
+                    maw={300}
+                  >
+                    {demoButton}
+                  </Tooltip>
+                  {demoAccounts}
+                </>
+              )}
             </Stack>
           </form>
         </Paper>
