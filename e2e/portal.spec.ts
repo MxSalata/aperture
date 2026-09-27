@@ -271,6 +271,14 @@ test.describe('Aperture (demo mode)', () => {
   });
 
   test('dashboard charts draw their series', async ({ page }) => {
+    // The two original charts: a fresh device shows the interoperability charts instead, and the
+    // areas below are the guard for the react-is regression.
+    await page.addInitScript(() =>
+      localStorage.setItem(
+        'aperture.dashboard',
+        JSON.stringify({ state: { charts: ['globalRefs', 'diskIo'] }, version: 0 }),
+      ),
+    );
     await loginDemo(page);
     // Rates need two samples; the dashboard polls every 3 s.
     await expect(page.locator('.mantine-LineChart-root .recharts-line')).toHaveCount(1, { timeout: 15_000 });

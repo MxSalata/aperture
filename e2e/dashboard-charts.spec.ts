@@ -22,25 +22,26 @@ test('charts are chosen from the menu, remembered, and the interop charts name t
   page,
 }) => {
   await signIn(page);
-  await expect(page.getByText('Global references per second')).toBeVisible();
-  await expect(page.getByText('Message throughput per namespace')).toHaveCount(0);
-
-  await tick(page, 'Message throughput per namespace');
-  await tick(page, 'Global references per second');
-  await expect(page.getByText('Global references per second')).toHaveCount(0);
+  // A fresh device shows the productions' throughput and queues; the demo's two productions
+  // report, and the lines need a second reading of /api/monitor (every 9 s).
   await expect(page.getByText('Message throughput per namespace')).toBeVisible();
-  // The demo's two productions report; the lines need a second reading of /api/monitor (every 9 s).
-  await expect(page.getByText('INTEROP', { exact: true })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText('CLINICAL', { exact: true })).toBeVisible();
+  await expect(page.getByText('Queued messages per namespace')).toBeVisible();
+  await expect(page.getByText('Global references per second')).toHaveCount(0);
+  await expect(page.getByText('INTEROP', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('CLINICAL', { exact: true }).first()).toBeVisible();
+
+  await tick(page, 'Global references per second');
+  await tick(page, 'Queued messages per namespace');
+  await expect(page.getByText('Global references per second')).toBeVisible();
+  await expect(page.getByText('Queued messages per namespace')).toHaveCount(0);
 
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
-  await expect(page.getByText('Message throughput per namespace')).toBeVisible();
-  await expect(page.getByText('Global references per second')).toHaveCount(0);
+  await expect(page.getByText('Global references per second')).toBeVisible();
+  await expect(page.getByText('Queued messages per namespace')).toHaveCount(0);
 
   // Every chart on, then the audit.
   for (const title of [
-    'Global references per second',
     'Queued messages per namespace',
     'Cache efficiency',
     'Logical requests per second',

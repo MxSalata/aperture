@@ -317,7 +317,7 @@ on unmount (React's StrictMode runs unmount cleanups right after mounting).
 | `health` | memory | reachability of the instance |
 | `appearance` | localStorage | contrast setting (system / normal / high) and palette (default / pastel); the colour scheme itself is Mantine's own localStorage key |
 | `navOrder` | localStorage | the order of the navigation menu's groups and screens, as the user arranged them (only what was moved, by label and path) |
-| `autoRefresh` | localStorage | the auto-refresh interval chosen per screen (seconds; absent means off) |
+| `autoRefresh` | localStorage | the auto-refresh interval chosen per screen (seconds, 0 for off; absent means the screen's default: off, except Processes at 5 s) |
 | `dashboard` | localStorage | which charts the dashboard shows |
 
 Everything that describes *the instance we were talking to* (the query cache, jobs, metric

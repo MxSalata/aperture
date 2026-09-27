@@ -10,10 +10,10 @@ function setVisibility(state: DocumentVisibilityState) {
   document.dispatchEvent(new Event('visibilitychange'));
 }
 
-const mount = (screenName: string, onRefresh: () => void) =>
+const mount = (screenName: string, onRefresh: () => void, defaultSeconds?: number) =>
   render(
     <MantineProvider env="test">
-      <RefreshControl screen={screenName} onRefresh={onRefresh} />
+      <RefreshControl screen={screenName} onRefresh={onRefresh} defaultSeconds={defaultSeconds} />
     </MantineProvider>,
   );
 
@@ -38,7 +38,18 @@ describe('RefreshControl', () => {
     expect(JSON.parse(localStorage.getItem('aperture.refresh')!).state.intervals).toEqual({ processes: 15 });
     act(() => useAutoRefresh.getState().set('processes', 0));
     expect(screen.getByRole('button', { name: 'Auto-refresh off' })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('aperture.refresh')!).state.intervals).toEqual({});
+    expect(JSON.parse(localStorage.getItem('aperture.refresh')!).state.intervals).toEqual({ processes: 0 });
+  });
+
+  it('a screen with a default of its own starts on it, and Off chosen there is remembered as off', () => {
+    const onRefresh = vi.fn();
+    const { unmount } = mount('processes', onRefresh, 5);
+    expect(screen.getByRole('button', { name: 'Auto-refresh every 5 seconds' })).toBeInTheDocument();
+    act(() => useAutoRefresh.getState().set('processes', 0));
+    expect(screen.getByRole('button', { name: 'Auto-refresh off' })).toBeInTheDocument();
+    unmount();
+    mount('processes', onRefresh, 5);
+    expect(screen.getByRole('button', { name: 'Auto-refresh off' })).toBeInTheDocument();
   });
 
   it('refreshes on the interval while the tab is visible, at once when it comes back, and stops on Off', () => {

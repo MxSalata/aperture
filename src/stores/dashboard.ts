@@ -15,8 +15,8 @@ export const DASHBOARD_CHARTS = [
 ] as const;
 export type DashboardChart = (typeof DASHBOARD_CHARTS)[number];
 
-/** What a fresh device shows: the two charts the dashboard always had. */
-export const DEFAULT_CHARTS: DashboardChart[] = ['globalRefs', 'diskIo'];
+/** What a fresh device shows: what an administrator watches, the productions' throughput and queues. */
+export const DEFAULT_CHARTS: DashboardChart[] = ['interopMessages', 'interopQueued'];
 
 interface DashboardState {
   /** In the order chosen; the catalogue's order decides where a newly ticked chart goes. */
