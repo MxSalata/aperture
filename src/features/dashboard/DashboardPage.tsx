@@ -3,6 +3,7 @@ import {
   Button,
   Grid,
   Group,
+  Menu,
   Paper,
   Progress,
   RingProgress,
@@ -17,6 +18,8 @@ import { useQuery } from '@tanstack/react-query';
 import {
   IconActivity,
   IconAlertTriangle,
+  IconChartLine,
+  IconCheck,
   IconClock,
   IconCpu,
   IconDatabase,
@@ -25,7 +28,7 @@ import {
   IconRefresh,
   IconWorld,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { api, result } from '@/api/client';
 import { PageHeader } from '@/components/PageHeader';
@@ -40,6 +43,8 @@ import { useSeriesColors } from './useSeriesColors';
 import { busyProcesses, withRates } from './rates';
 import { useReducedMotion } from '@mantine/hooks';
 import { SERIES_DASH } from '@/lib/chartColors';
+import { DASHBOARD_CHARTS, useDashboard, type DashboardChart } from '@/stores/dashboard';
+import { interopByNamespace, interopNamespaces } from './interop';
 import { useHostMetrics } from '@/features/monitor/useHostMetrics';
 import { metric } from '@/api/monitor';
 import { describeError } from '@/lib/errors';
@@ -62,6 +67,57 @@ function healthColor(v: string | undefined): 'good' | 'warning' | 'critical' {
   if (!s || s === 'normal' || s === 'ok') return 'good';
   if (s.includes('warn') || s.includes('attention')) return 'warning';
   return 'critical';
+}
+
+/** What each chart of the Charts menu shows; the ids are the dashboard store's. */
+const CHART_META: Record<DashboardChart, { title: string; caption: string }> = {
+  globalRefs: { title: 'Global references per second', caption: '' },
+  diskIo: { title: 'Disk I/O per second', caption: 'physical block reads and writes' },
+  interopMessages: {
+    title: 'Message throughput per namespace',
+    caption: 'interoperability messages processed per second',
+  },
+  interopQueued: { title: 'Queued messages per namespace', caption: "waiting in the productions' queues" },
+  cacheEfficiency: { title: 'Cache efficiency', caption: 'global references per physical read or write' },
+  logicalRequests: { title: 'Logical requests per second', caption: 'block requests, from memory or disk' },
+  routineRefs: { title: 'Routine references per second', caption: 'routine loads and calls' },
+  processes: { title: 'Processes and web sessions', caption: 'IRIS processes and active CSP sessions' },
+  license: { title: 'License units in use', caption: 'per cent of the license limit' },
+};
+
+/** A chart's card: the title, a caption or note on the right, and the chart or a waiting line. */
+function ChartCard({
+  title,
+  caption,
+  ready,
+  waiting = 'Collecting samples…',
+  children,
+}: {
+  title: string;
+  caption: ReactNode;
+  ready: boolean;
+  waiting?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <Paper p="md" h="100%">
+      <Group justify="space-between" mb="xs">
+        <Text fw={600} size="sm">
+          {title}
+        </Text>
+        <Text size="xs" c="dimmed">
+          {caption}
+        </Text>
+      </Group>
+      {ready ? (
+        children
+      ) : (
+        <Text size="sm" c="dimmed" py="xl" ta="center">
+          {waiting}
+        </Text>
+      )}
+    </Paper>
+  );
 }
 
 /** Green up to 75 %, amber to 90 %, red above: the thresholds the Host monitor's alerts use. */
@@ -131,6 +187,30 @@ export default function DashboardPage() {
   });
 
   const host = useHostMetrics(POLL_MS * 3);
+  const charts = useDashboard((s) => s.charts);
+  const toggleChart = useDashboard((s) => s.toggle);
+  const interopHistory = useMetrics((s) => s.interop);
+  const pushInterop = useMetrics((s) => s.pushInterop);
+  // One interop reading per host poll, keyed on its arrival like the dashboard samples above.
+  const hostUpdatedAt = host.dataUpdatedAt;
+  useEffect(() => {
+    if (!host.data || !hostUpdatedAt) return;
+    pushInterop(interopByNamespace(host.data, hostUpdatedAt));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hostUpdatedAt, pushInterop]);
+  const interopSeries = useMemo(() => interopNamespaces(interopHistory), [interopHistory]);
+  const interopRows = useMemo(
+    () =>
+      interopHistory.map((h) => {
+        const row: Record<string, string | number> = { time: formatClock(h.t) };
+        for (const [ns, v] of Object.entries(h.namespaces)) {
+          row[`${ns} msgs`] = Math.round(v.messagesPerSec * 10) / 10;
+          row[`${ns} queued`] = v.queued;
+        }
+        return row;
+      }),
+    [interopHistory],
+  );
   const failed = [
     ['dashboard', main],
     ['system resources', resources],
@@ -179,6 +259,196 @@ export default function DashboardPage() {
   const licenseHigh = pct(d?.Licensing?.LicenseUseHigh);
   const version = info?.serverVersion?.match(/\d{4}\.\d+(?:\.\d+)?/)?.[0];
 
+  const lineProps = { isAnimationActive: animate };
+  const axes = {
+    curveType: 'monotone' as const,
+    withDots: false,
+    strokeWidth: 2,
+    gridAxis: 'y' as const,
+    tickLine: 'none' as const,
+    xAxisProps: { interval: 'preserveStartEnd' as const, minTickGap: 40 },
+  };
+  const legend = { withLegend: true, legendProps: { verticalAlign: 'bottom' as const, height: 28 } };
+  const spanSeconds =
+    samples.length > 1 ? Math.round((samples[samples.length - 1].t - samples[0].t) / 1000) : 0;
+  const interopHint =
+    'No production reports here. IRIS publishes these figures once ' +
+    '##class(Ens.Util.Statistics).EnableSAMForNamespace() has been run in a namespace whose production is running.';
+  const perNamespace = (suffix: 'msgs' | 'queued') =>
+    interopSeries.map((ns, i) => ({
+      name: `${ns} ${suffix}`,
+      label: ns,
+      color: colors[i % colors.length],
+      strokeDasharray: SERIES_DASH[i % SERIES_DASH.length],
+    }));
+
+  /** One card per chart of the Charts menu; the rows are the six-minute history. */
+  const renderChart = (id: DashboardChart) => {
+    const meta = CHART_META[id];
+    const ready = chartData.length > 1;
+    switch (id) {
+      case 'globalRefs':
+        return (
+          <ChartCard title={meta.title} caption={`last ${spanSeconds}s`} ready={ready}>
+            <LineChart
+              h={220}
+              data={chartData}
+              dataKey="time"
+              series={[{ name: 'globalRefsPerSec', label: 'Global refs/s', color: colors[0] }]}
+              lineProps={lineProps}
+              withLegend={false}
+              valueFormatter={(v) => formatNumber(v)}
+              yAxisProps={{ width: 56 }}
+              {...axes}
+            />
+          </ChartCard>
+        );
+      case 'diskIo':
+        return (
+          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
+            <AreaChart
+              h={220}
+              data={chartData}
+              dataKey="time"
+              series={[
+                {
+                  name: 'diskReadsPerSec',
+                  label: 'Reads',
+                  color: colors[1],
+                  strokeDasharray: SERIES_DASH[1],
+                },
+                {
+                  name: 'diskWritesPerSec',
+                  label: 'Writes',
+                  color: colors[2],
+                  strokeDasharray: SERIES_DASH[2],
+                },
+              ]}
+              fillOpacity={0.1}
+              areaProps={lineProps}
+              valueFormatter={(v) => formatNumber(v)}
+              yAxisProps={{ width: 48 }}
+              {...axes}
+              {...legend}
+            />
+          </ChartCard>
+        );
+      case 'interopMessages':
+      case 'interopQueued': {
+        const queued = id === 'interopQueued';
+        return (
+          <ChartCard
+            title={meta.title}
+            caption={meta.caption}
+            ready={interopRows.length > 1 && interopSeries.length > 0}
+            waiting={interopRows.length > 1 && !interopSeries.length ? interopHint : undefined}
+          >
+            <LineChart
+              h={220}
+              data={interopRows}
+              dataKey="time"
+              series={perNamespace(queued ? 'queued' : 'msgs')}
+              lineProps={lineProps}
+              valueFormatter={(v) => formatNumber(v)}
+              yAxisProps={{ width: 48 }}
+              {...axes}
+              {...legend}
+            />
+          </ChartCard>
+        );
+      }
+      case 'cacheEfficiency':
+        return (
+          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
+            <LineChart
+              h={220}
+              data={chartData}
+              dataKey="time"
+              series={[{ name: 'cacheEfficiency', label: 'Cache efficiency', color: colors[1] }]}
+              lineProps={lineProps}
+              withLegend={false}
+              valueFormatter={(v) => `${formatNumber(v)} : 1`}
+              yAxisProps={{ width: 56 }}
+              {...axes}
+            />
+          </ChartCard>
+        );
+      case 'logicalRequests':
+        return (
+          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
+            <LineChart
+              h={220}
+              data={chartData}
+              dataKey="time"
+              series={[{ name: 'logicalRequestsPerSec', label: 'Logical requests/s', color: colors[3] }]}
+              lineProps={lineProps}
+              withLegend={false}
+              valueFormatter={(v) => formatNumber(v)}
+              yAxisProps={{ width: 56 }}
+              {...axes}
+            />
+          </ChartCard>
+        );
+      case 'routineRefs':
+        return (
+          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
+            <LineChart
+              h={220}
+              data={chartData}
+              dataKey="time"
+              series={[{ name: 'routineRefsPerSec', label: 'Routine refs/s', color: colors[4] }]}
+              lineProps={lineProps}
+              withLegend={false}
+              valueFormatter={(v) => formatNumber(v)}
+              yAxisProps={{ width: 56 }}
+              {...axes}
+            />
+          </ChartCard>
+        );
+      case 'processes':
+        return (
+          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
+            <LineChart
+              h={220}
+              data={chartData}
+              dataKey="time"
+              series={[
+                { name: 'processes', label: 'Processes', color: colors[0] },
+                {
+                  name: 'cspSessions',
+                  label: 'Web sessions',
+                  color: colors[2],
+                  strokeDasharray: SERIES_DASH[1],
+                },
+              ]}
+              lineProps={lineProps}
+              valueFormatter={(v) => formatNumber(v)}
+              yAxisProps={{ width: 40 }}
+              {...axes}
+              {...legend}
+            />
+          </ChartCard>
+        );
+      case 'license':
+        return (
+          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
+            <AreaChart
+              h={220}
+              data={chartData}
+              dataKey="time"
+              series={[{ name: 'licenseUse', label: 'License units', color: colors[3] }]}
+              fillOpacity={0.1}
+              areaProps={lineProps}
+              withLegend={false}
+              valueFormatter={(v) => `${v}%`}
+              yAxisProps={{ width: 40, domain: [0, 100] }}
+              {...axes}
+            />
+          </ChartCard>
+        );
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -198,6 +468,29 @@ export default function DashboardPage() {
                 </Badge>
               </Tooltip>
             ) : null}
+            <Menu shadow="md" width={300} position="bottom-end" withinPortal closeOnItemClick={false}>
+              <Menu.Target>
+                <Button size="xs" variant="default" leftSection={<IconChartLine size={14} />}>
+                  Charts
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>Charts on this dashboard</Menu.Label>
+                {DASHBOARD_CHARTS.map((id) => {
+                  const on = charts.includes(id);
+                  return (
+                    <Menu.Item
+                      key={id}
+                      onClick={() => toggleChart(id)}
+                      aria-label={`${CHART_META[id].title} (${on ? 'shown' : 'hidden'})`}
+                      leftSection={<IconCheck size={14} style={{ visibility: on ? 'visible' : 'hidden' }} />}
+                    >
+                      {CHART_META[id].title}
+                    </Menu.Item>
+                  );
+                })}
+              </Menu.Dropdown>
+            </Menu>
             <Button
               size="xs"
               variant={paused ? 'filled' : 'default'}
@@ -313,92 +606,21 @@ export default function DashboardPage() {
         </SimpleGrid>
       )}
 
-      <Grid gutter="md" mb="md">
-        <Grid.Col span={{ base: 12, lg: 7 }}>
-          <Paper p="md" h="100%">
-            <Group justify="space-between" mb="xs">
-              <Text fw={600} size="sm">
-                Global references per second
-              </Text>
-              <Text size="xs" c="dimmed">
-                last{' '}
-                {samples.length > 1 ? Math.round((samples[samples.length - 1].t - samples[0].t) / 1000) : 0}s
-              </Text>
-            </Group>
-            {chartData.length > 1 ? (
-              <LineChart
-                h={220}
-                data={chartData}
-                dataKey="time"
-                series={[{ name: 'globalRefsPerSec', label: 'Global refs/s', color: colors[0] }]}
-                curveType="monotone"
-                withDots={false}
-                strokeWidth={2}
-                lineProps={{ isAnimationActive: animate }}
-                gridAxis="y"
-                tickLine="none"
-                withLegend={false}
-                valueFormatter={(v) => formatNumber(v)}
-                xAxisProps={{ interval: 'preserveStartEnd', minTickGap: 40 }}
-                yAxisProps={{ width: 56 }}
-              />
-            ) : (
-              <Text size="sm" c="dimmed" py="xl" ta="center">
-                Collecting samples…
-              </Text>
-            )}
-          </Paper>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, lg: 5 }}>
-          <Paper p="md" h="100%">
-            <Group justify="space-between" mb="xs">
-              <Text fw={600} size="sm">
-                Disk I/O per second
-              </Text>
-              <Text size="xs" c="dimmed">
-                physical block reads and writes
-              </Text>
-            </Group>
-            {chartData.length > 1 ? (
-              <AreaChart
-                h={220}
-                data={chartData}
-                dataKey="time"
-                series={[
-                  {
-                    name: 'diskReadsPerSec',
-                    label: 'Reads',
-                    color: colors[1],
-                    strokeDasharray: SERIES_DASH[1],
-                  },
-                  {
-                    name: 'diskWritesPerSec',
-                    label: 'Writes',
-                    color: colors[2],
-                    strokeDasharray: SERIES_DASH[2],
-                  },
-                ]}
-                curveType="monotone"
-                withDots={false}
-                strokeWidth={2}
-                fillOpacity={0.1}
-                areaProps={{ isAnimationActive: animate }}
-                gridAxis="y"
-                tickLine="none"
-                withLegend
-                legendProps={{ verticalAlign: 'bottom', height: 28 }}
-                valueFormatter={(v) => formatNumber(v)}
-                xAxisProps={{ interval: 'preserveStartEnd', minTickGap: 40 }}
-                yAxisProps={{ width: 48 }}
-              />
-            ) : (
-              <Text size="sm" c="dimmed" py="xl" ta="center">
-                Collecting samples…
-              </Text>
-            )}
-          </Paper>
-        </Grid.Col>
-      </Grid>
+      {charts.length ? (
+        <Grid gutter="md" mb="md">
+          {charts.map((id) => (
+            <Grid.Col key={id} span={{ base: 12, lg: charts.length === 1 ? 12 : 6 }}>
+              {renderChart(id)}
+            </Grid.Col>
+          ))}
+        </Grid>
+      ) : (
+        <Paper p="md" mb="md">
+          <Text size="sm" c="dimmed" ta="center">
+            No charts shown: pick some under Charts.
+          </Text>
+        </Paper>
+      )}
 
       <Grid gutter="md">
         <Grid.Col span={{ base: 12, md: 4 }}>

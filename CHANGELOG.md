@@ -97,6 +97,13 @@
   disk" is now three gauges: a ring that fills with the percentage, green up to 75 %, amber to 90 %
   and red above, the number beside it and what it measures under it. The "Host monitor" link stays
   in the section's heading.
+- **Choose the dashboard's charts.** A Charts menu picks which charts the dashboard shows, kept per
+  device: global references per second and disk I/O as before, and now message throughput per
+  namespace and queued messages per namespace, cache efficiency, logical requests, routine
+  references, processes and web sessions, and license use. The two interoperability charts read the
+  `iris_interop_*` series of `/api/monitor` (one line per namespace whose production reports; IRIS
+  publishes them once `##class(Ens.Util.Statistics).EnableSAMForNamespace()` was run there and the
+  production is running, and the card says so until then); the demo's two productions report.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 
