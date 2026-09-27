@@ -1,0 +1,72 @@
+IPM install of Aperture 1.0.1 into a running IRIS for Health 2026.2 container with durable %SYS
+(the repository mounted read-only at /aperture; IPM 0.10.9 installed first, its SHA-256 checked).
+
+First load, module.xml copying the portal to {$cspdir}aperture/:
+
+USER>zpm "load /aperture -v"
+[USER|iris-aperture]    Compile SUCCESS
+[USER|iris-aperture]    Activate START
+[iris-aperture] Activate FAILURE
+ERROR! Error creating directory chain /usr/irissys/csp/aperture/: <13> Permission denied
+USER>do ##class(Aperture.Installer).Doctor()
+<CLASS DOES NOT EXIST> *Aperture.Installer
+
+Second load, module.xml copying the portal to {$mgrdir}aperture/:
+
+USER>zpm "load /aperture -v"
+Load started on 09/27/2026 22:03:50
+Loading file /aperture/module.xml as xml
+Imported document: iris-aperture.ZPM
+Load finished successfully.
+...
+[USER|iris-aperture]    Compile SUCCESS
+[USER|iris-aperture]    Activate START
+Copying /aperture/www/ to /durable/iris/mgr/aperture/ as directory
+Creating Web Application /aperture
+AutheEnabled: 64
+CSPZENEnabled: 0
+CookiePath: /aperture/
+Description: Aperture management portal (static SPA)
+Enabled: 1
+Name: /aperture
+NameSpace: %SYS
+Path: /durable/iris/mgr/aperture/
+Recurse: 1
+ServeFiles: 1
+UseCookies: 2
+Done.
+Creating Web Application /api/aperture
+AutheEnabled: 32
+CSPZENEnabled: 1
+CookiePath: /api/aperture/
+Description: Aperture log reader (read-only REST API over messages.log, alerts.log, SystemMonitor.log)
+DispatchClass: Aperture.API
+Enabled: 1
+Name: /api/aperture
+NameSpace: USER
+Recurse: 1
+Resource: %Admin_Operate
+UseCookies: 1
+Done.
+[USER|iris-aperture]    Configure START
+Updating Web Application /aperture
+No changes detected or made.
+Updating Web Application /api/aperture
+No changes detected or made.Aperture: /api/admin enabled; AutheEnabled 32 -> 32; JWT on
+Aperture: open http://<host>:52773/aperture/index.html and sign in with an account holding %Admin_* privileges
+
+[USER|iris-aperture]    Configure SUCCESS
+Seeding update steps for module = iris-aperture, for version = 1.0.1
+
+Aperture readiness report
+  ok  IRIS 2026.2  (the portal needs SysAdmin API v2, which ships with 2026.2)
+  ok  JWT login (POST /login)  (available, IRIS 2026.2+)
+  ok  /api/admin enabled
+  ok  /api/admin password authentication  (AutheEnabled=32)
+  ok  /api/admin JWT authentication  (JWTAuthEnabled)
+  ok  /aperture web application  (serves files from /durable/iris/mgr/aperture/)
+  ok  /aperture files on disk  (/durable/iris/mgr/aperture/index.html)
+  ok  /api/aperture log reader  (dispatch class Aperture.API, namespace USER)
+  ok  log files readable  (messages.log, SystemMonitor.log)
+
+[USER|iris-aperture]    Activate SUCCESS

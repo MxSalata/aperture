@@ -31,6 +31,15 @@
   %SYS the screen shows the host disk behind `/durable/iris/mgr/` (2.6 TiB free, 12 databases) apart
   from the image's own file system under `/usr/irissys/mgr/` (77 GiB free, the three read-only
   libraries). The demo puts its application databases on a second disk that is running low.
+- **The security write probe, complete on IRIS for Health 2026.2 (7/7).** `e2e/live/writes.spec.ts`
+  now writes its results as it goes (one `writes.json` per run, kept when a test times out),
+  registers the undo of every change to an existing object before making it and runs whatever a
+  timed-out test left in `afterAll` (a timed-out run had left `%Service_Weblink` with a client
+  address, put back by hand), records what the server stored next to what was sent, waits for the
+  navigation before judging an escalated sign-in, creates its TLS configuration with the fields the
+  spec requires, and confirms in the Explorer only when it asks. Its results, the live checks before
+  and after the IPM install and the install transcript are in
+  `docs/verification/2026-09-27-irishealth-2026.2/`.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 
