@@ -10,7 +10,7 @@
       content="Aperture: a modern management portal for InterSystems IRIS, built on the SysAdmin REST API."
     />
     <title>Aperture · IRIS Management Portal</title>
-    <!-- Applies the stored colour scheme and contrast before the first paint (see public/color-scheme.js). -->
+    <!-- Applies the stored colour scheme, contrast and palette before the first paint (see public/color-scheme.js). -->
     <script src="%BASE_URL%color-scheme.js"></script>
     <style>
       /* Shown until React's first render replaces #root: the demo loads its API mock first. */
@@ -51,6 +51,13 @@
       html[data-mantine-color-scheme='dark'] .boot {
         background: #181e26;
         color: #b3bcc8;
+      }
+      html[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not(
+          [data-aperture-contrast='high']
+        )
+        .boot {
+        background: #e6eff7;
+        color: #4a5b6c;
       }
       html[data-aperture-contrast='high'] .boot {
         background: #fff;

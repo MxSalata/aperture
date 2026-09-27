@@ -315,7 +315,7 @@ on unmount (React's StrictMode runs unmount cleanups right after mounting).
 | `demo` | sessionStorage | whether the in-browser mock is active |
 | `activity` | sessionStorage | changes sent from this tab |
 | `health` | memory | reachability of the instance |
-| `appearance` | localStorage | contrast setting (system / normal / high); the colour scheme itself is Mantine's own localStorage key |
+| `appearance` | localStorage | contrast setting (system / normal / high) and palette (default / pastel); the colour scheme itself is Mantine's own localStorage key |
 
 Everything that describes *the instance we were talking to* (the query cache, jobs, metric
 history, the activity log, reachability) is reset by `resetInstanceState()` in `stores/session.ts`
@@ -447,9 +447,10 @@ screens that were broken against every real instance. Where the server contradic
 mock follows the server and `DOCUMENTED_DIVERGENCE` names the answer paths and the evidence; an
 entry the mock no longer needs fails the test.
 
-`e2e/a11y.spec.ts` runs axe-core (WCAG 2.1 A/AA) over the sign-in page and nine screens in light,
-dark, and both high-contrast modes (Playwright emulates `prefers-color-scheme` and
-`prefers-contrast`). Serious and critical findings fail the run. Colour contrast is solved at the
+`e2e/a11y.spec.ts` runs axe-core (WCAG 2.1 A/AA) over the sign-in page and seventeen screens in
+light, pastel, dark, and both high-contrast modes (Playwright emulates `prefers-color-scheme` and
+`prefers-contrast`; Pastel is the stored device setting, written before the page loads). Serious
+and critical findings fail the run. Colour contrast is solved at the
 token level in `src/styles.css`, not per component: each of Mantine's `filled`, `text`, `outline`
 and `light-color` variables points at the shade nearest Mantine's own that reaches 4.5:1 on the
 surfaces it sits on, so any `color="…"` prop is legible without a local override.

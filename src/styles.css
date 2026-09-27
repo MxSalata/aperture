@@ -6,6 +6,8 @@
   /* Secondary text tokens: no inline opacity anywhere, so a contrast layer can raise them. */
   --aperture-muted: var(--mantine-color-gray-7);
   --aperture-muted-soft: var(--mantine-color-gray-6);
+  /* The navbar: the card colour, except where a theme gives it a tone of its own (Pastel). */
+  --aperture-navbar: var(--mantine-color-body);
 }
 
 /* Mantine's light "dimmed" is gray-6 (#868e96, 3.3:1 on white); gray-7 reads at 7:1 and still looks secondary. */
@@ -182,8 +184,48 @@
   color: var(--aperture-muted-soft);
 }
 
+/* ---- Pastel (data-aperture-palette, set before first paint by color-scheme.js and kept in sync
+   by useApplyAppearance): a light theme on pale blue. Blue rather than green, because green
+   already means healthy here (Mounted/RW, YES, the LIVE pill, success notifications). It applies
+   only to the light scheme at normal contrast, which the selector states: a stored Pastel is inert
+   in dark, and high contrast keeps its pure white body. The grey scale is re-tinted so that every
+   subtle grey Mantine draws (stripes, hovered rows, kbd, code, dividers, input borders, disabled
+   controls, chart labels) follows the tint without per-component rules; the dark steps keep the
+   luminance of the neutral ones, so the contrast-tuned tokens above hold: gray-7 (dimmed text)
+   reads at 6.6:1 on a card, 6.0:1 on the page and 5.6:1 on the navbar, gray-6 (icons) at 3.2:1 on
+   the navbar, body text at 14:1 on a card, links (aperture-8) at 6.4:1 on the page, and each
+   status badge at 4.5:1 or more on a 10 % tint over the page, whose luminance matches the
+   default Light page the tokens were tuned for. */
+:root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not(
+    [data-aperture-contrast='high']
+  ) {
+  --aperture-page: #e6eff7;
+  --aperture-navbar: #dde8f1;
+  --mantine-color-body: #f5f9fc;
+  --mantine-color-text: #1c2836;
+  --mantine-color-gray-0: #f0f5f9;
+  --mantine-color-gray-1: #e7eef4;
+  --mantine-color-gray-2: #dbe4ec;
+  --mantine-color-gray-3: #cbd7e2;
+  --mantine-color-gray-4: #b7c6d4;
+  --mantine-color-gray-5: #98a9ba;
+  --mantine-color-gray-6: #6e8096;
+  --mantine-color-gray-7: #4a5b6c;
+  --mantine-color-gray-8: #33424f;
+  --mantine-color-gray-9: #1f2a35;
+  --aperture-muted-soft: var(--mantine-color-gray-6);
+}
+/* The tinted gray-1 and gray-2 are darker than the neutral ones; stripes and hovered rows take the
+   step above, so the badge tokens hold on a hovered row here too (tuned to 4.6:1 for both). */
+:root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not([data-aperture-contrast='high'])
+  .mantine-Table-table {
+  --table-striped-color: var(--mantine-color-gray-0);
+  --table-hover-color: var(--mantine-color-gray-1);
+}
+
 /* ---- High-contrast axis (data-aperture-contrast, set before first paint by color-scheme.js
-   and kept in sync by useApplyAppearance). Independent of light/dark: four combinations. */
+   and kept in sync by useApplyAppearance). Independent of light/dark: four combinations, and
+   it overrides Pastel. */
 :root[data-aperture-contrast='high'] {
   --aperture-border-width: 2px;
   --aperture-page: var(--mantine-color-body);

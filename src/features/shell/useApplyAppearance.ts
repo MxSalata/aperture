@@ -26,14 +26,21 @@ export function useResolvedContrast(): 'normal' | 'high' {
 }
 
 /**
- * Writes the resolved contrast to `<html data-aperture-contrast>`, the sibling of Mantine's
- * `data-mantine-color-scheme`, which `styles.css` keys its high-contrast layer on. Mounted
- * above the router so the login page and error screens are covered too.
+ * Writes the resolved contrast to `<html data-aperture-contrast>` and the palette setting to
+ * `<html data-aperture-palette>`, the siblings of Mantine's `data-mantine-color-scheme`, which
+ * `styles.css` keys its high-contrast layer and the Pastel tokens on. The palette is written as
+ * chosen: the stylesheet applies it only to the light scheme at normal contrast, so a stored
+ * Pastel stays inert in dark or high contrast and returns with the light scheme. Mounted above
+ * the router so the login page and error screens are covered too.
  */
 export function useApplyAppearance(): 'normal' | 'high' {
   const contrast = useResolvedContrast();
+  const palette = useAppearance((s) => s.palette);
   useEffect(() => {
     document.documentElement.dataset.apertureContrast = contrast;
   }, [contrast]);
+  useEffect(() => {
+    document.documentElement.dataset.aperturePalette = palette;
+  }, [palette]);
   return contrast;
 }

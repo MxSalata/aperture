@@ -26,6 +26,7 @@ import {
   IconDeviceDesktop,
   IconLogout,
   IconMoon,
+  IconPalette,
   IconSearch,
   IconServer,
   IconSun,
@@ -35,7 +36,7 @@ import {
   IconLock,
   IconLockOpen,
 } from '@tabler/icons-react';
-import { Suspense } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { NAV } from './nav';
@@ -51,7 +52,7 @@ import { PageSkeleton } from '@/components/PageSkeleton';
 import { setInstanceTimezone } from '@/lib/format';
 import { useInstanceLabel } from './useInstanceLabel';
 import { useInstanceClock } from './useInstanceClock';
-import { useAppearance, type ContrastSetting } from '@/stores/appearance';
+import { useAppearance, type ContrastSetting, type PaletteSetting } from '@/stores/appearance';
 import { useResolvedContrast } from './useApplyAppearance';
 import { JobsDrawer } from '@/features/jobs/JobsDrawer';
 import { JobPoller } from '@/features/jobs/JobPoller';
@@ -218,18 +219,33 @@ function UserMenu() {
   );
 }
 
-/** Light / Dark / System (a way back to following the OS) and the independent contrast axis. */
+type ThemeChoice = 'light' | 'pastel' | 'dark' | 'auto';
+
+/**
+ * Light / Pastel / Dark / System (a way back to following the OS) and the independent contrast
+ * axis. Pastel is the light scheme with the pastel palette; the other three reset the palette, so
+ * System follows the OS between Light and Dark and exactly one entry is ever current.
+ */
 function AppearanceMenu() {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const computed = useComputedColorScheme('light');
   const contrast = useAppearance((s) => s.contrast);
   const setContrast = useAppearance((s) => s.setContrast);
+  const palette = useAppearance((s) => s.palette);
+  const setPalette = useAppearance((s) => s.setPalette);
   const resolved = useResolvedContrast();
-  const schemes = [
+  const themes: { value: ThemeChoice; label: string; icon: ReactNode }[] = [
     { value: 'light', label: 'Light', icon: <IconSun size={16} /> },
+    { value: 'pastel', label: 'Pastel', icon: <IconPalette size={16} /> },
     { value: 'dark', label: 'Dark', icon: <IconMoon size={16} /> },
     { value: 'auto', label: 'System', icon: <IconDeviceDesktop size={16} /> },
-  ] as const;
+  ];
+  const current: ThemeChoice = colorScheme === 'light' && palette === 'pastel' ? 'pastel' : colorScheme;
+  const choose = (value: ThemeChoice) => {
+    setColorScheme(value === 'pastel' ? 'light' : value);
+    const next: PaletteSetting = value === 'pastel' ? 'pastel' : 'default';
+    if (next !== palette) setPalette(next);
+  };
   const contrasts: { value: ContrastSetting; label: string }[] = [
     { value: 'auto', label: 'System' },
     { value: 'normal', label: 'Normal' },
@@ -252,15 +268,15 @@ function AppearanceMenu() {
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>Theme</Menu.Label>
-        {schemes.map((s) => (
+        {themes.map((t) => (
           <Menu.Item
-            key={s.value}
-            leftSection={s.icon}
-            onClick={() => setColorScheme(s.value)}
-            aria-label={`${s.label}${colorScheme === s.value ? ' (current theme)' : ''}`}
-            rightSection={colorScheme === s.value ? '●' : undefined}
+            key={t.value}
+            leftSection={t.icon}
+            onClick={() => choose(t.value)}
+            aria-label={`${t.label}${current === t.value ? ' (current theme)' : ''}`}
+            rightSection={current === t.value ? '●' : undefined}
           >
-            {s.label}
+            {t.label}
           </Menu.Item>
         ))}
         <Menu.Divider />
@@ -323,7 +339,10 @@ export function AppLayout() {
       header={{ height: 56 }}
       navbar={{ width: 250, breakpoint: 'md', collapsed: { mobile: !opened } }}
       padding="md"
-      styles={{ main: { background: 'var(--aperture-page)' } }}
+      styles={{
+        main: { background: 'var(--aperture-page)' },
+        navbar: { background: 'var(--aperture-navbar)' },
+      }}
     >
       <AppShell.Header style={{ boxShadow: `inset 0 3px 0 0 var(--mantine-color-${instance.color}-6)` }}>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">

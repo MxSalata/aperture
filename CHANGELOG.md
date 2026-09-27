@@ -29,6 +29,14 @@
   text reads at 7.0:1 on a card and 6.2:1 on the page, links at 6.4:1, and the status colours were
   darkened by up to five percent so every badge keeps 4.5:1 on the new page tone and on a hovered
   row. Dark and both high-contrast modes are unchanged.
+- **A Pastel theme.** The appearance menu offers Light, Pastel, Dark and System. Pastel is a light
+  theme on pale blue: a blue page, off-white cards, a navbar a shade deeper than the page, blue-grey
+  borders, stripes and secondary text, and a deep slate for body text. Blue rather than green,
+  because green already means healthy in this portal (`Mounted/RW`, `YES`, the `LIVE` pill, success
+  notifications). The choice is a device setting next to contrast, applied before the first paint
+  like the others, so nothing flashes on load; it is a light theme only: System still follows the
+  OS between Light and Dark, and high contrast overrides it. The accessibility suite now audits
+  every screen in five modes.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 
