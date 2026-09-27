@@ -87,14 +87,19 @@ export function KeyValueList({ items, cols = 2 }: Props) {
  */
 export function objectToItems(
   obj: Record<string, unknown> | null | undefined,
-  opts: { omit?: string[]; labels?: Record<string, string> } = {},
+  opts: {
+    omit?: string[];
+    labels?: Record<string, string>;
+    /** Render a field's value yourself (units, "Unlimited" for 0). */
+    format?: Record<string, (value: unknown) => ReactNode>;
+  } = {},
 ): KeyValue[] {
   if (!obj) return [];
   return Object.entries(obj)
     .filter(([k]) => !opts.omit?.includes(k))
     .map(([k, v]) => ({
       label: opts.labels?.[k] ?? humanize(k),
-      value: renderValue(redactDeep(v, k).value),
+      value: opts.format?.[k] ? opts.format[k](v) : renderValue(redactDeep(v, k).value),
     }));
 }
 

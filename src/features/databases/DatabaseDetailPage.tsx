@@ -434,6 +434,12 @@ export default function DatabaseDetailPage() {
                     NewGlobalCollation: 'New global collation',
                     NewGlobalIsKeep: 'New globals keep',
                   },
+                  // Megabytes, as the Space card above shows them; 0 means a default, not zero.
+                  format: {
+                    MaxSize: (v) => (Number(v) ? formatMB(v as number) : 'Unlimited'),
+                    ExpansionSize: (v) => (Number(v) ? formatMB(v as number) : 'System default'),
+                    NewVolumeThreshold: (v) => (Number(v) ? formatMB(v as number) : 'Off'),
+                  },
                 })}
               />
             ) : (
