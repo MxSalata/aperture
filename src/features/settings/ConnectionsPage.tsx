@@ -50,6 +50,7 @@ export default function ConnectionsPage() {
   const remove = useConnections((s) => s.remove);
   const setLastUsed = useConnections((s) => s.setLastUsed);
   const current = useSession((s) => s.connectionId);
+  const signedInAs = useSession((s) => s.username);
   const logout = useSession((s) => s.logout);
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
@@ -120,7 +121,7 @@ export default function ConnectionsPage() {
               <Table.Th>Name</Table.Th>
               <Table.Th>Base URL</Table.Th>
               <Table.Th>Auth</Table.Th>
-              <Table.Th>User</Table.Th>
+              <Table.Th>Default user</Table.Th>
               <Table.Th>Time zone</Table.Th>
               <Table.Th></Table.Th>
             </Table.Tr>
@@ -134,7 +135,7 @@ export default function ConnectionsPage() {
                     <b>{p.name}</b>
                     {p.id === current ? (
                       <Text size="xs" c="teal">
-                        ● connected
+                        ● connected{signedInAs ? ` as ${signedInAs}` : ''}
                       </Text>
                     ) : null}
                   </Group>
