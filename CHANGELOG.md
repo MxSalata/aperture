@@ -9,6 +9,15 @@
   the account (401 or 403), as a restored one already did; a read that got no answer is left to the
   next page's own check. Found by the first live run of the security write probe on IRIS for
   Health 2026.2, where the `%Operator` account hit it on every immediate navigation.
+- **The IPM package installs into a running container.** It copied the portal to
+  `{$cspdir}aperture/`, the csp directory of the IRIS installation, which belongs to the image: on
+  IRIS for Health 2026.2 with durable %SYS, `zpm "load"` into the running container stopped at
+  Activate with `<13> Permission denied` and rolled back, and where such a copy succeeds it is lost
+  whenever the container is recreated while the `/aperture` web application points at it. The
+  portal now goes to `{$mgrdir}aperture/`, the instance's own manager directory, which durable %SYS
+  keeps. Verified on that instance: the load completed, the readiness report passed all nine checks,
+  and `npm run verify:live` with the portal URL passed 25/25, reading the log catalogue and a window
+  of `messages.log` over HTTP. The CI image, which installs at build time, was not affected.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 

@@ -27,8 +27,12 @@
       <Resource Name="Aperture.Logs.CLS"/>
 
       <!-- The built portal (www/, from `npm run build:www`) is copied under the instance's
-           csp directory ... -->
-      <FileCopy Name="www/" Target="{$cspdir}aperture/"/>
+           manager directory, not its csp directory: in a container the csp directory belongs to
+           the image, so a running instance may not write there (IRIS for Health 2026.2 with
+           durable %SYS: <13> Permission denied), and whatever is written there is gone when the
+           container is recreated. The manager directory is always the instance's own, and with
+           durable %SYS it is the durable one ... -->
+      <FileCopy Name="www/" Target="{$mgrdir}aperture/"/>
 
       <!-- ... and served by IRIS as a static web application. Every attribute is a
            Security.Applications property (IPM validates them). AutheEnabled 64 =
@@ -38,7 +42,7 @@
         Name="/aperture"
         NameSpace="%SYS"
         Description="Aperture management portal (static SPA)"
-        Path="{$cspdir}aperture/"
+        Path="{$mgrdir}aperture/"
         Enabled="1"
         ServeFiles="1"
         Recurse="1"

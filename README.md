@@ -75,8 +75,8 @@ IRIS for Health Community 2026.2 is tested too, against a real instance
 in a `.env` file next to the compose file. The portal image pins `node:22-alpine` and
 `nginx:1.30-alpine` by digest, and CI pins every GitHub Action to a commit. At build time
 [`docker/iris/init.script`](docker/iris/init.script) fetches the InterSystems Package Manager from the
-community registry (installer 0.10.9, checked against its SHA-256) and installs Aperture through its own IPM package (`zpm "load"` of [`module.xml`](module.xml)): the built portal is copied under the instance's `csp/`
-directory, the `/aperture` web application is created, the `/api/aperture` log reader
+community registry (installer 0.10.9, checked against its SHA-256) and installs Aperture through its own IPM package (`zpm "load"` of [`module.xml`](module.xml)): the built portal is copied into the instance's manager
+directory (`mgr/aperture/`), the `/aperture` web application is created, the `/api/aperture` log reader
 ([`Aperture.API`](ipm/cls/Aperture/API.cls) over [`Aperture.Logs`](ipm/cls/Aperture/Logs.cls), Embedded Python)
 is created, and [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls), also Embedded Python, enables
 `/api/admin` with password + JWT authentication. The build log ends with the installer's readiness
@@ -92,7 +92,8 @@ docker exec aperture-iris iris session IRIS -U USER "##class(Aperture.Installer)
 zpm "install iris-aperture"
 ```
 
-copies the pre-built portal (`www/`) under the instance's `csp/` directory, creates the `/aperture`
+copies the pre-built portal (`www/`) into the instance's manager directory (`mgr/aperture/`, which
+durable %SYS keeps across container updates), creates the `/aperture`
 web application and the `/api/aperture` log reader (a read-only `%CSP.REST` class over an Embedded
 Python file reader, needs `%Admin_Operate:USE`), and runs [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls),
 an Embedded Python class that enables `/api/admin` with password and JWT authentication and prints a

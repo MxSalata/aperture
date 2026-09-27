@@ -402,7 +402,9 @@ Three rules sit at the render boundary rather than in individual screens:
 
 Hash routing is used wherever there is no server to rewrite deep links to `index.html`.
 
-There is one installation path. `module.xml` copies `www/` to `{$cspdir}aperture/`, creates the
+There is one installation path. `module.xml` copies `www/` to `{$mgrdir}aperture/` (the manager
+directory: in a container the csp directory belongs to the image, a running instance may not write
+there, and nothing written there survives the container being recreated), creates the
 `/aperture` web application, compiles `Aperture.API` and `Aperture.Logs` and creates the
 `/api/aperture` web application for them (in the namespace the package is installed in, password
 authentication, resource `%Admin_Operate`), and invokes `Aperture.Installer`
