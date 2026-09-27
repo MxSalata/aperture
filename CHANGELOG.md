@@ -37,6 +37,13 @@
   like the others, so nothing flashes on load; it is a light theme only: System still follows the
   OS between Light and Dark, and high contrast overrides it. The accessibility suite now audits
   every screen in five modes.
+- **The navigation menu can be rearranged.** Hold an entry and it lifts; drag it and the others
+  slide out of its way; let go and it stays there, on this device. A group moves by its heading, a
+  screen stays within its group, a short press is still a click, and a drag never opens a screen.
+  With the keyboard, Alt+Up and Alt+Down move the focused entry and Alt+Shift+Up or Down its whole
+  group, announced to screen readers. "Reset menu order" at the foot of the menu puts everything
+  back. Screens the account may not use are left out as before, and a screen added by a later
+  version appears where the menu puts it.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 
