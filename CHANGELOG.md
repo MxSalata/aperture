@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.2 - tested on a real IRIS for Health, with disk space, new themes and a choice of charts (28 September 2026)
 
 - **A reload just after signing in no longer signs you out.** Sign-in stores the session for the
   tab, then reads `/info`. A reload or a typed address in that moment aborted the read; sign-in took

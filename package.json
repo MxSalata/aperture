@@ -1,6 +1,6 @@
 {
   "name": "iris-aperture",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Aperture: a modern management portal for InterSystems IRIS built on the SysAdmin REST API (/api/admin v2)",
   "license": "MIT",
