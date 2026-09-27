@@ -51,6 +51,10 @@
   before sending anything; editing a resource whose public access was taken away in the Management
   Portal now sends only what changed, which IRIS accepts. The mock refuses it the same way, and
   keeps a TLS server's type when a PUT leaves it out.
+- **The shape oracle, recorded again.** `scripts/live/shapes.mjs` against IRIS for Health 2026.2 on
+  27 September found the same 74 operations in the same shapes, except that a busy process's
+  `Process` in the dashboard is an integer as well as the padding rows' empty string; the mock's
+  answers already fit, and the contract test passes unchanged.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 
