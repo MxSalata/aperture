@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.0.1 - after a review of the online demo (27 September 2026)
+
+- **The demo comes first.** On the online demo the sign-in page opens with the demo and says what it
+  is; signing in to an IRIS instance follows. Where a screen needs a password in a JWT session
+  (REST services, the Messages log), the demo says its password is `SYS` and offers it with one
+  click. The README's evaluation path takes the integrity check through Databases → USER → Actions,
+  not the Explorer's JSON body.
+- **Colours of its own.** An ocean blue-teal primary replaces Mantine's stock indigo, dark mode moves
+  from neutral grey to slate, light mode sets the cards on a cool page tone, and the header and sign-in
+  page share one brand mark. Every colour role keeps WCAG AA contrast (computed first, then checked by
+  axe in all four appearance modes).
+- **A loading splash.** The page shows the brand mark and "Loading Aperture…" from the first paint,
+  instead of staying blank while the demo starts its API mock.
+- **Badges keep their whole label** in table columns ("RUNW", "SYSTEM", "Scheduled", no longer
+  "RU…").
+- **Accessibility.** The raw JSON panels and the Explorer's lists scroll by keyboard (axe reported
+  scrollable-region-focusable on four screens); the audit now covers those screens too.
+- **Smaller fixes.** The Explorer shows `/v2/database-dirs` as itself, not "s". Connections names
+  the profile's default user and who is signed in. Database settings show megabytes and "Unlimited",
+  "System default" or "Off" like the space card. The demo starts with two finished tasks in the Job
+  Center and mappings in USER, reports the IRIS build Aperture was verified on (2026.2 Build 221U),
+  and sends a global mapping's collation as IRIS does (an integer; a documented divergence from the
+  spec).
+- **Housekeeping.** GitHub Actions on their Node 24 releases, pinned by SHA; one concurrency helper
+  (`mapLimit` in `lib/limiter.ts`); the entry chunk budget raised to 330 KB, with the reason.
+
 ## 1.0.0 - the submission (25 September 2026)
 
 - **The log files, through a reader of Aperture's own.** The SysAdmin API has no route for

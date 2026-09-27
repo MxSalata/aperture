@@ -3,7 +3,7 @@
   <Document name="iris-aperture.ZPM">
     <Module>
       <Name>iris-aperture</Name>
-      <Version>1.0.0</Version>
+      <Version>1.0.1</Version>
       <Description>Aperture: a modern management portal for InterSystems IRIS built on the SysAdmin REST API (/api/admin v2). Dashboard, databases, namespaces, processes, devices, journals, tasks, security (users, roles, web applications, TLS, X.509, wallet, OAuth 2.0), a Job Center for asynchronous operations, a spec-driven explorer for all 273 API operations, and a read-only Embedded Python log reader (/api/aperture) for messages.log, alerts.log and SystemMonitor.log, which the SysAdmin API does not expose.</Description>
       <Keywords>management portal,sysadmin,rest,admin,dashboard,logs,contest,react,embedded python</Keywords>
       <Author>
