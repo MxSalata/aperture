@@ -12,9 +12,66 @@
     <title>Aperture · IRIS Management Portal</title>
     <!-- Applies the stored colour scheme and contrast before the first paint (see public/color-scheme.js). -->
     <script src="%BASE_URL%color-scheme.js"></script>
+    <style>
+      /* Shown until React's first render replaces #root: the demo loads its API mock first. */
+      .boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 14px;
+        background: #f5f7fa;
+        color: #495057;
+        font:
+          500 14px/1.4 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      .boot-mark {
+        width: 44px;
+        height: 44px;
+        border-radius: 13px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #095c7c, #45acd1);
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+        animation: boot-pulse 1.4s ease-in-out infinite;
+      }
+      .boot-mark::after {
+        content: '';
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 3.5px solid #fff;
+      }
+      html[data-mantine-color-scheme='dark'] .boot {
+        background: #181e26;
+        color: #b3bcc8;
+      }
+      @keyframes boot-pulse {
+        50% {
+          transform: scale(0.92);
+          opacity: 0.85;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-mark {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" role="status" aria-live="polite">
+        <div class="boot-mark"></div>
+        <div>Loading Aperture…</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
