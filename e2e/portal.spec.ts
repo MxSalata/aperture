@@ -175,6 +175,20 @@ test.describe('Aperture (demo mode)', () => {
     await expect(page.getByRole('heading', { name: 'Locks' })).toBeVisible();
   });
 
+  test('a click on the backdrop closes the command palette, not an edit dialog', async ({ page }) => {
+    await loginDemo(page);
+    await page.getByRole('button', { name: 'Open command palette' }).click();
+    const search = page.getByPlaceholder(/Jump to a screen/);
+    await expect(search).toBeVisible();
+    await page.mouse.click(40, 600);
+    await expect(search).toBeHidden();
+    // Forms keep the theme's rule: a stray click outside must not discard a half-filled one.
+    await go(page, '/security/users/jdoe');
+    await page.getByRole('button', { name: 'Edit' }).click();
+    await page.mouse.click(40, 600);
+    await expect(page.getByRole('dialog')).toBeVisible();
+  });
+
   test('edits are reviewed field by field before they are applied', async ({ page }) => {
     await loginDemo(page);
     await go(page, '/security/users/jdoe');

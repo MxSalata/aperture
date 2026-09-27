@@ -54,6 +54,9 @@ export function CommandPalette() {
     <Spotlight
       actions={actions}
       onSpotlightOpen={loadOperations}
+      // The theme keeps modals open on a click outside so a half-filled form survives it; the
+      // palette is a Modal too but holds nothing to lose, so its backdrop closes it.
+      closeOnClickOutside
       shortcut={['mod + K', '/']}
       limit={12}
       nothingFound={operations ? 'Nothing found' : 'Loading the API operations…'}

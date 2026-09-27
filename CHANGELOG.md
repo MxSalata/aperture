@@ -18,6 +18,10 @@
   keeps. Verified on that instance: the load completed, the readiness report passed all nine checks,
   and `npm run verify:live` with the portal URL passed 25/25, reading the log catalogue and a window
   of `messages.log` over HTTP. The CI image, which installs at build time, was not affected.
+- **A click beside the command palette closes it.** The theme keeps every modal open on a click
+  outside, so a half-filled form survives a stray click; the palette is a Mantine modal too and
+  inherited the rule, so only Escape or a pick closed it. It now closes on its backdrop, while edit
+  dialogs keep the rule (an end-to-end test checks both).
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 
