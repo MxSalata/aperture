@@ -21,7 +21,7 @@
         place-content: center;
         justify-items: center;
         gap: 14px;
-        background: #f5f7fa;
+        background: #ebeef2;
         color: #495057;
         font:
           500 14px/1.4 ui-sans-serif,
@@ -51,6 +51,14 @@
       html[data-mantine-color-scheme='dark'] .boot {
         background: #181e26;
         color: #b3bcc8;
+      }
+      html[data-aperture-contrast='high'] .boot {
+        background: #fff;
+        color: #000;
+      }
+      html[data-aperture-contrast='high'][data-mantine-color-scheme='dark'] .boot {
+        background: #000;
+        color: #fff;
       }
       @keyframes boot-pulse {
         50% {

@@ -22,6 +22,13 @@
   outside, so a half-filled form survives a stray click; the palette is a Mantine modal too and
   inherited the rule, so only Escape or a pick closed it. It now closes on its backdrop, while edit
   dialogs keep the rule (an end-to-end test checks both).
+- **A softer Light theme.** White cards on a near-white page were too bright. The page behind the
+  cards is now a cool grey, and the cards, navbar, header, menus, modals and the sign-in page sit
+  just off white with a firmer edge; striped and hovered table rows move a step darker so they
+  still show, and the loading splash follows. The text is not greyed: body text stays black, dimmed
+  text reads at 7.0:1 on a card and 6.2:1 on the page, links at 6.4:1, and the status colours were
+  darkened by up to five percent so every badge keeps 4.5:1 on the new page tone and on a hovered
+  row. Dark and both high-contrast modes are unchanged.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 
