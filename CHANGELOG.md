@@ -93,6 +93,10 @@
   per screen on this device, and a hidden tab does not poll the instance: it refreshes the moment it
   comes back and counts from there. The "Live (5s)" switch of the Processes, Locks and Web sessions
   screens is replaced by it (Processes no longer polls unless asked to).
+- **The host figures on the dashboard read at a glance.** The line "CPU · Memory · Fullest DB
+  disk" is now three gauges: a ring that fills with the percentage, green up to 75 %, amber to 90 %
+  and red above, the number beside it and what it measures under it. The "Host monitor" link stays
+  in the section's heading.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 
