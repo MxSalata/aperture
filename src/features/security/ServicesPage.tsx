@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { IconPencil, IconRefresh } from '@tabler/icons-react';
 import { useState } from 'react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
+import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import type { ServiceList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
@@ -58,11 +59,8 @@ export default function ServicesPage() {
     { invalidate: [secKeys.services], success: (_d, v) => `${v.name} ${v.enabled ? 'enabled' : 'disabled'}` },
   );
   const save = useApiMutation(
-    (v: typeof form.values) =>
-      run(
-        api().PUT('/v2/security/service', { params: { query: { name: editing ?? '' } }, body: toBody(v) }),
-        'PUT',
-      ),
+    (body: Partial<ReturnType<typeof toBody>>) =>
+      run(api().PUT('/v2/security/service', { params: { query: { name: editing ?? '' } }, body }), 'PUT'),
     { invalidate: [secKeys.services], onSuccess: close },
   );
 
@@ -171,7 +169,11 @@ export default function ServicesPage() {
                 result(
                   api().GET('/v2/security/service', { params: { query: { name: editing ?? '' } } }),
                 ) as Promise<Record<string, unknown>>,
-              onConfirm: () => save.mutateAsync(v),
+              onlyChanges: sendsOnlyChanges('/v2/security/service'),
+              onConfirm: (changed) =>
+                save.mutateAsync(
+                  putBody('/v2/security/service', toBody(v), changed as Partial<ReturnType<typeof toBody>>),
+                ),
             }),
           )}
         >

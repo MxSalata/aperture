@@ -40,6 +40,17 @@
   spec requires, and confirms in the Explorer only when it asks. Its results, the live checks before
   and after the IPM install and the install transcript are in
   `docs/verification/2026-09-27-irishealth-2026.2/`.
+- **Security edits send only what changed.** The edit dialogs of roles, resources, users, web
+  applications, services and TLS configurations send the fields the review lists, as those of
+  databases, journal settings and namespaces already did: IRIS merged a body naming one field for
+  each of the six types. A field changed on the server since the dialog opened is kept unless it
+  was changed here too, and disabling a user sends `Enabled` alone.
+- **A resource without a public permission is not sent.** IRIS 2026.2 refuses one, on creation and
+  on edit, with a 400 that carries no message (spec finding 8, now confirmed for both). The
+  Resources form shows "none" without offering it, and a creation without a permission says why
+  before sending anything; editing a resource whose public access was taken away in the Management
+  Portal now sends only what changed, which IRIS accepts. The mock refuses it the same way, and
+  keeps a TLS server's type when a PUT leaves it out.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 

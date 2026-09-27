@@ -259,8 +259,13 @@ export const securityHandlers = [
   route('put', '/v2/security/resource', SECURE, async ({ request, account }) => {
     const name = requireParam(request, 'name');
     if (!name) return badRequest('Missing name');
-    const body = await jsonBody<{ Description?: string; PublicPermission?: string }>(request);
+    const body = await jsonBody<{ Description?: string; PublicPermission?: string | null }>(request);
     const existing = mockDb.resources.find((x) => x.Name === name);
+    // As IRIS 2026.2: no public permission is refused, "" and null with no message at all
+    // (docs/verification/2026-09-27-irishealth-2026.2/writes.json).
+    if ('PublicPermission' in body && !body.PublicPermission) return fail(400, '', []);
+    if (!existing && body.PublicPermission === undefined)
+      return fail(400, "ERROR #40301: Field 'PublicPermission' is required in the request body.");
     if (existing) {
       Object.assign(existing, body);
       recordAudit(account, 'ResourceChange', `Resource ${name} modified`);
@@ -516,7 +521,13 @@ export const securityHandlers = [
       Name: name,
       Description: String(body.Description ?? existing?.Description ?? ''),
       Enabled: body.Enabled !== undefined ? !!body.Enabled : (existing?.Enabled ?? true),
-      Type: body.Type === 1 || body.Type === 'Server' ? 'Server' : 'Client',
+      // A PUT that leaves Type out keeps it (it merges, like IRIS): a server stays a server.
+      Type:
+        body.Type === undefined
+          ? (existing?.Type ?? 'Client')
+          : body.Type === 1 || body.Type === 'Server'
+            ? 'Server'
+            : 'Client',
       CAFile: String(body.CAFile ?? existing?.CAFile ?? ''),
       CertificateFile: String(body.CertificateFile ?? existing?.CertificateFile ?? ''),
       PrivateKeyFile: String(body.PrivateKeyFile ?? existing?.PrivateKeyFile ?? ''),

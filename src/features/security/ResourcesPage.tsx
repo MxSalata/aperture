@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { IconPencil, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
+import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import type { ResourceList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
@@ -13,11 +14,18 @@ import { reviewChanges } from '@/components/ReviewChanges';
 import { secKeys } from './keys';
 
 type Row = ResourceList[number];
-/** Every combination of Read, Write and Use, in the order IRIS writes them. */
+/**
+ * IRIS 2026.2 refuses a resource with no public permission, created or edited: "" and null answer
+ * 400 with no message, a missing field 400 "required" (quirk resource-create-empty-public).
+ */
+const NONE_REFUSED =
+  'The SysAdmin API refuses a resource with no public permission (IRIS 2026.2). Choose one here, or take public access away in the Management Portal.';
+/** Every combination of Read, Write and Use, in the order IRIS writes them; "none" shows, but cannot be chosen. */
 const PERMS = [
-  { value: '', label: 'none' },
+  { value: '', label: 'none (the API refuses it)', disabled: true },
   ...['R', 'W', 'U', 'RW', 'RU', 'WU', 'RWU'].map((p) => ({ value: p, label: p })),
 ];
+type ResourceBody = { Description?: string; PublicPermission?: string };
 
 export default function ResourcesPage() {
   const list = useQuery({
@@ -32,14 +40,8 @@ export default function ResourcesPage() {
     validate: { Name: (v) => (/^[A-Za-z%][\w.-]*$/.test(v) ? null : 'Invalid resource name') },
   });
   const save = useApiMutation(
-    (v: typeof form.values) =>
-      run(
-        api().PUT('/v2/security/resource', {
-          params: { query: { name: v.Name } },
-          body: { Description: v.Description, PublicPermission: v.PublicPermission },
-        }),
-        'PUT',
-      ),
+    ({ name, body }: { name: string; body: ResourceBody }) =>
+      run(api().PUT('/v2/security/resource', { params: { query: { name } }, body }), 'PUT'),
     {
       invalidate: [secKeys.resources],
       onSuccess: () => {
@@ -166,31 +168,35 @@ export default function ResourcesPage() {
       />
       <Modal opened={opened} onClose={close} title={editing ? `Edit ${editing}` : 'Create resource'} centered>
         <form
-          onSubmit={form.onSubmit((v) =>
-            editing
-              ? reviewChanges({
-                  title: `Review changes to ${editing}`,
-                  before,
-                  after: { Description: v.Description, PublicPermission: v.PublicPermission },
-                  refetch: () =>
-                    result(
-                      api().GET('/v2/security/resource', { params: { query: { name: editing } } }),
-                    ) as Promise<Record<string, unknown>>,
-                  onConfirm: () => save.mutateAsync(v),
-                })
-              : save.mutate(v),
-          )}
+          onSubmit={form.onSubmit((v) => {
+            const body: ResourceBody = { Description: v.Description, PublicPermission: v.PublicPermission };
+            if (editing)
+              reviewChanges({
+                title: `Review changes to ${editing}`,
+                before,
+                after: body,
+                refetch: () =>
+                  result(
+                    api().GET('/v2/security/resource', { params: { query: { name: editing } } }),
+                  ) as Promise<Record<string, unknown>>,
+                // Only what changed: an untouched "none" from the Management Portal is never sent back.
+                onlyChanges: sendsOnlyChanges('/v2/security/resource'),
+                onConfirm: (changed) =>
+                  save.mutateAsync({
+                    name: editing,
+                    body: putBody('/v2/security/resource', body, changed as ResourceBody),
+                  }),
+              });
+            else if (!v.PublicPermission) form.setFieldError('PublicPermission', NONE_REFUSED);
+            else save.mutate({ name: v.Name, body });
+          })}
         >
           <Stack gap="sm">
             <TextInput label="Name" disabled={!!editing} data-autofocus {...form.getInputProps('Name')} />
             <TextInput label="Description" {...form.getInputProps('Description')} />
             <Select
               label="Public permission"
-              description={
-                editing
-                  ? undefined
-                  : 'IRIS 2026.2 has been seen to refuse creating a resource with no public permission (quirk resource-create-empty-public).'
-              }
+              description="IRIS 2026.2 refuses a resource with no public permission, on creation and on edit."
               data={PERMS}
               {...form.getInputProps('PublicPermission')}
             />

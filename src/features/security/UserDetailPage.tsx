@@ -21,6 +21,7 @@ import { IconArrowLeft, IconChevronDown, IconKey, IconTrash } from '@tabler/icon
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
+import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import type { User } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
@@ -46,7 +47,7 @@ export default function UserDetailPage() {
   const params = { params: { query: { name } } } as const;
   const invalidate = [secKeys.users, secKeys.user(name)];
   const save = useApiMutation(
-    (body: User) => run(api().PUT('/v2/security/user', { ...params, body }), 'PUT'),
+    (body: Partial<User>) => run(api().PUT('/v2/security/user', { ...params, body }), 'PUT'),
     { invalidate, onSuccess: () => closeEdit() },
   );
   const password = useApiMutation(
@@ -134,7 +135,10 @@ export default function UserDetailPage() {
                           roles: u.Roles ?? [],
                           enabled: false,
                         }),
-                      onConfirm: () => save.mutateAsync({ ...u, Enabled: false }),
+                      onConfirm: () =>
+                        save.mutateAsync(
+                          putBody('/v2/security/user', { ...u, Enabled: false }, { Enabled: false }),
+                        ),
                     });
                   }}
                 >
@@ -216,7 +220,9 @@ export default function UserDetailPage() {
                   enabled: v.Enabled !== false,
                 }),
               guardConfirmText: name,
-              onConfirm: () => save.mutateAsync(v),
+              onlyChanges: sendsOnlyChanges('/v2/security/user'),
+              onConfirm: (changed) =>
+                save.mutateAsync(putBody('/v2/security/user', v, changed as Partial<typeof v>)),
             }),
           )}
         >
