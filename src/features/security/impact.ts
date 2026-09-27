@@ -1,5 +1,6 @@
 import { api, result } from '@/api/client';
-import { applyChange, mapLimit, type AdminChange, type AdminModel, type RoleFacts } from './adminGuard';
+import { mapLimit } from '@/lib/limiter';
+import { applyChange, type AdminChange, type AdminModel, type RoleFacts } from './adminGuard';
 
 /**
  * Who loses what: for a change to a role or to a user's roles, the privileges (resource and

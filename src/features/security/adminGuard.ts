@@ -1,4 +1,5 @@
 import { api, result } from '@/api/client';
+import { mapLimit } from '@/lib/limiter';
 
 /**
  * Who can still administer security after a change. A change that leaves no enabled account
@@ -98,16 +99,6 @@ export function judge(model: AdminModel, change: AdminChange): AdminVerdict {
   const before = [...securityAdmins(model)].sort();
   const after = [...securityAdmins(applyChange(model, change))].sort();
   return { before, after, locksOut: before.length > 0 && after.length === 0 };
-}
-
-export async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const out: R[] = new Array(items.length);
-  let next = 0;
-  const worker = async () => {
-    for (let i = next++; i < items.length; i = next++) out[i] = await fn(items[i]);
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return out;
 }
 
 /**

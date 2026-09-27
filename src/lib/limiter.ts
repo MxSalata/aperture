@@ -26,3 +26,9 @@ export function createLimiter(concurrency: number) {
     });
   };
 }
+
+/** `fn` over every item, at most `concurrency` at a time; the results keep the items' order. */
+export function mapLimit<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const limit = createLimiter(concurrency);
+  return Promise.all(items.map((item) => limit(() => fn(item))));
+}
