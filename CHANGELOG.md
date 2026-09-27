@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- **Groundwork for "similar entries" in the Messages log.** One wording vectoriser, written twice
+  with identical output: Python for the package on the instance (`ipm/python/aperture_vectors.py`)
+  and TypeScript for the demo (`src/lib/logVectors.ts`). An entry's time, pid and severity are
+  dropped, the rest lower-cased, file paths become `<path>`, hexadecimal ids `<h>` and numbers
+  `<n>`; its words and neighbouring word pairs are hashed (FNV-1a) into 256 signed buckets, weighted
+  `1 + ln(count)`, and normalised, so the same message with other numbers scores 1.0 by cosine and
+  unrelated messages near 0. One fixture (`ipm/python/tests/fixture.json`) is checked by both test
+  suites, the Python one without IRIS (`python3 -m unittest discover -s ipm/python/tests`).
+
 ## 1.0.2 - tested on a real IRIS for Health, with disk space, new themes and a choice of charts (28 September 2026)
 
 - **A reload just after signing in no longer signs you out.** Sign-in stores the session for the
