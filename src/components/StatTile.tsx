@@ -12,7 +12,7 @@ interface Props {
   aside?: ReactNode;
 }
 
-export function StatTile({ label, value, hint, icon, color = 'indigo', footer, aside }: Props) {
+export function StatTile({ label, value, hint, icon, color = 'aperture', footer, aside }: Props) {
   return (
     <Paper p="md" radius="md" withBorder h="100%">
       <Group justify="space-between" align="flex-start" wrap="nowrap">

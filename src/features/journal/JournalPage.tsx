@@ -266,7 +266,7 @@ export default function JournalPage() {
                   title: 'Switch journal file',
                   message: 'Start a new journal file now? The current file is closed and kept.',
                   confirmLabel: 'Switch',
-                  color: 'indigo',
+                  color: 'aperture',
                   onConfirm: () => switchFile.mutateAsync(),
                 })
               }
@@ -282,7 +282,7 @@ export default function JournalPage() {
                   title: 'Switch journal directory',
                   message: `Switch journaling to the alternate directory (${String(settings.data?.AlternateDirectory ?? 'not configured')})?`,
                   confirmLabel: 'Switch',
-                  color: 'indigo',
+                  color: 'aperture',
                   onConfirm: () => switchDir.mutateAsync(),
                 })
               }

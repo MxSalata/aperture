@@ -55,22 +55,12 @@ import { useAppearance, type ContrastSetting } from '@/stores/appearance';
 import { useResolvedContrast } from './useApplyAppearance';
 import { JobsDrawer } from '@/features/jobs/JobsDrawer';
 import { JobPoller } from '@/features/jobs/JobPoller';
+import { BrandMark } from '@/components/BrandMark';
 
 function Logo() {
   return (
     <Group gap={8} wrap="nowrap">
-      <Box
-        w={28}
-        h={28}
-        style={{
-          borderRadius: 8,
-          background: 'linear-gradient(135deg, var(--mantine-color-indigo-6), var(--mantine-color-cyan-5))',
-          display: 'grid',
-          placeItems: 'center',
-        }}
-      >
-        <Box w={12} h={12} style={{ borderRadius: '50%', border: '2.5px solid white' }} />
-      </Box>
+      <BrandMark size={28} />
       <Text fw={700} fz="lg" style={{ letterSpacing: -0.3 }}>
         {APP_NAME}
       </Text>
@@ -298,7 +288,7 @@ function JobsButton() {
     <Tooltip
       label={active.length ? `${active.length} running job${active.length === 1 ? '' : 's'}` : 'Job Center'}
     >
-      <Indicator disabled={!active.length} processing color="indigo" size={8} offset={4}>
+      <Indicator disabled={!active.length} processing color="aperture" size={8} offset={4}>
         <ActionIcon
           variant="subtle"
           color="gray"
@@ -333,6 +323,7 @@ export function AppLayout() {
       header={{ height: 56 }}
       navbar={{ width: 250, breakpoint: 'md', collapsed: { mobile: !opened } }}
       padding="md"
+      styles={{ main: { background: 'var(--aperture-page)' } }}
     >
       <AppShell.Header style={{ boxShadow: `inset 0 3px 0 0 var(--mantine-color-${instance.color}-6)` }}>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">

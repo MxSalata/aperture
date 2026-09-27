@@ -108,7 +108,7 @@ export default function MonitorPage() {
           label="CPU usage"
           value={cpu === undefined ? '-' : formatPercent(cpu, 0)}
           hint="iris_cpu_usage"
-          color={cpu !== undefined && cpu > 85 ? 'red' : 'indigo'}
+          color={cpu !== undefined && cpu > 85 ? 'red' : 'aperture'}
         />
         <StatTile
           label="Physical memory used"

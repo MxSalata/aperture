@@ -164,7 +164,7 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
               size="xs"
               value={progressPct ?? (job.state === 'Paused' ? 50 : 100)}
               animated={progressPct === undefined && job.state !== 'Paused'}
-              color={job.state === 'Paused' ? 'yellow' : 'indigo'}
+              color={job.state === 'Paused' ? 'yellow' : 'aperture'}
               aria-label={`${job.name} progress`}
             />
             {progressPct !== undefined ? (

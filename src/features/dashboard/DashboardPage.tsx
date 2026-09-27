@@ -609,7 +609,7 @@ export default function DashboardPage() {
                       <Progress
                         size="xs"
                         value={Math.max(ratio, 0.5)}
-                        color={ratio > 5 ? 'red' : ratio > 1 ? 'yellow' : 'indigo'}
+                        color={ratio > 5 ? 'red' : ratio > 1 ? 'yellow' : 'aperture'}
                         aria-label={`${r.Name} seize waits`}
                       />
                     </div>

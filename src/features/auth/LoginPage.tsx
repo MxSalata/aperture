@@ -33,6 +33,7 @@ import {
   SAME_ORIGIN_ID,
 } from '@/stores/connections';
 import { DEMO_BUILD, DEMO_PASSWORD, useDemo } from '@/stores/demo';
+import { BrandMark } from '@/components/BrandMark';
 import { describeError } from '@/lib/errors';
 import { APP_NAME, APP_TAGLINE } from '@/theme';
 
@@ -176,25 +177,16 @@ export default function LoginPage() {
   return (
     <Box
       mih="100vh"
-      style={{ background: 'linear-gradient(160deg, var(--mantine-color-indigo-light) 0%, transparent 55%)' }}
+      style={{
+        background:
+          'linear-gradient(160deg, var(--mantine-color-aperture-light) 0%, transparent 55%), var(--aperture-page)',
+      }}
     >
       <Container size={460} py={60}>
         <Center mb="lg">
           <Stack gap={4} align="center">
             <Group gap={10}>
-              <Box
-                w={40}
-                h={40}
-                style={{
-                  borderRadius: 12,
-                  background:
-                    'linear-gradient(135deg, var(--mantine-color-indigo-6), var(--mantine-color-cyan-5))',
-                  display: 'grid',
-                  placeItems: 'center',
-                }}
-              >
-                <Box w={16} h={16} style={{ borderRadius: '50%', border: '3px solid white' }} />
-              </Box>
+              <BrandMark size={40} />
               <Title order={1} style={{ letterSpacing: -0.5 }}>
                 {APP_NAME}
               </Title>

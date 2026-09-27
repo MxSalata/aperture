@@ -378,7 +378,7 @@ export default function DatabaseDetailPage() {
             <Group justify="space-between" mb="xs">
               <Title order={5}>Space</Title>
               {metrics.running ? (
-                <Badge color="indigo" variant="light">
+                <Badge color="aperture" variant="light">
                   collecting via async task…
                 </Badge>
               ) : m ? (
@@ -390,7 +390,7 @@ export default function DatabaseDetailPage() {
                 <Progress.Root size={18}>
                   <Progress.Section
                     value={usedPct}
-                    color={usedPct > 90 ? 'red' : usedPct > 75 ? 'yellow' : 'indigo'}
+                    color={usedPct > 90 ? 'red' : usedPct > 75 ? 'yellow' : 'aperture'}
                     aria-label="Space used"
                   >
                     <Progress.Label>{usedPct.toFixed(0)}% used</Progress.Label>

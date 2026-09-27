@@ -643,7 +643,7 @@ function OperationPanel({ op, doc }: { op: IndexedOperation; doc: OpenApiDoc | n
       <Group>
         <Button
           leftSection={<IconPlayerPlay size={16} />}
-          color={dangerous ? 'red' : mutating ? 'orange' : 'indigo'}
+          color={dangerous ? 'red' : mutating ? 'orange' : 'aperture'}
           onClick={run}
           loading={busy}
         >

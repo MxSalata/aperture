@@ -7,7 +7,7 @@
  *  - the hues are mutually distinguishable under the common colour-vision deficiencies
  *    (indigo / teal / orange / grape / cyan were chosen with the dataviz validator);
  *  - every swatch keeps WCAG 1.4.11's 3:1 against the surface it is drawn on
- *    (white in light mode, Mantine `dark-7` #242424 in dark mode); the high-contrast
+ *    (white in light mode, the slate `dark-7` #1f2630 in dark mode); the high-contrast
  *    palettes keep 4:1 on white (no Mantine orange reaches 4.5:1 there; shade 9 is 4.30) and
  *    5:1 on dark. Shades therefore differ per scheme: teal 6 (#12b886) reads at 2.55:1 on
  *    white and is not used there.
@@ -27,7 +27,7 @@ export const SERIES_SHADE_DARK_HC = [4, 4, 4, 4, 4] as const;
 
 /** Surfaces the palettes are validated against. */
 export const SURFACE_LIGHT = '#ffffff';
-export const SURFACE_DARK = '#242424';
+export const SURFACE_DARK = '#1f2630';
 
 /** Redundant, non-colour encoding for line series: the n-th series gets the n-th dash pattern. */
 export const SERIES_DASH = ['', '6 3', '2 3', '8 3 2 3', '1 3'] as const;

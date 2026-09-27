@@ -1,5 +1,7 @@
 :root {
   --aperture-mono: ui-monospace, Menlo, Consolas, 'Liberation Mono', monospace;
+  /* The page behind the cards: a cool tone in light mode, a step darker than the cards in dark. */
+  --aperture-page: #f5f7fa;
   /* Secondary text tokens: no inline opacity anywhere, so a contrast layer can raise them. */
   --aperture-muted: var(--mantine-color-gray-7);
   --aperture-muted-soft: var(--mantine-color-gray-6);
@@ -27,6 +29,8 @@
  */
 :root:root[data-mantine-color-scheme='light'],
 :root:root[data-mantine-color-scheme='dark'] {
+  --mantine-color-aperture-filled: var(--mantine-color-aperture-7);
+  --mantine-color-aperture-filled-hover: var(--mantine-color-aperture-8);
   --mantine-color-gray-filled: var(--mantine-color-gray-7);
   --mantine-color-gray-filled-hover: var(--mantine-color-gray-8);
   --mantine-color-red-filled: var(--mantine-color-red-9);
@@ -57,6 +61,9 @@
 
 :root:root[data-mantine-color-scheme='light'] {
   --mantine-color-anchor: var(--mantine-primary-color-8);
+  --mantine-color-aperture-text: var(--mantine-color-aperture-8);
+  --mantine-color-aperture-outline: var(--mantine-color-aperture-8);
+  --mantine-color-aperture-light-color: var(--mantine-color-aperture-9);
   --mantine-color-gray-text: var(--mantine-color-gray-7);
   --mantine-color-gray-outline: var(--mantine-color-gray-7);
   --mantine-color-gray-light-color: var(--mantine-color-gray-7);
@@ -98,9 +105,11 @@
   --mantine-color-orange-light-color: #b83d0d;
 }
 
-/* Mantine's dark "dimmed" is dark-2 (#828282, 4.0:1 on the dark-7 body); dark-1 reads at 7.8:1. */
+/* Mantine's dark "dimmed" is dark-2; dark-1 of the slate scale reads at 7.9:1 on the dark-7 body. */
 :root:root[data-mantine-color-scheme='dark'] {
   --mantine-color-dimmed: var(--mantine-color-dark-1);
+  --mantine-color-aperture-text: var(--mantine-color-aperture-3);
+  --mantine-color-aperture-light-color: var(--mantine-color-aperture-3);
   --mantine-color-anchor: var(--mantine-primary-color-3);
   --mantine-color-grape-text: var(--mantine-color-grape-3);
   --mantine-color-violet-text: var(--mantine-color-violet-3);
@@ -109,6 +118,7 @@
 }
 
 :root[data-mantine-color-scheme='dark'] {
+  --aperture-page: var(--mantine-color-dark-8);
   --aperture-muted: var(--mantine-color-dark-1);
   /* Icons only (3:1 for graphics): dark-2 is 4.0:1, dark-3 was 2.8:1. */
   --aperture-muted-soft: var(--mantine-color-dark-2);
@@ -126,6 +136,7 @@
    and kept in sync by useApplyAppearance). Independent of light/dark: four combinations. */
 :root[data-aperture-contrast='high'] {
   --aperture-border-width: 2px;
+  --aperture-page: var(--mantine-color-body);
   --mantine-color-default-border: currentColor;
 }
 :root[data-aperture-contrast='high'][data-mantine-color-scheme='light'] {

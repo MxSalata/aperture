@@ -278,7 +278,7 @@ export default function NamespaceDetailPage() {
                     title: 'Enable interoperability',
                     message: `Enable interoperability (productions) in ${name}? This maps the Ens* packages and creates the %Ens_* resources.`,
                     confirmLabel: 'Enable',
-                    color: 'indigo',
+                    color: 'aperture',
                     onConfirm: () => interop.mutateAsync(),
                   })
                 }
