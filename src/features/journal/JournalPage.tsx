@@ -15,17 +15,12 @@ import { useForm } from '@mantine/form';
 import { canUse } from '@/api/privileges';
 import { useSession } from '@/stores/session';
 import { useQuery } from '@tanstack/react-query';
-import {
-  IconArrowsExchange,
-  IconFolder,
-  IconListDetails,
-  IconRefresh,
-  IconShieldCheck,
-} from '@tabler/icons-react';
+import { IconArrowsExchange, IconFolder, IconListDetails, IconShieldCheck } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { api, call, result, run, useApiMutation, useAsyncResult, jobHeaders, SILENT } from '@/api/hooks';
 import type { JournalFileList, JournalSettings } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -248,15 +243,7 @@ export default function JournalPage() {
         privileges={['%Admin_Operate:U', '%Admin_Journal:U']}
         actions={
           <>
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => files.refetch()}
-              loading={files.isFetching}
-            >
-              Refresh
-            </Button>
+            <RefreshControl screen="journal" onRefresh={() => files.refetch()} loading={files.isFetching} />
             <Button
               size="xs"
               variant="light"

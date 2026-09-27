@@ -81,6 +81,29 @@
   like the others, so nothing flashes on load; it is a light theme only: System still follows the
   OS between Light and Dark, and high contrast overrides it. The accessibility suite now audits
   every screen in five modes.
+- **The navigation menu can be rearranged.** Hold an entry and it lifts; drag it and the others
+  slide out of its way; let go and it stays there, on this device. A group moves by its heading, a
+  screen stays within its group, a short press is still a click, and a drag never opens a screen.
+  With the keyboard, Alt+Up and Alt+Down move the focused entry and Alt+Shift+Up or Down its whole
+  group, announced to screen readers. "Reset menu order" at the foot of the menu puts everything
+  back. Screens the account may not use are left out as before, and a screen added by a later
+  version appears where the menu puts it.
+- **Auto-refresh beside every Refresh button.** The button is now a pair: Refresh, and a menu that
+  refreshes the screen every 5, 15, 30 or 60 seconds. It is off by default, the choice is remembered
+  per screen on this device, and a hidden tab does not poll the instance: it refreshes the moment it
+  comes back and counts from there. The "Live (5s)" switch of the Processes, Locks and Web sessions
+  screens is replaced by it (Processes no longer polls unless asked to).
+- **The host figures on the dashboard read at a glance.** The line "CPU · Memory · Fullest DB
+  disk" is now three gauges: a ring that fills with the percentage, green up to 75 %, amber to 90 %
+  and red above, the number beside it and what it measures under it. The "Host monitor" link stays
+  in the section's heading.
+- **Choose the dashboard's charts.** A Charts menu picks which charts the dashboard shows, kept per
+  device: global references per second and disk I/O as before, and now message throughput per
+  namespace and queued messages per namespace, cache efficiency, logical requests, routine
+  references, processes and web sessions, and license use. The two interoperability charts read the
+  `iris_interop_*` series of `/api/monitor` (one line per namespace whose production reports; IRIS
+  publishes them once `##class(Ens.Util.Statistics).EnableSAMForNamespace()` was run there and the
+  production is running, and the card says so until then); the demo's two productions report.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 

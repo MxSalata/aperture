@@ -2,12 +2,13 @@ import { ActionIcon, Button, Group, Modal, Select, Stack, TextInput, Tooltip } f
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconPencil, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
+import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import type { ResourceList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { reviewChanges } from '@/components/ReviewChanges';
@@ -131,15 +132,7 @@ export default function ResourcesPage() {
         privileges={['%Admin_Secure:U']}
         actions={
           <>
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => list.refetch()}
-              loading={list.isFetching}
-            >
-              Refresh
-            </Button>
+            <RefreshControl screen="resources" onRefresh={() => list.refetch()} loading={list.isFetching} />
             <Button
               size="xs"
               leftSection={<IconPlus size={14} />}

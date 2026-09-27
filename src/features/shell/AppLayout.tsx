@@ -9,9 +9,7 @@ import {
   Indicator,
   Kbd,
   Menu,
-  NavLink,
   ScrollArea,
-  Stack,
   Text,
   Tooltip,
   UnstyledButton,
@@ -36,10 +34,11 @@ import {
   IconLock,
   IconLockOpen,
 } from '@tabler/icons-react';
-import { Suspense, type ReactNode } from 'react';
+import { Suspense, useCallback, type ReactNode } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router';
-import { NAV } from './nav';
+import { Link, Outlet, useNavigate } from 'react-router';
+import type { NavItem } from './nav';
+import { NavList } from './NavList';
 import { CommandPalette } from './CommandPalette';
 import { useSession } from '@/stores/session';
 import { useDemo } from '@/stores/demo';
@@ -322,8 +321,8 @@ function JobsButton() {
 export function AppLayout() {
   const [opened, { toggle, close }] = useDisclosure();
   const info = useSession((s) => s.info);
-  const location = useLocation();
   const instance = useInstanceLabel();
+  const canUseItem = useCallback((item: NavItem) => canUse(info, item.privileges), [info]);
 
   // Timestamps are parsed in the instance's zone once the profile names one. Set while
   // rendering, before the page below renders its first timestamp (an effect runs after the
@@ -401,38 +400,7 @@ export function AppLayout() {
 
       <AppShell.Navbar p="xs">
         <ScrollArea type="auto" style={{ flex: 1 }}>
-          <Stack gap="md">
-            {NAV.map((section) => {
-              const items = section.items.filter((i) => canUse(info, i.privileges));
-              if (!items.length) return null;
-              return (
-                <Stack key={section.label} gap={2}>
-                  <Text size="xs" c="dimmed" fw={600} tt="uppercase" px="sm" style={{ letterSpacing: 0.5 }}>
-                    {section.label}
-                  </Text>
-                  {items.map((item) => {
-                    // By path segment: /security/users is not active on /security/users-audit.
-                    const active =
-                      item.to === '/'
-                        ? location.pathname === '/'
-                        : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
-                    return (
-                      <NavLink
-                        key={item.to}
-                        component={Link}
-                        to={item.to}
-                        label={item.label}
-                        leftSection={<item.icon size={18} stroke={1.6} />}
-                        active={active}
-                        onClick={close}
-                        style={{ borderRadius: 8 }}
-                      />
-                    );
-                  })}
-                </Stack>
-              );
-            })}
-          </Stack>
+          <NavList canUse={canUseItem} onNavigate={close} />
         </ScrollArea>
         <Box hiddenFrom="sm" pt="xs">
           <ServerChip />

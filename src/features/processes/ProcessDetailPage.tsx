@@ -1,9 +1,10 @@
 import { Badge, Button, Grid, Group, Paper, Table, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { IconArrowLeft, IconPlayerPause, IconPlayerPlay, IconRefresh, IconSkull } from '@tabler/icons-react';
+import { IconArrowLeft, IconPlayerPause, IconPlayerPlay, IconSkull } from '@tabler/icons-react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { KeyValueList, renderValue } from '@/components/KeyValueList';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -58,15 +59,7 @@ export default function ProcessDetailPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           <>
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => q.refetch()}
-              loading={q.isFetching}
-            >
-              Refresh
-            </Button>
+            <RefreshControl screen="process" onRefresh={() => q.refetch()} loading={q.isFetching} />
             {suspended ? (
               <Button
                 size="xs"

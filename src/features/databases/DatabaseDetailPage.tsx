@@ -19,12 +19,13 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconArrowLeft, IconChevronDown, IconInfoCircle, IconRefresh, IconTrash } from '@tabler/icons-react';
+import { IconArrowLeft, IconChevronDown, IconInfoCircle, IconTrash } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api, call, result, run, useApiMutation, useAsyncResult, jobHeaders, SILENT } from '@/api/hooks';
 import type { Schemas } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -269,21 +270,17 @@ export default function DatabaseDetailPage() {
         privileges={['%Admin_Manage:U', '%Admin_Operate:U']}
         actions={
           <>
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              loading={metrics.running}
-              onClick={() => {
+            <RefreshControl
+              screen="database"
+              onRefresh={() => {
                 local.refetch();
                 config.refetch();
                 void loadMetrics(() =>
                   call(api().POST('/v2/database-dir/info', { ...q, headers: SILENT }), 'POST'),
                 ).catch(() => undefined);
               }}
-            >
-              Refresh
-            </Button>
+              loading={metrics.running}
+            />
             <Menu shadow="md" withinPortal>
               <Menu.Target>
                 <Button size="xs" rightSection={<IconChevronDown size={14} />}>

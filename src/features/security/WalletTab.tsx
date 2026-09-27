@@ -1,3 +1,4 @@
+import { RefreshControl } from '@/components/RefreshControl';
 import {
   ActionIcon,
   Alert,
@@ -21,15 +22,7 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import {
-  IconEye,
-  IconInfoCircle,
-  IconKey,
-  IconPencil,
-  IconPlus,
-  IconRefresh,
-  IconTrash,
-} from '@tabler/icons-react';
+import { IconEye, IconInfoCircle, IconKey, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { canUse } from '@/api/privileges';
@@ -435,15 +428,7 @@ export function WalletTab() {
           </Text>
         </Group>
         <Group gap="xs">
-          <Button
-            size="xs"
-            variant="default"
-            leftSection={<IconRefresh size={14} />}
-            onClick={() => list.refetch()}
-            loading={list.isFetching}
-          >
-            Refresh
-          </Button>
+          <RefreshControl screen="wallet" onRefresh={() => list.refetch()} loading={list.isFetching} />
           <Button
             size="xs"
             leftSection={<IconPlus size={14} />}

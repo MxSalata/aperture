@@ -1,9 +1,10 @@
-import { ActionIcon, Button, Tooltip } from '@mantine/core';
-import { IconRefresh, IconX } from '@tabler/icons-react';
+import { ActionIcon, Tooltip } from '@mantine/core';
+import { IconX } from '@tabler/icons-react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
-import { useLiveQuery } from '@/api/useLiveQuery';
 import type { WebSessionList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { useQuery } from '@tanstack/react-query';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { BoolBadge } from '@/components/StatusBadge';
 import { confirmDanger } from '@/components/ConfirmDanger';
@@ -12,7 +13,7 @@ import { formatDateTime } from '@/lib/format';
 type Row = WebSessionList[number];
 
 export default function WebSessionsPage() {
-  const { query: list, control: liveControl } = useLiveQuery({
+  const list = useQuery({
     queryKey: ['web-sessions'],
     queryFn: () => result(api().GET('/v2/web-sessions')),
   });
@@ -76,16 +77,11 @@ export default function WebSessionsPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           <>
-            {liveControl}
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => list.refetch()}
+            <RefreshControl
+              screen="web-sessions"
+              onRefresh={() => list.refetch()}
               loading={list.isFetching}
-            >
-              Refresh
-            </Button>
+            />
           </>
         }
       />

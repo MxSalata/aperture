@@ -15,11 +15,12 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconPlayerPause, IconPlayerPlay, IconPlus, IconRefresh } from '@tabler/icons-react';
+import { IconPlayerPause, IconPlayerPlay, IconPlus } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import type { TaskList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { StatusBadge, BoolBadge } from '@/components/StatusBadge';
 import { Timestamp } from '@/components/Timestamp';
@@ -149,18 +150,14 @@ export default function TasksPage() {
         privileges={['%Admin_Operate:U', '%Admin_Task:U']}
         actions={
           <>
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => {
+            <RefreshControl
+              screen="tasks"
+              onRefresh={() => {
                 list.refetch();
                 upcoming.refetch();
               }}
               loading={list.isFetching}
-            >
-              Refresh
-            </Button>
+            />
             <Button size="xs" leftSection={<IconPlus size={14} />} onClick={open}>
               New task
             </Button>

@@ -1,10 +1,11 @@
 import { Alert, Badge, Button, Grid, Group, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core';
-import { IconInfoCircle, IconRefresh } from '@tabler/icons-react';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { metric, type AlertRow, type MetricSample } from '@/api/monitor';
 import { useHostMetrics } from './useHostMetrics';
 import { useAlertLog } from './useAlertLog';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { StatTile } from '@/components/StatTile';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -79,15 +80,7 @@ export default function MonitorPage() {
         title="Host monitor"
         description="Operating-system level signals the SysAdmin API does not expose, read from the native /api/monitor service: CPU, memory, disk, licence and the alerts log."
         actions={
-          <Button
-            size="xs"
-            variant="default"
-            leftSection={<IconRefresh size={14} />}
-            onClick={() => metrics.refetch()}
-            loading={metrics.isFetching}
-          >
-            Refresh
-          </Button>
+          <RefreshControl screen="monitor" onRefresh={() => metrics.refetch()} loading={metrics.isFetching} />
         }
       />
       {metrics.isError ? (

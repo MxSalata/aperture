@@ -1,6 +1,6 @@
 import { Alert, Badge, Button, Code, Drawer, Group, MultiSelect, Select, Stack, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { IconArrowLeft, IconArrowUp, IconInfoCircle, IconRefresh } from '@tabler/icons-react';
+import { IconArrowLeft, IconArrowUp, IconInfoCircle } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { fetchLogSources, isReaderMissing, readLogWindow, type LogSource, type LogWindow } from '@/api/logs';
@@ -8,6 +8,7 @@ import { mgmntCredentials } from '@/api/mgmnt';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { PasswordGate } from '@/components/PasswordGate';
 import { Timestamp } from '@/components/Timestamp';
 import { formatBytes, formatNumber } from '@/lib/format';
@@ -192,18 +193,14 @@ export default function MessagesLogPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           ready && file ? (
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => {
+            <RefreshControl
+              screen="messages-log"
+              onRefresh={() => {
                 void sources.refetch();
                 void latest.refetch();
               }}
               loading={latest.isFetching}
-            >
-              Latest
-            </Button>
+            />
           ) : null
         }
       />

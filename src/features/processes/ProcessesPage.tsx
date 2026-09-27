@@ -1,12 +1,13 @@
 import { Button, Group, Modal, Stack, Textarea } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
-import { IconBroadcast, IconRefresh } from '@tabler/icons-react';
+import { IconBroadcast } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
-import { useLiveQuery } from '@/api/useLiveQuery';
 import type { ProcessList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { useQuery } from '@tanstack/react-query';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { elapsedSeconds, formatCompact } from '@/lib/format';
@@ -68,10 +69,7 @@ const columns: ColumnDef<Row, unknown>[] = [
 
 export default function ProcessesPage() {
   const navigate = useNavigate();
-  const { query: list, control: liveControl } = useLiveQuery(
-    { queryKey: procKeys.list, queryFn: () => result(api().GET('/v2/processes')) },
-    { defaultLive: true },
-  );
+  const list = useQuery({ queryKey: procKeys.list, queryFn: () => result(api().GET('/v2/processes')) });
   const [opened, { open, close }] = useDisclosure(false);
   const form = useForm({
     initialValues: { Message: '' },
@@ -108,16 +106,7 @@ export default function ProcessesPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           <>
-            {liveControl}
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => list.refetch()}
-              loading={list.isFetching}
-            >
-              Refresh
-            </Button>
+            <RefreshControl screen="processes" onRefresh={() => list.refetch()} loading={list.isFetching} />
             <Button size="xs" variant="light" leftSection={<IconBroadcast size={14} />} onClick={open}>
               Broadcast message
             </Button>

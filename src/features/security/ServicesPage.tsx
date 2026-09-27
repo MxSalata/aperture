@@ -13,12 +13,13 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconPencil, IconRefresh } from '@tabler/icons-react';
+import { IconPencil } from '@tabler/icons-react';
 import { useState } from 'react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import type { ServiceList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { renderValue } from '@/components/KeyValueList';
 import { notifyError } from '@/lib/notify';
@@ -136,15 +137,7 @@ export default function ServicesPage() {
         description="Entry points into the instance (%Service_Bindings, %Service_WebGateway, …), how they authenticate and which client IPs may use them."
         privileges={['%Admin_Secure:U']}
         actions={
-          <Button
-            size="xs"
-            variant="default"
-            leftSection={<IconRefresh size={14} />}
-            onClick={() => list.refetch()}
-            loading={list.isFetching}
-          >
-            Refresh
-          </Button>
+          <RefreshControl screen="services" onRefresh={() => list.refetch()} loading={list.isFetching} />
         }
       />
       <DataTable

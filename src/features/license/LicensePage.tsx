@@ -2,9 +2,10 @@ import { Button, Grid, Group, Modal, Paper, Stack, Table, Text, Textarea, Title 
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconKey, IconRefresh } from '@tabler/icons-react';
+import { IconKey } from '@tabler/icons-react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -53,17 +54,13 @@ export default function LicensePage() {
         privileges={['%Admin_Manage:U', '%Admin_Operate:U']}
         actions={
           <>
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => {
+            <RefreshControl
+              screen="license"
+              onRefresh={() => {
                 key.refetch();
                 usage.refetch();
               }}
-            >
-              Refresh
-            </Button>
+            />
             <Button size="xs" leftSection={<IconKey size={14} />} onClick={open}>
               Activate key…
             </Button>

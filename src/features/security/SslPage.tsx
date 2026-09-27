@@ -14,12 +14,13 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconPencil, IconPlugConnected, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
+import { IconPencil, IconPlugConnected, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import type { SSLConfigurationList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { BoolBadge } from '@/components/StatusBadge';
 import { confirmDanger } from '@/components/ConfirmDanger';
@@ -239,15 +240,7 @@ export default function SslPage() {
         privileges={['%Admin_Secure:U']}
         actions={
           <>
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconRefresh size={14} />}
-              onClick={() => list.refetch()}
-              loading={list.isFetching}
-            >
-              Refresh
-            </Button>
+            <RefreshControl screen="tls" onRefresh={() => list.refetch()} loading={list.isFetching} />
             <Button
               size="xs"
               leftSection={<IconPlus size={14} />}

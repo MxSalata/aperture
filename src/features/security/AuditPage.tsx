@@ -18,11 +18,12 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { IconEraser, IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react';
+import { IconEraser, IconSearch, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { api, call, result, run, useApiMutation, useAsyncResult, SILENT } from '@/api/hooks';
 import type { AuditEventList, Schemas } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
+import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -393,16 +394,12 @@ export default function AuditPage() {
         description="Which events are audited, the audit log itself, and retention."
         privileges={['%Admin_Secure:U']}
         actions={
-          <Button
-            size="xs"
-            variant="default"
-            leftSection={<IconRefresh size={14} />}
-            // Re-read the audit settings and events; a page reload would sign out a session that
-            // is kept in memory only ("Keep me signed in" off) and drop the log query's result.
-            onClick={() => void queryClient.invalidateQueries({ queryKey: ['security', 'audit'] })}
-          >
-            Refresh
-          </Button>
+          // Re-read the audit settings and events; a page reload would sign out a session that
+          // is kept in memory only ("Keep me signed in" off) and drop the log query's result.
+          <RefreshControl
+            screen="audit"
+            onRefresh={() => void queryClient.invalidateQueries({ queryKey: ['security', 'audit'] })}
+          />
         }
       />
       <Tabs defaultValue="log">

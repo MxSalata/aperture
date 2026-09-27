@@ -130,6 +130,21 @@ function prometheusText(): string {
     '# HELP iris_wd_cycle_time Write daemon cycle time in ms',
     '# TYPE iris_wd_cycle_time gauge',
     `iris_wd_cycle_time ${Math.round(drift(12, 6, 30))}`,
+    // Interoperability metrics, as IRIS reports them once EnableSAMForNamespace() ran in a
+    // namespace whose production is running; aggregated per production (no host labels).
+    '# HELP iris_interop_messages_per_sec Average number of messages processed within the production and namespace in a second over the most recent sampling interval',
+    '# TYPE iris_interop_messages_per_sec gauge',
+    `iris_interop_messages_per_sec{id="INTEROP",production="HL7.Production"} ${drift(42, 14, 60, 4).toFixed(1)}`,
+    `iris_interop_messages_per_sec{id="CLINICAL",production="FHIR.Production"} ${drift(11, 5, 75, 5).toFixed(1)}`,
+    '# HELP iris_interop_queued Number of messages currently queued for hosts within the production and namespace',
+    '# TYPE iris_interop_queued gauge',
+    `iris_interop_queued{id="INTEROP",production="HL7.Production"} ${Math.max(0, Math.round(drift(3, 4, 50, 6)))}`,
+    `iris_interop_queued{id="CLINICAL",production="FHIR.Production"} ${Math.max(0, Math.round(drift(0.4, 1, 40, 7)))}`,
+    '# HELP iris_interop_hosts Number of hosts within the production and namespace which currently have the specified status',
+    '# TYPE iris_interop_hosts gauge',
+    'iris_interop_hosts{id="INTEROP",status="OK",production="HL7.Production"} 14',
+    'iris_interop_hosts{id="INTEROP",status="Error",production="HL7.Production"} 1',
+    'iris_interop_hosts{id="CLINICAL",status="OK",production="FHIR.Production"} 6',
   ];
   return lines.join('\n') + '\n';
 }
