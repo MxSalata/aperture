@@ -26,6 +26,7 @@ before and after).
 | `ui/walk-admin.json`, `ui/walk-operator.json` | every screen of 1.0.1 with the fixes, both accounts, as on 23 September: administrator, 32 screens with no console error or failed request (the only note is the dashboard's notice that the instance's clock differs from the browser's); operator, 403s only on the screens that need a privilege it lacks. |
 | `ui/time-readings.json` | browser in America/New_York, instance UTC+1: every absolute time 0 minutes off, without a named zone and with Europe/London. |
 | `ui/limits.json` | the audit query at its `maxRows` and the journal records at 200 show the "server limit reached" badge. |
+| `jwt-off.json`, `verify-live-jwt-off.json`, `jwt-on-again.json` | JWT authentication switched off on `/api/admin` with a PUT naming `JWTAuthEnabled` only, and on again (spec finding 20): with it off, `POST /login` is a bodiless 401 with `WWW-Authenticate: Basic` (served by Apache), `/info` with Basic answers 200, and `live-check` passes 22/22 in Basic mode; the portal signed in with Basic through the dev server and served by IRIS, without a browser login dialog. Switched back, the web application matches its earlier state field for field and `POST /login` issues tokens again. |
 
 What the run changed in Aperture (see `CHANGELOG.md`): the edit dialogs of the six security types
 send only what changed; the Resources form says that "none" is refused instead of sending it; the

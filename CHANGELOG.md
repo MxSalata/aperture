@@ -60,6 +60,12 @@
   without a console error or a failed request, as the `%Operator` account only the screens that need
   another privilege answer 403, times read from New York are exact with and without a named zone,
   and the limit badges show (`docs/verification/2026-09-27-irishealth-2026.2/ui/`).
+- **JWT switched off on a real `/api/admin`.** On IRIS for Health 2026.2, with `JWTAuthEnabled` off,
+  `POST /login` is the bodiless 401 with `WWW-Authenticate: Basic` of spec finding 20, which had only
+  been seen on IRIS Community and on `/api/mgmnt`; the portal signed in with Basic through the dev
+  server and served by IRIS itself, with no browser login dialog. `npm run verify:live` took that
+  401 for a failure: it now records it as JWT switched off, with the Basic fallback in use (22/22).
+  Switched back on, the web application matched its earlier state field for field.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 
