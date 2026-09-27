@@ -3,7 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Automated accessibility check (axe-core, WCAG 2.1 A and AA) of the sign-in page and the main
- * screens of the demo build. Serious and critical violations fail the run; the rest are printed.
+ * screens of the demo build, in every appearance: light, pastel, dark, and both high-contrast
+ * modes. Serious and critical violations fail the run; the rest are printed.
  */
 const go = (page: Page, path: string) => page.goto(`/#${path}`);
 
@@ -46,17 +47,28 @@ const SCREENS: [path: string, heading: string][] = [
 ];
 
 const MODES = [
-  { colorScheme: 'light', contrast: 'no-preference' },
-  { colorScheme: 'dark', contrast: 'no-preference' },
-  { colorScheme: 'light', contrast: 'more' },
-  { colorScheme: 'dark', contrast: 'more' },
+  { colorScheme: 'light', contrast: 'no-preference', palette: 'default' },
+  { colorScheme: 'light', contrast: 'no-preference', palette: 'pastel' },
+  { colorScheme: 'dark', contrast: 'no-preference', palette: 'default' },
+  { colorScheme: 'light', contrast: 'more', palette: 'default' },
+  { colorScheme: 'dark', contrast: 'more', palette: 'default' },
 ] as const;
 
-for (const { colorScheme, contrast } of MODES) {
-  const mode = `${colorScheme}${contrast === 'more' ? ', high contrast' : ''}`;
+for (const { colorScheme, contrast, palette } of MODES) {
+  const mode = `${palette === 'pastel' ? 'pastel' : colorScheme}${contrast === 'more' ? ', high contrast' : ''}`;
   test.describe(`accessibility (axe-core, WCAG 2.1 A/AA), ${mode}`, () => {
     // Until the user picks otherwise, the app follows prefers-color-scheme and prefers-contrast.
     test.use({ colorScheme, contrast });
+    // Pastel has no OS preference: it is the stored device setting, read before the first paint.
+    if (palette === 'pastel')
+      test.beforeEach(({ page }) =>
+        page.addInitScript(() =>
+          localStorage.setItem(
+            'aperture.appearance',
+            JSON.stringify({ state: { contrast: 'auto', palette: 'pastel' }, version: 0 }),
+          ),
+        ),
+      );
 
     test('sign-in page', async ({ page }) => {
       await go(page, '/login');
