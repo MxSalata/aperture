@@ -9,7 +9,12 @@
   `<n>`; its words and neighbouring word pairs are hashed (FNV-1a) into 256 signed buckets, weighted
   `1 + ln(count)`, and normalised, so the same message with other numbers scores 1.0 by cosine and
   unrelated messages near 0. One fixture (`ipm/python/tests/fixture.json`) is checked by both test
-  suites, the Python one without IRIS (`python3 -m unittest discover -s ipm/python/tests`).
+  suites, the Python one without IRIS (`python3 -m unittest discover -s ipm/python/tests`). On the
+  instance, the package keeps a wording index of `messages.log` and its rotations: two tables of
+  its namespace (`Aperture.LogLine`, with an HNSW index over a 256-dimensional vector property, and
+  `Aperture.LogIndexFile`, a watermark per file), filled incrementally and within bounds; `/api/aperture`
+  gains `GET` and `POST /logs/index` and `GET /logs/similar?file=&offset=&limit=`, and every window
+  of `/logs/read` now carries the byte offset of each line.
 
 ## 1.0.2 - tested on a real IRIS for Health, with disk space, new themes and a choice of charts (28 September 2026)
 
