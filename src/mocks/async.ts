@@ -53,6 +53,36 @@ export interface StartOptions {
   progressTotal?: number;
 }
 
+/** A task that ended before the demo was opened, so the Job Center has a history to follow. */
+export function seedEndedTask(opts: {
+  name: string;
+  owner: string;
+  console: string[];
+  queued: string;
+  started: string;
+  finished: string;
+  result?: unknown;
+}): string {
+  const id = String(++counter);
+  tasks.set(id, {
+    GUID: id,
+    TaskName: opts.name,
+    State: 'Finished',
+    FailureReason: '',
+    TimeQueued: opts.queued,
+    TimeStarted: opts.started,
+    TimeFinished: opts.finished,
+    Console: [...opts.console],
+    Result: (opts.result ?? {}) as MockAsyncTask['Result'],
+    owner: opts.owner,
+    pending: [],
+    finalResult: opts.result ?? {},
+    tickMs: 0,
+    totalSteps: opts.console.length,
+  });
+  return id;
+}
+
 export function startAsyncTask(opts: StartOptions): string {
   const id = String(++counter);
   const task: MockAsyncTask = {

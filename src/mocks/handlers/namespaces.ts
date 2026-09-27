@@ -88,7 +88,7 @@ export const namespaceHandlers = [
       Name: 'Ens.*',
       Subscript: '',
       Database: 'ENSLIB',
-      Collation: 'IRIS standard',
+      Collation: 5,
       LockDatabase: 'ENSLIB',
     });
     return ok(
@@ -134,7 +134,7 @@ export const namespaceHandlers = [
       Name: name,
       Subscript: '',
       Database: body.Database,
-      Collation: 'IRIS standard',
+      Collation: 5,
       LockDatabase: body.LockDatabase || body.Database,
     };
     if (existing) Object.assign(existing, rec);

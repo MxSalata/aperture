@@ -32,6 +32,12 @@ const DOCUMENTED_DIVERGENCE: Record<string, { paths: RegExp; evidence: string }[
       evidence: 'an array on every server (quirk local-database-list-shape)',
     },
   ],
+  '/v2/namespace/global-mappings': [
+    {
+      paths: /^result\[\d+\]\.Collation: spec says string, mock sent integer/,
+      evidence: 'an integer (5) on IRIS 2026.2 (iris-shapes.json); the spec says a string like "5"',
+    },
+  ],
   '/v2/locks': [
     {
       paths: /^result\[\d+\]\.Pid: spec says string, mock sent integer/,

@@ -6,7 +6,7 @@
  * journals, users/roles/resources, web applications and audit events.
  */
 import { daysAgo, hoursAgo, minutesAgo, seeded, pick, inMinutes, inDays } from './util';
-import { resetAsyncTasks } from './async';
+import { resetAsyncTasks, seedEndedTask } from './async';
 
 export const MGR = '/usr/irissys/mgr/';
 
@@ -65,7 +65,7 @@ export interface NamespaceRec {
     Name: string;
     Subscript: string;
     Database: string;
-    Collation: string;
+    Collation: number;
     LockDatabase: string;
   }[];
   packageMappings: { Name: string; Database: string }[];
@@ -522,7 +522,19 @@ function ns(
 function seedNamespaces(): NamespaceRec[] {
   return [
     ns('%SYS', 'IRISSYS', 'IRISSYS'),
-    ns('USER', 'USER'),
+    ns('USER', 'USER', 'USER', {
+      globalMappings: [
+        {
+          Name: 'Report.Cache',
+          Subscript: '',
+          Database: 'IRISAPP',
+          Collation: 5,
+          LockDatabase: 'IRISAPP',
+        },
+      ],
+      packageMappings: [{ Name: 'dc.Reports', Database: 'IRISAPP' }],
+      routineMappings: [{ Name: 'ZUTIL*', Type: '', Database: 'IRISAPP' }],
+    }),
     ns('IRISAPP', 'IRISAPP', 'IRISAPP', {
       packageMappings: [{ Name: 'dc.Aperture', Database: 'IRISAPP' }],
       globalMappings: [
@@ -530,7 +542,7 @@ function seedNamespaces(): NamespaceRec[] {
           Name: 'dc.Config',
           Subscript: '',
           Database: 'IRISAPP',
-          Collation: 'IRIS standard',
+          Collation: 5,
           LockDatabase: 'IRISAPP',
         },
       ],
@@ -548,18 +560,18 @@ function seedNamespaces(): NamespaceRec[] {
           Name: 'Ens.*',
           Subscript: '',
           Database: 'ENSLIB',
-          Collation: 'IRIS standard',
+          Collation: 5,
           LockDatabase: 'ENSLIB',
         },
         {
           Name: 'HL7.Archive',
           Subscript: '',
           Database: 'CLINICAL',
-          Collation: 'IRIS standard',
+          Collation: 5,
           LockDatabase: 'CLINICAL',
         },
       ],
-      routineMappings: [{ Name: 'Ens*', Type: 'ALL', Database: 'ENSLIB' }],
+      routineMappings: [{ Name: 'Ens*', Type: '', Database: 'ENSLIB' }],
     }),
     ns('CLINICAL', 'CLINICAL', 'CLINICAL', {
       globalMappings: [
@@ -567,7 +579,7 @@ function seedNamespaces(): NamespaceRec[] {
           Name: 'DICOM.Study',
           Subscript: '',
           Database: 'CLINICAL',
-          Collation: 'IRIS standard',
+          Collation: 5,
           LockDatabase: 'CLINICAL',
         },
       ],
@@ -1979,11 +1991,37 @@ export function createDb(): MockDb {
   };
 }
 
+/** Two tasks of _SYSTEM that ended before the demo was opened: the Job Center is not empty on a first visit. */
+function seedAsyncTasks() {
+  seedEndedTask({
+    name: 'POST /v2/database-dir/integrity-check',
+    owner: '_SYSTEM',
+    queued: minutesAgo(43),
+    started: minutesAgo(43),
+    finished: minutesAgo(41),
+    console: [
+      'Integrity check of /usr/irissys/mgr/user/',
+      '82 globals, 12,416 blocks checked',
+      'No errors were found.',
+    ],
+  });
+  seedEndedTask({
+    name: 'POST /v2/security/audit/records',
+    owner: '_SYSTEM',
+    queued: minutesAgo(190),
+    started: minutesAgo(190),
+    finished: minutesAgo(189),
+    console: ['Audit query over the last 24 hours: 200 records'],
+  });
+}
+
 export let mockDb: MockDb = createDb();
+seedAsyncTasks();
 
 export function resetDb() {
   mockDb = createDb();
   resetAsyncTasks();
+  seedAsyncTasks();
 }
 
 export function minutesAgoStr(m: number) {
