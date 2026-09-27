@@ -282,4 +282,45 @@ describe('what a reload keeps', () => {
     expect(useSession.getState().status).toBe('anonymous');
     expect(sessionStorage.getItem('aperture.session') ?? '').not.toContain(creds);
   });
+
+  // IRIS 2026.2, 27 September: a reload in the moment after sign-in aborted the first GET /info,
+  // sign-in revoked the tokens, and the page that loaded next restored them revoked.
+  it('keeps a session whose first /info got no answer, for the page that loads next', async () => {
+    let revoked = 0;
+    server.use(
+      http.get(`${BASE}/api/admin/info`, () => HttpResponse.error()),
+      http.post(`${BASE}/api/admin/logout`, () => {
+        revoked++;
+        return HttpResponse.json({});
+      }),
+    );
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS', persist: true });
+    expect(revoked).toBe(0);
+    expect(useSession.getState().status).toBe('authenticated');
+    expect(stored().status).toBe('authenticated');
+    expect(stored().accessToken).toBeTruthy();
+  });
+
+  it('still revokes the tokens when /info refuses the account', async () => {
+    let revoked = 0;
+    server.use(
+      http.get(`${BASE}/api/admin/info`, () =>
+        HttpResponse.json({ status: { errors: [{ error: 'ERROR #5002: no access' }] } }, { status: 403 }),
+      ),
+      http.post(`${BASE}/api/admin/logout`, () => {
+        revoked++;
+        return HttpResponse.json({});
+      }),
+    );
+    await expect(
+      useSession
+        .getState()
+        .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS', persist: true }),
+    ).rejects.toMatchObject({ status: 403 });
+    expect(revoked).toBe(1);
+    expect(stored().status).toBe('anonymous');
+    expect(stored().accessToken).toBeNull();
+  });
 });

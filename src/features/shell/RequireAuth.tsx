@@ -5,16 +5,11 @@ import { Navigate, Outlet, useLocation } from 'react-router';
 import { useSession } from '@/stores/session';
 import { PageSkeleton } from '@/components/PageSkeleton';
 import { ErrorAlert } from '@/components/ErrorAlert';
-import { isApiError } from '@/lib/errors';
+import { rejectsSession } from '@/lib/errors';
 import { claimSession, DUPLICATE_TAB_REASON } from '@/stores/sessionLock';
 
 /** A restored JWT session that another live tab already holds (this tab is a copy of it). */
 class CopiedTabError extends Error {}
-
-/** Only the server saying no ends a restored session; a network or gateway failure does not. */
-function rejectsSession(error: unknown): boolean {
-  return isApiError(error) && (error.isUnauthorized || error.isForbidden);
-}
 
 /**
  * Gate for all authenticated routes. On a fresh page load with a persisted

@@ -169,3 +169,8 @@ export function describeError(e: unknown): string {
 export function isApiError(e: unknown): e is ApiError {
   return e instanceof ApiError;
 }
+
+/** Only the server saying no ends a session; a network or gateway failure does not. */
+export function rejectsSession(error: unknown): boolean {
+  return isApiError(error) && (error.isUnauthorized || error.isForbidden);
+}

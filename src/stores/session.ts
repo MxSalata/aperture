@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { safeSessionStorage } from './storage';
 import type { Info } from '@/api/types';
-import { ApiError, normalizeErrors } from '@/lib/errors';
+import { ApiError, normalizeErrors, rejectsSession } from '@/lib/errors';
 import { apiBase, basicCredentials, decodeJwtPayload } from '@/api/base';
 import { useJobs } from '@/stores/jobs';
 import { useMetrics } from '@/stores/metrics';
@@ -354,7 +354,18 @@ export const useSession = create<SessionState>()(
             sessionKey,
           });
           await claimSession(sessionKey);
-          assertSupportedApi(await get().loadInfo(), `${base}/info`);
+          let info: Info;
+          try {
+            info = await get().loadInfo();
+          } catch (e) {
+            // No answer (a reload or a typed URL aborts the request, or the network failed) says
+            // nothing about the session, which this tab has already stored: revoking it would sign
+            // out the page that loads next. RequireAuth validates it again and keeps it through an
+            // outage, so only the server refusing the account ends it here.
+            if (!rejectsSession(e)) return;
+            throw e;
+          }
+          assertSupportedApi(info, `${base}/info`);
         } catch (e) {
           // A token issued to a session that cannot start (e.g. /info refuses the account) is revoked.
           if (get().mode === 'jwt') await get().logout();

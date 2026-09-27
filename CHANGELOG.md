@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- **A reload just after signing in no longer signs you out.** Sign-in stores the session for the
+  tab, then reads `/info`. A reload or a typed address in that moment aborted the read; sign-in took
+  the failure for a refused account and revoked the new tokens, and the page that loaded next
+  restored them revoked: "Your session expired". A new session now ends only when the server refuses
+  the account (401 or 403), as a restored one already did; a read that got no answer is left to the
+  next page's own check. Found by the first live run of the security write probe on IRIS for
+  Health 2026.2, where the `%Operator` account hit it on every immediate navigation.
+
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 
 - **The demo comes first.** On the online demo the sign-in page opens with the demo and says what it
