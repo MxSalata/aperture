@@ -23,6 +23,9 @@ before and after).
 | `verify-live.json` | `scripts/live-check.mjs`, 23/23, before the package was installed (the log reader answers 404). |
 | `verify-live-portal.json` | the same with `PORTAL_URL` after the IPM install, 25/25: the log catalogue (`messages.log`, `SystemMonitor.log`), a window of 199 whole lines of `messages.log`, and the portal served at `/aperture/index.html`. |
 | `ipm-load.txt` | `zpm "load"` into the running container: with the portal copied to `{$cspdir}` it stopped at Activate (`<13> Permission denied` on `/usr/irissys/csp/aperture/`, the image's own directory); copied to `{$mgrdir}` it installed, and the readiness report passed all nine checks. |
+| `ui/walk-admin.json`, `ui/walk-operator.json` | every screen of 1.0.1 with the fixes, both accounts, as on 23 September: administrator, 32 screens with no console error or failed request (the only note is the dashboard's notice that the instance's clock differs from the browser's); operator, 403s only on the screens that need a privilege it lacks. |
+| `ui/time-readings.json` | browser in America/New_York, instance UTC+1: every absolute time 0 minutes off, without a named zone and with Europe/London. |
+| `ui/limits.json` | the audit query at its `maxRows` and the journal records at 200 show the "server limit reached" badge. |
 
 What the run changed in Aperture (see `CHANGELOG.md`): the edit dialogs of the six security types
 send only what changed; the Resources form says that "none" is refused instead of sending it; the

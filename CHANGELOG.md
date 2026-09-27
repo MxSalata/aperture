@@ -55,6 +55,11 @@
   27 September found the same 74 operations in the same shapes, except that a busy process's
   `Process` in the dashboard is an integer as well as the padding rows' empty string; the mock's
   answers already fit, and the contract test passes unchanged.
+- **Every screen walked again on IRIS for Health 2026.2.** The visual refresh of 1.0.1 and the fixes
+  after it change no behaviour against the real instance: as the administrator all 32 screens open
+  without a console error or a failed request, as the `%Operator` account only the screens that need
+  another privilege answer 403, times read from New York are exact with and without a named zone,
+  and the limit badges show (`docs/verification/2026-09-27-irishealth-2026.2/ui/`).
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 

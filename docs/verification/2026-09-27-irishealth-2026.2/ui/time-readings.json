@@ -1,0 +1,262 @@
+{
+  "instanceOffset": 60,
+  "browserOffset": -240,
+  "zone": "Europe/London",
+  "notice": true,
+  "before": [
+    {
+      "page": "/tasks",
+      "text": "4 minutes ago",
+      "claimedUtc": "2026-09-27T21:50:00.000Z",
+      "errorMinutes": null
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-27 22:55:00",
+      "claimedUtc": "2026-09-27T21:55:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "4 minutes ago",
+      "claimedUtc": "2026-09-27T21:50:00.000Z",
+      "errorMinutes": null
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-27 23:00:00",
+      "claimedUtc": "2026-09-27T22:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 00:00:00",
+      "claimedUtc": "2026-09-27T23:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 00:00:00",
+      "claimedUtc": "2026-09-27T23:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 00:30:00",
+      "claimedUtc": "2026-09-27T23:30:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:00:00",
+      "claimedUtc": "2026-09-28T00:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:00:00",
+      "claimedUtc": "2026-09-28T00:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:00:00",
+      "claimedUtc": "2026-09-28T00:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:00:00",
+      "claimedUtc": "2026-09-28T00:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:00:00",
+      "claimedUtc": "2026-09-28T00:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:30:00",
+      "claimedUtc": "2026-09-28T00:30:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:30:00",
+      "claimedUtc": "2026-09-28T00:30:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 02:00:00",
+      "claimedUtc": "2026-09-28T01:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 02:00:00",
+      "claimedUtc": "2026-09-28T01:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2 hours ago",
+      "claimedUtc": "2026-09-27T19:56:00.000Z",
+      "errorMinutes": null
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-10-04 00:00:00",
+      "claimedUtc": "2026-10-03T23:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2 hours ago",
+      "claimedUtc": "2026-09-27T19:56:00.000Z",
+      "errorMinutes": null
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-10-04 00:30:00",
+      "claimedUtc": "2026-10-03T23:30:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/logs",
+      "text": "4 minutes ago",
+      "claimedUtc": "2026-09-27T21:50:00.000Z",
+      "errorMinutes": null
+    }
+  ],
+  "after": [
+    {
+      "page": "/tasks",
+      "text": "5 minutes ago",
+      "claimedUtc": "2026-09-27T21:50:00.000Z",
+      "errorMinutes": null
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-27 22:55:00",
+      "claimedUtc": "2026-09-27T21:55:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "5 minutes ago",
+      "claimedUtc": "2026-09-27T21:50:00.000Z",
+      "errorMinutes": null
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-27 23:00:00",
+      "claimedUtc": "2026-09-27T22:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 00:00:00",
+      "claimedUtc": "2026-09-27T23:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 00:00:00",
+      "claimedUtc": "2026-09-27T23:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 00:30:00",
+      "claimedUtc": "2026-09-27T23:30:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:00:00",
+      "claimedUtc": "2026-09-28T00:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:00:00",
+      "claimedUtc": "2026-09-28T00:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:00:00",
+      "claimedUtc": "2026-09-28T00:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:00:00",
+      "claimedUtc": "2026-09-28T00:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:00:00",
+      "claimedUtc": "2026-09-28T00:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:30:00",
+      "claimedUtc": "2026-09-28T00:30:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 01:30:00",
+      "claimedUtc": "2026-09-28T00:30:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 02:00:00",
+      "claimedUtc": "2026-09-28T01:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-09-28 02:00:00",
+      "claimedUtc": "2026-09-28T01:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2 hours ago",
+      "claimedUtc": "2026-09-27T19:56:00.000Z",
+      "errorMinutes": null
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-10-04 00:00:00",
+      "claimedUtc": "2026-10-03T23:00:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/tasks",
+      "text": "2 hours ago",
+      "claimedUtc": "2026-09-27T19:56:00.000Z",
+      "errorMinutes": null
+    },
+    {
+      "page": "/tasks",
+      "text": "2026-10-04 00:30:00",
+      "claimedUtc": "2026-10-03T23:30:00.000Z",
+      "errorMinutes": 0
+    },
+    {
+      "page": "/logs",
+      "text": "5 minutes ago",
+      "claimedUtc": "2026-09-27T21:50:00.000Z",
+      "errorMinutes": null
+    }
+  ]
+}

@@ -1,0 +1,260 @@
+[
+  {
+    "route": "/",
+    "heading": "Dashboard",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [
+      "The instance's clock is not this browser'sIt runs at UTC+01:00, this browser at UTC−04:00. Times are read at the instance's offset; name its time zone under Settings → Connections to keep them exact across daylight-saving changes."
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/jobs",
+    "heading": "Job Center",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/activity",
+    "heading": "Activity",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/monitor",
+    "heading": "Host monitor",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/logs",
+    "heading": "Logs",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/databases",
+    "heading": "Databases",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/namespaces",
+    "heading": "Namespaces",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/processes",
+    "heading": "Processes",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/locks",
+    "heading": "Locks",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/journal",
+    "heading": "Journaling",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/tasks",
+    "heading": "Tasks",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/web-sessions",
+    "heading": "Web sessions",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/license",
+    "heading": "License",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/users",
+    "heading": "Users",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/roles",
+    "heading": "Roles",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/resources",
+    "heading": "Resources",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/services",
+    "heading": "Services",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/web-apps",
+    "heading": "Web applications",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/audit",
+    "heading": "Audit",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/ssl",
+    "heading": "TLS & certificates",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/sql",
+    "heading": "SQL privileges",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/explorer",
+    "heading": "API Explorer",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/settings/connections",
+    "heading": "Connections",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/about",
+    "heading": "About Aperture",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/databases/detail?dir=%2Fdurable%2Firis%2Fmgr%2Fuser%2F&name=USER",
+    "heading": "USER",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/namespaces/USER",
+    "heading": "USER",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/processes/817",
+    "heading": "Process 817RUN",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/tasks/1",
+    "heading": "Switch Journal1",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/users/_SYSTEM",
+    "heading": "_SYSTEMEnabled",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/roles/%25Manager",
+    "heading": "%Manager",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/web-apps/detail?name=%2Fapi%2Fadmin",
+    "heading": "/api/adminEnabledJWT",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/explorer/Databases",
+    "heading": "API Explorer",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  }
+]

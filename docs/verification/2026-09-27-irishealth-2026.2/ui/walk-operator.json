@@ -1,0 +1,366 @@
+[
+  {
+    "route": "/",
+    "heading": "Dashboard",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [
+      "The instance's clock is not this browser'sIt runs at UTC+01:00, this browser at UTC−04:00. Times are read at the instance's offset; name its time zone under Settings → Connections to keep them exact across daylight-saving changes."
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/jobs",
+    "heading": "Job Center",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/activity",
+    "heading": "Activity",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/monitor",
+    "heading": "Host monitor",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/logs",
+    "heading": "Logs",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/databases",
+    "heading": "Databases",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/databases → 403",
+      "GET /api/admin/v2/database-dirs → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/namespaces",
+    "heading": "Namespaces",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/databases → 403",
+      "GET /api/admin/v2/namespaces → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/processes",
+    "heading": "Processes",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/locks",
+    "heading": "Locks",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/journal",
+    "heading": "Journaling",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/tasks",
+    "heading": "Tasks",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/web-sessions",
+    "heading": "Web sessions",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/license",
+    "heading": "License",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/license/key → 403",
+      "GET /api/admin/v2/license/servers → 403"
+    ],
+    "alerts": [
+      "GET /v2/license/key → HTTP 403Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/security/users",
+    "heading": "Users",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/roles → 403",
+      "GET /api/admin/v2/security/users → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/security/roles",
+    "heading": "Roles",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/roles → 403",
+      "GET /api/admin/v2/security/resources → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/security/resources",
+    "heading": "Resources",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/resources → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/security/services",
+    "heading": "Services",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/services → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/security/web-apps",
+    "heading": "Web applications",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/web-apps → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/security/audit",
+    "heading": "Audit",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/audit/enabled → 403",
+      "GET /api/admin/v2/security/audit/events → 403"
+    ],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/ssl",
+    "heading": "TLS & certificates",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/ssl-configurations → 403"
+    ],
+    "alerts": [
+      "Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/security/sql",
+    "heading": "SQL privileges",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/explorer",
+    "heading": "API Explorer",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/settings/connections",
+    "heading": "Connections",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/about",
+    "heading": "About Aperture",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/databases/detail?dir=%2Fdurable%2Firis%2Fmgr%2Fuser%2F&name=USER",
+    "heading": "USER",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/database-dir/volumes?dir=%2Fdurable%2Firis%2Fmgr%2Fuser%2F → 403",
+      "GET /api/admin/v2/database?name=USER → 403"
+    ],
+    "alerts": [
+      "GET /v2/database?name=USER → HTTP 403Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/namespaces/USER",
+    "heading": "USER",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/namespace/global-mappings?namespace=USER → 403",
+      "GET /api/admin/v2/namespaces → 403",
+      "GET /api/admin/v2/databases → 403",
+      "GET /api/admin/v2/namespace/package-mappings?namespace=USER → 403",
+      "GET /api/admin/v2/namespace?name=USER → 403",
+      "GET /api/admin/v2/namespace/routine-mappings?namespace=USER → 403"
+    ],
+    "alerts": [
+      "GET /v2/namespace?name=USER → HTTP 403Forbidden - you do not hold the required privilegeRetry",
+      "Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/processes/817",
+    "heading": "Process 817RUN",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/tasks/1",
+    "heading": "Switch Journal1",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  },
+  {
+    "route": "/security/users/_SYSTEM",
+    "heading": "_SYSTEM",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/roles → 403",
+      "GET /api/admin/v2/security/user?name=_SYSTEM → 403"
+    ],
+    "alerts": [
+      "GET /v2/security/user?name=_SYSTEM → HTTP 403Forbidden - you do not hold the required privilegeRetry"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/security/roles/%25Manager",
+    "heading": "%Manager",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/security/resources → 403",
+      "GET /api/admin/v2/security/role/owners?name=%25Manager → 403",
+      "GET /api/admin/v2/security/role?name=%25Manager → 403",
+      "GET /api/admin/v2/security/roles → 403"
+    ],
+    "alerts": [
+      "GET /v2/security/role?name=%25Manager → HTTP 403Forbidden - you do not hold the required privilegeRetry",
+      "GET /v2/security/role/owners?name=%25Manager → HTTP 403Forbidden - you do not hold the required privilege"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/security/web-apps/detail?name=%2Fapi%2Fadmin",
+    "heading": "/api/admin",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "failedRequests": [
+      "GET /api/admin/v2/web-app?name=%2Fapi%2Fadmin → 403"
+    ],
+    "alerts": [
+      "GET /v2/web-app?name=%2Fapi%2Fadmin → HTTP 403Forbidden - you do not hold the required privilegeRetry"
+    ],
+    "screenshot": null
+  },
+  {
+    "route": "/explorer/Databases",
+    "heading": "API Explorer",
+    "consoleErrors": [],
+    "failedRequests": [],
+    "alerts": [],
+    "screenshot": null
+  }
+]
