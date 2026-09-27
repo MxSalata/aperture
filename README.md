@@ -8,7 +8,7 @@
   <a href="#quick-start">Quick start</a> ·
   <a href="#what-you-get">Features</a> ·
   <a href="#architecture">Architecture</a> ·
-  <a href="docs/ARTICLE.md">Article</a>
+  <a href="#spec-findings">Spec findings</a>
 </p>
 
 Aperture is an entry for the **InterSystems Programming Contest: Build Your Own Management Portal**.
@@ -28,7 +28,7 @@ disagree are listed below.
 
 ## Evaluate in two minutes
 
-1. **Without an IRIS:** open the [online demo](https://mxsalata.github.io/intersystems-frontend-contest/) and press **Try the demo**. Press <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>K</kbd>, type `integrity`, run the check on `USER`: the `202 Accepted` lands in the Job Center with console output and progress. Open _Security → Users → jdoe_, remove a role and press Save: the review lists old → new and who loses which privilege. Open _Logs_ for every log in one place, _REST services_ for every REST route on the instance. Sign out and sign in as `operator` / `SYS`: the security area is gone and every disabled action names the resource it needs.
+1. **Without an IRIS:** open the [online demo](https://mxsalata.github.io/aperture/) and press **Try the demo**. Press <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>K</kbd>, type `integrity`, run the check on `USER`: the `202 Accepted` lands in the Job Center with console output and progress. Open _Security → Users → jdoe_, remove a role and press Save: the review lists old → new and who loses which privilege. Open _Logs_ for every log in one place, _REST services_ for every REST route on the instance. Sign out and sign in as `operator` / `SYS`: the security area is gone and every disabled action names the resource it needs.
 2. **Against a real IRIS (five minutes, Docker):** `npm run iris:password && docker compose up --build`, then http://localhost:8080 with `_SYSTEM` and the password in `.secrets/iris-password`. The build log ends with the readiness report of the Embedded Python installer; `npm run verify:live` re-checks the API contract against the running instance.
 3. **In the code:** the fetch middleware that adds the token, refreshes it and captures every `202` ([`src/api/client.ts`](src/api/client.ts)); the guard that refuses a change leaving nobody able to administer security ([`src/features/security/adminGuard.ts`](src/features/security/adminGuard.ts)); the mock instance that powers the demo and both test suites ([`src/mocks`](src/mocks)); the Embedded Python installer and log reader ([`ipm/cls/Aperture`](ipm/cls/Aperture)).
 
@@ -55,8 +55,8 @@ Every real deployment also has a **Try the demo** button on the login page.
 ### 1. Docker Compose (IRIS + portal, one command)
 
 ```bash
-git clone https://github.com/MxSalata/intersystems-frontend-contest.git
-cd intersystems-frontend-contest
+git clone https://github.com/MxSalata/aperture.git
+cd aperture
 npm run iris:password   # or write any password of 12+ characters to .secrets/iris-password
 docker compose up --build
 ```
@@ -98,7 +98,7 @@ Python file reader, needs `%Admin_Operate:USE`), and runs [`Aperture.Installer`]
 an Embedded Python class that enables `/api/admin` with password and JWT authentication and prints a
 readiness report (IRIS version, JWT availability, the API's authentication settings, the portal's
 files, the log reader and the log files it can read). Then open
-`http://<host>:52773/aperture/index.html`. From a checkout, `zpm "load /path/to/intersystems-frontend-contest"`
+`http://<host>:52773/aperture/index.html`. From a checkout, `zpm "load /path/to/aperture"`
 installs the same package; `##class(Aperture.Installer).Doctor()` prints the report again.
 
 ### 3. Development
@@ -237,17 +237,12 @@ browser ──HTTP(S)─▶ nginx (dist/) ──/api/admin──▶ IRIS private
 
 ## Documentation
 
-| File                                                               | Purpose                                                                                       |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                       | how the layers fit: typed client, auth, async jobs, privileges, mock, deployment              |
-| [docs/CONTEST_PLAN.md](docs/CONTEST_PLAN.md)                       | contest requirements, judging, bonuses, plan                                                  |
-| [docs/SCOPE-2026.1.md](docs/SCOPE-2026.1.md)                       | what a limited mode for IRIS 2026.1 (SysAdmin API v1) would offer and take; scoped, not built |
-| [docs/BONUSES.md](docs/BONUSES.md)                                 | technology bonuses: criteria, evidence, what remains                                          |
-| [docs/OPENEXCHANGE_SUBMISSION.md](docs/OPENEXCHANGE_SUBMISSION.md) | paste-ready Open Exchange listing                                                             |
-| [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md)       | everything to tick before the deadline                                                        |
-| [docs/ARTICLE.md](docs/ARTICLE.md)                                 | Developer Community article draft                                                             |
-| [docs/ARTICLE_2.md](docs/ARTICLE_2.md)                             | second article draft: what the specification does not tell you                                |
-| [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md)                       | three demo video storyboards                                                                  |
+| File                                         | Purpose                                                                                                      |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | how the layers fit: typed client, auth, async jobs, privileges, mock, deployment                             |
+| [docs/VERIFICATION.md](docs/VERIFICATION.md) | the conformance check against a real instance, and how to run it against yours                               |
+| [docs/verification/](docs/verification/)     | recorded answers of real IRIS 2026.2 instances, one folder per run, the evidence for the spec findings below |
+| [CHANGELOG.md](CHANGELOG.md)                 | what changed, and why                                                                                        |
 
 ## Verified against real IRIS
 

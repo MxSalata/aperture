@@ -34,9 +34,6 @@
   stop advising an allow-list for a cross-origin instance and document the same-origin pattern: a
   second instance behind the same nginx under a path prefix, which a connection profile can now
   name as its base URL (`/iris-b`).
-- **Bonus facts as the organisers answered them** (21-22 September): Vector Search is 2 points,
-  only the first eligible YouTube video is awarded (the three storyboards are the three acts of one
-  video), and the dark-mode idea DPI-I-768 does not carry the "Community Opportunity" status.
 - **A two-minute evaluation path for the jury** at the top of the README; version 1.0.0 in
   `package.json` and `module.xml`.
 - **Requests for curl, VS Code and Postman (Ideas Portal DPI-I-813).** The REST services drawer
@@ -54,11 +51,9 @@
   the smoke run adds `30-request-export.png`.
 - **Ideas Portal.** The README names the two "Community Opportunity" ideas Aperture implements,
   with what each asks and where it is done: DPI-I-966 (any rotated `messages.old_*` file readable
-  in the portal, which the log reader and Logs → Messages log do) and DPI-I-813 (above). The
-  bonus pages, the listing copy, the checklist and the article say which link to paste into the
-  Open Exchange form and which idea pages to comment on.
+  in the portal, which the log reader and Logs → Messages log do) and DPI-I-813 (above).
 
-### Before 1.0.0 - backlog after the real-instance pass
+### Before 1.0.0 - permission safety, REST services, read-only tabs
 
 - **Edits send only what changed, where IRIS merges a PUT.** The review dialog now hands the write
   the changed fields. For the local database, the database configuration and the journal settings
@@ -80,12 +75,6 @@
 - **An escalation role is refused when sign-in ends in Basic.** Escalation exists only at
   `POST /login`; the Basic session ran with the account's own roles while the account menu said
   "escalated to …".
-
-- **A limited mode for IRIS 2026.1 is scoped, not built** (docs/SCOPE-2026.1.md). 2026.1 serves
-  SysAdmin API v1 only, over Basic. Mapped by v1's own conventions, 74 of the 112 operations
-  Aperture calls have a v1 route: all of security, tasks, processes, the dashboard and the license.
-  None of databases, namespaces, journals or locks do, since v1 has no such API. v1's answer shapes
-  are unrecorded. The note proposes recording a 2026.1 instance first, then a read-only v1 mode.
 
 - **The Explorer sends the OAuth token revocation where IRIS serves it.** The spec documents
   `POST /v2/security/oauth2/revoke`; IRIS 2026.2 has no such route (404 to every method) and serves
@@ -268,10 +257,9 @@ each suspected bug before it was fixed). Highlights:
   credentials); `APERTURE_BIND` opts out. The installer's readiness report no longer fails an
   install where Embedded Python is unavailable.
 
-## 0.3.0 - what the other entries taught us
+## 0.3.0
 
-A scan of the other contest entries (IRIS Ops Studio, IRIS Fieldwork, Meridian, IRIS
-Multi-Manager, OcuPilot, Ops Canvas) turned up six things worth having before the deadline.
+Six additions.
 
 - **Secrets are redacted at the render boundary.** Passwords, client secrets, tokens and private
   keys are replaced before raw JSON is rendered or copied, before detail pages list fields and
@@ -299,10 +287,6 @@ Multi-Manager, OcuPilot, Ops Canvas) turned up six things worth having before th
   (`optional-body-415` in `src/lib/quirks.ts`).
 
 ## 0.2.0 - release candidate for the contest submission
-
-Built from an external architecture review of 0.1.0 (F/G/U/A/M-series findings, 60 items).
-Every finding was checked against the code; the disposition table at the end says what was done
-with each one and why the rest were deferred.
 
 ### Correctness
 
@@ -359,59 +343,8 @@ with each one and why the rest were deferred.
 
 ### Repository
 
-- Removed what the release does not need: the archived single-file prototype (`docs/prototype/`,
-  still the `initial commit` in history; it targeted endpoints that are not in the v2
-  specification and was never part of the build), the standalone Mermaid file (now embedded in
-  `docs/ARCHITECTURE.md`), the demo-assets checklist (merged into `docs/VIDEO_SCRIPT.md`) and the
+- Removed the standalone Mermaid file (the diagram lives in `docs/ARCHITECTURE.md`) and the
   unused `QueryBoundary` component.
 - The GitHub Pages deployment is opt-in: `deploy-demo` runs only when the repository variable
   `DEPLOY_DEMO` is `true`, so a private repository gets a skipped job instead of a failed run.
   Every run still attaches the demo build as the `demo-site` artifact.
-
-### Review disposition
-
-| Finding                                 | Status      | Note                                                                                                                                                                                                                                    |
-| --------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F1 demo mock intercepts a real instance | done        | `disable()` stops and unregisters the worker; the demo build itself is exempt (the mock is its only backend). The optional "no mock chunk in IRIS builds" decision was not taken: the README promises a demo button on every deployment |
-| F2 cache survives logout / switch       | done        | `resetInstanceState()`; tests                                                                                                                                                                                                           |
-| F3 transport dependency inversion       | deferred    | largest refactor of the set, no user-visible effect; the dynamic import in `loadInfo` is the documented seam                                                                                                                            |
-| F4 401-retry bookkeeping                | done        | `finalize()` runs for both responses; tests                                                                                                                                                                                             |
-| F5 inflight leak                        | done        | `onError`, JWT-only buffering; test                                                                                                                                                                                                     |
-| F6 spec index in the entry chunk        | done        | `lib/specIndex.ts`, idle load, CI guard                                                                                                                                                                                                 |
-| F7 dashboard imports the monitor page   | done        | `useHostMetrics.ts`                                                                                                                                                                                                                     |
-| F8 client-side-only tables              | partial     | filter debounced; server-side `filter`/`maxRows` deferred (semantics per endpoint unverified on real instances)                                                                                                                         |
-| F9 dashboard component size             | deferred    | memoising the panels is safe work for after the contest; chart animations were fixed under G11                                                                                                                                          |
-| F10 job poller                          | done        | scoped invalidation, signature-keyed effect, `useQueryClient`                                                                                                                                                                           |
-| F11 Basic credentials in sessionStorage | partial     | the opt-in checkbox is explicit and its copy says what is stored; the default stays on because the demo and most sessions are JWT                                                                                                       |
-| F12 security headers                    | done        | nginx CSP and friends                                                                                                                                                                                                                   |
-| F13 metadata headers on the wire        | done        | stripped in `onRequest`; test                                                                                                                                                                                                           |
-| F14 route-level privileges              | deferred    | U1 fixes the landing page; the nav/PageHeader duplication is documented, not harmful                                                                                                                                                    |
-| F15 component tests                     | partial     | DataTable, palette, CSV, session-reset and retry tests added; shell-level RTL tests deferred                                                                                                                                            |
-| F16 `www/` freshness                    | done        | CI step                                                                                                                                                                                                                                 |
-| F17a-f                                  | done        | keys, apply-time re-read, method-based confirmation, invalidation, `useLiveQuery`; F17e documented in §4                                                                                                                                |
-| G1 Prettier                             | done        | ignore list, `format:check`, one reformat commit                                                                                                                                                                                        |
-| G2 spec index timestamp                 | done        | SHA-256                                                                                                                                                                                                                                 |
-| G3 Docker context                       | done        |                                                                                                                                                                                                                                         |
-| G4 CI permissions / concurrency         | done        |                                                                                                                                                                                                                                         |
-| G5 time zone                            | done        | policy: verbatim wall clock, zone per profile, §2.10                                                                                                                                                                                    |
-| G6 `formatBytes`                        | done        | binary labels, clamped; tests                                                                                                                                                                                                           |
-| G7 export download                      | done        | `lib/download.ts`                                                                                                                                                                                                                       |
-| G8 revoke on switch                     | done        |                                                                                                                                                                                                                                         |
-| G9-G13 accessibility                    | done        | roles, focusable tooltips, reduced motion, honest fonts, row buttons                                                                                                                                                                    |
-| G14 un-expire passwords                 | done (kept) | announced in the build log and in the script; dev image only                                                                                                                                                                            |
-| G15 duplicated `/api/admin` config      | superseded  | one installer (Embedded Python) used by IPM and the Docker build                                                                                                                                                                        |
-| G16 metric row keys                     | done        |                                                                                                                                                                                                                                         |
-| U1-U6                                   | done        | landing, titles, URL state, modal guard, instance colour, empty states                                                                                                                                                                  |
-| U7 bulk actions                         | deferred    | needs per-screen design of partial-failure reporting                                                                                                                                                                                    |
-| U8 empty charts on load                 | done        | history persisted per tab                                                                                                                                                                                                               |
-| U9 more shortcuts                       | deferred    | `/` and ⌘K exist; single-key bindings need an input-focus policy first                                                                                                                                                                  |
-| U10 breadcrumbs, U11 phone tables       | deferred    | U10 waits on F14; U11 is a layout project                                                                                                                                                                                               |
-| U12 CSV export                          | done        |                                                                                                                                                                                                                                         |
-| U13 timestamp control                   | done        | `Timestamp` component; global preference deferred                                                                                                                                                                                       |
-| A1 dark-mode defects                    | done        | pre-paint script, three-state theme, palette measured                                                                                                                                                                                   |
-| A2-A5, A8 contrast                      | done        | tokens, contrast axis, reactive theme, localStorage                                                                                                                                                                                     |
-| A6 charts                               | partial     | HC palettes and dash patterns; patterned fills deferred                                                                                                                                                                                 |
-| A7 forced colors                        | partial     | badges and swatches keep colour, focus ring; not audited component by component                                                                                                                                                         |
-| A9 tests                                | partial     | palette contrast test; e2e contrast pass deferred                                                                                                                                                                                       |
-| M1-M4 splits                            | deferred    | pure movement; not worth churn days before submission (M3 `db.ts` is demo-only)                                                                                                                                                         |
-| M5 `ApiError` accessors                 | done        | adopted                                                                                                                                                                                                                                 |

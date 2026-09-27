@@ -88,7 +88,7 @@ export default function AboutPage() {
                 </Anchor>
                 <Anchor
                   size="sm"
-                  href="https://github.com/MxSalata/intersystems-frontend-contest"
+                  href="https://github.com/MxSalata/aperture"
                   target="_blank"
                   rel="noreferrer"
                 >
