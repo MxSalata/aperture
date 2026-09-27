@@ -31,6 +31,19 @@ test.describe('Aperture (demo mode)', () => {
     await expect(page.getByText('File size')).toBeVisible({ timeout: 20_000 });
   });
 
+  test('says how much room each disk behind the databases has left', async ({ page }) => {
+    await loginDemo(page);
+    await go(page, '/databases');
+    const disks = page.locator('.mantine-Paper-root').filter({ hasText: 'Disk space' });
+    await expect(disks.getByText('/irisdata/', { exact: true })).toBeVisible();
+    await expect(disks.getByText('9.2 GiB free')).toBeVisible();
+    await expect(disks.getByText('low', { exact: true })).toBeVisible();
+    await expect(disks.getByText('/usr/irissys/mgr/', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Open database CLINICAL' }).getByRole('cell', { name: '9.2 GiB low' }),
+    ).toBeVisible();
+  });
+
   test('queues an integrity check and follows it in the Job Center', async ({ page }) => {
     await loginDemo(page);
     await go(page, '/databases/detail?dir=%2Fusr%2Firissys%2Fmgr%2Fuser%2F&name=USER');

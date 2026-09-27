@@ -45,6 +45,8 @@ and commit the JSON report next to this file.
 | 2026-09-19 | same image, both runs, inside the container | - | `Aperture.Installer.Doctor()` (Embedded Python): 7/7 ok (version, JWT available, `/api/admin` enabled + password + JWT, `/aperture` web app, files on disk) | job log, step "Readiness report" |
 | 2026-09-23 | IRIS for Health 2026.2 (Build 221U), `containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3…62cf3`, a real instance on a LAN | JWT | 22/22, and 25/25 with `--mutate` (the task list lags the task object again) | [`2026-09-23-irishealth-2026.2/`](2026-09-23-irishealth-2026.2/) |
 | 2026-09-24 | IRIS Community 2026.2 (Build 221U), CI run 36070924998 on the 1.0.0 branch (`verify-iris` green) | JWT | 28/28 (`--mutate`): the previous 25 plus the log reader: `GET /api/aperture/logs` listed 2 files (`messages.log`, `SystemMonitor.log`; a stock instance writes no `alerts.log`) and a window of `messages.log` returned 201 whole lines from bytes 28522-44904 of 44904; the readiness report's rows `/api/aperture log reader (dispatch class Aperture.API, namespace USER)` and `log files readable` are ok | `iris-verification` artifact of the run |
+| 2026-09-27 | IRIS for Health 2026.2 (Build 221U), the same instance as on 23 September, with the IPM package installed into the running container | JWT | 23/23 before the install; 25/25 with `PORTAL_URL` after it (the log catalogue, a 199-line window of `messages.log`, the portal at `/aperture/index.html`); the security write probe 7/7 | [`2026-09-27-irishealth-2026.2/`](2026-09-27-irishealth-2026.2/) |
+| 2026-09-27 | the same, JWT authentication switched off on `/api/admin` and on again | Basic | 22/22: `POST /login` is the bodiless 401 with `WWW-Authenticate: Basic` of spec finding 20, recorded as JWT off with the Basic fallback in use | [`verify-live-jwt-off.json`](2026-09-27-irishealth-2026.2/verify-live-jwt-off.json) |
 
 ## Findings from the `--mutate` probe (22 September 2026, run 35718557061)
 
@@ -98,6 +100,22 @@ shows. What it changed in Aperture (see `CHANGELOG.md` for each fix):
   instead of a screen.
 
 Checks that change security settings are `e2e/live/writes.spec.ts`, run by the instance's owner.
+
+## The same instance, 27 September 2026
+
+The security write probe, the IPM install into the running container and the log reader, all in
+[`2026-09-27-irishealth-2026.2/`](2026-09-27-irishealth-2026.2/). What it changed in Aperture:
+
+- **The security edits send only what changed.** A PUT naming some fields leaves the others as they
+  were for roles, resources, users, web applications, services and TLS configurations, as it
+  already did for databases, journal settings and namespaces (`src/api/partialPut.ts`).
+- **A resource cannot be without a public permission through the API** (spec finding 8, now
+  confirmed for creation and edit): the Resources form says so instead of sending it.
+- **The IPM package installs into a running container.** The portal went to the csp directory of
+  the image, which the instance may not write to (`<13> Permission denied`) and which does not
+  survive the container; it now goes to the manager directory.
+- **A reload just after signing in no longer ends the session.** The probe's own sign-ins, which
+  navigate at once, found that an aborted first `/info` made sign-in revoke the new tokens.
 
 ## Known differences between spec and instances
 

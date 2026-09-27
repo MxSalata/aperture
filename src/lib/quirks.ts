@@ -135,8 +135,9 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
   {
     id: 'resource-create-empty-public',
     appliesTo: (op) => op.path === '/v2/security/resource' && op.method === 'PUT',
-    note: 'Creating a resource with an empty PublicPermission was rejected by IRIS 2026.2, although the spec allows any combination of R, W and U. Editing an existing resource to "none" is not affected.',
-    source: 'iris-fieldwork verification record (IRIS 2026.2, runtime/extended-validation.json)',
+    note: 'IRIS 2026.2 refuses a resource with no public permission, on creation and on edit: PublicPermission "" or null answers 400 with an empty error list and summary, and a creation without the field answers 400 (ERROR #40301, required). A public permission can therefore not be taken away through the API; the Management Portal can.',
+    source:
+      'Aperture live write probe, IRIS for Health 2026.2 Build 221U, 27 September 2026 (docs/verification/2026-09-27-irishealth-2026.2/writes.json); first reported for creation by the iris-fieldwork verification record',
   },
   {
     id: 'process-resume-state',

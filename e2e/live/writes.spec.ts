@@ -1,8 +1,8 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { randomBytes } from 'node:crypto';
 import { account, type Account } from './live';
-import { writeFileSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 /**
  * Writes against a real instance, with read-back: partial PUT per object type, role grants,
@@ -21,11 +21,26 @@ test.skip(!process.env.IRIS_URL, 'IRIS_URL is not set: the live run is opt-in');
 
 const PREFIX = process.env.IRIS_API_PREFIX ?? '/api/admin';
 const P = 'ApertureProbe';
-const results: Record<string, unknown> = {};
+/** One file for the whole run, written at every note: a test that times out keeps what it found. */
+const resultsFile = () => join(test.info().project.outputDir, 'writes.json');
 const note = (key: string, value: unknown) => {
-  results[key] = value;
   console.log(`• ${key}: ${JSON.stringify(value).slice(0, 400)}`);
+  const file = resultsFile();
+  mkdirSync(dirname(file), { recursive: true });
+  let results: Record<string, unknown> = {};
+  try {
+    results = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+  } catch {
+    /* the run's first note */
+  }
+  writeFileSync(file, `${JSON.stringify({ ...results, [key]: value }, null, 2)}\n`);
 };
+/**
+ * Changes to existing objects not yet undone. Each test puts its undo here before the change and
+ * takes it out in its own `finally`; `afterAll` runs whatever a timed-out test left behind, while
+ * the page is still open.
+ */
+const pendingRestores = new Map<string, () => Promise<Answer>>();
 
 interface Answer {
   status: number;
@@ -73,6 +88,16 @@ async function rest(
 
 const result = <T = Record<string, unknown>>(a: Answer) => (a.json?.result ?? {}) as T;
 const summary = (a: Answer) => `${a.status}${a.json?.status?.summary ? ` ${a.json.status.summary}` : ''}`;
+
+/** Change an existing object with its undo registered first; undo it here, or in afterAll after a timeout. */
+async function withRestore(key: string, restore: () => Promise<Answer>, change: () => Promise<void>) {
+  pendingRestores.set(key, restore);
+  try {
+    await change();
+  } finally {
+    if (pendingRestores.delete(key)) note(`${key}.restore`, summary(await restore()));
+  }
+}
 const q = (name: string) => `name=${encodeURIComponent(name)}`;
 
 /** Keys whose value differs between two reads, apart from the ones the write named. */
@@ -92,6 +117,8 @@ async function partialPut(page: Page, admin: Account, path: string, patch: Recor
     patch,
     put: summary(put),
     applied: named.every((k) => JSON.stringify(after[k]) === JSON.stringify(patch[k])),
+    // What the server holds afterwards: a list stored in another order is not a refusal.
+    stored: Object.fromEntries(named.map((k) => [k, after[k] ?? null])),
     otherFieldsChanged: drift(before, after, named).map((k) => ({
       key: k,
       before: before[k],
@@ -117,6 +144,12 @@ test.describe.serial('writes with read-back @mutate', () => {
   });
 
   test.afterAll(async () => {
+    for (const [key, restore] of pendingRestores)
+      note(
+        `${key}.restoredAfterAll`,
+        summary(await restore().catch(() => ({ status: 0, json: null, location: null }))),
+      );
+    pendingRestores.clear();
     // Best-effort cleanup of everything this file may have created.
     for (const [method, path] of [
       ['DELETE', `/v2/security/user?${q(`${P}User`)}`],
@@ -129,10 +162,7 @@ test.describe.serial('writes with read-back @mutate', () => {
       ['DELETE', `/v2/security/ssl-configuration?${q(`${P}TLS`)}`],
     ] as const)
       await rest(page, admin, method, path).catch(() => undefined);
-    const file = test.info().outputPath('writes.json');
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, `${JSON.stringify(results, null, 2)}\n`);
-    console.log(`→ ${file}`);
+    console.log(`→ ${resultsFile()}`);
     await page.close();
   });
 
@@ -169,23 +199,28 @@ test.describe.serial('writes with read-back @mutate', () => {
 
   test('resource: created with no public permission, then edited field by field', async () => {
     const path = `/v2/security/resource?${q(`${P}Res`)}`;
-    const empty = await rest(page, admin, 'PUT', path, {
-      Description: 'Aperture probe',
-      PublicPermission: '',
-    });
-    note('resource.createEmptyPublic', { put: summary(empty), errors: empty.json?.status?.errors ?? null });
-    if (empty.status >= 300) {
-      const r = await rest(page, admin, 'PUT', path, {
-        Description: 'Aperture probe',
-        PublicPermission: 'R',
-      });
-      note('resource.createWithR', summary(r));
+    // No public permission, three ways: an empty string, null, and no field at all.
+    for (const [key, body] of [
+      ['resource.createEmptyPublic', { Description: 'Aperture probe', PublicPermission: '' }],
+      ['resource.createNullPublic', { Description: 'Aperture probe', PublicPermission: null }],
+      ['resource.createWithoutPublic', { Description: 'Aperture probe' }],
+    ] as const) {
+      const a = await rest(page, admin, 'PUT', path, body);
+      const stored =
+        a.status < 300 ? result(await rest(page, admin, 'GET', path)).PublicPermission : undefined;
+      note(key, { put: summary(a), answer: a.status >= 300 ? a.json : undefined, stored });
+      if (a.status < 300) await rest(page, admin, 'DELETE', path);
     }
+    note(
+      'resource.createWithR',
+      summary(await rest(page, admin, 'PUT', path, { Description: 'Aperture probe', PublicPermission: 'R' })),
+    );
     note(
       'resource.descriptionOnly',
       await partialPut(page, admin, path, { Description: 'Aperture probe, renamed' }),
     );
     note('resource.publicToNone', await partialPut(page, admin, path, { PublicPermission: '' }));
+    note('resource.publicToNull', await partialPut(page, admin, path, { PublicPermission: null }));
     note('resource.emptyBody', await partialPut(page, admin, path, {}));
     note('resource.delete', summary(await rest(page, admin, 'DELETE', path)));
   });
@@ -314,10 +349,18 @@ test.describe.serial('writes with read-back @mutate', () => {
           () => true,
           () => false,
         );
-      const usersLink = landed
-        ? await p.getByRole('navigation').getByRole('link', { name: 'Users', exact: true }).count()
-        : 0;
-      note('ui.signIn.escalated', { landed, securityNavVisible: usersLink > 0 });
+      // The navigation appears once the session is validated (a "Connecting…" skeleton until then).
+      const securityNavVisible = landed
+        ? await p
+            .getByRole('navigation')
+            .getByRole('link', { name: 'Users', exact: true })
+            .waitFor({ timeout: 15_000 })
+            .then(
+              () => true,
+              () => false,
+            )
+        : false;
+      note('ui.signIn.escalated', { landed, securityNavVisible });
       await ctx.close();
     }
     note('user.delete', summary(await rest(page, admin, 'DELETE', path)));
@@ -372,7 +415,15 @@ test.describe.serial('writes with read-back @mutate', () => {
       `/explorer/${encodeURIComponent('/v2/security')}?op=${encodeURIComponent('POST /v2/security/audit/records')}`,
     );
     await p.getByRole('button', { name: 'Execute' }).first().click();
-    await p.getByRole('dialog').getByRole('button', { name: 'Execute' }).click();
+    // An operation that changes something asks first; this read-only task is queued at once.
+    const confirm = p.getByRole('dialog').getByRole('button', { name: 'Execute' });
+    if (
+      await confirm.waitFor({ timeout: 3_000 }).then(
+        () => true,
+        () => false,
+      )
+    )
+      await confirm.click();
     await p.waitForTimeout(12_000);
     const afterFirst = polls;
     await p.waitForTimeout(8_000);
@@ -454,7 +505,13 @@ test.describe.serial('writes with read-back @mutate', () => {
     test.skip(!name, 'no disabled service to probe');
     const path = `/v2/security/service?${q(name!)}`;
     const original = result(await rest(page, admin, 'GET', path));
-    try {
+    const restore = () =>
+      rest(page, admin, 'PUT', path, {
+        AutheEnabled: original.AutheEnabled,
+        ClientSystems: original.ClientSystems ?? [],
+        Enabled: original.Enabled,
+      });
+    await withRestore('service', restore, async () => {
       const wanted = ((original.AutheEnabled as number) ?? 64) | 1024 | (1 << 25);
       const set = await rest(page, admin, 'PUT', path, { AutheEnabled: wanted });
       const stored = result(await rest(page, admin, 'GET', path)).AutheEnabled as number;
@@ -503,25 +560,23 @@ test.describe.serial('writes with read-back @mutate', () => {
         switchChecked: await sw.isChecked().catch(() => null),
       });
       await ctx.close();
-    } finally {
-      note(
-        'service.restore',
-        summary(
-          await rest(page, admin, 'PUT', path, {
-            AutheEnabled: original.AutheEnabled,
-            ClientSystems: original.ClientSystems ?? [],
-            Enabled: original.Enabled,
-          }),
-        ),
-      );
-    }
+    });
   });
 
   test('TLS configuration, database and journal settings: partial PUT', async () => {
     const tls = `/v2/security/ssl-configuration?${q(`${P}TLS`)}`;
     note(
       'tls.create',
-      summary(await rest(page, admin, 'PUT', tls, { Description: 'Aperture probe', Type: 0, Enabled: true })),
+      // A TLS configuration is created with Type, Enabled and VerifyPeer (IRIS 2026.2 answers 400
+      // naming each one that is missing); 0 is a client that does not verify its peer.
+      summary(
+        await rest(page, admin, 'PUT', tls, {
+          Description: 'Aperture probe',
+          Type: 0,
+          Enabled: true,
+          VerifyPeer: 0,
+        }),
+      ),
     );
     note(
       'tls.descriptionOnly',
@@ -534,36 +589,41 @@ test.describe.serial('writes with read-back @mutate', () => {
     if (userDir) {
       const dpath = `/v2/database-dir?dir=${encodeURIComponent(userDir)}`;
       const orig = result(await rest(page, admin, 'GET', dpath));
-      try {
-        note(
-          'databaseDir.expansionOnly',
-          await partialPut(page, admin, dpath, { ExpansionSize: ((orig.ExpansionSize as number) ?? 0) + 1 }),
-        );
-      } finally {
-        await rest(page, admin, 'PUT', dpath, { ExpansionSize: orig.ExpansionSize });
-      }
+      await withRestore(
+        'databaseDir',
+        () => rest(page, admin, 'PUT', dpath, { ExpansionSize: orig.ExpansionSize }),
+        async () =>
+          note(
+            'databaseDir.expansionOnly',
+            await partialPut(page, admin, dpath, {
+              ExpansionSize: ((orig.ExpansionSize as number) ?? 0) + 1,
+            }),
+          ),
+      );
     }
     const cpath = `/v2/database?${q('USER')}`;
     const corig = result(await rest(page, admin, 'GET', cpath));
-    try {
-      note(
-        'database.mountAtStartupOnly',
-        await partialPut(page, admin, cpath, { MountAtStartup: !corig.MountAtStartup }),
-      );
-    } finally {
-      await rest(page, admin, 'PUT', cpath, { MountAtStartup: corig.MountAtStartup });
-    }
+    await withRestore(
+      'database',
+      () => rest(page, admin, 'PUT', cpath, { MountAtStartup: corig.MountAtStartup }),
+      async () =>
+        note(
+          'database.mountAtStartupOnly',
+          await partialPut(page, admin, cpath, { MountAtStartup: !corig.MountAtStartup }),
+        ),
+    );
     const jpath = '/v2/journal/settings';
     const jorig = result(await rest(page, admin, 'GET', jpath));
-    try {
-      note(
-        'journal.daysBeforePurgeOnly',
-        await partialPut(page, admin, jpath, {
-          DaysBeforePurge: ((jorig.DaysBeforePurge as number) ?? 2) + 1,
-        }),
-      );
-    } finally {
-      await rest(page, admin, 'PUT', jpath, { DaysBeforePurge: jorig.DaysBeforePurge });
-    }
+    await withRestore(
+      'journal',
+      () => rest(page, admin, 'PUT', jpath, { DaysBeforePurge: jorig.DaysBeforePurge }),
+      async () =>
+        note(
+          'journal.daysBeforePurgeOnly',
+          await partialPut(page, admin, jpath, {
+            DaysBeforePurge: ((jorig.DaysBeforePurge as number) ?? 2) + 1,
+          }),
+        ),
+    );
   });
 });

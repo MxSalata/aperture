@@ -142,11 +142,27 @@ try {
     }
   } else {
     report.auth = 'basic';
+    // No /login before IRIS 2026.2 (404/405). With JWT switched off on the web application, IRIS
+    // asks for a password before the API sees the request: a bodiless 401 with
+    // WWW-Authenticate: Basic (spec finding 20). The portal signs in with Basic in both cases.
+    const challenge = login.headers.get('www-authenticate') ?? '';
+    const absent = login.status === 404 || login.status === 405;
+    const jwtOff = login.status === 401 && /^basic\b/i.test(challenge);
     record(
       'POST /login (JWT)',
-      login.status === 404 || login.status === 405,
-      `HTTP ${login.status} - ${login.status === 404 || login.status === 405 ? 'endpoint absent (IRIS < 2026.2?), Basic fallback in use' : 'unexpected answer'}`,
-      { status: login.status, body: login.json ?? login.text?.slice(0, 200) },
+      absent || jwtOff,
+      `HTTP ${login.status} - ${
+        absent
+          ? 'endpoint absent (IRIS < 2026.2?), Basic fallback in use'
+          : jwtOff
+            ? 'JWT authentication off on this web application (WWW-Authenticate: Basic), Basic fallback in use'
+            : 'unexpected answer'
+      }`,
+      {
+        status: login.status,
+        wwwAuthenticate: challenge || undefined,
+        body: login.json ?? login.text?.slice(0, 200),
+      },
     );
   }
 

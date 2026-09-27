@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { api, result } from '@/api/client';
 import type { ConfigDatabaseList, Schemas } from '@/api/types';
+import { mapLimit } from '@/lib/limiter';
+import type { SpaceLevel, Volume } from './storage';
 
 export type ConfigRow = ConfigDatabaseList[number];
 /** The spec declares LocalDatabaseList as an object; the server returns an array. Accept both. */
@@ -13,6 +15,9 @@ export interface DatabaseRow extends ConfigRow {
   Resource?: string;
   Encrypted?: boolean;
   Mirrored?: boolean;
+  /** Free space on the disk the database grows on, in MB (from its volumes). */
+  DiskFreeMB?: number;
+  DiskLevel?: SpaceLevel;
 }
 
 export function normalizeLocal(raw: unknown): LocalRow[] {
@@ -26,7 +31,34 @@ export const dbKeys = {
   local: ['databases', 'local'] as const,
   configOne: (name: string) => ['databases', 'config', name] as const,
   localOne: (dir: string) => ['databases', 'local', dir] as const,
+  volumes: (dirs: string[]) => ['databases', 'volumes', dirs] as const,
 };
+
+/**
+ * The volumes of each database directory, by `dirKey`: one GET /v2/database-dir/volumes per
+ * directory, four at a time. A directory whose read fails (a dismounted database, a missing
+ * privilege) is left out rather than failing the others.
+ */
+export async function fetchVolumes(dirs: string[]): Promise<Map<string, Volume[]>> {
+  const read = await mapLimit(dirs, 4, async (dir) => {
+    try {
+      const v = await result(api().GET('/v2/database-dir/volumes', { params: { query: { dir } } }));
+      return [dirKey(dir), (Array.isArray(v) ? v : []) as Volume[]] as const;
+    } catch {
+      return null;
+    }
+  });
+  return new Map(read.filter((r) => r !== null));
+}
+
+export function useDatabaseVolumes(dirs: string[]) {
+  return useQuery({
+    queryKey: dbKeys.volumes(dirs),
+    queryFn: () => fetchVolumes(dirs),
+    enabled: dirs.length > 0,
+    staleTime: 60_000,
+  });
+}
 
 export function useConfigDatabases() {
   return useQuery({ queryKey: dbKeys.config, queryFn: () => result(api().GET('/v2/databases')) });

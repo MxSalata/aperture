@@ -22,6 +22,50 @@
   outside, so a half-filled form survives a stray click; the palette is a Mantine modal too and
   inherited the rule, so only Escape or a pick closed it. It now closes on its backdrop, while edit
   dialogs keep the rule (an end-to-end test checks both).
+- **Disk space on the Databases screen.** A card above the table shows each disk that holds
+  database files: its path, the free space IRIS reports, and the databases on it with their size;
+  the table has a "Disk free" column. A disk is marked low under 10 GiB or under a tenth of the data
+  on it, and critical under 2 GiB, in words as well as colour. The figures are the `DiskFree` of GET
+  `/v2/database-dir/volumes`, read for every database four at a time; directories reporting the
+  same free space are one disk. It works in a container too: on IRIS for Health 2026.2 with durable
+  %SYS the screen shows the host disk behind `/durable/iris/mgr/` (2.6 TiB free, 12 databases) apart
+  from the image's own file system under `/usr/irissys/mgr/` (77 GiB free, the three read-only
+  libraries). The demo puts its application databases on a second disk that is running low.
+- **The security write probe, complete on IRIS for Health 2026.2 (7/7).** `e2e/live/writes.spec.ts`
+  now writes its results as it goes (one `writes.json` per run, kept when a test times out),
+  registers the undo of every change to an existing object before making it and runs whatever a
+  timed-out test left in `afterAll` (a timed-out run had left `%Service_Weblink` with a client
+  address, put back by hand), records what the server stored next to what was sent, waits for the
+  navigation before judging an escalated sign-in, creates its TLS configuration with the fields the
+  spec requires, and confirms in the Explorer only when it asks. Its results, the live checks before
+  and after the IPM install and the install transcript are in
+  `docs/verification/2026-09-27-irishealth-2026.2/`.
+- **Security edits send only what changed.** The edit dialogs of roles, resources, users, web
+  applications, services and TLS configurations send the fields the review lists, as those of
+  databases, journal settings and namespaces already did: IRIS merged a body naming one field for
+  each of the six types. A field changed on the server since the dialog opened is kept unless it
+  was changed here too, and disabling a user sends `Enabled` alone.
+- **A resource without a public permission is not sent.** IRIS 2026.2 refuses one, on creation and
+  on edit, with a 400 that carries no message (spec finding 8, now confirmed for both). The
+  Resources form shows "none" without offering it, and a creation without a permission says why
+  before sending anything; editing a resource whose public access was taken away in the Management
+  Portal now sends only what changed, which IRIS accepts. The mock refuses it the same way, and
+  keeps a TLS server's type when a PUT leaves it out.
+- **The shape oracle, recorded again.** `scripts/live/shapes.mjs` against IRIS for Health 2026.2 on
+  27 September found the same 74 operations in the same shapes, except that a busy process's
+  `Process` in the dashboard is an integer as well as the padding rows' empty string; the mock's
+  answers already fit, and the contract test passes unchanged.
+- **Every screen walked again on IRIS for Health 2026.2.** The visual refresh of 1.0.1 and the fixes
+  after it change no behaviour against the real instance: as the administrator all 32 screens open
+  without a console error or a failed request, as the `%Operator` account only the screens that need
+  another privilege answer 403, times read from New York are exact with and without a named zone,
+  and the limit badges show (`docs/verification/2026-09-27-irishealth-2026.2/ui/`).
+- **JWT switched off on a real `/api/admin`.** On IRIS for Health 2026.2, with `JWTAuthEnabled` off,
+  `POST /login` is the bodiless 401 with `WWW-Authenticate: Basic` of spec finding 20, which had only
+  been seen on IRIS Community and on `/api/mgmnt`; the portal signed in with Basic through the dev
+  server and served by IRIS itself, with no browser login dialog. `npm run verify:live` took that
+  401 for a failure: it now records it as JWT switched off, with the Basic fallback in use (22/22).
+  Switched back on, the web application matched its earlier state field for field.
 - **A softer Light theme.** White cards on a near-white page were too bright. The page behind the
   cards is now a cool grey, and the cards, navbar, header, menus, modals and the sign-in page sit
   just off white with a firmer edge; striped and hovered table rows move a step darker so they

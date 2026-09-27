@@ -1,0 +1,1 @@
+const t=new Set(["/v2/database-dir","/v2/database","/v2/journal/settings","/v2/namespace","/v2/security/role","/v2/security/resource","/v2/security/user","/v2/web-app","/v2/security/service","/v2/security/ssl-configuration"]);function n(e){return t.has(e)}function a(e,s,r){return n(e)?r:s}export{a as p,n as s};

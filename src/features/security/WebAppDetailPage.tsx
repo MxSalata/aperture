@@ -22,6 +22,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { API_PREFIX } from '@/api/base';
+import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import type { Application } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
@@ -56,10 +57,13 @@ export default function WebAppDetailPage() {
     const { flags, ...body } = v;
     return { ...body, AutheEnabled: applyFlags(q.data?.AutheEnabled, flags.map(Number)) };
   };
-  const save = useApiMutation((body: Application) => run(api().PUT('/v2/web-app', { ...p, body }), 'PUT'), {
-    invalidate: [secKeys.webApps, secKeys.webApp(name)],
-    onSuccess: close,
-  });
+  const save = useApiMutation(
+    (body: Partial<Application>) => run(api().PUT('/v2/web-app', { ...p, body }), 'PUT'),
+    {
+      invalidate: [secKeys.webApps, secKeys.webApp(name)],
+      onSuccess: close,
+    },
+  );
   const remove = useApiMutation(() => run(api().DELETE('/v2/web-app', p), 'DELETE'), {
     invalidate: [secKeys.webApps],
     onSuccess: () => navigate('/security/web-apps'),
@@ -227,7 +231,9 @@ export default function WebAppDetailPage() {
               before: q.data as Record<string, unknown>,
               after: toBody(v) as Record<string, unknown>,
               refetch: () => result(api().GET('/v2/web-app', p)) as Promise<Record<string, unknown>>,
-              onConfirm: () => save.mutateAsync(toBody(v)),
+              onlyChanges: sendsOnlyChanges('/v2/web-app'),
+              onConfirm: (changed) =>
+                save.mutateAsync(putBody('/v2/web-app', toBody(v), changed as Partial<Application>)),
             }),
           )}
         >

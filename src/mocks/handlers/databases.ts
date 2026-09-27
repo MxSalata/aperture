@@ -1,4 +1,4 @@
-import { mockDb, MGR, type DbLocal } from '../db';
+import { mockDb, MGR, diskFreeMB, type DbLocal } from '../db';
 import {
   ok,
   created,
@@ -159,7 +159,7 @@ export const databaseHandlers = [
       Full: false,
       LastExpansionTime: now(),
       AvailableSpace: Math.round(size * 0.9),
-      DiskFree: '41.2 GB',
+      DiskFree: `${(diskFreeMB(normDir) / 1024).toFixed(2)}GB`,
       EndFree: Math.round(size * 0.9),
       Mounted: true,
     });
@@ -208,7 +208,7 @@ export const databaseHandlers = [
         File: 'IRIS.DAT',
         Size: d.Size,
         VolumeDirectoryTotalSize: d.Size,
-        DiskFree: 184_320,
+        DiskFree: diskFreeMB(d.Directory),
       },
     ]);
   }),

@@ -1,0 +1,1 @@
+function c(r){let t=0;const i=[],e=()=>{if(t>=r)return;const n=i.shift();n&&n()};return function(s){return new Promise((u,o)=>{i.push(()=>{t++,s().then(u,o).finally(()=>{t--,e()})}),e()})}}function m(r,t,i){const e=c(t);return Promise.all(r.map(n=>e(()=>i(n))))}export{c,m};

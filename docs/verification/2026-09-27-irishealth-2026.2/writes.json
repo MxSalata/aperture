@@ -1,0 +1,414 @@
+{
+  "role.create": {
+    "put": "201",
+    "read": {
+      "Description": "Aperture probe",
+      "GrantedRoles": [
+        "%Developer"
+      ],
+      "EscalationOnly": false,
+      "Resources": [
+        {
+          "Name": "%DB_USER",
+          "Permissions": "R"
+        }
+      ]
+    }
+  },
+  "role.resourcesOnly": {
+    "patch": {
+      "Resources": [
+        {
+          "Name": "%DB_USER",
+          "Permissions": "RW"
+        }
+      ]
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "Resources": [
+        {
+          "Name": "%DB_USER",
+          "Permissions": "RW"
+        }
+      ]
+    },
+    "otherFieldsChanged": []
+  },
+  "role.resourcesReplaceOrMerge": {
+    "patch": {
+      "Resources": [
+        {
+          "Name": "%DB_IRISSYS",
+          "Permissions": "R"
+        }
+      ]
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "Resources": [
+        {
+          "Name": "%DB_IRISSYS",
+          "Permissions": "R"
+        }
+      ]
+    },
+    "otherFieldsChanged": [],
+    "resourcesAfter": [
+      {
+        "Name": "%DB_IRISSYS",
+        "Permissions": "R"
+      }
+    ]
+  },
+  "role.descriptionOnly": {
+    "patch": {
+      "Description": "Aperture probe, renamed"
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "Description": "Aperture probe, renamed"
+    },
+    "otherFieldsChanged": []
+  },
+  "role.emptyResources": {
+    "patch": {
+      "Resources": []
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "Resources": []
+    },
+    "otherFieldsChanged": []
+  },
+  "role.emptyGrantedRoles": {
+    "patch": {
+      "GrantedRoles": []
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "GrantedRoles": []
+    },
+    "otherFieldsChanged": []
+  },
+  "role.delete": "200",
+  "resource.createEmptyPublic": {
+    "put": "400",
+    "answer": {
+      "status": {
+        "errors": [],
+        "summary": ""
+      },
+      "console": [],
+      "result": {}
+    }
+  },
+  "resource.createNullPublic": {
+    "put": "400",
+    "answer": {
+      "status": {
+        "errors": [],
+        "summary": ""
+      },
+      "console": [],
+      "result": {}
+    }
+  },
+  "resource.createWithoutPublic": {
+    "put": "400 ERROR #40301: Field &#39;PublicPermission&#39; is required in the request body.",
+    "answer": {
+      "status": {
+        "errors": [
+          {
+            "error": "ERROR #40301: Field 'PublicPermission' is required in the request body.",
+            "code": 40301,
+            "domain": "%ObjectErrors",
+            "id": "MissingRequestBodyField",
+            "params": [
+              "PublicPermission"
+            ]
+          }
+        ],
+        "summary": "ERROR #40301: Field &#39;PublicPermission&#39; is required in the request body."
+      },
+      "console": [],
+      "result": {}
+    }
+  },
+  "resource.createWithR": "201",
+  "resource.descriptionOnly": {
+    "patch": {
+      "Description": "Aperture probe, renamed"
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "Description": "Aperture probe, renamed"
+    },
+    "otherFieldsChanged": []
+  },
+  "resource.publicToNone": {
+    "patch": {
+      "PublicPermission": ""
+    },
+    "put": "400",
+    "applied": false,
+    "stored": {
+      "PublicPermission": "R"
+    },
+    "otherFieldsChanged": []
+  },
+  "resource.publicToNull": {
+    "patch": {
+      "PublicPermission": null
+    },
+    "put": "400",
+    "applied": false,
+    "stored": {
+      "PublicPermission": "R"
+    },
+    "otherFieldsChanged": []
+  },
+  "resource.emptyBody": {
+    "patch": {},
+    "put": "200",
+    "applied": true,
+    "stored": {},
+    "otherFieldsChanged": []
+  },
+  "resource.delete": "200",
+  "escRole.create": "201",
+  "user.create": {
+    "status": "201",
+    "errors": []
+  },
+  "user.read": {
+    "AccountNeverExpires": false,
+    "AutheEnabled": 0,
+    "ChangePassword": false,
+    "Comment": "",
+    "EmailAddress": "",
+    "Enabled": true,
+    "ExpirationDate": "",
+    "FullName": "Aperture probe",
+    "HOTPKeyDisplay": false,
+    "NameSpace": "USER",
+    "PasswordNeverExpires": true,
+    "PhoneNumber": "",
+    "PhoneProvider": "",
+    "Roles": [
+      "%Operator"
+    ],
+    "EscalationRoles": [
+      "ApertureProbeEsc"
+    ],
+    "Routine": ""
+  },
+  "user.fullNameOnly": {
+    "patch": {
+      "FullName": "Aperture probe, renamed"
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "FullName": "Aperture probe, renamed"
+    },
+    "otherFieldsChanged": []
+  },
+  "user.rolesOnly": {
+    "patch": {
+      "Roles": [
+        "%Operator",
+        "%Developer"
+      ]
+    },
+    "put": "200",
+    "applied": false,
+    "stored": {
+      "Roles": [
+        "%Developer",
+        "%Operator"
+      ]
+    },
+    "otherFieldsChanged": []
+  },
+  "user.commentOnly": {
+    "patch": {
+      "Comment": "probe"
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "Comment": "probe"
+    },
+    "otherFieldsChanged": []
+  },
+  "user.enabledOnly": {
+    "patch": {
+      "Enabled": false
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "Enabled": false
+    },
+    "otherFieldsChanged": []
+  },
+  "login.jwt": {
+    "status": 200,
+    "secure": false
+  },
+  "login.escalated": {
+    "status": 200,
+    "secure": true
+  },
+  "login.notMyEscalationRole": {
+    "status": 401,
+    "secure": null
+  },
+  "login.basicUtf8": 200,
+  "login.basicLatin1": 401,
+  "login.passwordHasNonLatin1": true,
+  "ui.signIn.Auto": {
+    "landed": true,
+    "alert": null
+  },
+  "ui.signIn.Basic": {
+    "landed": true,
+    "alert": null
+  },
+  "ui.signIn.escalated": {
+    "landed": true,
+    "securityNavVisible": true
+  },
+  "user.delete": "200",
+  "escRole.delete": "200",
+  "auditor.api": {
+    "queued": "202",
+    "location": "/api/admin/v1/async-result?id=<n>",
+    "ownResult": "403"
+  },
+  "auditor.jobCenter": {
+    "pollsIn12s": 1,
+    "pollsInNext8s": 0,
+    "text": [
+      "Missing",
+      "needs %Admin_Operate, which this account does not hold."
+    ]
+  },
+  "webapp.create": {
+    "put": "201",
+    "wanted": 3145764,
+    "stored": 3145764
+  },
+  "webapp.descriptionOnly": {
+    "patch": {
+      "Description": "Aperture probe (API partial)"
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "Description": "Aperture probe (API partial)"
+    },
+    "otherFieldsChanged": []
+  },
+  "webapp.uiEdit": {
+    "storedBefore": 3145764,
+    "after": 3145764,
+    "identical": true,
+    "saved": true,
+    "sentKeys": null,
+    "sentAutheEnabled": null
+  },
+  "webapp.delete": "200",
+  "service.setHiddenBits": {
+    "put": "200",
+    "original": 64,
+    "wanted": 33555520,
+    "stored": 64
+  },
+  "service.clientSystemsOnly": {
+    "patch": {
+      "ClientSystems": [
+        "127.0.0.1"
+      ]
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "ClientSystems": [
+        "127.0.0.1"
+      ]
+    },
+    "otherFieldsChanged": []
+  },
+  "service.uiEdit": {
+    "stored": 64,
+    "after": 64,
+    "identical": true,
+    "clientSystems": [
+      "127.0.0.1",
+      "127.0.0.2"
+    ],
+    "sent": null
+  },
+  "service.listSwitch": {
+    "enabled": false,
+    "switchChecked": false
+  },
+  "service.restore": "200",
+  "tls.create": "201",
+  "tls.descriptionOnly": {
+    "patch": {
+      "Description": "Aperture probe, renamed"
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "Description": "Aperture probe, renamed"
+    },
+    "otherFieldsChanged": []
+  },
+  "tls.delete": "200",
+  "databaseDir.expansionOnly": {
+    "patch": {
+      "ExpansionSize": 1
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "ExpansionSize": 1
+    },
+    "otherFieldsChanged": []
+  },
+  "databaseDir.restore": "200",
+  "database.mountAtStartupOnly": {
+    "patch": {
+      "MountAtStartup": true
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "MountAtStartup": true
+    },
+    "otherFieldsChanged": []
+  },
+  "database.restore": "200",
+  "journal.daysBeforePurgeOnly": {
+    "patch": {
+      "DaysBeforePurge": 3
+    },
+    "put": "200",
+    "applied": true,
+    "stored": {
+      "DaysBeforePurge": 3
+    },
+    "otherFieldsChanged": []
+  },
+  "journal.restore": "200"
+}

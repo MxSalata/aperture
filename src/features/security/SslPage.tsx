@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import { IconPencil, IconPlugConnected, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
+import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import type { SSLConfigurationList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
@@ -103,11 +104,8 @@ export default function SslPage() {
       : { CipherList: splitCiphers(v.CipherList) }),
   });
   const save = useApiMutation(
-    (v: typeof form.values) =>
-      run(
-        api().PUT('/v2/security/ssl-configuration', { params: { query: { name: v.Name } }, body: toBody(v) }),
-        'PUT',
-      ),
+    ({ name, body }: { name: string; body: Partial<ReturnType<typeof toBody>> }) =>
+      run(api().PUT('/v2/security/ssl-configuration', { params: { query: { name } }, body }), 'PUT'),
     {
       invalidate: [secKeys.ssl],
       onSuccess: () => {
@@ -304,9 +302,18 @@ export default function SslPage() {
                     result(
                       api().GET('/v2/security/ssl-configuration', { params: { query: { name: editing } } }),
                     ) as Promise<Record<string, unknown>>,
-                  onConfirm: () => save.mutateAsync(v),
+                  onlyChanges: sendsOnlyChanges('/v2/security/ssl-configuration'),
+                  onConfirm: (changed) =>
+                    save.mutateAsync({
+                      name: v.Name,
+                      body: putBody(
+                        '/v2/security/ssl-configuration',
+                        toBody(v),
+                        changed as Partial<ReturnType<typeof toBody>>,
+                      ),
+                    }),
                 })
-              : save.mutate(v),
+              : save.mutate({ name: v.Name, body: toBody(v) }),
           )}
         >
           <Stack gap="sm">

@@ -63,7 +63,7 @@ describe('the body of an edit', () => {
     const form = { a: 1, b: 2 };
     expect(sendsOnlyChanges('/v2/journal/settings')).toBe(true);
     expect(putBody('/v2/journal/settings', form, { b: 3 })).toEqual({ b: 3 });
-    expect(sendsOnlyChanges('/v2/security/user')).toBe(false);
-    expect(putBody('/v2/security/user', form, { b: 3 })).toBe(form);
+    expect(sendsOnlyChanges('/v2/task')).toBe(false);
+    expect(putBody('/v2/task', form, { b: 3 })).toBe(form);
   });
 });

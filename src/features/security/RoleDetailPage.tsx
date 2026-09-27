@@ -19,6 +19,7 @@ import { IconArrowLeft, IconTrash } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
+import { putBody, sendsOnlyChanges } from '@/api/partialPut';
 import type { Role } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { KeyValueList, renderValue } from '@/components/KeyValueList';
@@ -54,7 +55,7 @@ export default function RoleDetailPage() {
   const roleNames = useRoleNames();
   const params = { params: { query: { name } } } as const;
   const save = useApiMutation(
-    (body: Role) => run(api().PUT('/v2/security/role', { ...params, body }), 'PUT'),
+    (body: Partial<Role>) => run(api().PUT('/v2/security/role', { ...params, body }), 'PUT'),
     { invalidate: [secKeys.roles, secKeys.role(name)], onSuccess: () => close() },
   );
   const remove = useApiMutation(() => run(api().DELETE('/v2/security/role', params), 'DELETE'), {
@@ -197,7 +198,9 @@ export default function RoleDetailPage() {
                   granted: body.GrantedRoles ?? [],
                 }),
               guardConfirmText: name,
-              onConfirm: () => save.mutateAsync(body),
+              onlyChanges: sendsOnlyChanges('/v2/security/role'),
+              onConfirm: (changed) =>
+                save.mutateAsync(putBody('/v2/security/role', body, changed as Partial<Role>)),
             });
           })}
         >
