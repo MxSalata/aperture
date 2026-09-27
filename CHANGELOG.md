@@ -104,6 +104,18 @@
   `iris_interop_*` series of `/api/monitor` (one line per namespace whose production reports; IRIS
   publishes them once `##class(Ens.Util.Statistics).EnableSAMForNamespace()` was run there and the
   production is running, and the card says so until then); the demo's two productions report.
+- **All 273 operations accounted for on a real IRIS.** `docs/COVERAGE.md` lists every operation of
+  the specification with the screen that calls it, what IRIS for Health 2026.2 answered and whether
+  the demo answers it: 139 verified on that instance (100 of the 115 reads, called with objects taken
+  from its own lists and checked against the spec's schemas, and 38 writes and tasks with their
+  evidence, each undone after its check), 136 called by a hand-made screen, 173 answered by the demo.
+  `scripts/live/coverage.mjs` runs the read sweep; `scripts/live/sample-data.mjs` creates disabled
+  sample objects (wallet, OAuth 2.0 server definition and resource server, file system access
+  purpose, privileged routine, DocDB) after a create, read and delete round trip on a probe of each
+  type; `scripts/coverage-doc.mjs` writes the document. The run found four new differences from the
+  spec (a device's `Alias`, a task's `ExpiresDays`, a web application's `WSGIType` and an OAuth 2.0
+  server definition's `ID` come in another type), a 500 for `discover=false`, and two documented
+  bodies IRIS refuses.
 
 ## 1.0.1 - after a review of the online demo (27 September 2026)
 

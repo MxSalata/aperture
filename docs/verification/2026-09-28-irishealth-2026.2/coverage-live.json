@@ -1,0 +1,1256 @@
+{
+  "meta": {
+    "image": "containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3",
+    "serverVersion": "IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2 (Build 221U) Fri Jun 26 2026 09:58:52 EDT",
+    "capturedAt": "2026-09-27T23:07:18.399Z",
+    "instance": "http://<iris-host>:52773/api/admin"
+  },
+  "about": "Every GET of the SysAdmin API v2 called as an administrator with parameters from the instance (scripts/live/coverage.mjs)",
+  "summary": {
+    "operations": 115,
+    "answered": 100,
+    "notFound": 1,
+    "refused": 0,
+    "error": 0,
+    "notCalled": 14
+  },
+  "results": [
+    {
+      "id": "GET /info",
+      "status": 200,
+      "params": [],
+      "ms": 8,
+      "outcome": "answered",
+      "shape": "{apiVersion:number, username:string, serverVersion:string, systemMode:string, product:string, namespaces:[{…}]×8, privileges:{ExternalLanguageServerEdit:{…}, Journal:{…}, Manage:{…}, OAuth2_Client:{…}, OAuth2_Registration:{…}, OAuth2_Server:{…}, Operate:{…}, Secure:{…}, Task:{…}, Wallet:{…}, FileSystemAccess:{…}}}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/async-result",
+      "outcome": "not called",
+      "reason": "never called here: re-reading an ended task logs an alert; the live check reads one task once"
+    },
+    {
+      "id": "GET /v2/async-results",
+      "status": 200,
+      "params": [],
+      "ms": 11,
+      "outcome": "answered",
+      "shape": "[{GUID:string, TaskName:string, State:string, FailureReason:string, TimeQueued:string, TimeStarted:string, TimeFinished:string}]×65",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/database",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 7,
+      "outcome": "answered",
+      "shape": "{Server:string, Directory:string, StreamLocation:string, ClusterMountMode:boolean, MountAtStartup:boolean, MountRequired:boolean}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/database-dir",
+      "status": 200,
+      "params": [
+        "dir"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{MaxSize:number, ExpansionSize:number, NewVolumeThreshold:number, NewVolumeDirectory:string, ResourceName:string, NewGlobalIsKeep:boolean, NewGlobalCollation:number, ClusterMountMode:boolean, ReadOnly:boolean, GlobalJournalState:boolean}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/database-dir/volumes",
+      "status": 200,
+      "params": [
+        "dir"
+      ],
+      "ms": 8,
+      "outcome": "answered",
+      "shape": "[{VolumeNumber:number, VolumeDirectory:string, File:string, Size:number, VolumeDirectoryTotalSize:number, DiskFree:number}]×1",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/database-dirs",
+      "status": 200,
+      "params": [],
+      "ms": 10,
+      "outcome": "answered",
+      "shape": "[{Directory:string, MaxSize:string, Size:number, Status:string, Resource:string, Encrypted:boolean, Mirrored:boolean, SFN:number, EncryptionKeyID:string, EncryptionVersion:string}]×15",
+      "specProblems": [
+        "result: spec says object, server sent array [{\"Directory\":\"/durable/iris/mgr/\",\"MaxSize\":\"Unlimited\",\"Size\":90,\"Status\":\"Mou"
+      ],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/databases",
+      "status": 200,
+      "params": [],
+      "ms": 9,
+      "outcome": "answered",
+      "shape": "[{Name:string, Directory:string, Server:string, ClusterMountMode:boolean, MountRequired:boolean, MountAtStartup:boolean, StreamLocation:string, Status:string}]×15",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/device",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{Alias:string, AlternateDevice:string, Description:string, OpenParameters:string, PhysicalDevice:string, Prompt:string, SubType:string, Type:string}",
+      "specProblems": [
+        "result.Alias: spec says integer, server sent string \"\"",
+        "result.Prompt: spec says integer, server sent string \"\""
+      ],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/device/settings",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "{TelnetSettings:{DNSLookup:string, Port:number}, IOSettings:{File:string, MagTape:string, Other:string, Terminal:string}}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/device/subtype",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 7,
+      "outcome": "answered",
+      "shape": "{Backspace:string, CursorControl:string, EraseEOF:string, EraseEOL:string, FormFeed:string, RightMargin:number, ScreenLength:number, ZU22Backspace:string, ZU22FormFeed:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/device/subtypes",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "[{Name:string, RightMargin:number, FormFeed:string, ScreenLength:number, Backspace:string, CursorControl:string, EraseEOL:string, EraseEOF:string, ZU22FormFeed:string, ZU22Backspace:string}]×14",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/devices",
+      "status": 200,
+      "params": [],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "[{Name:string, PhysicalDevice:string, Type:string, SubType:string, Prompt:string, OpenParameters:string, AlternateDevice:string, Description:string, Alias:string}]×12",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/doc-db",
+      "status": 200,
+      "params": [
+        "name",
+        "namespace"
+      ],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "{Description:string, Enabled:boolean, Resource:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/doc-dbs",
+      "status": 200,
+      "params": [],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "[{Name:string, Namespace:string, Enabled:boolean, Resource:string, Description:string}]×1",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/ecp/application-server-ssl-connections",
+      "status": 200,
+      "params": [],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/ecp/application-servers",
+      "status": 200,
+      "params": [],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/ecp/data-server",
+      "outcome": "not called",
+      "reason": "no such object on this instance"
+    },
+    {
+      "id": "GET /v2/ecp/data-server/databases",
+      "outcome": "not called",
+      "reason": "no such object on this instance"
+    },
+    {
+      "id": "GET /v2/ecp/data-servers",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/ecp/settings",
+      "status": 200,
+      "params": [],
+      "ms": 9,
+      "outcome": "answered",
+      "shape": "{AppServerSettings:{MaxServers:number, ClientReconnectDuration:number, ClientReconnectInterval:number}, DataServerSettings:{MaxServerConn:number, ServerTroubleDuration:number, SSLECPServer:number}}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/ext-lang-server",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "{BindToIPAddress:string, ConnectionTimeout:number, InitializationTimeout:number, LogFile:string, Port:number, Resource:string, Type:string, UseSharedMemory:boolean, SSLConfigurationServer:string, SSLConfigurationClient:string, VerifySSLHostName:boolean, Custom:{DotNetVersion:string, Exec32:number, FilePath:string}}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/ext-lang-server/activity",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 8,
+      "outcome": "answered",
+      "shape": "{Activity:[], CurrentlyRunning:boolean}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/ext-lang-servers",
+      "status": 200,
+      "params": [],
+      "ms": 8,
+      "outcome": "answered",
+      "shape": "[{Name:string, Port:number, Type:string}]×9",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/fs-access-purpose",
+      "status": 200,
+      "params": [
+        "purpose"
+      ],
+      "ms": 7,
+      "outcome": "answered",
+      "shape": "{Restricted:boolean}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/fs-access-purpose/paths",
+      "status": 200,
+      "params": [
+        "purpose"
+      ],
+      "ms": 15,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/fs-access-purposes",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "[{Purpose:string, Restricted:boolean}]×1",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/journal/file",
+      "status": 200,
+      "params": [
+        "file"
+      ],
+      "ms": 78,
+      "outcome": "answered",
+      "shape": "{Databases:[{…}]×15, FirstRecordAddress:string, LastRecordAddress:string, ClusterStartTime:string, End:number, FileCount:number, MaxSize:number, MinTransFileCount:number, MinTransFileIndex:number, FileGUID:string, CreationTime:string, EncryptionKeyID:string, MirrorInfo:{}, PrevFile:{File:string, End:number, GUID:string}, NextFile:{}}",
+      "specProblems": [],
+      "undeclared": [
+        "result.MirrorInfo"
+      ]
+    },
+    {
+      "id": "GET /v2/journal/file/record",
+      "status": 200,
+      "params": [
+        "file",
+        "address"
+      ],
+      "ms": 33,
+      "outcome": "answered",
+      "shape": "{TypeName:string, ExtTypeName:string, PrevAddress:number, NextAddress:number, TimeStamp:string, InTransaction:boolean, ProcessID:string, JobID:number, RemoteSystemID:number, ECPSystemID:number, SetKill:{ClusterSequence:number, Collation:number, DatabaseName:string, GlobalNode:string, GlobalReference:string, MirrorDatabaseName:string, NewValue:string, NumberOfValues:number, OldValue:string}, VectorSetKill:{}}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/journal/files",
+      "status": 200,
+      "params": [],
+      "ms": 182,
+      "outcome": "answered",
+      "shape": "[{Name:string, Size:number, CreationTime:string, Reason:string, DataSize:number}]×15",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/journal/settings",
+      "status": 200,
+      "params": [],
+      "ms": 8,
+      "outcome": "answered",
+      "shape": "{AlternateDirectory:string, ArchiveName:string, BackupsBeforePurge:number, CurrentDirectory:string, DaysBeforePurge:number, FileSizeLimit:number, FreezeOnError:boolean, JournalFilePrefix:string, JournalcspSession:boolean, PurgeArchived:boolean, CompressFiles:boolean, wijdir:string, targwijsz:number}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/license/key",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "{LicenseCapacity:string, CustomerName:string, OrderNumber:number, AuthorizationKey:string, Product:string, LicenseType:string, Server:string, Platform:string, LicenseUnits:number, CoresLicensed:number, CoresEnforced:number, ExpirationDate:string, ExtendedFeaturesList:[string]×18, AuthorizedApplications:[]}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/license/server",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{Address:string, Port:number, KeyDirectory:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/license/servers",
+      "status": 200,
+      "params": [],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "[{Name:string, Address:string, Port:number, KeyDirectory:string}]×1",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/locks",
+      "status": 200,
+      "params": [],
+      "ms": 16,
+      "outcome": "answered",
+      "shape": "[{Pid:number, ModeCount:string, Reference:string, Directory:string, System:string, Removable:boolean, DeleteID:string, CanBeExamined:boolean, RemoteOwner:boolean, RoutineInfo:string, OSUserName:string}]×18",
+      "specProblems": [
+        "result[0].Pid: spec says string, server sent integer 874",
+        "result[1].Pid: spec says string, server sent integer 1034",
+        "result[2].Pid: spec says string, server sent integer 1033",
+        "result[3].Pid: spec says string, server sent integer 1032",
+        "result[4].Pid: spec says string, server sent integer 1035"
+      ],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/monitor/dashboard/ecp",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "{AppServer:{MaxConn:number, ActConn:number, GloRef:number, ByteSent:number, ByteRcvd:number, BlockAdd:number, BlockBuffPurge:number, BlockSvrPurge:number, GloRefLocal:number, GloRefRemote:number, GloUpdateLocal:number, GloUpdateRemote:number, RoutineCallLocal:number, RoutineCallRemote:number, RoutineBuffLocal:number, RoutineBuffRemote:number}, DataServer:{GloUpdate:number, ReqRcvd:number, ReqBuff:number, BlockSent:number, LockGrant:number, LockFail:number, LockQueGrant:number, LockQueFail:number, SvrBlockPurge:number, RoutinePurge:number, BigKill:number, BigString:number, MaxConn:number, ActConn:number, GloRef:number, ByteRcvd:number, ByteSent:number}}",
+      "specProblems": [],
+      "undeclared": [
+        "result.AppServer.GloUpdateRemote"
+      ]
+    },
+    {
+      "id": "GET /v2/monitor/dashboard/globals-and-routines",
+      "status": 200,
+      "params": [],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{Globals:{RefLocal:number, RefUpdateLocal:number, RefRemote:number, RefUpdateRemote:number, RefPrivate:number, RefUpdatePrivate:number, LogicalBlocks:number, PhysBlockReads:number, PhysBlockWrites:number, WIJWrites:number, JrnEntries:number, JrnBlocks:number}, Routines:{RtnCallsLocal:number, RtnFetchLocal:number, RtnCallsRemote:number, RtnCommands:number, RtnNotCached:number, RtnFetchRemote:number}}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/monitor/dashboard/main",
+      "status": 200,
+      "params": [],
+      "ms": 16,
+      "outcome": "answered",
+      "shape": "{Performance:{GlobalRefsPerSecond:number, GlobalRefs:number, GlobalSetKill:number, RoutineRefs:number, LogicalRequests:number, DiskReads:number, DiskWrites:number, CacheEfficiency:number}, ECP:{ECPClients:string, ECPClientTraffic:number, ECPServers:string, ECPServerTraffic:number, ShadowConnections:string, Shadows:string}, Status:{UpTime:string, LastBackup:string, SystemMonitor:boolean}, SystemUsage:{DatabaseSpace:string, DatabaseJournal:string, JournalSpace:string, JournalEntries:number, LockTable:string, WriteDaemon:string, Processes:number, CSPSessions:number, BusyProcesses:[{…}]×10}, Alerts:{SeriousAlerts:number, ApplicationErrors:number}, Licensing:{LicenseLimit:number, LicenseUse:number, LicenseUseHigh:number}, UpcomingTasks:[{…}]×5}",
+      "specProblems": [
+        "result.SystemUsage.BusyProcesses[1].Process: spec says integer, server sent string \"\"",
+        "result.SystemUsage.BusyProcesses[2].Process: spec says integer, server sent string \"\"",
+        "result.SystemUsage.BusyProcesses[3].Process: spec says integer, server sent string \"\"",
+        "result.SystemUsage.BusyProcesses[4].Process: spec says integer, server sent string \"\"",
+        "result.SystemUsage.BusyProcesses[5].Process: spec says integer, server sent string \"\""
+      ],
+      "undeclared": [
+        "result.ECP.Shadows"
+      ]
+    },
+    {
+      "id": "GET /v2/monitor/dashboard/system-resources",
+      "status": 200,
+      "params": [],
+      "ms": 9,
+      "outcome": "answered",
+      "shape": "[{Name:string, Seize:number, Nseize:number, Aseize:number, Bseize:number, BusySet:number}]×56",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/monitor/license-usage",
+      "status": 200,
+      "params": [],
+      "ms": 7,
+      "outcome": "answered",
+      "shape": "{UsageByProcess:[{…}]×36, UsageByUser:[{…}]×1, Summary:[{…}]×5, ConnectionList:[{…}]×1}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/monitor/system-usage",
+      "status": 200,
+      "params": [],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{AllGlobalReferences:number, GlobalUpdateReferences:number, RoutineCalls:number, RoutineBufferLoadsAndSaves:number, LogicalBlockRequests:number, BlockReads:number, BlockWrites:number, WIJwrites:number, JournalEntries:number, JournalBlockWrites:number, RoutineLines:number, LastUpdate:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/monitor/system-usage/shared-memory",
+      "status": 200,
+      "params": [],
+      "ms": 8,
+      "outcome": "answered",
+      "shape": "[{Description:string, SMHAllocated:number, SMHAvailable:number, SMHUsed:number, SMTUsed:number, GSTUsed:number, AllUsed:number}]×28",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/namespace",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "{Globals:string, Routines:string, TempGlobals:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/namespace/global-mapping",
+      "status": 200,
+      "params": [
+        "namespace",
+        "name"
+      ],
+      "ms": 7,
+      "outcome": "answered",
+      "shape": "{Collation:number, Database:string, LockDatabase:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/namespace/global-mappings",
+      "status": 200,
+      "params": [
+        "namespace"
+      ],
+      "ms": 9,
+      "outcome": "answered",
+      "shape": "[{Name:string, Subscript:string, Database:string, Collation:number, LockDatabase:string}]×117",
+      "specProblems": [
+        "result[0].Collation: spec says string, server sent integer 5",
+        "result[1].Collation: spec says string, server sent integer 5",
+        "result[2].Collation: spec says string, server sent integer 0",
+        "result[3].Collation: spec says string, server sent integer 5",
+        "result[4].Collation: spec says string, server sent integer 0"
+      ],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/namespace/package-mapping",
+      "status": 200,
+      "params": [
+        "namespace",
+        "name"
+      ],
+      "ms": 8,
+      "outcome": "answered",
+      "shape": "{Database:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/namespace/package-mappings",
+      "status": 200,
+      "params": [
+        "namespace"
+      ],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "[{Name:string, Database:string}]×5",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/namespace/routine-mapping",
+      "status": 200,
+      "params": [
+        "namespace",
+        "name"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{Database:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/namespace/routine-mappings",
+      "status": 200,
+      "params": [
+        "namespace"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "[{Name:string, Type:string, Database:string}]×2",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/namespaces",
+      "status": 200,
+      "params": [],
+      "ms": 7,
+      "outcome": "answered",
+      "shape": "[{Name:string, Globals:string, Routines:string, SysGlobals:string, SysRoutines:string, Library:string, TempGlobals:string}]×8",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/process",
+      "status": 200,
+      "params": [
+        "id"
+      ],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "{CanBeSuspended:boolean, CanBeTerminated:boolean, CanReceiveBroadcast:boolean, ClientExecutableName:string, ClientIPAddress:string, ClientNodeName:string, CommandsExecuted:number, CSPSessionID:string, CurrentDevice:string, CurrentLineAndRoutine:string, CurrentSrcLine:string, EscalatedRoles:[], GlobalReferences:number, GlobalUpdates:number, GlobalDiskReads:number, GlobalBlocks:number, DataBlockWrites:number, InTransaction:number, IsGhost:number, JobNumber:number, JobType:number, JournalEntries:number, LastGlobalReference:string, LicenseUserId:string, Location:string, LoginRoles:[string]×1, MemoryAllocated:number, MemoryUsed:number, MemoryPeak:number, NameSpace:string, OpenDevices:[], OSUserName:string, CPUTime:number, ParentPid:number, Pid:number, PrivateGlobalBlockCount:number, PrivateGlobalReferences:number, PrivateGlobalUpdates:number, PidExternal:number, PrincipalDevice:string, Priority:number, Roles:[string]×1, Routine:string, StartTimeUTC:string, StartupClientIPAddress:string, StartupClientNodeName:string, State:string, UserInfo:string, UserName:string, Variables:[{…}]×1}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/processes",
+      "status": 200,
+      "params": [],
+      "ms": 11,
+      "outcome": "answered",
+      "shape": "[{Job:number, Pid:number, Username:string, Device:string, Nspace:string, Routine:string, Commands:number, Globals:number, State:string, ClientName:string, EXEname:string, IPAddress:string, CanBeExamined:boolean, CanBeSuspended:boolean, CanBeTerminated:boolean, CanReceiveBroadcast:boolean, PrvGblBlkCnt:number, OSUserName:string, CPUTime:number, ParentPid:number, ElapsedTime:string}]×36",
+      "specProblems": [],
+      "undeclared": [
+        "result[].EXEname"
+      ]
+    },
+    {
+      "id": "GET /v2/security/audit/enabled",
+      "status": 200,
+      "params": [],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{Enabled:boolean}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/audit/event",
+      "status": 200,
+      "params": [
+        "source",
+        "type",
+        "name"
+      ],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "{Description:string, Enabled:boolean}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/audit/events",
+      "status": 200,
+      "params": [],
+      "ms": 8,
+      "outcome": "answered",
+      "shape": "[{EventName:string, Enabled:boolean, Total:number, Written:number, Lost:number}]×75",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/audit/record",
+      "status": 200,
+      "params": [
+        "utcTimeStamp",
+        "systemID",
+        "auditIndex"
+      ],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "{Description:string, EventSource:string, EventType:string, Event:string, Username:string, Pid:string, JobId:number, JobNumber:number, ClientIPAddress:string, StartupClientIPAddress:string, ClientExecutableName:string, SystemID:string, AuditIndex:string, Roles:string, Namespace:string, RoutineSpec:string, UserInfo:string, OSUsername:string, Status:string, EventData:string, UTCTimeStamp:string, Authentication:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/encryption/data-element-keys",
+      "status": 200,
+      "params": [],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/encryption/file/admins",
+      "outcome": "not called",
+      "reason": "needs a database encryption key file; none on this instance"
+    },
+    {
+      "id": "GET /v2/security/encryption/file/keys",
+      "outcome": "not called",
+      "reason": "needs a database encryption key file; none on this instance"
+    },
+    {
+      "id": "GET /v2/security/encryption/keys",
+      "status": 200,
+      "params": [],
+      "ms": 3,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/encryption/settings",
+      "status": 200,
+      "params": [],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "{DBEncStartMode:string, DBEncJournal:boolean, DBEncIRISSecurity:boolean, DBEncIRISTemp:boolean, AuditEncrypt:boolean, DBEncStartKMIPServer:string, DBEncStartKeyFile:string, DBEncDefaultKeyID:string, DBEncJournalKeyID:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/ldap/configuration",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{Description:string, LDAPAttributes:[], LDAPAttributeComment:string, LDAPAttributeFullName:string, LDAPAttributeMail:string, LDAPAttributeMobile:string, LDAPAttributeMobileProvider:string, LDAPAttributeNameSpace:string, LDAPAttributeRoutine:string, LDAPAttributeRoles:string, LDAPAttributeEscalationRoles:string, LDAPBaseDN:string, LDAPBaseDNForGroups:string, LDAPCACertFile:string, LDAPClientTimeout:number, LDAPFlags:number, LDAPGroupId:string, LDAPHostNames:[string]×1, LDAPInstanceId:string, OrganizationId:string, GroupId:string, InstanceId:string, RoleId:string, EscalationRoleId:string, RoutineId:string, NamespaceId:string, DelimiterId:string, LDAPSearchUsername:string, LDAPServerTimeout:number, LDAPUniqueDNIdentifier:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/ldap/configurations",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "[{Name:string, Enabled:boolean, Description:string, LDAPCACertFile:string}]×1",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/mft/connection",
+      "outcome": "not called",
+      "reason": "no managed file transfer connection"
+    },
+    {
+      "id": "GET /v2/security/mft/connection/auth-code-url",
+      "outcome": "not called",
+      "reason": "no managed file transfer connection"
+    },
+    {
+      "id": "GET /v2/security/mft/connections",
+      "status": 200,
+      "params": [],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/oauth2/client/client-configuration",
+      "outcome": "not called",
+      "reason": "no OAuth 2.0 client configuration"
+    },
+    {
+      "id": "GET /v2/security/oauth2/client/client-configurations",
+      "status": 200,
+      "params": [
+        "serverId"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/oauth2/client/server-definition",
+      "status": 200,
+      "params": [
+        "serverId"
+      ],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "{IssuerEndpoint:string, SSLConfiguration:string, ServerCredentials:string, Metadata:{issuer:string, authorization_endpoint:string, token_endpoint:string, jwks_uri:string}}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/oauth2/client/server-definitions",
+      "status": 200,
+      "params": [],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "[{ID:number, IssuerEndpoint:string, ClientCount:number, ResourceCount:number}]×1",
+      "specProblems": [
+        "result[0].ID: spec says string, server sent integer 1"
+      ],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/oauth2/resource-server",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{Enabled:boolean, Description:string, IssuerEndpoint:string, ScopeRequiredToConnect:string, Audiences:[string]×1, AccessTokenIsJWT:boolean, AlwaysCallIntrospection:boolean, ClientId:string, IntrospectionAuthMethod:string, UseOIDC:boolean, Authenticator:{Namespace:string, Implementation:string, Prefix:string, RoleClaim:string, UserClaim:string}}",
+      "specProblems": [],
+      "undeclared": [
+        "result.Authenticator.Prefix",
+        "result.Authenticator.RoleClaim",
+        "result.Authenticator.UserClaim"
+      ]
+    },
+    {
+      "id": "GET /v2/security/oauth2/resource-server/mapping",
+      "outcome": "not called",
+      "reason": "no resource server mapping (IRIS refused the documented body)"
+    },
+    {
+      "id": "GET /v2/security/oauth2/resource-server/mappings",
+      "status": 200,
+      "params": [
+        "service"
+      ],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/oauth2/resource-servers",
+      "status": 200,
+      "params": [],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "[{Name:string, ServerDefinition:string}]×1",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/oauth2/server",
+      "status": 404,
+      "params": [],
+      "ms": 3,
+      "outcome": "not found",
+      "error": {
+        "code": 8864,
+        "id": "OAuth2NoConfiguration",
+        "text": "ERROR #8864: OAuth 2.0 server is not configured."
+      }
+    },
+    {
+      "id": "GET /v2/security/oauth2/server/client",
+      "outcome": "not called",
+      "reason": "no client registered with an OAuth 2.0 server here"
+    },
+    {
+      "id": "GET /v2/security/oauth2/server/clients",
+      "status": 200,
+      "params": [],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/privileged-routine",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "{MatchRoles:[], Routines:[], Enabled:boolean, Resource:string, Description:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/privileged-routines",
+      "status": 200,
+      "params": [],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "[{Name:string, Namespace:string, NamespaceDefault:boolean, Enabled:boolean, Type:string, Resource:string, IsSystemApp:boolean, DispatchClass:string}]×1",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/resource",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 3,
+      "outcome": "answered",
+      "shape": "{Description:string, PublicPermission:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/resources",
+      "status": 200,
+      "params": [],
+      "ms": 11,
+      "outcome": "answered",
+      "shape": "[{Name:string, Description:string, PublicPermission:string, ResourceType:string, AllowDelete:boolean}]×197",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/role",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{Description:string, GrantedRoles:[], EscalationOnly:boolean, Resources:[{…}]×27}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/role/owners",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "[{Name:string, Type:string, AdminOption:string}]×2",
+      "specProblems": [
+        "result[0].AdminOption: spec says boolean, server sent string \"0\"",
+        "result[1].AdminOption: spec says boolean, server sent string \"0\""
+      ],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/roles",
+      "status": 200,
+      "params": [],
+      "ms": 7,
+      "outcome": "answered",
+      "shape": "[{Name:string, Description:string, CreatedBy:string, EscalationOnly:boolean}]×76",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/service",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "{AutheEnabled:number, ClientSystems:[], Description:string, Enabled:boolean}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/services",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "[{Name:string, Enabled:boolean, Public:string, AuthenticationMethods:[string]×1, AllowedConnections:[], Description:string, HttpOnlyCookies:boolean, TwoFactorEnabled:boolean}]×15",
+      "specProblems": [
+        "result[0].Enabled: spec says string, server sent boolean true",
+        "result[1].Enabled: spec says string, server sent boolean false",
+        "result[2].Enabled: spec says string, server sent boolean false",
+        "result[3].Enabled: spec says string, server sent boolean false",
+        "result[4].Enabled: spec says string, server sent boolean false"
+      ],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/sql-admin-privileges",
+      "status": 200,
+      "params": [
+        "grantee",
+        "namespace"
+      ],
+      "ms": 7,
+      "outcome": "answered",
+      "shape": "[{Privilege:string, GrantOption:boolean, GrantedVia:string}]×31",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/sql-column-privileges",
+      "outcome": "not called",
+      "reason": "needs a table with column privileges"
+    },
+    {
+      "id": "GET /v2/security/sql-privileges",
+      "status": 200,
+      "params": [
+        "grantee",
+        "namespace"
+      ],
+      "ms": 59,
+      "outcome": "answered",
+      "shape": "[{Type:string, Object:string, Action:string, GrantedBy:string, GrantOption:boolean, GrantedVia:string, HasColumnPriv:boolean}]×1000",
+      "specProblems": [],
+      "undeclared": [
+        "result[].Object",
+        "result[].Action"
+      ]
+    },
+    {
+      "id": "GET /v2/security/ssl-configuration",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{AuthorizeCN:boolean, CAFile:string, CAPath:string, CertificateFile:string, CipherList:[string]×5, Ciphersuites:[string]×3, Description:string, DiffieHellmanBits:number, Enabled:boolean, OCSP:number, OCSPIssuerCert:string, OCSPResponseFile:string, OCSPTimeout:number, OCSPURL:string, PrivateKeyFile:string, PrivateKeyType:number, TLSMaxVersion:number, TLSMinVersion:number, Type:number, VerifyDepth:number, VerifyPeer:number}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/ssl-configurations",
+      "status": 200,
+      "params": [],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "[{Name:string, Description:string, Enabled:boolean, Type:string}]×3",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/superserver",
+      "status": 200,
+      "params": [
+        "port"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{Description:string, EnableCacheDirect:boolean, EnableClients:boolean, EnableCSP:boolean, EnableDataCheck:boolean, EnableECP:boolean, EnableMirror:boolean, EnableNodeJS:boolean, EnableShadows:boolean, EnableSharding:boolean, EnableSNMP:boolean, EnableWebLink:boolean, Enabled:boolean, SSLConfig:string, SSLSupportLevel:number, SystemDefault:boolean}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/superservers",
+      "status": 200,
+      "params": [],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "[{Port:number, BindAddress:string, Enabled:boolean, SystemDefault:boolean}]×1",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/user",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "{AccountNeverExpires:boolean, AutheEnabled:number, ChangePassword:boolean, Comment:string, EmailAddress:string, Enabled:boolean, ExpirationDate:string, FullName:string, HOTPKeyDisplay:boolean, NameSpace:string, PasswordNeverExpires:boolean, PhoneNumber:string, PhoneProvider:string, Roles:[string]×1, EscalationRoles:[], Routine:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/users",
+      "status": 200,
+      "params": [],
+      "ms": 9,
+      "outcome": "answered",
+      "shape": "[{Name:string, FullName:string, Namespace:string, Routine:string, Type:string, Enabled:boolean}]×11",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/web-auth",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "{AutheAlwaysTryDelegated:boolean, AutheCache:boolean, AutheDelegated:boolean, AutheKB:boolean, AutheLDAP:boolean, AutheLDAPCache:boolean, AutheLoginToken:boolean, AutheOAuth2:boolean, AutheOS:boolean, AutheOSDelegated:boolean, AutheOSLDAP:boolean, AutheTwoFactorPW:boolean, AutheTwoFactorSMS:boolean, AutheUnauthenticated:boolean, LoginCookieTimeout:number, SMTPServer:string, SMTPUsername:string, TwoFactorFrom:string, TwoFactorTimeout:number, JWTIssuer:string, JWTSigAlg:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/security/x509-credential",
+      "outcome": "not called",
+      "reason": "no X.509 credential"
+    },
+    {
+      "id": "GET /v2/security/x509-credential/certificate",
+      "outcome": "not called",
+      "reason": "no X.509 credential"
+    },
+    {
+      "id": "GET /v2/security/x509-credentials",
+      "status": 200,
+      "params": [],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "[]",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/task",
+      "status": 200,
+      "params": [
+        "id"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{Name:string, RunAsUser:string, EmailOnCompletion:[], EmailOnError:[], EmailOnExpiration:[], ExpiresDays:string, ExpiresHours:string, ExpiresMinutes:string, OutputDirectory:string, OutputFilename:string, Priority:string, TaskClass:string, NameSpace:string, TimePeriod:string, TimePeriodEvery:number, TimePeriodDay:string, DailyFrequency:string, DailyFrequencyTime:string, DailyIncrement:string, DailyStartTime:string, DailyEndTime:string, StartDate:string, EndDate:string, RunAfterGUID:string, MirrorStatus:string, Description:string, EmailOutput:boolean, Expires:boolean, OpenOutputFile:boolean, OutputFileIsBinary:boolean, SuspendOnError:boolean, SuspendTerminated:boolean, IsBatch:boolean, RescheduleOnStart:boolean, Settings:{}}",
+      "specProblems": [
+        "result.ExpiresDays: spec says integer, server sent string \"\"",
+        "result.ExpiresHours: spec says integer, server sent string \"\"",
+        "result.ExpiresMinutes: spec says integer, server sent string \"\"",
+        "result.TimePeriodEvery: spec says string, server sent integer 1"
+      ],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/task/history",
+      "status": 200,
+      "params": [],
+      "ms": 22,
+      "outcome": "answered",
+      "shape": "[{LastStart:string, Completed:string, Name:string, Status:string, Result:string, TaskId:number, Namespace:string, Routine:string, Pid:string, ErrDate:string, ErrNumber:number, Username:string, LogDatetime:string}]×343",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/task/info",
+      "status": 200,
+      "params": [
+        "id"
+      ],
+      "ms": 4,
+      "outcome": "answered",
+      "shape": "{Type:string, Status:string, Error:string, LastSchedule:string, LastStarted:string, LastFinished:string, NextScheduled:string, Suspended:boolean}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/task/manager",
+      "status": 200,
+      "params": [],
+      "ms": 1004,
+      "outcome": "answered",
+      "shape": "{Status:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/task/upcoming",
+      "status": 200,
+      "params": [],
+      "ms": 13,
+      "outcome": "answered",
+      "shape": "[{Id:number, Name:string, Namespace:string, Suspended:boolean, Datetime:string}]×100",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/tasks",
+      "status": 200,
+      "params": [],
+      "ms": 8,
+      "outcome": "answered",
+      "shape": "[{Name:string, Type:string, Namespace:string, Description:string, Id:number, Suspended:boolean, LastFinished:string, NextScheduled:string}]×19",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/wallet/collection",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "{EditResource:string, UseResource:string}",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/wallet/collections",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "[{Name:string, EditResource:string, UseResource:string}]×1",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/wallet/secrets",
+      "status": 200,
+      "params": [
+        "collection"
+      ],
+      "ms": 5,
+      "outcome": "answered",
+      "shape": "[{Name:string, Type:string}]×1",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/web-app",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "{AutheEnabled:number, AutoCompile:boolean, ChangePasswordPage:string, CookiePath:string, CorsAllowlist:[], CorsCredentialsAllowed:boolean, CorsHeadersList:[], CSPZENEnabled:boolean, CSRFToken:boolean, DeepSeeEnabled:boolean, Description:string, DispatchClass:string, Enabled:boolean, ErrorPage:string, EventClass:string, GroupById:string, iKnowEnabled:boolean, InbndWebServicesEnabled:boolean, IsNameSpaceDefault:boolean, JWTAuthEnabled:boolean, JWTAccessTokenTimeout:number, JWTRefreshTokenTimeout:number, LockCSPName:boolean, LoginPage:string, NameSpace:string, Package:string, Path:string, PermittedClasses:string, Recurse:boolean, RedirectEmptyPath:boolean, Resource:string, ServeFiles:string, ServeFilesTimeout:number, SuperClass:string, Timeout:number, TraceEnabled:boolean, TwoFactorEnabled:boolean, UseCookies:string, SessionScope:string, UserCookieScope:string, WSGIAppLocation:string, WSGIAppName:string, WSGICallable:string, WSGIDebug:boolean, WSGIType:string, MatchRoles:[]}",
+      "specProblems": [
+        "result.WSGIType: spec says integer, server sent string \"WSGI\""
+      ],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/web-app/pct-access",
+      "outcome": "not called",
+      "reason": "needs a web application with a percent-class allow list"
+    },
+    {
+      "id": "GET /v2/web-app/pct-accesses",
+      "status": 200,
+      "params": [],
+      "ms": 8,
+      "outcome": "answered",
+      "shape": "[{Name:string, AllowType:string, Class:string, AllowAccess:boolean, System:boolean}]×40",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/web-apps",
+      "status": 200,
+      "params": [],
+      "ms": 10,
+      "outcome": "answered",
+      "shape": "[{Name:string, Namespace:string, NamespaceDefault:boolean, Enabled:boolean, Type:string, Resource:string, AuthenticationMethods:[string]×1, IsSystemApp:boolean, DispatchClass:string}]×51",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/web-sessions",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "[{ID:string, Username:string, Preserve:number, Application:string, Timeout:string, LicenseId:string, SesProcessId:string, AllowEndSession:boolean}]×23",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/wqm-categories",
+      "status": 200,
+      "params": [],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "[{Name:string, MaxActiveWorkers:string, DefaultWorkers:string, MaxWorkers:string, MaxTotalWorkers:number, AlwaysQueue:boolean}]×3",
+      "specProblems": [],
+      "undeclared": []
+    },
+    {
+      "id": "GET /v2/wqm-category",
+      "status": 200,
+      "params": [
+        "name"
+      ],
+      "ms": 6,
+      "outcome": "answered",
+      "shape": "{DefaultWorkers:number, MaxActiveWorkers:number, MaxWorkers:number, MaxTotalWorkers:number, AlwaysQueue:boolean}",
+      "specProblems": [],
+      "undeclared": []
+    }
+  ]
+}

@@ -238,12 +238,13 @@ browser ──HTTP(S)─▶ nginx (dist/) ──/api/admin──▶ IRIS private
 
 ## Documentation
 
-| File                                         | Purpose                                                                                                      |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | how the layers fit: typed client, auth, async jobs, privileges, mock, deployment                             |
-| [docs/VERIFICATION.md](docs/VERIFICATION.md) | the conformance check against a real instance, and how to run it against yours                               |
-| [docs/verification/](docs/verification/)     | recorded answers of real IRIS 2026.2 instances, one folder per run, the evidence for the spec findings below |
-| [CHANGELOG.md](CHANGELOG.md)                 | what changed, and why                                                                                        |
+| File                                         | Purpose                                                                                                                                 |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | how the layers fit: typed client, auth, async jobs, privileges, mock, deployment                                                        |
+| [docs/COVERAGE.md](docs/COVERAGE.md)         | all 273 operations: the screen that calls each, what a real IRIS for Health instance answered (139 verified), and what the demo answers |
+| [docs/VERIFICATION.md](docs/VERIFICATION.md) | the conformance check against a real instance, and how to run it against yours                                                          |
+| [docs/verification/](docs/verification/)     | recorded answers of real IRIS 2026.2 instances, one folder per run, the evidence for the spec findings below                            |
+| [CHANGELOG.md](CHANGELOG.md)                 | what changed, and why                                                                                                                   |
 
 ## Verified against real IRIS
 
@@ -254,7 +255,10 @@ plus a check that the portal is served at `/aperture/index.html` (22/22 on IRIS 
 Health 2026.2 instance was also walked screen by screen, as an administrator and as an operator,
 from a browser in another time zone (`npm run test:live`, opt-in); its answers are the evidence in
 [docs/verification/2026-09-23-irishealth-2026.2](docs/verification/2026-09-23-irishealth-2026.2/)
-and the second oracle of the mock's contract test.
+and the second oracle of the mock's contract test. [docs/COVERAGE.md](docs/COVERAGE.md) accounts for
+every one of the 273 operations: 139 verified on that instance (every read that had an object to
+read, and each write with its evidence, undone after its check), 136 called by a hand-made screen,
+173 answered by the online demo.
 
 ## Spec findings
 
