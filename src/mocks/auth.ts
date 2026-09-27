@@ -143,7 +143,8 @@ export function infoFor(account: MockAccount, namespaces: string[]): Info {
     apiVersion: 2,
     username: account.username,
     serverVersion:
-      'IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2.0 (Build 142U) Fri Sep 4 2026 10:22:01 EDT',
+      // The build Aperture was verified on (docs/verification): IRIS Community and IRIS for Health 2026.2.
+      'IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2026.2 (Build 221U) Fri Jun 26 2026 09:58:52 EDT',
     systemMode: 'DEVELOPMENT',
     product: 'iris',
     namespaces: namespaces.map((name) => ({ name })),
