@@ -173,6 +173,15 @@ const METHOD_COLOR: Record<string, string> = {
   PATCH: 'grape',
 };
 
+/**
+ * An operation's path relative to its group ("/compact" under /v2/database-dir), cut at a whole
+ * segment only: /v2/database-dirs is not "s", and the group's own path shows in full.
+ */
+export function shortPath(path: string, groupPath: string): string {
+  const rest = path.startsWith(groupPath) ? path.slice(groupPath.length) : '';
+  return rest.startsWith('/') ? rest : path;
+}
+
 function MethodBadge({ method }: { method: string }) {
   return (
     <Badge
@@ -859,7 +868,7 @@ export default function ExplorerPage() {
                           <Group gap={6} wrap="nowrap">
                             <MethodBadge method={o.method} />
                             <Text size="sm" className="mono" truncate>
-                              {o.path.replace(`/v2/${selectedGroup.replace('/v2/', '')}`, '') || '/'}
+                              {shortPath(o.path, `/v2/${selectedGroup.replace('/v2/', '')}`)}
                             </Text>
                           </Group>
                         }
