@@ -814,7 +814,10 @@ export default function ExplorerPage() {
       <Grid gutter="md">
         <Grid.Col span={{ base: 12, md: 3 }}>
           <Paper p="xs">
-            <ScrollArea.Autosize mah="calc(100vh - 220px)">
+            <ScrollArea.Autosize
+              mah="calc(100vh - 220px)"
+              viewportProps={{ tabIndex: 0, role: 'region', 'aria-label': 'Operation groups' }}
+            >
               {groups.map((g) => {
                 const allowed = (operationsByGroup[g] ?? []).some((o) => canUse(info, o.privileges));
                 return (
@@ -850,7 +853,10 @@ export default function ExplorerPage() {
                 onChange={(e) => setFilter(e.currentTarget.value)}
                 mb="xs"
               />
-              <ScrollArea.Autosize mah="calc(100vh - 260px)">
+              <ScrollArea.Autosize
+                mah="calc(100vh - 260px)"
+                viewportProps={{ tabIndex: 0, role: 'region', 'aria-label': 'Operations' }}
+              >
                 {bySub.map(([sub, list]) => (
                   <Box key={sub} mb="xs">
                     {sub ? (

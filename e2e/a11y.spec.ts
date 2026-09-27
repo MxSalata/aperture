@@ -38,6 +38,11 @@ const SCREENS: [path: string, heading: string][] = [
   ['/devices', 'Devices'],
   ['/rest-services', 'REST services'],
   ['/activity', 'Activity'],
+  // Detail screens with a raw JSON panel, and the Explorer and About page, which have one too.
+  ['/databases/detail?dir=%2Fusr%2Firissys%2Fmgr%2Fuser%2F', '/usr/irissys/mgr/user/'],
+  ['/security/roles/%25Operator', '%Operator'],
+  ['/explorer', 'API Explorer'],
+  ['/about', 'About Aperture'],
 ];
 
 const MODES = [

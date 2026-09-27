@@ -61,7 +61,11 @@ export function JsonViewer({ value, title = 'Raw response', maxHeight = 420 }: P
           )}
         </CopyButton>
       </Group>
-      <ScrollArea.Autosize mah={maxHeight} type="auto">
+      <ScrollArea.Autosize
+        mah={maxHeight}
+        type="auto"
+        viewportProps={{ tabIndex: 0, role: 'region', 'aria-label': title }}
+      >
         <Code block style={{ fontSize: 12 }}>
           {text}
         </Code>
