@@ -51,10 +51,13 @@ and commit the JSON report next to this file.
 
 ## Findings from the `--mutate` probe (22 September 2026, run 35718557061)
 
-- **The task list lags behind the task object.** Right after `POST /v2/task/suspend` succeeded,
+- **The task list reports every task as active.** Right after `POST /v2/task/suspend` succeeded,
   `GET /v2/task/info` reported `Suspended=true` while the row in `GET /v2/tasks` still reported
-  `false` (run 35719716417). This reproduces the IRIS Fieldwork finding. The task detail page
-  re-reads both and says which one has not caught up; recorded as `task-suspended-lag`.
+  `false` (run 35719716417), which reproduced the IRIS Fieldwork finding and was read then as a lag.
+  It is not one: on 28 September, IRIS for Health 2026.2 reported two of its 19 tasks suspended in
+  `/v2/task/info` and none in the list, as OcuPilot reported (sysadmin-api-specification issue #1).
+  The Tasks screen reads each task's state from `/v2/task/info`; recorded as
+  `task-list-suspended-false`.
 - `POST /v2/task/suspend?id=…` **without a body answers HTTP 415**, although the specification
   marks the body (`LeaveInQueue`) as optional. The portal and the probe now send `{}` with
   `Content-Type: application/json`; the same applies to `database-dir/mount`, `database-dir/truncate`

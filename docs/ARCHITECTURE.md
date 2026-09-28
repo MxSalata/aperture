@@ -437,8 +437,8 @@ Three rules sit at the render boundary rather than in individual screens:
   `…_signed_response_alg`) pass through; the rule is unit-tested against the specification's
   vocabulary.
 - **A change is only as real as the read-back.** After a task suspend or resume the detail page
-  re-reads `/v2/task/info` and says when IRIS still reports the previous state (see
-  `lib/quirks.ts`, `task-suspended-lag`). The Activity screen can match a security write to the
+  re-reads `/v2/task/info` and says when IRIS still reports the previous state; the task list is no
+  witness, since it reports every task as active (see `lib/quirks.ts`, `task-list-suspended-false`). The Activity screen can match a security write to the
   `%System/%Security/<Event>` audit record that proves it: `lib/auditEvents.ts` maps the request
   path to the event, the audit log is queried as an asynchronous task around the request time, and
   the closest matching record is shown next to the HTTP result.

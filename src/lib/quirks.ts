@@ -126,11 +126,14 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
     source: 'Aperture CI, IRIS Community 2026.2 Build 221U (scripts/live-check.mjs --mutate)',
   },
   {
-    id: 'task-suspended-lag',
-    appliesTo: (op) => op.path === '/v2/task/suspend' || op.path === '/v2/task/resume',
-    note: 'Right after a successful suspend, GET /v2/task/info reports Suspended=true while the GET /v2/tasks list still reports false. Aperture re-reads both after each change and says which one has not caught up.',
+    id: 'task-list-suspended-false',
+    appliesTo: (op) =>
+      (op.path === '/v2/tasks' && op.method === 'GET') ||
+      op.path === '/v2/task/suspend' ||
+      op.path === '/v2/task/resume',
+    note: "GET /v2/tasks answers Suspended false for every task, suspended ones included; GET /v2/task/info has the real state (on IRIS for Health 2026.2, info reported 2 of 19 tasks suspended and the list none). The Tasks screen reads each task's state from /v2/task/info.",
     source:
-      'Reproduced by Aperture CI (IRIS Community 2026.2 Build 221U, run 35719716417), first reported in the IRIS Fieldwork verification record; `npm run verify:live -- --mutate` records what your instance does',
+      'Aperture live check, IRIS for Health 2026.2 Build 221U, 28 September 2026; reported by OcuPilot (sysadmin-api-specification issue #1). Seen first right after a suspend (IRIS Fieldwork, Aperture CI run 35719716417) and read then as a lag',
   },
   {
     id: 'resource-create-empty-public',

@@ -18,13 +18,17 @@ function findTask(request: Request) {
   return mockDb.tasks.find((t) => t.Id === id);
 }
 
+/**
+ * A row of GET /v2/tasks as IRIS 2026.2 answers it: Suspended is false for every task, suspended
+ * ones included (lib/quirks.ts, task-list-suspended-false); GET /v2/task/info has the real state.
+ */
 const listShape = (t: TaskRec) => ({
   Name: t.Name,
   Type: t.Type,
   Namespace: t.Namespace,
   Description: t.Description,
   Id: t.Id,
-  Suspended: t.Suspended,
+  Suspended: false,
   LastFinished: t.LastFinished,
   NextScheduled: t.NextScheduled,
 });

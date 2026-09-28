@@ -162,7 +162,7 @@ export const CHECKS: CheckInfo[] = [
     title: 'Tasks whose last run failed, or suspended',
     area: 'Tasks',
     needs: ['%Admin_Task:U', '%Admin_Operate:U'],
-    reads: 'GET /v2/tasks',
+    reads: "GET /v2/tasks, each task's GET /v2/task/info (the list reports every task as active)",
   },
   {
     id: 'system-monitor',
@@ -768,7 +768,7 @@ export function checkTasks(tasks: TaskFacts[], history: TaskRunFacts[], read: nu
           'A suspended task does not run on its schedule; if it was suspended after an error it stays so until someone resumes it.',
           'Resume the task if it should run, or delete it if it should not.',
           {
-            source: 'GET /v2/tasks',
+            source: 'GET /v2/task/info',
             read,
             fields: [f('Task', t.Name), f('Suspended', t.Suspended), f('LastFinished', t.LastFinished)],
           },

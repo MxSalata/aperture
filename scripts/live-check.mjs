@@ -303,7 +303,7 @@ try {
           true,
           reflected
             ? '/v2/task/info and /v2/tasks both report Suspended=true at once'
-            : `/v2/task/info says ${after.info}, /v2/tasks says ${after.list} - the list lags behind the object (quirk task-suspended-lag; Aperture re-reads both and says so)`,
+            : `/v2/task/info says ${after.info}, /v2/tasks says ${after.list}: the list reports every task as active (quirk task-list-suspended-false; the Tasks screen reads /v2/task/info)`,
         );
       } finally {
         const res = await http('POST', `/v2/task/resume?id=${id}`);

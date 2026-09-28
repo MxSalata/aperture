@@ -11,22 +11,35 @@ import {
   TextInput,
   Textarea,
   Title,
+  Tooltip,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { IconPlayerPause, IconPlayerPlay, IconPlus } from '@tabler/icons-react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
+import { canUse } from '@/api/privileges';
 import type { TaskList } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { StatusBadge, BoolBadge } from '@/components/StatusBadge';
 import { Timestamp } from '@/components/Timestamp';
+import { createLimiter } from '@/lib/limiter';
 import { useSession } from '@/stores/session';
 
-type Row = TaskList[number];
+/**
+ * A task of the list with its real state. GET /v2/tasks answers Suspended false for every task,
+ * suspended ones included (IRIS 2026.2, lib/quirks.ts task-list-suspended-false), so the state
+ * comes from each task's GET /v2/task/info: undefined while it is read, null when this account may
+ * not read it (%Admin_Operate:U) or the read failed.
+ */
+type Row = Omit<TaskList[number], 'Suspended'> & { Suspended?: boolean | null };
+
+/** At most four task reads in flight: the API has no batch read of task states. */
+const infoReads = createLimiter(4);
 export const taskKeys = {
   list: ['tasks', 'list'] as const,
   one: (id: string) => ['tasks', 'detail', id] as const,
@@ -51,14 +64,24 @@ const columns: ColumnDef<Row, unknown>[] = [
   {
     accessorKey: 'Suspended',
     header: 'Suspended',
-    cell: (c) => (
-      <BoolBadge
-        value={c.getValue() as boolean}
-        yes="Suspended"
-        no="Active"
-        color={c.getValue() ? 'yellow' : 'teal'}
-      />
-    ),
+    cell: (c) => {
+      const value = c.getValue() as boolean | null | undefined;
+      if (value === undefined)
+        return (
+          <Text size="xs" c="dimmed">
+            reading…
+          </Text>
+        );
+      if (value === null)
+        return (
+          <Tooltip label="Read from GET /v2/task/info, which needs %Admin_Operate:U; the task list itself reports every task as active">
+            <Badge size="xs" color="gray" variant="light">
+              Unknown
+            </Badge>
+          </Tooltip>
+        );
+      return <BoolBadge value={value} yes="Suspended" no="Active" color={value ? 'yellow' : 'teal'} />;
+    },
   },
   {
     accessorKey: 'LastFinished',
@@ -77,6 +100,23 @@ export default function TasksPage() {
   const navigate = useNavigate();
   const info = useSession((s) => s.info);
   const list = useQuery({ queryKey: taskKeys.list, queryFn: () => result(api().GET('/v2/tasks')) });
+  // Each task's state from its own read (the task detail page shares the cache).
+  const canReadState = canUse(info, ['%Admin_Operate:U']);
+  const suspended = useQueries({
+    queries: (list.data ?? []).map((task) => ({
+      queryKey: [...taskKeys.one(String(task.Id)), 'info'],
+      queryFn: () =>
+        infoReads(() => result(api().GET('/v2/task/info', { params: { query: { id: Number(task.Id) } } }))),
+      enabled: canReadState,
+      staleTime: 10_000,
+      retry: false,
+    })),
+    combine: (results) => results.map((r) => (r.isError ? null : r.data ? !!r.data.Suspended : undefined)),
+  });
+  const rows = useMemo<Row[] | undefined>(
+    () => list.data?.map((task, i) => ({ ...task, Suspended: canReadState ? suspended[i] : null })),
+    [list.data, suspended, canReadState],
+  );
   const manager = useQuery({
     queryKey: taskKeys.manager,
     queryFn: () => result(api().GET('/v2/task/manager')),
@@ -246,7 +286,7 @@ export default function TasksPage() {
         stateKey="tasks"
         exportName="tasks"
         getRowLabel={(r) => `Open task ${r.Name ?? ''}`}
-        data={list.data}
+        data={rows}
         columns={columns}
         loading={list.isPending}
         error={list.error}

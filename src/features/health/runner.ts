@@ -106,6 +106,20 @@ export async function runHealthCheck(ctx: RunContext): Promise<HealthReport> {
     auditEnabled: memo(() => result(api().GET('/v2/security/audit/enabled'))),
     auditEvents: memo(() => result(api().GET('/v2/security/audit/events'))),
     tasks: memo(() => result(api().GET('/v2/tasks'))),
+    // GET /v2/tasks answers Suspended false for every task (lib/quirks.ts, task-list-suspended-false):
+    // each task's own GET /v2/task/info has the state, readable with %Admin_Operate:U. A task whose
+    // state cannot be read keeps Suspended undefined, so no finding is made up either way.
+    taskStates: memo(async () => {
+      const tasks = (await result(api().GET('/v2/tasks'))) as { Id?: number }[];
+      return mapLimit(tasks, 4, async (t) => {
+        try {
+          const info = await result(api().GET('/v2/task/info', { params: { query: { id: Number(t.Id) } } }));
+          return { ...t, Suspended: !!info.Suspended };
+        } catch {
+          return { ...t, Suspended: undefined };
+        }
+      });
+    }),
     taskHistory: memo(() => result(api().GET('/v2/task/history'))),
     allOwners: memo(() =>
       result(api().GET('/v2/security/role/owners', { params: { query: { name: '%All' } } })),
@@ -208,7 +222,7 @@ export async function runHealthCheck(ctx: RunContext): Promise<HealthReport> {
     },
     certificates: async () => checkCertificates(await load.certificates(), read(), now),
     tasks: async () => {
-      const [tasks, history] = await Promise.all([load.tasks(), load.taskHistory()]);
+      const [tasks, history] = await Promise.all([load.taskStates(), load.taskHistory()]);
       return checkTasks(
         tasks as { Id?: number; Name: string; Suspended?: boolean; LastFinished?: string }[],
         history as TaskRunFacts[],
