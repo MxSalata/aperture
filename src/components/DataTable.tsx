@@ -16,6 +16,7 @@ import {
   Text,
   TextInput,
   Tooltip,
+  UnstyledButton,
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import {
@@ -415,9 +416,7 @@ export function DataTable<T>({
                   return (
                     <Table.Th
                       key={header.id}
-                      onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
                       style={{
-                        cursor: canSort ? 'pointer' : undefined,
                         whiteSpace: 'nowrap',
                         userSelect: 'none',
                         width: header.getSize() !== 150 ? header.getSize() : undefined,
@@ -426,18 +425,27 @@ export function DataTable<T>({
                         sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined
                       }
                     >
-                      <Group gap={4} wrap="nowrap">
+                      {canSort ? (
+                        // A button, so sorting works from the keyboard (Enter or Space) as well as the
+                        // mouse; the cell keeps aria-sort, which says the order.
+                        <UnstyledButton
+                          onClick={header.column.getToggleSortingHandler()}
+                          style={{ display: 'flex', width: '100%', font: 'inherit', color: 'inherit' }}
+                        >
+                          <Group gap={4} wrap="nowrap">
+                            <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                            {sorted === 'asc' ? (
+                              <IconChevronUp size={14} aria-hidden />
+                            ) : sorted === 'desc' ? (
+                              <IconChevronDown size={14} aria-hidden />
+                            ) : (
+                              <IconArrowsSort size={12} className="muted-soft" aria-hidden />
+                            )}
+                          </Group>
+                        </UnstyledButton>
+                      ) : (
                         <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                        {canSort ? (
-                          sorted === 'asc' ? (
-                            <IconChevronUp size={14} />
-                          ) : sorted === 'desc' ? (
-                            <IconChevronDown size={14} />
-                          ) : (
-                            <IconArrowsSort size={12} className="muted-soft" />
-                          )
-                        ) : null}
-                      </Group>
+                      )}
                     </Table.Th>
                   );
                 })}

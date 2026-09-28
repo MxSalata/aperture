@@ -47,6 +47,18 @@ describe('DataTable', () => {
     expect(screen.getByRole('columnheader', { name: 'N' })).toHaveAttribute('aria-sort', 'descending');
   });
 
+  it('sorts from the keyboard: each sortable header is a button', () => {
+    mount(<DataTable data={rows} columns={columns} />);
+    const sortName = screen.getByRole('button', { name: 'Name' });
+    sortName.focus();
+    expect(sortName).toHaveFocus();
+    // Enter or Space on a button is a click (text sorts ascending first, numbers descending first).
+    fireEvent.click(sortName);
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'ascending');
+    fireEvent.click(sortName);
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'descending');
+  });
+
   it('exposes clickable rows as buttons with an accessible name', () => {
     mount(
       <DataTable data={rows} columns={columns} onRowClick={() => {}} getRowLabel={(r) => `Open ${r.name}`} />,

@@ -1,4 +1,4 @@
-import { Tooltip } from '@mantine/core';
+import { Tooltip, VisuallyHidden } from '@mantine/core';
 import { formatOffset, getInstanceTimezone, getMeasuredOffset, parseIrisDate } from '@/lib/format';
 
 interface Props {
@@ -12,6 +12,8 @@ interface Props {
  * One timestamp, both readings. IRIS reports wall-clock times of the instance without a
  * zone; they are shown verbatim, and relative times are exact when the connection profile
  * names the instance's time zone (otherwise the browser's zone is assumed and said so).
+ * The second reading is in the tooltip for the mouse and in hidden text for a screen reader,
+ * so a table of timestamps adds no tab stops.
  */
 export function Timestamp({ value, mode = 'absolute', className }: Props) {
   const d = parseIrisDate(value);
@@ -31,6 +33,8 @@ export function Timestamp({ value, mode = 'absolute', className }: Props) {
     <Tooltip label={`${secondary} · ${clock}`}>
       <time dateTime={d.toISOString()} className={className ?? 'tabular'} style={{ cursor: 'help' }}>
         {primary}
+        {/* The other reading for a screen reader, which the tooltip gives the mouse; no tab stop. */}
+        <VisuallyHidden> ({secondary})</VisuallyHidden>
       </time>
     </Tooltip>
   );

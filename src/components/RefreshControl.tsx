@@ -85,11 +85,21 @@ export function RefreshControl({ screen, onRefresh, loading, defaultSeconds }: P
         </Menu.Target>
         <Menu.Dropdown>
           <Menu.Label>Auto-refresh</Menu.Label>
-          <Menu.Item onClick={() => setSeconds(0)} rightSection={seconds ? undefined : '●'}>
+          {/* The bullet marks the current choice for the eye; the name says it, as the Appearance menu does. */}
+          <Menu.Item
+            onClick={() => setSeconds(0)}
+            aria-label={`Off${seconds ? '' : ' (current)'}`}
+            rightSection={seconds ? undefined : '●'}
+          >
             Off
           </Menu.Item>
           {REFRESH_INTERVALS.map((s) => (
-            <Menu.Item key={s} onClick={() => setSeconds(s)} rightSection={seconds === s ? '●' : undefined}>
+            <Menu.Item
+              key={s}
+              onClick={() => setSeconds(s)}
+              aria-label={`Every ${s} seconds${seconds === s ? ' (current)' : ''}`}
+              rightSection={seconds === s ? '●' : undefined}
+            >
               Every {s} seconds
             </Menu.Item>
           ))}

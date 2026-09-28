@@ -56,6 +56,7 @@ import { useResolvedContrast } from './useApplyAppearance';
 import { JobsDrawer } from '@/features/jobs/JobsDrawer';
 import { JobPoller } from '@/features/jobs/JobPoller';
 import { BrandMark } from '@/components/BrandMark';
+import { MAIN_ID, SkipLink } from './SkipLink';
 
 function Logo() {
   return (
@@ -344,6 +345,7 @@ export function AppLayout() {
         header: { background: 'var(--aperture-header)' },
       }}
     >
+      <SkipLink />
       <AppShell.Header style={{ boxShadow: `inset 0 3px 0 0 var(--mantine-color-${instance.color}-6)` }}>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
@@ -408,7 +410,8 @@ export function AppLayout() {
         </Box>
       </AppShell.Navbar>
 
-      <AppShell.Main>
+      {/* The skip link's target: focusable by script only, so it is no tab stop of its own. */}
+      <AppShell.Main id={MAIN_ID} tabIndex={-1} style={{ outline: 'none' }}>
         <Suspense fallback={<PageSkeleton />}>
           <Outlet />
         </Suspense>
