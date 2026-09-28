@@ -3,7 +3,6 @@ import {
   Button,
   Grid,
   Group,
-  Menu,
   Paper,
   Progress,
   RingProgress,
@@ -18,8 +17,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   IconActivity,
   IconAlertTriangle,
-  IconChartLine,
-  IconCheck,
   IconClock,
   IconCpu,
   IconDatabase,
@@ -43,7 +40,8 @@ import { useSeriesColors } from './useSeriesColors';
 import { busyProcesses, withRates } from './rates';
 import { useReducedMotion } from '@mantine/hooks';
 import { SERIES_DASH } from '@/lib/chartColors';
-import { DASHBOARD_CHARTS, useDashboard, type DashboardChart } from '@/stores/dashboard';
+import { CHART_TITLES, orderCharts, useDashboard, type DashboardChart } from '@/stores/dashboard';
+import { ChartPicker } from './ChartPicker';
 import { interopByNamespace, interopNamespaces } from './interop';
 import { useHostMetrics } from '@/features/monitor/useHostMetrics';
 import { metric } from '@/api/monitor';
@@ -69,20 +67,17 @@ function healthColor(v: string | undefined): 'good' | 'warning' | 'critical' {
   return 'critical';
 }
 
-/** What each chart of the Charts menu shows; the ids are the dashboard store's. */
-const CHART_META: Record<DashboardChart, { title: string; caption: string }> = {
-  globalRefs: { title: 'Global references per second', caption: '' },
-  diskIo: { title: 'Disk I/O per second', caption: 'physical block reads and writes' },
-  interopMessages: {
-    title: 'Message throughput per namespace',
-    caption: 'interoperability messages processed per second',
-  },
-  interopQueued: { title: 'Queued messages per namespace', caption: "waiting in the productions' queues" },
-  cacheEfficiency: { title: 'Cache efficiency', caption: 'global references per physical read or write' },
-  logicalRequests: { title: 'Logical requests per second', caption: 'block requests, from memory or disk' },
-  routineRefs: { title: 'Routine references per second', caption: 'routine loads and calls' },
-  processes: { title: 'Processes and web sessions', caption: 'IRIS processes and active CSP sessions' },
-  license: { title: 'License units in use', caption: 'per cent of the license limit' },
+/** What each chart of the Charts menu shows, under the title the dashboard store gives it. */
+const CHART_CAPTIONS: Record<DashboardChart, string> = {
+  globalRefs: '',
+  diskIo: 'physical block reads and writes',
+  interopMessages: 'interoperability messages processed per second',
+  interopQueued: "waiting in the productions' queues",
+  cacheEfficiency: 'global references per physical read or write',
+  logicalRequests: 'block requests, from memory or disk',
+  routineRefs: 'routine loads and calls',
+  processes: 'IRIS processes and active CSP sessions',
+  license: 'per cent of the license limit',
 };
 
 /** A chart's card: the title, a caption or note on the right, and the chart or a waiting line. */
@@ -188,7 +183,12 @@ export default function DashboardPage() {
 
   const host = useHostMetrics(POLL_MS * 3);
   const charts = useDashboard((s) => s.charts);
-  const toggleChart = useDashboard((s) => s.toggle);
+  const chartOrder = useDashboard((s) => s.order);
+  // The charts ticked in the Charts menu, in the order arranged there.
+  const shown = useMemo(
+    () => orderCharts(chartOrder).filter((id) => charts.includes(id)),
+    [chartOrder, charts],
+  );
   const interopHistory = useMetrics((s) => s.interop);
   const pushInterop = useMetrics((s) => s.pushInterop);
   // One interop reading per host poll, keyed on its arrival like the dashboard samples above.
@@ -284,7 +284,7 @@ export default function DashboardPage() {
 
   /** One card per chart of the Charts menu; the rows are the six-minute history. */
   const renderChart = (id: DashboardChart) => {
-    const meta = CHART_META[id];
+    const meta = { title: CHART_TITLES[id], caption: CHART_CAPTIONS[id] };
     const ready = chartData.length > 1;
     switch (id) {
       case 'globalRefs':
@@ -468,29 +468,6 @@ export default function DashboardPage() {
                 </Badge>
               </Tooltip>
             ) : null}
-            <Menu shadow="md" width={300} position="bottom-end" withinPortal closeOnItemClick={false}>
-              <Menu.Target>
-                <Button size="xs" variant="default" leftSection={<IconChartLine size={14} />}>
-                  Charts
-                </Button>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Label>Charts on this dashboard</Menu.Label>
-                {DASHBOARD_CHARTS.map((id) => {
-                  const on = charts.includes(id);
-                  return (
-                    <Menu.Item
-                      key={id}
-                      onClick={() => toggleChart(id)}
-                      aria-label={`${CHART_META[id].title} (${on ? 'shown' : 'hidden'})`}
-                      leftSection={<IconCheck size={14} style={{ visibility: on ? 'visible' : 'hidden' }} />}
-                    >
-                      {CHART_META[id].title}
-                    </Menu.Item>
-                  );
-                })}
-              </Menu.Dropdown>
-            </Menu>
             <Button
               size="xs"
               variant={paused ? 'filled' : 'default'}
@@ -606,10 +583,16 @@ export default function DashboardPage() {
         </SimpleGrid>
       )}
 
-      {charts.length ? (
+      <Group justify="space-between" mb={6}>
+        <Text size="xs" c="dimmed" fw={600} tt="uppercase" style={{ letterSpacing: 0.4 }}>
+          Charts
+        </Text>
+        <ChartPicker />
+      </Group>
+      {shown.length ? (
         <Grid gutter="md" mb="md">
-          {charts.map((id) => (
-            <Grid.Col key={id} span={{ base: 12, lg: charts.length === 1 ? 12 : 6 }}>
+          {shown.map((id) => (
+            <Grid.Col key={id} span={{ base: 12, lg: shown.length === 1 ? 12 : 6 }}>
               {renderChart(id)}
             </Grid.Col>
           ))}
@@ -617,7 +600,7 @@ export default function DashboardPage() {
       ) : (
         <Paper p="md" mb="md">
           <Text size="sm" c="dimmed" ta="center">
-            No charts shown: pick some under Charts.
+            No charts shown: pick some with Choose charts.
           </Text>
         </Paper>
       )}

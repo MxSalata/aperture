@@ -58,6 +58,9 @@ export const themeBase: MantineThemeOverride = {
     Tooltip: { defaultProps: { withArrow: true, openDelay: 300 } },
     // Forms live in modals; a stray click outside must not discard a half-filled one (Escape still closes).
     Modal: { defaultProps: { closeOnClickOutside: false } },
+    // Without the focusable placeholder Mantine puts first in a menu, which a menu may not contain
+    // (axe: aria-required-children); an opened menu focuses its first item, as the pattern has it.
+    Menu: { defaultProps: { withInitialFocusPlaceholder: false } },
   },
 };
 

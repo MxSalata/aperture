@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+- **The dashboard's Charts menu sits beside the charts, lists them A to Z, and can be rearranged.**
+  It was a small grey button among the page's actions, easy to miss; it is now "Choose charts", a
+  tinted button on a Charts heading directly above them. The charts are listed, and shown, A to Z by
+  title on a fresh device, and they can be rearranged as the navigation menu can: hold one and drag
+  it, or move the focused one with Alt+Up and Alt+Down, announced to screen readers. The dashboard
+  follows, the order is kept on this device like the choice of charts, and "Reset to A-Z" puts it
+  back. Both lists now share one hold-and-drag implementation (`src/components/useHoldToReorder.ts`),
+  and the order helpers moved to `src/lib/order.ts`.
+- **Touch scrolling after rearranging the menu.** Dragging a navigation entry on a touch screen left
+  the page unable to scroll by touch until it was reloaded: the listener that holds the page still
+  during a drag was a new function on every render, so the one removed at the drop was never the
+  one added at the lift. It is one function now, and a unit test checks that the listener removed
+  is the listener added.
+- **Open menus pass the accessibility audit.** Mantine puts a focusable placeholder first in every
+  menu, which an element with `role="menu"` may not contain (axe `aria-required-children`, serious);
+  the audits had only seen menus closed. The theme leaves it out, so an opened menu focuses its
+  first item, and the Charts test audits its menu open.
+
 ## 1.0.2 - tested on a real IRIS for Health, with disk space, new themes and a choice of charts (28 September 2026)
 
 - **A reload just after signing in no longer signs you out.** Sign-in stores the session for the

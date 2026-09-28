@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NavSection } from '@/features/shell/nav';
-import { applyOrder, isCustomOrder, orderNav } from '../navOrder';
+import { isCustomOrder, orderNav } from '../navOrder';
 
 const icon = (() => null) as unknown as NavSection['items'][number]['icon'];
 const item = (to: string) => ({ label: to, to, icon, privileges: [] });
@@ -29,13 +29,6 @@ describe('navigation order', () => {
     expect(paths(arranged[2])).toEqual(['/journal', '/databases', '/devices', '/locks']);
     expect(paths(arranged[0])).toEqual(['/security/users', '/security/roles']);
     expect(isCustomOrder(NAV, order)).toBe(true);
-  });
-
-  it('gives an entry the stored order does not know its default position, and drops one that no longer exists', () => {
-    // A screen added to nav.ts later shows up where nav.ts puts it; a removed one leaves no hole.
-    expect(applyOrder(['a', 'b', 'c', 'd'], ['d', 'gone', 'b'], (x) => x)).toEqual(['a', 'd', 'c', 'b']);
-    expect(applyOrder(['a', 'b'], ['b', 'b', 'a'], (x) => x)).toEqual(['b', 'a']);
-    expect(applyOrder(['a', 'b'], [], (x) => x)).toEqual(['a', 'b']);
   });
 
   describe('the store', () => {
