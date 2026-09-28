@@ -142,6 +142,15 @@ describe('the portal and rotating tokens', () => {
       server.events.removeListener('request:start', onRequest);
     }
   });
+
+  it('signs out when the retry after a refresh is refused too, instead of staying signed in', async () => {
+    await signIn();
+    // The session was revoked on the server (as when a refresh token is presented twice): the
+    // request and its retry with the refreshed token are both refused.
+    server.use(http.get(`${API}/v2/locks`, () => new HttpResponse(null, { status: 401 })));
+    await expect(result(api().GET('/v2/locks'))).rejects.toMatchObject({ status: 401 });
+    await waitFor(() => expect(useSession.getState().status).toBe('anonymous'));
+  });
 });
 
 describe('one tab per session', () => {

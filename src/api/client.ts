@@ -203,6 +203,17 @@ const middleware: Middleware = {
               credentials: 'omit',
             }),
           );
+          // Refused again with the newest token: IRIS has ended the session (a refresh token used
+          // twice revokes all of its tokens), so sign out now rather than at the next request.
+          if (
+            retried.status === 401 &&
+            headers.get('Authorization') === useSession.getState().authorizationHeader()
+          ) {
+            void useSession
+              .getState()
+              .logout({ reason: 'Your session expired. Please sign in again.', remote: false });
+            return retried;
+          }
           await finalize(request, retried, entry);
           return retried;
         }
