@@ -1,162 +1,35 @@
-import {
-  Badge,
-  Box,
-  Button,
-  Grid,
-  Group,
-  Paper,
-  Progress,
-  RingProgress,
-  SimpleGrid,
-  Stack,
-  Table,
-  Text,
-  Tooltip,
-} from '@mantine/core';
-import { AreaChart, LineChart, Sparkline } from '@mantine/charts';
+import { Badge, Box, Button, Grid, Group, Paper, SimpleGrid, Text, Tooltip } from '@mantine/core';
+import { Sparkline } from '@mantine/charts';
 import { useQuery } from '@tanstack/react-query';
-import {
-  IconActivity,
-  IconAlertTriangle,
-  IconClock,
-  IconCpu,
-  IconDatabase,
-  IconDeviceFloppy,
-  IconLicense,
-  IconRefresh,
-  IconWorld,
-} from '@tabler/icons-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import { IconActivity, IconCpu, IconDeviceFloppy, IconLicense, IconRefresh } from '@tabler/icons-react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { api, result } from '@/api/client';
 import { PageHeader } from '@/components/PageHeader';
-import { Timestamp } from '@/components/Timestamp';
 import { StatTile } from '@/components/StatTile';
 import { ErrorAlert } from '@/components/ErrorAlert';
-import { StatusBadge } from '@/components/StatusBadge';
-import { formatClock, formatCompact, formatNumber, formatPercent } from '@/lib/format';
+import { formatClock, formatCompact, formatNumber } from '@/lib/format';
 import { useMetrics, type MetricSample } from '@/stores/metrics';
 import { useSession } from '@/stores/session';
 import { useSeriesColors } from './useSeriesColors';
 import { busyProcesses, withRates } from './rates';
 import { useReducedMotion } from '@mantine/hooks';
-import { SERIES_DASH } from '@/lib/chartColors';
-import { CHART_TITLES, orderCharts, useDashboard, type DashboardChart } from '@/stores/dashboard';
+import { orderCharts, useDashboard } from '@/stores/dashboard';
 import { ChartPicker } from './ChartPicker';
 import { interopByNamespace, interopNamespaces } from './interop';
 import { HealthCard } from '@/features/health/HealthCard';
 import { useHostMetrics } from '@/features/monitor/useHostMetrics';
-import { metric } from '@/api/monitor';
-import { describeError } from '@/lib/errors';
+import { DashboardChartCard } from './DashboardCharts';
+import { HostGauges } from './HostGauges';
+import {
+  BusyProcessesCard,
+  GlobalsCard,
+  ResourceSeizesCard,
+  SystemHealthCard,
+  UpcomingTasksCard,
+} from './DashboardCards';
+import { num, pct } from './values';
 
 const POLL_MS = 3000;
-
-function num(v: unknown): number {
-  const n = typeof v === 'string' ? Number(v) : (v as number);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function pct(v: unknown): number | null {
-  if (v === '' || v === null || v === undefined) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function healthColor(v: string | undefined): 'good' | 'warning' | 'critical' {
-  const s = (v ?? '').toLowerCase();
-  if (!s || s === 'normal' || s === 'ok') return 'good';
-  if (s.includes('warn') || s.includes('attention')) return 'warning';
-  return 'critical';
-}
-
-/** What each chart of the Charts menu shows, under the title the dashboard store gives it. */
-const CHART_CAPTIONS: Record<DashboardChart, string> = {
-  globalRefs: '',
-  diskIo: 'physical block reads and writes',
-  interopMessages: 'interoperability messages processed per second',
-  interopQueued: "waiting in the productions' queues",
-  cacheEfficiency: 'global references per physical read or write',
-  logicalRequests: 'block requests, from memory or disk',
-  routineRefs: 'routine loads and calls',
-  processes: 'IRIS processes and active CSP sessions',
-  license: 'per cent of the license limit',
-};
-
-/** A chart's card: the title, a caption or note on the right, and the chart or a waiting line. */
-function ChartCard({
-  title,
-  caption,
-  ready,
-  waiting = 'Collecting samples…',
-  children,
-}: {
-  title: string;
-  caption: ReactNode;
-  ready: boolean;
-  waiting?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <Paper p="md" h="100%">
-      <Group justify="space-between" mb="xs">
-        <Text fw={600} size="sm">
-          {title}
-        </Text>
-        <Text size="xs" c="dimmed">
-          {caption}
-        </Text>
-      </Group>
-      {ready ? (
-        children
-      ) : (
-        <Text size="sm" c="dimmed" py="xl" ta="center">
-          {waiting}
-        </Text>
-      )}
-    </Paper>
-  );
-}
-
-/** Green up to 75 %, amber to 90 %, red above: the thresholds the Host monitor's alerts use. */
-function gaugeColor(value: number | undefined) {
-  if (value === undefined) return 'gray';
-  return value >= 90 ? 'red' : value >= 75 ? 'yellow' : 'teal';
-}
-
-/**
- * A host figure as a ring and a number: how full, at a glance, and the colour says whether it
- * matters. The ring takes the filled token of its colour, which keeps 3:1 on the card; the number
- * carries the value for everyone else.
- */
-function GaugeTile({ label, value, hint }: { label: string; value: number | undefined; hint: string }) {
-  const color = gaugeColor(value);
-  return (
-    <Paper p="sm">
-      <Group gap="sm" wrap="nowrap">
-        <RingProgress
-          size={58}
-          thickness={6}
-          roundCaps
-          aria-hidden
-          sections={[
-            { value: Math.max(0, Math.min(100, value ?? 0)), color: `var(--mantine-color-${color}-filled)` },
-          ]}
-        />
-        <Stack gap={0} style={{ minWidth: 0 }}>
-          <Text size="xs" c="dimmed" fw={500} tt="uppercase" style={{ letterSpacing: 0.4 }}>
-            {label}
-          </Text>
-          <Text fz={22} fw={650} lh={1.15} className="tabular">
-            {value === undefined ? '-' : formatPercent(value, 0)}
-          </Text>
-          <Text size="xs" c="dimmed">
-            {hint}
-          </Text>
-        </Stack>
-      </Group>
-    </Paper>
-  );
-}
 
 export default function DashboardPage() {
   const info = useSession((s) => s.info);
@@ -195,11 +68,12 @@ export default function DashboardPage() {
   const pushInterop = useMetrics((s) => s.pushInterop);
   // One interop reading per host poll, keyed on its arrival like the dashboard samples above.
   const hostUpdatedAt = host.dataUpdatedAt;
+  const recordInterop = useEffectEvent((at: number) => {
+    if (host.data) pushInterop(interopByNamespace(host.data, at));
+  });
   useEffect(() => {
-    if (!host.data || !hostUpdatedAt) return;
-    pushInterop(interopByNamespace(host.data, hostUpdatedAt));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hostUpdatedAt, pushInterop]);
+    if (hostUpdatedAt) recordInterop(hostUpdatedAt);
+  }, [hostUpdatedAt]);
   const interopSeries = useMemo(() => interopNamespaces(interopHistory), [interopHistory]);
   const interopRows = useMemo(
     () =>
@@ -218,20 +92,15 @@ export default function DashboardPage() {
     ['system resources', resources],
     ['globals and routines', globals],
   ].filter(([, q]) => (q as { isError: boolean }).isError) as [string, unknown][];
-  const cpu = host.data ? metric(host.data, 'iris_cpu_usage')?.value : undefined;
-  const mem = host.data ? metric(host.data, 'iris_phys_mem_percent_used')?.value : undefined;
-  const diskFull = host.data
-    ? host.data.filter((s) => s.name === 'iris_disk_percent_full').reduce((a, s) => Math.max(a, s.value), 0)
-    : undefined;
 
   // One sample per successful poll, stamped with its arrival. Keyed on dataUpdatedAt, not on the
   // data: two identical answers are still two samples (structural sharing keeps the object).
   const updatedAt = main.dataUpdatedAt;
-  useEffect(() => {
+  const recordSample = useEffectEvent((at: number) => {
     const d = main.data;
-    if (!d || !updatedAt) return;
+    if (!d) return;
     push({
-      t: updatedAt,
+      t: at,
       globalRefsPerSec: num(d.Performance?.GlobalRefsPerSecond),
       globalSetKill: num(d.Performance?.GlobalSetKill),
       routineRefs: num(d.Performance?.RoutineRefs),
@@ -243,8 +112,10 @@ export default function DashboardPage() {
       processes: num(d.SystemUsage?.Processes),
       cspSessions: num(d.SystemUsage?.CSPSessions),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updatedAt, push]);
+  });
+  useEffect(() => {
+    if (updatedAt) recordSample(updatedAt);
+  }, [updatedAt]);
 
   // DiskReads, LogicalRequests & co. are totals since startup: the screen shows their rates.
   const chartData = useMemo(
@@ -261,195 +132,8 @@ export default function DashboardPage() {
   const licenseHigh = pct(d?.Licensing?.LicenseUseHigh);
   const version = info?.serverVersion?.match(/\d{4}\.\d+(?:\.\d+)?/)?.[0];
 
-  const lineProps = { isAnimationActive: animate };
-  const axes = {
-    curveType: 'monotone' as const,
-    withDots: false,
-    strokeWidth: 2,
-    gridAxis: 'y' as const,
-    tickLine: 'none' as const,
-    xAxisProps: { interval: 'preserveStartEnd' as const, minTickGap: 40 },
-  };
-  const legend = { withLegend: true, legendProps: { verticalAlign: 'bottom' as const, height: 28 } };
   const spanSeconds =
     samples.length > 1 ? Math.round((samples[samples.length - 1].t - samples[0].t) / 1000) : 0;
-  const interopHint =
-    'No production reports here. IRIS publishes these figures once ' +
-    '##class(Ens.Util.Statistics).EnableSAMForNamespace() has been run in a namespace whose production is running.';
-  const perNamespace = (suffix: 'msgs' | 'queued') =>
-    interopSeries.map((ns, i) => ({
-      name: `${ns} ${suffix}`,
-      label: ns,
-      color: colors[i % colors.length],
-      strokeDasharray: SERIES_DASH[i % SERIES_DASH.length],
-    }));
-
-  /** One card per chart of the Charts menu; the rows are the six-minute history. */
-  const renderChart = (id: DashboardChart) => {
-    const meta = { title: CHART_TITLES[id], caption: CHART_CAPTIONS[id] };
-    const ready = chartData.length > 1;
-    switch (id) {
-      case 'globalRefs':
-        return (
-          <ChartCard title={meta.title} caption={`last ${spanSeconds}s`} ready={ready}>
-            <LineChart
-              h={220}
-              data={chartData}
-              dataKey="time"
-              series={[{ name: 'globalRefsPerSec', label: 'Global refs/s', color: colors[0] }]}
-              lineProps={lineProps}
-              withLegend={false}
-              valueFormatter={(v) => formatNumber(v)}
-              yAxisProps={{ width: 56 }}
-              {...axes}
-            />
-          </ChartCard>
-        );
-      case 'diskIo':
-        return (
-          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
-            <AreaChart
-              h={220}
-              data={chartData}
-              dataKey="time"
-              series={[
-                {
-                  name: 'diskReadsPerSec',
-                  label: 'Reads',
-                  color: colors[1],
-                  strokeDasharray: SERIES_DASH[1],
-                },
-                {
-                  name: 'diskWritesPerSec',
-                  label: 'Writes',
-                  color: colors[2],
-                  strokeDasharray: SERIES_DASH[2],
-                },
-              ]}
-              fillOpacity={0.1}
-              areaProps={lineProps}
-              valueFormatter={(v) => formatNumber(v)}
-              yAxisProps={{ width: 48 }}
-              {...axes}
-              {...legend}
-            />
-          </ChartCard>
-        );
-      case 'interopMessages':
-      case 'interopQueued': {
-        const queued = id === 'interopQueued';
-        return (
-          <ChartCard
-            title={meta.title}
-            caption={meta.caption}
-            ready={interopRows.length > 1 && interopSeries.length > 0}
-            waiting={interopRows.length > 1 && !interopSeries.length ? interopHint : undefined}
-          >
-            <LineChart
-              h={220}
-              data={interopRows}
-              dataKey="time"
-              series={perNamespace(queued ? 'queued' : 'msgs')}
-              lineProps={lineProps}
-              valueFormatter={(v) => formatNumber(v)}
-              yAxisProps={{ width: 48 }}
-              {...axes}
-              {...legend}
-            />
-          </ChartCard>
-        );
-      }
-      case 'cacheEfficiency':
-        return (
-          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
-            <LineChart
-              h={220}
-              data={chartData}
-              dataKey="time"
-              series={[{ name: 'cacheEfficiency', label: 'Cache efficiency', color: colors[1] }]}
-              lineProps={lineProps}
-              withLegend={false}
-              valueFormatter={(v) => `${formatNumber(v)} : 1`}
-              yAxisProps={{ width: 56 }}
-              {...axes}
-            />
-          </ChartCard>
-        );
-      case 'logicalRequests':
-        return (
-          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
-            <LineChart
-              h={220}
-              data={chartData}
-              dataKey="time"
-              series={[{ name: 'logicalRequestsPerSec', label: 'Logical requests/s', color: colors[3] }]}
-              lineProps={lineProps}
-              withLegend={false}
-              valueFormatter={(v) => formatNumber(v)}
-              yAxisProps={{ width: 56 }}
-              {...axes}
-            />
-          </ChartCard>
-        );
-      case 'routineRefs':
-        return (
-          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
-            <LineChart
-              h={220}
-              data={chartData}
-              dataKey="time"
-              series={[{ name: 'routineRefsPerSec', label: 'Routine refs/s', color: colors[4] }]}
-              lineProps={lineProps}
-              withLegend={false}
-              valueFormatter={(v) => formatNumber(v)}
-              yAxisProps={{ width: 56 }}
-              {...axes}
-            />
-          </ChartCard>
-        );
-      case 'processes':
-        return (
-          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
-            <LineChart
-              h={220}
-              data={chartData}
-              dataKey="time"
-              series={[
-                { name: 'processes', label: 'Processes', color: colors[0] },
-                {
-                  name: 'cspSessions',
-                  label: 'Web sessions',
-                  color: colors[2],
-                  strokeDasharray: SERIES_DASH[1],
-                },
-              ]}
-              lineProps={lineProps}
-              valueFormatter={(v) => formatNumber(v)}
-              yAxisProps={{ width: 40 }}
-              {...axes}
-              {...legend}
-            />
-          </ChartCard>
-        );
-      case 'license':
-        return (
-          <ChartCard title={meta.title} caption={meta.caption} ready={ready}>
-            <AreaChart
-              h={220}
-              data={chartData}
-              dataKey="time"
-              series={[{ name: 'licenseUse', label: 'License units', color: colors[3] }]}
-              fillOpacity={0.1}
-              areaProps={lineProps}
-              withLegend={false}
-              valueFormatter={(v) => `${v}%`}
-              yAxisProps={{ width: 40, domain: [0, 100] }}
-              {...axes}
-            />
-          </ChartCard>
-        );
-    }
-  };
 
   return (
     <>
@@ -559,31 +243,7 @@ export default function DashboardPage() {
         />
       </SimpleGrid>
 
-      <Group justify="space-between" mb={6}>
-        <Text size="xs" c="dimmed" fw={600} tt="uppercase" style={{ letterSpacing: 0.4 }}>
-          Host
-        </Text>
-        <Button component={Link} to="/monitor" size="compact-xs" variant="subtle">
-          Host monitor
-        </Button>
-      </Group>
-      {host.isError ? (
-        <Paper p="sm" mb="md">
-          <Text size="xs" c="dimmed">
-            metrics unavailable - {describeError(host.error)}
-          </Text>
-        </Paper>
-      ) : (
-        <SimpleGrid cols={{ base: 1, sm: 3 }} mb="md">
-          <GaugeTile label="CPU" value={cpu} hint="of the host's CPU in use" />
-          <GaugeTile label="Memory" value={mem} hint="of physical memory in use" />
-          <GaugeTile
-            label="Fullest DB disk"
-            value={diskFull === undefined || !host.data?.length ? undefined : diskFull}
-            hint="of the fullest database volume in use"
-          />
-        </SimpleGrid>
-      )}
+      <HostGauges host={host} />
 
       <Box mb="md">
         <HealthCard />
@@ -599,7 +259,14 @@ export default function DashboardPage() {
         <Grid gutter="md" mb="md">
           {shown.map((id) => (
             <Grid.Col key={id} span={{ base: 12, lg: shown.length === 1 ? 12 : 6 }}>
-              {renderChart(id)}
+              <DashboardChartCard
+                id={id}
+                chartData={chartData}
+                interopRows={interopRows}
+                interopSeries={interopSeries}
+                spanSeconds={spanSeconds}
+                animate={animate}
+              />
             </Grid.Col>
           ))}
         </Grid>
@@ -613,261 +280,23 @@ export default function DashboardPage() {
 
       <Grid gutter="md">
         <Grid.Col span={{ base: 12, md: 4 }}>
-          <Paper p="md" h="100%">
-            <Text fw={600} size="sm" mb="xs">
-              System health
-            </Text>
-            <Stack gap={6}>
-              {(
-                [
-                  ['Database space', d?.SystemUsage?.DatabaseSpace],
-                  ['Database journal', d?.SystemUsage?.DatabaseJournal],
-                  ['Journal space', d?.SystemUsage?.JournalSpace],
-                  ['Lock table', d?.SystemUsage?.LockTable],
-                  ['Write daemon', d?.SystemUsage?.WriteDaemon],
-                ] as [string, string | undefined][]
-              ).map(([label, value]) => {
-                const h = healthColor(value);
-                return (
-                  <Group key={label} justify="space-between">
-                    <Text size="sm">{label}</Text>
-                    <Badge
-                      size="sm"
-                      variant="light"
-                      color={h === 'good' ? 'teal' : h === 'warning' ? 'yellow' : 'red'}
-                      style={{ textTransform: 'none' }}
-                    >
-                      {value ?? '-'}
-                    </Badge>
-                  </Group>
-                );
-              })}
-              <Group justify="space-between">
-                <Text size="sm">System monitor</Text>
-                <Badge size="sm" variant="light" color={d?.Status?.SystemMonitor ? 'teal' : 'red'}>
-                  {d?.Status?.SystemMonitor ? 'Running' : 'Stopped'}
-                </Badge>
-              </Group>
-              <Group justify="space-between">
-                <Group gap={6}>
-                  <IconAlertTriangle size={14} />
-                  <Text size="sm">Serious alerts</Text>
-                </Group>
-                <Badge size="sm" variant="light" color={num(d?.Alerts?.SeriousAlerts) ? 'red' : 'teal'}>
-                  {formatNumber(d?.Alerts?.SeriousAlerts)}
-                </Badge>
-              </Group>
-              <Group justify="space-between">
-                <Text size="sm">Application errors</Text>
-                <Badge
-                  size="sm"
-                  variant="light"
-                  color={num(d?.Alerts?.ApplicationErrors) ? 'yellow' : 'teal'}
-                >
-                  {formatNumber(d?.Alerts?.ApplicationErrors)}
-                </Badge>
-              </Group>
-              <Group justify="space-between">
-                <Group gap={6}>
-                  <IconClock size={14} />
-                  <Text size="sm">Up time</Text>
-                </Group>
-                <Text size="sm" className="tabular">
-                  {d?.Status?.UpTime ?? '-'}
-                </Text>
-              </Group>
-              <Group justify="space-between">
-                <Group gap={6}>
-                  <IconDatabase size={14} />
-                  <Text size="sm">Last backup</Text>
-                </Group>
-                <Text size="sm">
-                  {d?.Status?.LastBackup ? (
-                    <Timestamp value={d.Status.LastBackup} mode="relative" className="" />
-                  ) : (
-                    'never'
-                  )}
-                </Text>
-              </Group>
-              <Group justify="space-between">
-                <Group gap={6}>
-                  <IconWorld size={14} />
-                  <Text size="sm">Journal entries</Text>
-                </Group>
-                <Text size="sm" className="tabular">
-                  {formatCompact(num(d?.SystemUsage?.JournalEntries))}
-                </Text>
-              </Group>
-            </Stack>
-          </Paper>
+          <SystemHealthCard d={d} />
         </Grid.Col>
 
         <Grid.Col span={{ base: 12, md: 4 }}>
-          <Paper p="md" h="100%">
-            <Group justify="space-between" mb="xs">
-              <Text fw={600} size="sm">
-                Upcoming tasks
-              </Text>
-              <Button component={Link} to="/tasks" size="compact-xs" variant="subtle">
-                All tasks
-              </Button>
-            </Group>
-            {d?.UpcomingTasks?.length ? (
-              <Table verticalSpacing={4} fz="sm">
-                <Table.Tbody>
-                  {d.UpcomingTasks.slice(0, 8).map((t, i) => (
-                    <Table.Tr key={i}>
-                      <Table.Td style={{ maxWidth: 180 }}>
-                        <Text size="sm" truncate>
-                          {t.Task}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="xs" c="dimmed" className="tabular" style={{ whiteSpace: 'nowrap' }}>
-                          {t.Time}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <StatusBadge status={t.Status} />
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            ) : (
-              <Text size="sm" c="dimmed">
-                No scheduled tasks
-              </Text>
-            )}
-          </Paper>
+          <UpcomingTasksCard d={d} />
         </Grid.Col>
 
         <Grid.Col span={{ base: 12, md: 4 }}>
-          <Paper p="md" h="100%">
-            <Group justify="space-between" mb="xs">
-              <Text fw={600} size="sm">
-                Busy processes
-              </Text>
-              <Button component={Link} to="/processes" size="compact-xs" variant="subtle">
-                All processes
-              </Button>
-            </Group>
-            {busy.length ? (
-              <Table verticalSpacing={4} fz="sm">
-                <Table.Tbody>
-                  {busy.slice(0, 8).map((p) => (
-                    <Table.Tr key={p.pid}>
-                      <Table.Td>
-                        <Text
-                          size="sm"
-                          className="mono"
-                          component={Link}
-                          to={`/processes/${p.pid}`}
-                          c="indigo"
-                        >
-                          {p.pid}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td ta="right">
-                        <Text size="sm" className="tabular">
-                          {formatCompact(p.commands)} commands
-                        </Text>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            ) : (
-              <Text size="sm" c="dimmed">
-                No busy user processes
-              </Text>
-            )}
-          </Paper>
+          <BusyProcessesCard busy={busy} />
         </Grid.Col>
 
         <Grid.Col span={{ base: 12, md: 7 }}>
-          <Paper p="md" h="100%">
-            <Group justify="space-between" mb="xs">
-              <Text fw={600} size="sm">
-                Globals and routines (totals since startup)
-              </Text>
-              <Text size="xs" c="dimmed">
-                /v2/monitor/dashboard/globals-and-routines
-              </Text>
-            </Group>
-            {globals.data ? (
-              <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="xs">
-                {(
-                  [
-                    ['Global refs (local)', globals.data.Globals?.RefLocal],
-                    ['Global updates', globals.data.Globals?.RefUpdateLocal],
-                    ['Logical blocks', globals.data.Globals?.LogicalBlocks],
-                    ['Block reads', globals.data.Globals?.PhysBlockReads],
-                    ['Block writes', globals.data.Globals?.PhysBlockWrites],
-                    ['Journal entries', globals.data.Globals?.JrnEntries],
-                    ['Routine calls', globals.data.Routines?.RtnCallsLocal],
-                    ['Routine commands', globals.data.Routines?.RtnCommands],
-                    ['Routine loads', globals.data.Routines?.RtnFetchLocal],
-                  ] as [string, number | undefined][]
-                ).map(([label, value]) => (
-                  <Stack key={label} gap={0}>
-                    <Text size="xs" c="dimmed">
-                      {label}
-                    </Text>
-                    <Text fw={600} className="tabular">
-                      {formatCompact(value)}
-                    </Text>
-                  </Stack>
-                ))}
-              </SimpleGrid>
-            ) : (
-              <Text size="sm" c="dimmed">
-                Loading…
-              </Text>
-            )}
-          </Paper>
+          <GlobalsCard data={globals.data} />
         </Grid.Col>
 
         <Grid.Col span={{ base: 12, md: 5 }}>
-          <Paper p="md" h="100%">
-            <Group justify="space-between" mb="xs">
-              <Text fw={600} size="sm">
-                Resource seizes
-              </Text>
-              <Text size="xs" c="dimmed">
-                contention on shared structures
-              </Text>
-            </Group>
-            {resources.data ? (
-              <Stack gap={6}>
-                {resources.data.slice(0, 6).map((r) => {
-                  const seize = num(r.Seize);
-                  const waits = num(r.Nseize) + num(r.Aseize) + num(r.Bseize);
-                  const ratio = seize ? Math.min(100, (waits / seize) * 100) : 0;
-                  return (
-                    <div key={r.Name}>
-                      <Group justify="space-between" mb={2}>
-                        <Text size="xs">{r.Name}</Text>
-                        <Text size="xs" c="dimmed" className="tabular">
-                          {formatCompact(seize)} seizes · {ratio.toFixed(2)}% waits
-                        </Text>
-                      </Group>
-                      <Progress
-                        size="xs"
-                        value={Math.max(ratio, 0.5)}
-                        color={ratio > 5 ? 'red' : ratio > 1 ? 'yellow' : 'aperture'}
-                        aria-label={`${r.Name} seize waits`}
-                      />
-                    </div>
-                  );
-                })}
-              </Stack>
-            ) : (
-              <Text size="sm" c="dimmed">
-                Loading…
-              </Text>
-            )}
-          </Paper>
+          <ResourceSeizesCard data={resources.data} />
         </Grid.Col>
       </Grid>
     </>

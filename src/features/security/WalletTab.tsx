@@ -1,26 +1,6 @@
 import { RefreshControl } from '@/components/RefreshControl';
-import {
-  ActionIcon,
-  Alert,
-  Badge,
-  Button,
-  Checkbox,
-  Drawer,
-  Group,
-  Modal,
-  MultiSelect,
-  PasswordInput,
-  Select,
-  Stack,
-  TagsInput,
-  Text,
-  Textarea,
-  TextInput,
-  Title,
-  Tooltip,
-} from '@mantine/core';
+import { ActionIcon, Alert, Badge, Button, Drawer, Group, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { useForm } from '@mantine/form';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { IconEye, IconInfoCircle, IconKey, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -30,12 +10,13 @@ import type { Schemas } from '@/api/types';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { PrivilegeBadge } from '@/components/PrivilegeBadge';
-import { reviewChanges } from '@/components/ReviewChanges';
 import { createLimiter } from '@/lib/limiter';
 import { notifyError } from '@/lib/notify';
 import { useSession } from '@/stores/session';
 import { secKeys } from './keys';
-import { fullSecretName, shortSecretName } from './wallet';
+import { readCollection, shortSecretName } from './wallet';
+import { WalletCollectionDialog, type CollectionEdit } from './WalletCollectionDialog';
+import { WalletSecretDialog, type SecretTarget } from './WalletSecretDialog';
 
 const WALLET = ['%Admin_Wallet:U'] as const;
 
@@ -43,29 +24,9 @@ type CollectionRow = Schemas['WalletCollectionList'][number] & {
   secrets?: Schemas['WalletSecretList'];
   secretsError?: string;
 };
-type SecretType = NonNullable<Schemas['WalletSecret']['Type']>;
-
-const SECRET_TYPES: { value: SecretType; label: string }[] = [
-  { value: '%Wallet.KeyValue', label: 'Key/value (%Wallet.KeyValue): credentials, API keys' },
-  { value: '%Wallet.SymmetricKey', label: 'Symmetric key (%Wallet.SymmetricKey)' },
-  { value: '%Wallet.RSA', label: 'RSA key pair (%Wallet.RSA)' },
-];
-const USAGES = ['HTTP', 'SOAP', 'SQL'];
 
 /** At most four secret lists in flight while the collections load (one request per collection). */
 const secretReads = createLimiter(4);
-
-const readCollection = (name: string) =>
-  result(api().GET('/v2/wallet/collection', { params: { query: { name } } }));
-
-function collectionRules(v: string): string | null {
-  return /^[A-Za-z][A-Za-z0-9_-]*$/.test(v) ? null : 'Letters, digits, _ and - ; starts with a letter';
-}
-function resourceRules(v: string): string | null {
-  return /^%?[A-Za-z0-9_%]+(:[A-Za-z]+)?$/.test(v.trim())
-    ? null
-    : 'A resource, optionally with :USE, :READ or :WRITE';
-}
 
 export function WalletTab() {
   const info = useSession((s) => s.info);
@@ -91,38 +52,18 @@ export function WalletTab() {
   }));
 
   const [opened, { open, close }] = useDisclosure(false);
-  const [editing, setEditing] = useState<string | null>(null);
-  const [before, setBefore] = useState<Record<string, unknown> | undefined>(undefined);
+  // Each opening of a dialog mounts it afresh (`run` is its key), so its form starts from what it is given.
+  const [collectionDialog, setCollectionDialog] = useState<{ run: number; edit: CollectionEdit | null }>({
+    run: 0,
+    edit: null,
+  });
   const [selected, setSelected] = useState<string | null>(null);
   const [secretOpen, { open: openSecret, close: closeSecret }] = useDisclosure(false);
-  const [secretTarget, setSecretTarget] = useState<{ collection: string; replace?: string } | null>(null);
-
-  const form = useForm({
-    initialValues: { Name: '', UseResource: '%Admin_Manage:USE', EditResource: '%Admin_Secure:USE' },
-    validate: { Name: collectionRules, UseResource: resourceRules, EditResource: resourceRules },
+  const [secretDialog, setSecretDialog] = useState<{ run: number; target: SecretTarget | null }>({
+    run: 0,
+    target: null,
   });
-  const save = useApiMutation(
-    (v: { Name: string; UseResource?: string; EditResource?: string }) =>
-      run(
-        api().PUT('/v2/wallet/collection', {
-          params: { query: { name: v.Name } },
-          body: {
-            ...(v.UseResource !== undefined ? { UseResource: v.UseResource.trim() } : {}),
-            ...(v.EditResource !== undefined ? { EditResource: v.EditResource.trim() } : {}),
-          },
-        }),
-        'PUT',
-      ),
-    {
-      success: (_d, v) => `Wallet collection ${v.Name} ${editing ? 'saved' : 'created'}`,
-      invalidate: [secKeys.walletCollections],
-      onSuccess: () => {
-        close();
-        form.reset();
-        setEditing(null);
-      },
-    },
-  );
+
   const removeCollection = useApiMutation(
     (name: string) => run(api().DELETE('/v2/wallet/collection', { params: { query: { name } } }), 'DELETE'),
     {
@@ -134,64 +75,6 @@ export function WalletTab() {
     },
   );
 
-  const secretForm = useForm({
-    initialValues: {
-      name: '',
-      Type: '%Wallet.KeyValue' as SecretType,
-      entries: [{ key: 'user', value: '' }] as { key: string; value: string }[],
-      Usage: ['HTTP'] as string[],
-      RequireTLS: true,
-      AllowedHosts: [] as string[],
-      configJson: '{\n  \n}',
-    },
-    validate: {
-      name: (v) => (/^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(v) ? null : 'Letters, digits, _ . and -'),
-      entries: {
-        key: (v, values) => (values.Type !== '%Wallet.KeyValue' || v.trim() ? null : 'Required'),
-      },
-      configJson: (v, values) => {
-        if (values.Type === '%Wallet.KeyValue') return null;
-        try {
-          const parsed = JSON.parse(v) as unknown;
-          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? null : 'A JSON object';
-        } catch {
-          return 'Not valid JSON';
-        }
-      },
-    },
-  });
-  const putSecret = useApiMutation(
-    (v: typeof secretForm.values & { collection: string }) => {
-      const config: Record<string, unknown> =
-        v.Type === '%Wallet.KeyValue'
-          ? {
-              Secret: Object.fromEntries(
-                v.entries.filter((e) => e.key.trim()).map((e) => [e.key.trim(), e.value]),
-              ),
-              Usage: v.Usage,
-              RequireTLS: v.RequireTLS,
-              AllowedHosts: v.AllowedHosts,
-            }
-          : (JSON.parse(v.configJson) as Record<string, unknown>);
-      return run(
-        api().PUT('/v2/wallet/secret', {
-          params: { query: { name: fullSecretName(v.collection, v.name) } },
-          body: { Type: v.Type, WalletSecretConfig: config as Schemas['WalletSecret']['WalletSecretConfig'] },
-        }),
-        'PUT',
-      );
-    },
-    {
-      success: (_d, v) =>
-        `Wallet secret ${fullSecretName(v.collection, v.name)} ${secretTarget?.replace ? 'replaced' : 'created'}`,
-      invalidate: [secKeys.walletCollections, ['security', 'wallet', 'secrets']],
-      onSuccess: () => {
-        closeSecret();
-        secretForm.reset();
-        setSecretTarget(null);
-      },
-    },
-  );
   const removeSecret = useApiMutation(
     (name: string) => run(api().DELETE('/v2/wallet/secret', { params: { query: { name } } }), 'DELETE'),
     {
@@ -201,9 +84,7 @@ export function WalletTab() {
   );
 
   const startSecret = (collection: string, replace?: string) => {
-    secretForm.reset();
-    if (replace) secretForm.setFieldValue('name', replace);
-    setSecretTarget({ collection, replace });
+    setSecretDialog((s) => ({ run: s.run + 1, target: { collection, replace } }));
     openSecret();
   };
   const confirmDeleteCollection = (row: CollectionRow) =>
@@ -305,13 +186,15 @@ export function WalletTab() {
                   notifyError(err, 'Cannot open the collection');
                   return;
                 }
-                setBefore(d as Record<string, unknown>);
-                setEditing(row.original.Name ?? '');
-                form.setValues({
-                  Name: row.original.Name ?? '',
-                  UseResource: d.UseResource ?? '',
-                  EditResource: d.EditResource ?? '',
-                });
+                setCollectionDialog((c) => ({
+                  run: c.run + 1,
+                  edit: {
+                    name: row.original.Name ?? '',
+                    UseResource: d.UseResource ?? '',
+                    EditResource: d.EditResource ?? '',
+                    before: d as Record<string, unknown>,
+                  },
+                }));
                 open();
               }}
             >
@@ -433,8 +316,7 @@ export function WalletTab() {
             size="xs"
             leftSection={<IconPlus size={14} />}
             onClick={() => {
-              setEditing(null);
-              form.reset();
+              setCollectionDialog((c) => ({ run: c.run + 1, edit: null }));
               open();
             }}
           >
@@ -514,162 +396,18 @@ export function WalletTab() {
         ) : null}
       </Drawer>
 
-      <Modal
+      <WalletCollectionDialog
+        key={collectionDialog.run}
         opened={opened}
         onClose={close}
-        title={editing ? `Edit ${editing}` : 'Create wallet collection'}
-        centered
-      >
-        <form
-          onSubmit={form.onSubmit((v) =>
-            editing
-              ? reviewChanges({
-                  title: `Review changes to ${editing}`,
-                  before,
-                  after: { UseResource: v.UseResource.trim(), EditResource: v.EditResource.trim() },
-                  refetch: () => readCollection(editing) as Promise<Record<string, unknown>>,
-                  onConfirm: () => save.mutateAsync(v),
-                })
-              : save.mutate(v),
-          )}
-        >
-          <Stack gap="sm">
-            <TextInput label="Name" disabled={!!editing} data-autofocus {...form.getInputProps('Name')} />
-            <TextInput
-              label="Resource required to use a secret"
-              description="resource:permission, e.g. %Admin_Manage:USE (READ when the permission is omitted)"
-              {...form.getInputProps('UseResource')}
-            />
-            <TextInput
-              label="Resource required to add, edit or remove secrets"
-              description="e.g. %Admin_Secure:USE (WRITE when the permission is omitted)"
-              {...form.getInputProps('EditResource')}
-            />
-            <Group justify="flex-end">
-              <Button variant="default" onClick={close}>
-                Cancel
-              </Button>
-              <Button type="submit" loading={save.isPending}>
-                {editing ? 'Save' : 'Create'}
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
-
-      <Modal
+        edit={collectionDialog.edit}
+      />
+      <WalletSecretDialog
+        key={secretDialog.run}
         opened={secretOpen}
         onClose={closeSecret}
-        title={
-          secretTarget?.replace
-            ? `Replace ${secretTarget.collection}.${secretTarget.replace}`
-            : `Add a secret to ${secretTarget?.collection ?? ''}`
-        }
-        centered
-        size="lg"
-      >
-        <form
-          onSubmit={secretForm.onSubmit((v) =>
-            putSecret.mutate({ ...v, collection: secretTarget?.collection ?? '' }),
-          )}
-        >
-          <Stack gap="sm">
-            <Group grow>
-              <TextInput
-                label="Secret name"
-                description={`Stored as ${secretTarget?.collection ?? ''}.<name>`}
-                disabled={!!secretTarget?.replace}
-                data-autofocus
-                {...secretForm.getInputProps('name')}
-              />
-              <Select
-                label="Type"
-                data={SECRET_TYPES}
-                allowDeselect={false}
-                {...secretForm.getInputProps('Type')}
-              />
-            </Group>
-            {secretForm.values.Type === '%Wallet.KeyValue' ? (
-              <>
-                <Stack gap={4}>
-                  <Text size="sm" fw={500}>
-                    Values
-                  </Text>
-                  {secretForm.values.entries.map((_, i) => (
-                    <Group key={i} gap="xs" align="flex-start" wrap="nowrap">
-                      <TextInput
-                        placeholder="key, e.g. user"
-                        aria-label={`Key ${i + 1}`}
-                        style={{ flex: 1 }}
-                        {...secretForm.getInputProps(`entries.${i}.key`)}
-                      />
-                      <PasswordInput
-                        placeholder="value"
-                        aria-label={`Value ${i + 1}`}
-                        autoComplete="new-password"
-                        style={{ flex: 2 }}
-                        {...secretForm.getInputProps(`entries.${i}.value`)}
-                      />
-                      <ActionIcon
-                        variant="subtle"
-                        color="red"
-                        aria-label="Remove entry"
-                        disabled={secretForm.values.entries.length === 1}
-                        onClick={() => secretForm.removeListItem('entries', i)}
-                      >
-                        <IconTrash size={14} />
-                      </ActionIcon>
-                    </Group>
-                  ))}
-                  <Button
-                    size="compact-xs"
-                    variant="subtle"
-                    leftSection={<IconPlus size={12} />}
-                    style={{ alignSelf: 'flex-start' }}
-                    onClick={() => secretForm.insertListItem('entries', { key: '', value: '' })}
-                  >
-                    Another entry
-                  </Button>
-                </Stack>
-                <Group grow align="flex-start">
-                  <MultiSelect label="Usage" data={USAGES} {...secretForm.getInputProps('Usage')} />
-                  <TagsInput
-                    label="Allowed hosts"
-                    description="Hosts the secret may be sent to over HTTP"
-                    placeholder="host, Enter"
-                    {...secretForm.getInputProps('AllowedHosts')}
-                  />
-                </Group>
-                <Checkbox
-                  label="Require TLS when the secret is sent in an HTTP request"
-                  {...secretForm.getInputProps('RequireTLS', { type: 'checkbox' })}
-                />
-              </>
-            ) : (
-              <Textarea
-                label="WalletSecretConfig (JSON)"
-                description="Passed as it is to the Create or Modify method of the secret's class"
-                autosize
-                minRows={4}
-                className="mono"
-                {...secretForm.getInputProps('configJson')}
-              />
-            )}
-            <Text size="xs" c="dimmed">
-              The value is sent once, over this session's connection, and never shown again anywhere in
-              Aperture.
-            </Text>
-            <Group justify="flex-end">
-              <Button variant="default" onClick={closeSecret}>
-                Cancel
-              </Button>
-              <Button type="submit" loading={putSecret.isPending}>
-                {secretTarget?.replace ? 'Replace' : 'Create'}
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
+        target={secretDialog.target}
+      />
     </Stack>
   );
 }
