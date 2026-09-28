@@ -9,8 +9,8 @@ const go = (page: Page, path: string) => page.goto(`/#${path}`);
 const PASTEL = { state: { contrast: 'auto', palette: 'pastel' }, version: 0 };
 const bg = (page: Page, selector: string) =>
   page.locator(selector).evaluate((el) => getComputedStyle(el).backgroundColor);
-const PAGE = { pastel: 'rgb(230, 239, 247)', light: 'rgb(235, 238, 242)', dark: 'rgb(24, 30, 38)' };
-const BODY = { pastel: 'rgb(245, 249, 252)', light: 'rgb(249, 250, 251)', dark: 'rgb(31, 38, 48)' };
+const PAGE = { pastel: 'rgb(240, 236, 249)', light: 'rgb(235, 238, 242)', dark: 'rgb(24, 30, 38)' };
+const BODY = { pastel: 'rgb(250, 248, 254)', light: 'rgb(249, 250, 251)', dark: 'rgb(31, 38, 48)' };
 
 async function signIn(page: Page) {
   await go(page, '/login');

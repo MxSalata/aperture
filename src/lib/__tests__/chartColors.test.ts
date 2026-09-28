@@ -5,12 +5,15 @@ import {
   CATEGORICAL_DARK_HC,
   CATEGORICAL_LIGHT,
   CATEGORICAL_LIGHT_HC,
+  CATEGORICAL_PASTEL,
   SERIES,
   SERIES_SHADE_DARK,
   SERIES_SHADE_DARK_HC,
   SERIES_SHADE_LIGHT,
   SERIES_SHADE_LIGHT_HC,
+  SERIES_SHADE_PASTEL,
   SURFACE_DARK,
+  SURFACE_PASTEL,
   SURFACE_LIGHT,
   contrastRatio,
 } from '../chartColors';
@@ -21,6 +24,7 @@ const cases: Array<[string, readonly string[], readonly number[], string, number
   // orange has no Mantine shade above 4.3:1 on white, so the light floor is 4:1 (well above the 3:1 graphics minimum)
   ['light high-contrast', CATEGORICAL_LIGHT_HC, SERIES_SHADE_LIGHT_HC, SURFACE_LIGHT, 4],
   ['dark high-contrast', CATEGORICAL_DARK_HC, SERIES_SHADE_DARK_HC, SURFACE_DARK, 5],
+  ['pastel', CATEGORICAL_PASTEL, SERIES_SHADE_PASTEL, SURFACE_PASTEL, 3],
 ];
 
 describe('chart palettes', () => {

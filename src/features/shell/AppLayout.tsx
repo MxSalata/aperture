@@ -341,6 +341,7 @@ export function AppLayout() {
       styles={{
         main: { background: 'var(--aperture-page)' },
         navbar: { background: 'var(--aperture-navbar)' },
+        header: { background: 'var(--aperture-header)' },
       }}
     >
       <AppShell.Header style={{ boxShadow: `inset 0 3px 0 0 var(--mantine-color-${instance.color}-6)` }}>

@@ -16,6 +16,8 @@ export const CATEGORICAL_LIGHT = ['#4c6ef5', '#099268', '#e8590c', '#be4bdb', '#
 export const CATEGORICAL_DARK = ['#5c7cfa', '#0ca678', '#f76707', '#be4bdb', '#1098ad'] as const;
 export const CATEGORICAL_LIGHT_HC = ['#364fc7', '#087f5b', '#d9480f', '#862e9c', '#0b7285'] as const;
 export const CATEGORICAL_DARK_HC = ['#748ffc', '#38d9a9', '#ffa94d', '#da77f2', '#3bc9db'] as const;
+/** Pastel's cards are tinted, so each slot takes a step deeper than on white (3.7:1 and more on the darkest fill). */
+export const CATEGORICAL_PASTEL = ['#4263eb', '#087f5b', '#d9480f', '#ae3ec9', '#0b7285'] as const;
 
 /** Mantine color keys in the same order (Mantine resolves the right shade per scheme). */
 export const SERIES = ['indigo', 'teal', 'orange', 'grape', 'cyan'] as const;
@@ -24,10 +26,13 @@ export const SERIES_SHADE_LIGHT = [6, 8, 8, 6, 8] as const;
 export const SERIES_SHADE_DARK = [5, 7, 7, 6, 7] as const;
 export const SERIES_SHADE_LIGHT_HC = [9, 9, 9, 9, 9] as const;
 export const SERIES_SHADE_DARK_HC = [4, 4, 4, 4, 4] as const;
+export const SERIES_SHADE_PASTEL = [7, 9, 9, 7, 9] as const;
 
 /** Surfaces the palettes are validated against. */
 export const SURFACE_LIGHT = '#ffffff';
 export const SURFACE_DARK = '#1f2630';
+/** The darkest card fill of Pastel (lavender, styles.css --pastel-fill-1). */
+export const SURFACE_PASTEL = '#f3f0fc';
 
 /** Redundant, non-colour encoding for line series: the n-th series gets the n-th dash pattern. */
 export const SERIES_DASH = ['', '6 3', '2 3', '8 3 2 3', '1 3'] as const;
