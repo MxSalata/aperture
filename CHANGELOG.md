@@ -7,6 +7,12 @@
   XSLT XML transformer): Open Exchange's reader keeps the low byte of a character only, and the en
   dash (U+2013) in `module.xml`'s description became 0x13, which XML does not allow. The
   description is plain ASCII now, and a unit test keeps the whole file so.
+- **No en or em dashes in the repository's own text.** After Open Exchange refused `module.xml`
+  over an en dash, every en and em dash in the sources, tests, scripts and documents became a
+  hyphen (the package descriptions read "Aperture: a modern management portal ..."), 118 in 47
+  files, including the dash the screens show for a missing value. A unit test keeps it so. The
+  recorded output of past runs (`docs/verification/`) stays as it was recorded, and the built
+  portal keeps the few that come from third-party libraries.
 - **The dashboard's Charts menu sits beside the charts, lists them A to Z, and can be rearranged.**
   It was a small grey button among the page's actions, easy to miss; it is now "Choose charts", a
   tinted button on a Charts heading directly above them. The charts are listed, and shown, A to Z by
