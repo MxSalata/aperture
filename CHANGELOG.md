@@ -19,6 +19,10 @@
   menu, which an element with `role="menu"` may not contain (axe `aria-required-children`, serious);
   the audits had only seen menus closed. The theme leaves it out, so an opened menu focuses its
   first item, and the Charts test audits its menu open.
+- **A mark of its own: an iris diaphragm.** Six blades round a hexagonal opening, one tint lighter
+  each, on the rounded square in the portal's blues: the aperture of a lens, and IRIS. The header,
+  the sign-in page, the browser tab and the README show the same mark; the tab and the README still
+  drew the target of the first versions.
 
 ## 1.0.2 - tested on a real IRIS for Health, with disk space, new themes and a choice of charts (28 September 2026)
 

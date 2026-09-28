@@ -1,12 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Aperture's mark, an iris diaphragm: six blades round a hexagonal opening, one tint lighter
+       each, on a rounded square; src/components/BrandMark.tsx draws the same: keep the two alike -->
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#4c6ef5"/>
-      <stop offset="1" stop-color="#15aabf"/>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="64" y2="64">
+      <stop offset="0" stop-color="#095c7c"/>
+      <stop offset="1" stop-color="#45acd1"/>
     </linearGradient>
   </defs>
-  <circle cx="32" cy="32" r="30" fill="url(#g)"/>
-  <circle cx="32" cy="32" r="17" fill="none" stroke="#fff" stroke-width="4"/>
-  <circle cx="32" cy="32" r="6" fill="#fff"/>
-  <path d="M32 2v13M32 49v13M2 32h13M49 32h13" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+  <rect width="64" height="64" rx="19.2" fill="url(#g)"/>
+  <g fill="#fff" stroke="url(#g)" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M32.000 22.000 L7.822 35.959 A24.500 24.500 0 0 1 16.482 13.041 Z"/>
+    <path d="M23.340 27.000 L23.340 54.918 A24.500 24.500 0 0 1 7.822 35.959 Z" fill-opacity="0.92"/>
+    <path d="M23.340 37.000 L47.518 50.959 A24.500 24.500 0 0 1 23.340 54.918 Z" fill-opacity="0.84"/>
+    <path d="M32.000 42.000 L56.178 28.041 A24.500 24.500 0 0 1 47.518 50.959 Z" fill-opacity="0.76"/>
+    <path d="M40.660 37.000 L40.660 9.082 A24.500 24.500 0 0 1 56.178 28.041 Z" fill-opacity="0.68"/>
+    <path d="M40.660 27.000 L16.482 13.041 A24.500 24.500 0 0 1 40.660 9.082 Z" fill-opacity="0.6"/>
+  </g>
 </svg>
