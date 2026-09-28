@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Coloured icons in the navigation.** Every entry's icon has a colour of its own (Dashboard teal,
+  Databases green, Locks red, Journals orange, Users indigo, Roles violet ...), labels in the normal
+  text colour, so the list is easy to scan; neighbours always differ. The colour is that colour's
+  text token, which every scheme already tunes to 4.5:1 on its surfaces, so the icons hold 3:1 on
+  the navbar in Light, Dark and Pastel, on a hovered entry and on the active one; high contrast
+  keeps them in the text colour. The command palette shows the same icons in the same colours.
 - **Pastel is a theme of its own.** It was a tinted Light. It now has several soft hues working
   together: a lavender page, a sky navbar and a peach header, and the cards ("boxes") each in a
   gentle pastel (lavender, mint, peach, butter, sky, rose, in turn, with a border a step deeper than

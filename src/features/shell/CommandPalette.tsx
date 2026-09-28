@@ -1,6 +1,6 @@
 import { Spotlight, type SpotlightActionData, type SpotlightActionGroupData } from '@mantine/spotlight';
 import { IconApi, IconSearch } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
 import { ALL_NAV_ITEMS } from './nav';
 import { groupLabel, type IndexedOperation } from '@/lib/openapi';
@@ -33,7 +33,14 @@ export function CommandPalette() {
       label: n.label,
       description: n.description,
       keywords: n.keywords,
-      leftSection: <n.icon size={18} stroke={1.6} />,
+      leftSection: (
+        <n.icon
+          size={18}
+          stroke={1.6}
+          className="nav-icon"
+          style={{ '--nav-icon': `var(--mantine-color-${n.color}-text)` } as CSSProperties}
+        />
+      ),
       onClick: () => navigate(n.to),
     }));
     const ops: SpotlightActionData[] = (operations ?? []).map((op) => ({

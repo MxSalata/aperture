@@ -3,7 +3,7 @@ import type { NavSection } from '@/features/shell/nav';
 import { isCustomOrder, orderNav } from '../navOrder';
 
 const icon = (() => null) as unknown as NavSection['items'][number]['icon'];
-const item = (to: string) => ({ label: to, to, icon, privileges: [] });
+const item = (to: string) => ({ label: to, to, icon, privileges: [], color: 'gray' as const });
 const NAV: NavSection[] = [
   { label: 'Overview', items: [item('/'), item('/jobs')] },
   { label: 'Operations', items: [item('/databases'), item('/devices'), item('/locks'), item('/journal')] },
