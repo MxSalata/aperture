@@ -23,8 +23,10 @@ export default function AboutPage() {
             </Title>
             <List size="sm" spacing={4}>
               <List.Item>
-                Every screen talks to the <b>SysAdmin REST API</b> (<code>/api/admin</code>, spec v
-                {index.version}); there is no server-side code of its own.
+                The portal is static files with no server-side code of its own: its screens talk to the{' '}
+                <b>SysAdmin REST API</b> (<code>/api/admin</code>, spec v{index.version}). The log files,
+                which that API does not serve, are the exception: for them the IPM package adds a small
+                read-only reader in Embedded Python (<code>/api/aperture</code>).
               </List.Item>
               <List.Item>
                 Types for all {index.operations.length} operations are generated from the OpenAPI document;

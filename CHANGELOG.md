@@ -23,6 +23,9 @@
   each, on the rounded square in the portal's blues: the aperture of a lens, and IRIS. The header,
   the sign-in page, the browser tab and the README show the same mark; the tab and the README still
   drew the target of the first versions.
+- **The About page is exact about server-side code.** It said there was none. The portal itself is
+  static files calling the SysAdmin API, but the log files come through the package's read-only
+  Embedded Python reader, and the page now says so.
 
 ## 1.0.2 - tested on a real IRIS for Health, with disk space, new themes and a choice of charts (28 September 2026)
 
