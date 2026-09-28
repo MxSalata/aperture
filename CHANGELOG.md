@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **The README says why one image.** A "Why one image" section: the image is the official IRIS
+  Community 2026.2 with the package installed, Aperture has no server of its own to put in a second
+  container, part of it lives inside IRIS, the browser needs one origin, and what CI checked is what
+  runs. The image and Compose sections point to it, and the compose file's header says the same.
+
 ## 1.0.5 - A review applied, and Docker Compose step by step (28 September 2026)
 
 A review of 1.0.4, applied, a new About page, and the README's instructions for Docker Compose.

@@ -167,7 +167,8 @@ Every screen and what it does, area by area: [docs/FEATURES.md](docs/FEATURES.md
 
 #### The image
 
-IRIS Community 2026.2 with Aperture installed through its IPM package, in one command:
+One container: the official IRIS Community 2026.2 image with Aperture installed in it through its IPM
+package ([why one image](#why-one-image)), in one command:
 
 ```bash
 docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture
@@ -181,16 +182,13 @@ password of its own, use [Docker Compose](#docker-compose).
 
 CI publishes the image only after checking it against the SysAdmin API: with a password set at start,
 across a restart, and with the demonstration password. `latest` and the version come from `main`,
-`edge` from the development branch.
+`edge` from development branches.
 
 #### Docker Compose
 
-The same image, set up to stay: a password of its own, and back after a reboot. It is one container:
-IRIS Community 2026.2 with Aperture installed in it, whose own web server serves the portal and the
-APIs it calls on one port, 52773. Aperture has no server or container of its own, and needs none: the
-browser loads the portal from IRIS and calls IRIS directly, on the same origin, which the SysAdmin API
-requires (it sends no CORS headers). [From the sources](#from-the-sources) you can also put nginx in
-front, as a second container that passes the API calls on to IRIS over Compose's network.
+The same image, set up to stay: a password of its own, and back after a reboot. Compose runs it as one
+service, IRIS with Aperture inside, whose own web server serves the portal and the APIs it calls on one
+port, 52773 ([why one image](#why-one-image)).
 
 Two files in a folder, with no clone and no build:
 
@@ -266,6 +264,27 @@ services:
 ```
 
 </details>
+
+#### Why one image
+
+Aperture ships as one image, IRIS and Aperture together, rather than a portal container beside a stock
+IRIS:
+
+- **It is the official image plus the package.** `intersystems/iris-community:2026.2`, pinned by digest,
+  with `iris-aperture` installed at build time by the package manager: the same installation as
+  `zpm "install iris-aperture"` on an instance of your own.
+- **Aperture has no server to run.** The portal is static files that IRIS's own web server serves; a
+  container of Aperture's own would only be a web server in front of IRIS.
+- **Part of Aperture lives inside IRIS.** The log reader (`/api/aperture`, Embedded Python), the wording
+  index that IRIS Vector Search queries, and the installer's JWT settings for `/api/admin` are installed
+  into IRIS: a container beside a stock IRIS could not provide them.
+- **The browser needs one origin.** `/api/admin` sends no CORS headers, so the portal must come from IRIS
+  itself or from a proxy in front of both; in one container there is nothing to proxy.
+- **You run what CI checked.** The image is published only after it passes the checks against the
+  SysAdmin API.
+
+To put nginx in front (TLS, or several instances behind one address), build the two-container setup from
+the sources.
 
 #### From the sources
 

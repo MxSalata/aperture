@@ -1,5 +1,7 @@
-# Aperture on IRIS Community 2026.2, ready to use: this file and a .env next to it are all it takes,
-# no clone of the repository and no build (the README's "Docker Compose" section, step by step).
+# Aperture on IRIS Community 2026.2 in one container: the official image with Aperture installed in it,
+# serving the portal and the APIs on one port (the README's "Why one image"). This file and a .env next
+# to it are all it takes, with no clone of the repository and no build (the README's "Docker Compose"
+# section, step by step).
 #   docker compose up -d
 # then open http://localhost:52773/aperture/index.html and sign in as _SYSTEM with IRIS_PASSWORD
 # from .env, or with the demonstration password SYS when none is set.
