@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **Open Exchange's code quality check.** A workflow asks ObjectScript Quality to analyse the
+  package's ObjectScript classes on every push to `main` (its community hook, pinned to a commit;
+  it sends the repository's URL and the branch). The entry chunk's budget goes from 330 to 334 KB:
+  1.0.4 is at 331.3 KB with the Health check's navigation entry, the coloured icons and the copy
+  that works over plain HTTP.
+- **Copy works on the portal IRIS serves over plain HTTP, and says so.** Browsers offer the
+  clipboard API only on HTTPS and on localhost, so on `http://<server>:52773/aperture/` the copy
+  buttons (the Explorer's requests, the raw JSON of a response, a REST route as curl) did nothing,
+  silently. They now copy through the browser's copy command where the API is missing or refuses,
+  keeping the focus where it was, and every copy shows "Copied to clipboard" (or how to copy by hand
+  if the browser refuses both). An end-to-end test copies a request on a page without the API.
 - **The package installs its Python vectoriser.** The first CI build with Vector Search stopped at
   IPM's Activate phase: a `FileCopy` of the single file `aperture_vectors.py` went to an empty
   target (`File not copied: -2`), although the six classes, the vector property and its HNSW index

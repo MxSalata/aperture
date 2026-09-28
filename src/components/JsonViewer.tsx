@@ -1,4 +1,5 @@
-import { ActionIcon, Badge, Code, CopyButton, Group, ScrollArea, Text, Tooltip } from '@mantine/core';
+import { ActionIcon, Badge, Code, Group, ScrollArea, Text, Tooltip } from '@mantine/core';
+import { CopyButton } from '@/components/CopyButton';
 import { IconCheck, IconCopy, IconEyeOff } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { redactDeep } from '@/lib/redact';
@@ -46,12 +47,20 @@ export function JsonViewer({ value, title = 'Raw response', maxHeight = 420 }: P
           ) : null}
         </Group>
         <CopyButton value={text}>
-          {({ copied, copy }) => (
-            <Tooltip label={copied ? 'Copied' : 'Copy JSON'}>
+          {({ copied, failed, copy }) => (
+            <Tooltip
+              label={
+                copied
+                  ? 'Copied to clipboard'
+                  : failed
+                    ? 'Copying failed: select the text and copy it'
+                    : 'Copy JSON'
+              }
+            >
               <ActionIcon
                 size="sm"
                 variant="subtle"
-                color={copied ? 'teal' : 'gray'}
+                color={copied ? 'teal' : failed ? 'red' : 'gray'}
                 onClick={copy}
                 aria-label="Copy JSON"
               >

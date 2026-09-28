@@ -4,7 +4,6 @@ import {
   Anchor,
   Badge,
   Button,
-  CopyButton,
   Drawer,
   Group,
   Menu,
@@ -13,6 +12,7 @@ import {
   Title,
   Tooltip,
 } from '@mantine/core';
+import { CopyButton } from '@/components/CopyButton';
 import { useQuery } from '@tanstack/react-query';
 import { IconCheck, IconChevronDown, IconCopy, IconDownload } from '@tabler/icons-react';
 import { Link } from 'react-router';
@@ -77,8 +77,8 @@ function paramsSummary(r: Route): string {
 function CopyCurl({ command, label }: { command: string; label: string }) {
   return (
     <CopyButton value={command}>
-      {({ copied, copy }) => (
-        <Tooltip label={copied ? 'Copied' : 'Copy as curl'}>
+      {({ copied, failed, copy }) => (
+        <Tooltip label={copied ? 'Copied to clipboard' : failed ? 'Copying failed' : 'Copy as curl'}>
           <ActionIcon variant="subtle" color="gray" size="sm" aria-label={label} onClick={copy}>
             {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
           </ActionIcon>

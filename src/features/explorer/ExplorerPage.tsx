@@ -6,7 +6,6 @@ import {
   Button,
   Checkbox,
   Code,
-  CopyButton,
   Grid,
   Group,
   Menu,
@@ -22,6 +21,7 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
+import { CopyButton } from '@/components/CopyButton';
 import {
   IconPlayerPlay,
   IconAlertTriangle,
@@ -95,14 +95,14 @@ function RequestText({ text, filename, type }: { text: string; filename?: string
       </Code>
       <Group gap="xs">
         <CopyButton value={text}>
-          {({ copied, copy }) => (
+          {({ copied, failed, copy }) => (
             <Button
               size="xs"
               variant="default"
               leftSection={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
               onClick={copy}
             >
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? 'Copied to clipboard' : failed ? 'Copying failed: select the text' : 'Copy'}
             </Button>
           )}
         </CopyButton>
