@@ -2,8 +2,8 @@
 
 ## 1.0.6 - Suspended tasks as IRIS holds them, resource writes read back (28 September 2026)
 
-From the comments on the article about the specification: Joshua Brandt, building OcuPilot on the same
-API, found what Aperture had misread and one write it would have missed.
+From the comments on the article about the specification (Joshua Brandt, building OcuPilot on the same
+API, found what Aperture had misread and one write it would have missed), and a second review of 1.0.5.
 
 - **Suspended tasks show as suspended.** `GET /v2/tasks` answers `Suspended` false for every task,
   suspended ones included (sysadmin-api-specification issue #1; on IRIS for Health 2026.2, 2 of 19
@@ -22,6 +22,25 @@ API, found what Aperture had misread and one write it would have missed.
   between lines; progress now counts as a change on its own.
 - **Similar entries don't wait out a busy index.** When another refresh holds the wording index, the
   search stops refreshing and answers with what is indexed, rather than asking up to 12 times.
+- **The keyboard reaches everything.** Sortable table headers are buttons, so every list sorts with
+  Enter or Space; "Skip to content" is the first Tab stop on every page and takes the focus past the
+  navigation (without changing the route); the Refresh menu names its current interval "(current)"
+  rather than marking it with a bullet only; timestamps carry their second reading as hidden text for
+  screen readers, with no tab stop added.
+- **Three more actions ask first.** Suspending or resuming the task manager, running a task now, and
+  switching auditing off (in red) each open a confirmation, like every delete and purge.
+- **The Health check says what it could not read.** An account that may list tasks but not read
+  their state gets "The state of N of M tasks could not be read" rather than tasks taken for active.
+- **Smaller fixes.** "Enable account" sends only the change, like "Disable account". A process page
+  stops asking once the process has ended, and says so. A full disk's card says "The disk is full"
+  instead of an empty size. Connections and the sign-in form warn that another origin fails in the
+  browser (no CORS headers, and on the builds with their own policy, the Content-Security-Policy).
+  The curl exports say they are quoted for bash and zsh. A test ties the About page's "New in" to the
+  package version. The Tasks screen keeps each task's state for a minute.
+- **The README reads the same on Open Exchange.** Open Exchange renders every line break inside a
+  paragraph as a break, so the README's hard-wrapped paragraphs came out broken mid-sentence on the
+  listing. Each paragraph and list item of README.md is now one line (Prettier `proseWrap: never` for
+  that file only).
 - **The spec findings credit OcuPilot.** `docs/SPEC_FINDINGS.md` has a "Found with OcuPilot" section
   (the task list, `GET /v2/web-app` without `Type`, `WSGIType` as a string, the resource write), and
   notes that the OAuth field of finding 6 and the halved journal records reproduce on IRIS for Health
