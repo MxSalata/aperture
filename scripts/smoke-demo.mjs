@@ -256,6 +256,20 @@ await step('messages log through the reader', async () => {
   await page.waitForTimeout(200);
   await shot('29-messages-log');
 });
+await step('similar entries (IRIS Vector Search)', async () => {
+  // A message the demo's log repeats with other numbers; the drawer lists the entries worded like it.
+  await page.getByRole('textbox', { name: 'Filter rows' }).fill('expanded by');
+  await page
+    .getByRole('button', { name: /^Log entry / })
+    .first()
+    .click();
+  const drawer = page.getByRole('dialog');
+  await drawer.getByRole('button', { name: 'Similar entries' }).click();
+  await drawer.getByText(/Seen (at least )?\d+ times since/).waitFor({ timeout: 20000 });
+  await page.waitForTimeout(500);
+  await shot('31-similar-entries');
+  await page.keyboard.press('Escape');
+});
 await step('read-only tab', async () => {
   await page.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('menuitem', { name: 'Make this tab read-only' }).click();
@@ -298,6 +312,19 @@ await step('command palette', async () => {
   await page.waitForTimeout(500);
   await shot('12-palette');
   await page.keyboard.press('Escape');
+});
+await step('pastel theme', async () => {
+  await page.goto(url(`/`));
+  await page.getByRole('button', { name: 'Appearance' }).click();
+  await page.getByRole('menuitem', { name: /^Pastel/ }).click();
+  // The default charts draw once /api/monitor has been read twice (every 9 s).
+  await page
+    .locator('.mantine-Paper-root', { hasText: 'Message throughput per namespace' })
+    .locator('.recharts-line-curve')
+    .first()
+    .waitFor({ timeout: 30000 });
+  await page.waitForTimeout(1000);
+  await shot('32-pastel');
 });
 await step('dark mode', async () => {
   await page.goto(url(`/`));
