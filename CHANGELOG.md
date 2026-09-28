@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **The package publishes from Open Exchange.** Submitting the application with "Publish in
+  Package Manager" failed with "invalid character 0x13 at line 7 offset 30" (error #6901, from its
+  XSLT XML transformer): Open Exchange's reader keeps the low byte of a character only, and the en
+  dash (U+2013) in `module.xml`'s description became 0x13, which XML does not allow. The
+  description is plain ASCII now, and a unit test keeps the whole file so.
 - **The dashboard's Charts menu sits beside the charts, lists them A to Z, and can be rearranged.**
   It was a small grey button among the page's actions, easy to miss; it is now "Choose charts", a
   tinted button on a Charts heading directly above them. The charts are listed, and shown, A to Z by
