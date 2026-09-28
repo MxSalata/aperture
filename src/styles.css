@@ -6,8 +6,10 @@
   /* Secondary text tokens: no inline opacity anywhere, so a contrast layer can raise them. */
   --aperture-muted: var(--mantine-color-gray-7);
   --aperture-muted-soft: var(--mantine-color-gray-6);
-  /* The navbar: the card colour, except where a theme gives it a tone of its own (Pastel). */
+  /* The navbar and the header: the card colour, except where a theme gives them tones of their
+     own (Pastel). */
   --aperture-navbar: var(--mantine-color-body);
+  --aperture-header: var(--mantine-color-body);
 }
 
 /* Mantine's light "dimmed" is gray-6 (#868e96, 3.3:1 on white); gray-7 reads at 7:1 and still looks secondary. */
@@ -185,42 +187,153 @@
 }
 
 /* ---- Pastel (data-aperture-palette, set before first paint by color-scheme.js and kept in sync
-   by useApplyAppearance): a light theme on pale blue. Blue rather than green, because green
-   already means healthy here (Mounted/RW, YES, the LIVE pill, success notifications). It applies
-   only to the light scheme at normal contrast, which the selector states: a stored Pastel is inert
-   in dark, and high contrast keeps its pure white body. The grey scale is re-tinted so that every
-   subtle grey Mantine draws (stripes, hovered rows, kbd, code, dividers, input borders, disabled
-   controls, chart labels) follows the tint without per-component rules; the dark steps keep the
-   luminance of the neutral ones, so the contrast-tuned tokens above hold: gray-7 (dimmed text)
-   reads at 6.6:1 on a card, 6.0:1 on the page and 5.6:1 on the navbar, gray-6 (icons) at 3.2:1 on
-   the navbar, body text at 14:1 on a card, links (aperture-8) at 6.4:1 on the page, and each
-   status badge at 4.5:1 or more on a 10 % tint over the page, whose luminance matches the
-   default Light page the tokens were tuned for. */
+   by useApplyAppearance): a theme of its own, colourful and gentle. Several soft hues work
+   together: a lavender page, a sky navbar, a peach header, and the cards each in a pastel of
+   their own, in turn (lavender, mint, peach, butter, sky, rose), with a border a step deeper than
+   the fill; a periwinkle accent for buttons, links, the active navigation entry and focus rings.
+   It applies only to the light scheme at normal contrast, which the selector states: a stored
+   Pastel is inert in dark, and high contrast keeps its pure white body.
+
+   Meaning survives: the status colours (green healthy, amber warning, red critical) are the
+   contrast-tuned tokens above, untouched; the primary is swapped by redefining the `aperture`
+   scale and its light tint, so every `color="aperture"` follows. The grey scale is re-tinted
+   towards lavender, so kbd, code, dividers, disabled controls and chart labels follow without
+   per-component rules. Contrast, checked against every fill, stripe, hover and frame surface:
+   body text 12:1 or more, dimmed text 5.9:1, links (aperture-8) 7.0:1, icons and control borders
+   (gray-6) 4.1:1, white on the filled accent (aperture-7) 6.4:1, and each status badge 4.6:1 or
+   more on a 10 % tint over the darkest of them (the hovers keep 0.845 luminance for that;
+   axe-core sees a hovered row on every screen). */
 :root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not(
     [data-aperture-contrast='high']
   ) {
-  --aperture-page: #e6eff7;
-  --aperture-navbar: #dde8f1;
-  --mantine-color-body: #f5f9fc;
-  --mantine-color-text: #1c2836;
-  --mantine-color-gray-0: #f0f5f9;
-  --mantine-color-gray-1: #e7eef4;
-  --mantine-color-gray-2: #dbe4ec;
-  --mantine-color-gray-3: #cbd7e2;
-  --mantine-color-gray-4: #b7c6d4;
-  --mantine-color-gray-5: #98a9ba;
-  --mantine-color-gray-6: #6e8096;
-  --mantine-color-gray-7: #4a5b6c;
-  --mantine-color-gray-8: #33424f;
-  --mantine-color-gray-9: #1f2a35;
+  --aperture-page: #f0ecf9;
+  --aperture-navbar: #e3edf8;
+  --aperture-header: #fbeee3;
+  --mantine-color-body: #faf8fe;
+  --mantine-color-text: #282442;
+  --mantine-color-gray-0: #f5f2fb;
+  --mantine-color-gray-1: #ece8f6;
+  --mantine-color-gray-2: #e0dbee;
+  --mantine-color-gray-3: #cfc9e2;
+  --mantine-color-gray-4: #b9b2d1;
+  --mantine-color-gray-5: #9a93b6;
+  --mantine-color-gray-6: #736d90;
+  --mantine-color-gray-7: #5a5577;
+  --mantine-color-gray-8: #403c58;
+  --mantine-color-gray-9: #2a2740;
   --aperture-muted-soft: var(--mantine-color-gray-6);
+  /* Borders of controls (inputs, default buttons) reach 3:1 on every fill; card edges stay soft. */
+  --mantine-color-default-border: var(--mantine-color-gray-6);
+  /* The accent: a periwinkle scale in place of the ocean blue-teal. Shades 7 to 9 carry white
+     text (6.4:1 and more); 8 is the link, 9 the text of the light variant. */
+  --mantine-color-aperture-0: #f1eefc;
+  --mantine-color-aperture-1: #e3dcf8;
+  --mantine-color-aperture-2: #cdc2f0;
+  --mantine-color-aperture-3: #b3a3e7;
+  --mantine-color-aperture-4: #9a87dd;
+  --mantine-color-aperture-5: #8470d2;
+  --mantine-color-aperture-6: #7160c5;
+  --mantine-color-aperture-7: #6050b3;
+  --mantine-color-aperture-8: #4f4197;
+  --mantine-color-aperture-9: #3e3378;
+  --mantine-color-aperture-light: rgba(113, 96, 197, 0.12);
+  --mantine-color-aperture-light-hover: rgba(113, 96, 197, 0.2);
+  /* The six card hues: fill, stripe, hovered row, edge. */
+  --pastel-fill-1: #f3f0fc;
+  --pastel-stripe-1: #f2effc;
+  --pastel-hover-1: #efebfb;
+  --pastel-edge-1: #cfc3f2;
+  --pastel-fill-2: #ecf8f1;
+  --pastel-stripe-2: #e4f5eb;
+  --pastel-hover-2: #ddf2e6;
+  --pastel-edge-2: #b6e1ca;
+  --pastel-fill-3: #fdf2eb;
+  --pastel-stripe-3: #fceee5;
+  --pastel-hover-3: #fbeadf;
+  --pastel-edge-3: #f2c6ad;
+  --pastel-fill-4: #fdf8e8;
+  --pastel-stripe-4: #f9f1d4;
+  --pastel-hover-4: #f7edc9;
+  --pastel-edge-4: #ecd994;
+  --pastel-fill-5: #ecf5fc;
+  --pastel-stripe-5: #e8f2fb;
+  --pastel-hover-5: #e1effa;
+  --pastel-edge-5: #b4d3ef;
+  --pastel-fill-6: #fdeff4;
+  --pastel-stripe-6: #fcedf2;
+  --pastel-hover-6: #fbe9ef;
+  --pastel-edge-6: #efbccd;
 }
-/* The tinted gray-1 and gray-2 are darker than the neutral ones; stripes and hovered rows take the
-   step above, so the badge tokens hold on a hovered row here too (tuned to 4.6:1 for both). */
+/* Inputs take the same 3:1 border as the other controls. */
+:root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not([data-aperture-contrast='high'])
+  .mantine-Input-input {
+  --input-bd: var(--mantine-color-gray-6);
+}
+/* Stripes and hovered rows: a table inside a card takes the card's hue (the --card-* below,
+   inherited); one outside a card takes the lavender of the page. Both keep 0.845 luminance or
+   more, where every status badge holds 4.5:1; the tinted gray-1 and gray-2 of the Light rule
+   above would not. */
 :root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not([data-aperture-contrast='high'])
   .mantine-Table-table {
-  --table-striped-color: var(--mantine-color-gray-0);
-  --table-hover-color: var(--mantine-color-gray-1);
+  --table-striped-color: var(--card-stripe, var(--pastel-stripe-1));
+  --table-hover-color: var(--card-hover, var(--pastel-hover-1));
+}
+/* The cards take the six hues in turn: the n-th card among its siblings (the stat tiles and the
+   gauges of a grid, the sections of a stack) or the card of the n-th grid column (the charts).
+   A card that names its own background keeps it. Whatever sits inside a card, its table's
+   stripes and hovered rows and a sticky header, takes the card's hue. */
+:root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not([data-aperture-contrast='high'])
+  .mantine-Paper-root {
+  --card-fill: var(--pastel-fill-1);
+  --card-stripe: var(--pastel-stripe-1);
+  --card-hover: var(--pastel-hover-1);
+  --card-edge: var(--pastel-edge-1);
+  --paper-border-color: var(--card-edge);
+  background-color: var(--card-fill);
+}
+:root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not([data-aperture-contrast='high'])
+  :is(.mantine-Paper-root:nth-child(6n + 2), .mantine-Grid-col:nth-child(6n + 2) > .mantine-Paper-root) {
+  --card-fill: var(--pastel-fill-2);
+  --card-stripe: var(--pastel-stripe-2);
+  --card-hover: var(--pastel-hover-2);
+  --card-edge: var(--pastel-edge-2);
+}
+:root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not([data-aperture-contrast='high'])
+  :is(.mantine-Paper-root:nth-child(6n + 3), .mantine-Grid-col:nth-child(6n + 3) > .mantine-Paper-root) {
+  --card-fill: var(--pastel-fill-3);
+  --card-stripe: var(--pastel-stripe-3);
+  --card-hover: var(--pastel-hover-3);
+  --card-edge: var(--pastel-edge-3);
+}
+:root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not([data-aperture-contrast='high'])
+  :is(.mantine-Paper-root:nth-child(6n + 4), .mantine-Grid-col:nth-child(6n + 4) > .mantine-Paper-root) {
+  --card-fill: var(--pastel-fill-4);
+  --card-stripe: var(--pastel-stripe-4);
+  --card-hover: var(--pastel-hover-4);
+  --card-edge: var(--pastel-edge-4);
+}
+:root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not([data-aperture-contrast='high'])
+  :is(.mantine-Paper-root:nth-child(6n + 5), .mantine-Grid-col:nth-child(6n + 5) > .mantine-Paper-root) {
+  --card-fill: var(--pastel-fill-5);
+  --card-stripe: var(--pastel-stripe-5);
+  --card-hover: var(--pastel-hover-5);
+  --card-edge: var(--pastel-edge-5);
+}
+:root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not([data-aperture-contrast='high'])
+  :is(.mantine-Paper-root:nth-child(6n), .mantine-Grid-col:nth-child(6n) > .mantine-Paper-root) {
+  --card-fill: var(--pastel-fill-6);
+  --card-stripe: var(--pastel-stripe-6);
+  --card-hover: var(--pastel-hover-6);
+  --card-edge: var(--pastel-edge-6);
+}
+:root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not([data-aperture-contrast='high'])
+  :root[data-aperture-palette='pastel'][data-mantine-color-scheme='light']:not(
+    [data-aperture-contrast='high']
+  )
+  .mantine-Paper-root
+  .sticky-thead
+  thead {
+  background: var(--card-fill);
 }
 
 /* ---- High-contrast axis (data-aperture-contrast, set before first paint by color-scheme.js

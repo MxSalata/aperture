@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **Pastel is a theme of its own.** It was a tinted Light. It now has several soft hues working
+  together: a lavender page, a sky navbar and a peach header, and the cards ("boxes") each in a
+  gentle pastel (lavender, mint, peach, butter, sky, rose, in turn, with a border a step deeper than
+  the fill), the dashboard's stat and gauge tiles among them; tables keep stripes and hovered rows in
+  their card's own hue. The accent is a friendly periwinkle (buttons, links, the active navigation
+  entry, focus rings). Meaning survives: green still means healthy, amber warning, red critical, in
+  every badge, gauge and notification; the chart series take a step deeper so each keeps 3:1 on
+  its card. Every text keeps 4.5:1 on every tinted surface (dimmed text 5.2:1 at worst, body text
+  10:1), control borders and icons 3:1; the accessibility suite passes in all five modes. Light
+  and Dark are untouched; System still follows the OS between them; high contrast still overrides
+  Pastel; the splash follows Pastel, so nothing flashes on load.
 - **Every drawer's and modal's close button has a name.** Mantine's close button has no
   accessible name of its own (axe-core rates the gap critical), and no drawer had been audited
   open before. The theme now gives it "Close" everywhere (Job Center, Devices, Database detail,
