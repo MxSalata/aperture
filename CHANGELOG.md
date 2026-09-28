@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **The package publishes from Open Exchange.** Submitting the application with "Publish in
+  Package Manager" failed with "invalid character 0x13 at line 7 offset 30" (error #6901, from its
+  XSLT XML transformer): Open Exchange's reader keeps the low byte of a character only, and the en
+  dash (U+2013) in `module.xml`'s description became 0x13, which XML does not allow. The
+  description is plain ASCII now, and a unit test keeps the whole file so.
+
 ## 1.0.2 - tested on a real IRIS for Health, with disk space, new themes and a choice of charts (28 September 2026)
 
 - **A reload just after signing in no longer signs you out.** Sign-in stores the session for the
