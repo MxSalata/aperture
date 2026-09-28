@@ -117,7 +117,7 @@ docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture
 
 Then open http://localhost:52773/aperture/index.html and sign in as `_SYSTEM` (or `SuperUser`) with `SYS`, the image's demonstration password. For anything but a try-out, give the container a password of its own with `-e IRIS_PASSWORD=...`: it becomes the password of the image's accounts at the container's first start, and a restart keeps any password changed in IRIS since. To keep it running with a password of its own, use [Docker Compose](https://github.com/MxSalata/aperture#docker-compose).
 
-CI publishes the image only after checking it against the SysAdmin API: with a password set at start, across a restart, and with the demonstration password. `latest` and the version come from `main`, `edge` from development branches.
+CI publishes the image only after checking it against the SysAdmin API: with a password set at start, across a restart, and with the demonstration password. `latest` and an immutable `main-<sha>` tag come from `main` (the version's tag once, when it is new), `edge` from a feature branch.
 
 #### Docker Compose
 

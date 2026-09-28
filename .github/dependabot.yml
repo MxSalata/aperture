@@ -1,14 +1,16 @@
 # Keeps the pins fresh: every action is pinned to a commit, every npm package by the lockfile and
-# the portal image's bases (docker/Dockerfile) by digest, and nothing else proposes updates. Weekly
-# and grouped, so each ecosystem opens a few pull requests at most. The IRIS base image is an ARG
-# default in docker/iris/Dockerfile, which Dependabot does not follow: that pin moves by hand with
-# an IRIS release, after the verify-iris job has checked the new build.
+# the portal image's bases (docker/Dockerfile) by digest, and nothing else proposes updates.
+# Monthly, so the rebuild of www/ that a dependency update needs (ci.yml, www-for-dependabot)
+# happens once a month, and grouped, so the packages that must move together arrive as one pull
+# request: the Mantine packages share one version, and the ESLint packages one major line. The IRIS
+# base image is an ARG default in docker/iris/Dockerfile, which Dependabot does not follow: that pin
+# moves by hand with an IRIS release, after the verify-iris job has checked the new build.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       actions:
         patterns: ['*']
@@ -16,13 +18,29 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     open-pull-requests-limit: 5
     groups:
+      # A dependency goes into the first group that matches it. The Mantine packages together, at
+      # every update type: @mantine/core pins its siblings to its own version, so hooks or
+      # notifications alone on a new major cannot install. Then the ESLint packages, which follow
+      # one major line. Then everything else that is not a major, one pull request a month; other
+      # majors come one per package.
+      mantine:
+        patterns: ['@mantine/*']
+        update-types: [major, minor, patch]
+      eslint:
+        patterns: ['eslint', '@eslint/*', 'typescript-eslint', 'eslint-plugin-*', 'globals']
+        update-types: [major, minor, patch]
       minor-and-patch:
         update-types: [minor, patch]
 
   - package-ecosystem: docker
     directory: /docker
     schedule:
-      interval: weekly
+      interval: monthly
+    ignore:
+      # The build stage stays on a Node LTS line (package.json: engines.node >= 22). A new major
+      # is a deliberate move, and CI does not build this image (verify-iris builds the IRIS one).
+      - dependency-name: node
+        update-types: ['version-update:semver-major']

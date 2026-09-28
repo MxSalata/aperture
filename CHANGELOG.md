@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+- **Dependency updates arrive monthly and rebuild `www/` themselves.** Dependabot runs monthly, with
+  the Mantine packages as one group at every update type (they share a version, so a major arrives
+  for all of them at once) and the ESLint packages as another; the build stage's Node major is
+  ignored (an LTS line, moved by hand). A pull request from Dependabot no longer fails the "www/ is
+  current" check (the build is still checked); on the push that merges it into `main`, a job
+  rebuilds `www/` and commits it as github-actions[bot], and the image is built from that commit, so
+  `main` always carries the build the IPM package ships. No run that Dependabot starts holds a write
+  token. On
+  `main`, CI publishes the image as `latest` and an immutable `main-<sha>` tag, and sets the
+  version's tag once, when the registry has none: a dependency update merged after a release gives a
+  fresh `latest` and `main-<sha>` and leaves the release's image as it was.
+- **Links that work on Open Exchange, and the second article.** Open Exchange rewrote the README's
+  in-page links (the Docker and IPM badges, the jump links, the "more" links) to GitHub's file tree,
+  where they lost their place; they now point at the section of the README on GitHub. The second
+  article, "20 places where the SysAdmin API specification and IRIS disagree", is linked from the
+  header, the bonuses table, the spec findings section and `docs/SPEC_FINDINGS.md`. "For judges" starts
+  with the Health check and Similar entries, and "Tested on real IRIS" no longer repeats the
+  verification section.
+- **The README says why one image.** A "Why one image" section: the image is the official IRIS
+  Community 2026.2 with the package installed, Aperture has no server of its own to put in a second
+  container, part of it lives inside IRIS, the browser needs one origin, and what CI checked is what
+  runs. The image and Compose sections point to it, and the compose file's header says the same.
+
 ## 1.1.0 - Suspended tasks as IRIS holds them, resource writes read back, the keyboard everywhere (28 September 2026)
 
 From the comments on the article about the specification (Joshua Brandt, building OcuPilot on the same

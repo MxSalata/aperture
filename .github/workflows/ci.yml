@@ -38,11 +38,23 @@ jobs:
       - name: Entry chunk stays small and free of the spec index
         run: npm run check:bundle
       - name: www/ is current (the IPM package ships the committed build)
+        env:
+          COMMITS: ${{ toJson(github.event.commits) }}
         run: |
           npm run build:www
-          if [ -n "$(git status --porcelain -- www)" ]; then
-            echo "www/ is stale: run 'npm run build:www' and commit the result"; git status --porcelain -- www; exit 1
+          if [ -z "$(git status --porcelain -- www)" ]; then exit 0; fi
+          # A dependency update changes the bundle. On Dependabot's pull request the build is checked
+          # and the comparison skipped; on the push that merges it into main, the job below commits
+          # the rebuilt www/. Everyone else commits www/ with the change, as before.
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.user.login }}" = "dependabot[bot]" ]; then
+            echo "www/ changes with this dependency update; it is rebuilt and committed when the pull request is merged"
+            exit 0
           fi
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && printf '%s' "$COMMITS" | jq -e 'map(.author.username) | index("dependabot[bot]")' > /dev/null; then
+            echo "www/ changes with the merged dependency update; the www-after-dependabot-merge job commits it to main"
+            exit 0
+          fi
+          echo "www/ is stale: run 'npm run build:www' and commit the result"; git status --porcelain -- www; exit 1
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
@@ -67,6 +79,45 @@ jobs:
         with:
           path: dist-demo
 
+  # A merged Dependabot pull request changes the bundle but not the committed www/, which the IPM
+  # package and the image ship. On that push to main, and on no other event, this job rebuilds www/
+  # and commits it as github-actions[bot]; verify-iris then builds the image from that commit. Only a
+  # maintainer's merge starts it, so no run that Dependabot starts holds a write token. A push made
+  # with GITHUB_TOKEN starts no workflow, so the commit is checked by the next push to main.
+  www-after-dependabot-merge:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(toJson(github.event.commits.*.author.username), 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Rebuild www/ and, when it changed, commit it to main
+        id: commit
+        run: |
+          npm run build:www
+          if [ -z "$(git status --porcelain -- www)" ]; then
+            echo "www/ is current"
+            echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A www
+          git commit -m "www/ rebuilt for the dependency update"
+          git push origin HEAD:main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Committed the rebuilt www/ to main"
+
   # Builds the IRIS image (official IRIS Community 2026.2 image plus the package manager),
   # which installs Aperture through its own module.xml (zpm "load") and runs the Embedded
   # Python installer at build time; then starts it and checks the SysAdmin API behaves as
@@ -74,7 +125,10 @@ jobs:
   # with the image's own. The image that passed is then published to the GitHub Container
   # Registry: latest and the version from main, the version from a tag, edge from a feature branch.
   verify-iris:
-    needs: verify
+    needs: [verify, www-after-dependabot-merge]
+    # Runs after verify whether or not the rebuild job had anything to do (it is skipped on every
+    # event but a dependency merge).
+    if: ${{ !cancelled() && needs.verify.result == 'success' && (needs.www-after-dependabot-merge.result == 'success' || needs.www-after-dependabot-merge.result == 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -84,6 +138,9 @@ jobs:
       COMPOSE_FILE: docker-compose.build.yml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The commit the rebuild job made, when it made one; the pushed commit otherwise.
+          ref: ${{ needs.www-after-dependabot-merge.outputs.sha || github.sha }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
@@ -154,12 +211,19 @@ jobs:
         run: |
           image="ghcr.io/${GITHUB_REPOSITORY,,}"
           version=$(node -p "require('./package.json').version")
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           case "$GITHUB_REF" in
-            refs/heads/main) tags="latest $version" ;;
+            refs/heads/main)
+              # latest, and an immutable tag for this commit. The version's tag is set once, the
+              # first time main carries a version the registry has not seen (or by a tag push), and
+              # never moved: a dependency update merged after a release gives a fresh latest and
+              # main-<sha> and leaves the release's image as it was.
+              tags="latest main-$(git rev-parse --short=7 HEAD)"
+              docker manifest inspect "$image:$version" > /dev/null 2>&1 || tags="$tags $version"
+              ;;
             refs/tags/v*) tags="$version" ;;
             *) tags="edge" ;;
           esac
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           for tag in $tags; do
             docker tag aperture-iris:local "$image:$tag"
             docker push "$image:$tag"
