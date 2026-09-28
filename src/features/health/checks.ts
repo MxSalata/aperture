@@ -694,7 +694,8 @@ export function checkCertificates(certs: CertificateFacts[], read: number, now: 
 export interface TaskFacts {
   Id?: number | string;
   Name: string;
-  Suspended?: boolean;
+  /** From the task's GET /v2/task/info; null when it could not be read. */
+  Suspended?: boolean | null;
   LastFinished?: string;
 }
 
@@ -776,6 +777,24 @@ export function checkTasks(tasks: TaskFacts[], history: TaskRunFacts[], read: nu
         ),
       );
   }
+  // States that could not be read are not states: say so rather than count those tasks as active.
+  const unread = tasks.filter((t) => t.Suspended === null);
+  if (unread.length)
+    out.push(
+      finding(
+        'tasks',
+        'states-unread',
+        'advice',
+        `The state of ${unread.length} of ${tasks.length} task${tasks.length === 1 ? '' : 's'} could not be read`,
+        'IRIS reports every task as active in its task list; only GET /v2/task/info says which are suspended, and it needs %Admin_Operate:U. A suspended task among these would go unnoticed.',
+        'Run the Health check with an account that holds %Admin_Operate:U to see which tasks are suspended.',
+        {
+          source: 'GET /v2/task/info',
+          read,
+          fields: [f('Tasks not read', unread.length), f('Tasks', tasks.length)],
+        },
+      ),
+    );
   return out;
 }
 

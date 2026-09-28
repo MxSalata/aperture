@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/mocks/node';
 import { needsLabel, runHealthCheck } from '../runner';
 import { reportToJson, reportToMarkdown } from '../export';
 import { resetClients } from '@/api/client';
@@ -40,6 +42,9 @@ describe('the health check runner', () => {
       ]),
     );
     expect(ids.some((id) => id.startsWith('tasks:') && id.endsWith(':error'))).toBe(true);
+    // The demo's suspended task, which its task list, like IRIS's, reports as active.
+    expect(ids).toContain('tasks:7:suspended');
+    expect(ids).not.toContain('tasks:states-unread');
     expect(ids.some((id) => id.startsWith('disk-space:'))).toBe(true);
     expect(ids.some((id) => id.startsWith('messages-log:'))).toBe(true);
     // Highest severity first; the counts add up.
@@ -90,6 +95,26 @@ describe('the health check runner', () => {
     expect(report.results.find((r) => r.check === 'alerts')?.status).toMatch(/ok|findings/);
     expect(report.notChecked).toBe(notChecked.length);
     expect(reportToMarkdown(report, 'x')).toContain('not checked: needs %Admin_Secure');
+  });
+
+  it('says when the state of tasks could not be read rather than taking them for active', async () => {
+    await signIn('_SYSTEM');
+    server.use(
+      http.get('*/api/admin/v2/task/info', () =>
+        HttpResponse.json({ status: { errors: [], summary: '' }, console: [], result: {} }, { status: 403 }),
+      ),
+    );
+    const report = await runHealthCheck({
+      info: useSession.getState().info,
+      account: '_SYSTEM',
+      logsReady: false,
+    });
+    const ids = report.findings.map((f) => f.id);
+    expect(ids).toContain('tasks:states-unread');
+    expect(ids.some((id) => id.endsWith(':suspended'))).toBe(false);
+    const unread = report.findings.find((f) => f.id === 'tasks:states-unread')!;
+    expect(unread.title).toMatch(/^The state of \d+ of \d+ tasks could not be read$/);
+    expect(unread.evidence.source).toBe('GET /v2/task/info');
   });
 
   it('names the resources the way the badges do', () => {

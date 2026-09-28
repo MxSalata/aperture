@@ -107,16 +107,16 @@ export async function runHealthCheck(ctx: RunContext): Promise<HealthReport> {
     auditEvents: memo(() => result(api().GET('/v2/security/audit/events'))),
     tasks: memo(() => result(api().GET('/v2/tasks'))),
     // GET /v2/tasks answers Suspended false for every task (lib/quirks.ts, task-list-suspended-false):
-    // each task's own GET /v2/task/info has the state, readable with %Admin_Operate:U. A task whose
-    // state cannot be read keeps Suspended undefined, so no finding is made up either way.
+    // each task's own GET /v2/task/info has the state, readable with %Admin_Operate:U. A state that
+    // cannot be read is null, which the check reports rather than taking the task for active.
     taskStates: memo(async () => {
-      const tasks = (await result(api().GET('/v2/tasks'))) as { Id?: number }[];
+      const tasks = (await load.tasks()) as { Id?: number }[];
       return mapLimit(tasks, 4, async (t) => {
         try {
           const info = await result(api().GET('/v2/task/info', { params: { query: { id: Number(t.Id) } } }));
           return { ...t, Suspended: !!info.Suspended };
         } catch {
-          return { ...t, Suspended: undefined };
+          return { ...t, Suspended: null };
         }
       });
     }),

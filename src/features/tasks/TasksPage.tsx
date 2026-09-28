@@ -108,7 +108,9 @@ export default function TasksPage() {
       queryFn: () =>
         infoReads(() => result(api().GET('/v2/task/info', { params: { query: { id: Number(task.Id) } } }))),
       enabled: canReadState,
-      staleTime: 10_000,
+      // A suspend or resume invalidates the task's reads, so a minute costs nothing in accuracy
+      // and spares a large instance a read per task on every visit.
+      staleTime: 60_000,
       retry: false,
     })),
     combine: (results) => results.map((r) => (r.isError ? null : r.data ? !!r.data.Suspended : undefined)),
