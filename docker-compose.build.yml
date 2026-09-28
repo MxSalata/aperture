@@ -22,8 +22,9 @@ services:
     container_name: aperture-iris
     command: --check-caps false --ISCAgent false
     environment:
-      # The password of _SYSTEM, SuperUser and the other accounts, applied at every start; empty
-      # keeps the demonstration password SYS.
+      # The password of _SYSTEM, SuperUser and the other accounts, applied at the container's first
+      # start (a restart keeps passwords changed in IRIS since); empty keeps the demonstration
+      # password SYS.
       - IRIS_PASSWORD=${IRIS_PASSWORD:-}
     # Published on this machine only by default, and nginx serves plain HTTP: to reach it from
     # other hosts, set IRIS_PASSWORD, put TLS in front and start with APERTURE_BIND=0.0.0.0 (or a

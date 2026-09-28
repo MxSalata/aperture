@@ -117,6 +117,26 @@ jobs:
           IRIS_URL: http://localhost:52773
           IRIS_USER: _SYSTEM
           PORTAL_URL: http://localhost:52773/aperture/index.html
+      # IRIS_PASSWORD is applied at the container's first start only (apply-password.sh), so a
+      # password an administrator changes in IRIS afterwards must survive a restart.
+      - name: A password changed in IRIS survives a restart
+        run: |
+          pw2=$(openssl rand -base64 18 | tr '+/' '-_')
+          echo "::add-mask::$pw2"
+          docker exec -i -e NEW_PASSWORD="$pw2" aperture-iris iris session IRIS -U %SYS <<'OBJECTSCRIPT'
+          Kill p  Set p("Password")=$System.Util.GetEnviron("NEW_PASSWORD"),sc=##class(Security.Users).Modify("_SYSTEM",.p)  If 'sc Write $system.Status.GetErrorText(sc),!  Do $system.Process.Terminate($job,1)
+          Halt
+          OBJECTSCRIPT
+          docker restart aperture-iris >/dev/null
+          code=
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -u "_SYSTEM:$pw2" http://localhost:52773/api/admin/info || true)
+            if [ "$code" = "200" ]; then echo "The changed password signs in after the restart ($((i*5))s)"; break; fi
+            sleep 5
+          done
+          docker logs aperture-iris 2>&1 | grep "Aperture image" || true
+          [ "$code" = "200" ] || { echo "The changed password did not sign in after the restart (last HTTP status: '$code')"; exit 1; }
+          docker logs aperture-iris 2>&1 | grep -q "applied at the first start" || { echo "The restart did not skip IRIS_PASSWORD"; exit 1; }
       - name: Without IRIS_PASSWORD, the image signs in with its demonstration password
         run: |
           docker run -d --name aperture-default -p 127.0.0.1:52774:52773 aperture-iris:local --check-caps false --ISCAgent false

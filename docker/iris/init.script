@@ -7,12 +7,13 @@ Write "IRIS version: ",$zversion,!
 // Signs in at the first click: every enabled account but CSPSystem (the image's own Web Gateway
 // signs in with it; its password is in CSP.ini) and UnknownUser gets the documented demonstration
 // password SYS, not to be changed at first login. A container started with IRIS_PASSWORD gets
-// that password instead, at every start (start.sh, apply-password.sh): anything but a try-out
-// should set one.
-Set rs=##class(%SQL.Statement).%ExecDirect(,"SELECT Name FROM Security.Users WHERE Enabled = 1 AND Name NOT IN ('CSPSystem','UnknownUser')"),n=0
-While rs.%Next() { Kill p  Set u=rs.%Get("Name"),p("Password")="SYS",p("ChangePassword")=0,sc=##class(Security.Users).Modify(u,.p)  If 'sc { Write "Cannot set the password of ",u,": ",$system.Status.GetErrorText(sc),!  Do $system.Process.Terminate($job,1) }  Set n=n+1 }
+// that password instead, at its first start (start.sh, apply-password.sh): anything but a try-out
+// should set one. Their names go to image-accounts, the only accounts apply-password.sh changes.
+Set rs=##class(%SQL.Statement).%ExecDirect(,"SELECT Name FROM Security.Users WHERE Enabled = 1 AND Name NOT IN ('CSPSystem','UnknownUser')"),n=0,list=##class(%Stream.FileCharacter).%New(),sc=list.LinkToFile("/home/irisowner/aperture/image-accounts")
+While rs.%Next() { Kill p  Set u=rs.%Get("Name"),p("Password")="SYS",p("ChangePassword")=0,sc=##class(Security.Users).Modify(u,.p)  If 'sc { Write "Cannot set the password of ",u,": ",$system.Status.GetErrorText(sc),!  Do $system.Process.Terminate($job,1) }  Set n=n+1  Do list.WriteLine(u) }
+Set sc=list.%Save()  If 'sc Write "Cannot record the image's accounts: ",$system.Status.GetErrorText(sc),!  Do $system.Process.Terminate($job,1)
 Write "Aperture image: ",n," enabled accounts sign in with SYS until a container sets IRIS_PASSWORD",!
-Kill p
+Kill p,list
 // IPM is preinstalled in the intersystemsdc "-zpm" tags; the official image needs the
 // installer from the community registry (the same step the InterSystems templates use)
 Set hasIPM=##class(%Dictionary.CompiledClass).%ExistsId("%IPM.Main"),sc=1

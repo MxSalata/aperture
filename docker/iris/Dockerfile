@@ -38,5 +38,6 @@ RUN iris start IRIS \
  && iris stop IRIS quietly
 
 # IRIS starts as the base image starts it (tini, then iris-main, with the container's options);
-# start.sh adds the step that applies IRIS_PASSWORD, when it is set, once IRIS is up.
+# start.sh adds the step that applies IRIS_PASSWORD, when it is set, once IRIS is up at the
+# container's first start.
 ENTRYPOINT ["/tini", "--", "/home/irisowner/aperture/start.sh"]
