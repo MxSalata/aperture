@@ -293,8 +293,9 @@ namespace and nowhere else:
 
 Indexing is **incremental and bounded**: a file is first indexed from its newest 8 MB, then only
 what was appended since the watermark; one call indexes at most 2 MB and 4,000 entries over all
-files (each entry is an HNSW insert), and reports what is still pending. `GET /logs/similar`
-runs one such refresh when the index is behind, so the newest lines are always in the answer;
+files (each entry is an HNSW insert), and reports what is still pending. Refreshes run one at a
+time (a lock on `^Aperture.LogIndex`): a second caller waits up to 20 seconds for the first, then
+finds little or nothing left, or answers `busy` and adds nothing. `GET /logs/similar` only reads;
 the screen calls `POST /logs/index` until nothing is pending before it asks. A query reads the
 one entry at the offset it was given from the file (a bounded read, like a window), vectorises
 it, and asks SQL for the 250 nearest rows by `VECTOR_COSINE(Embedding, TO_VECTOR(?, DOUBLE,
@@ -305,7 +306,7 @@ more, and the first and last stamp among them.
 | Route | Answer |
 | --- | --- |
 | `GET /api/aperture/logs/index` | per file: size, bytes indexed, entries, last indexed; totals; `stale` and `pendingBytes`; the bounds |
-| `POST /api/aperture/logs/index` | one bounded refresh: what was added per file and whether more waits |
+| `POST /api/aperture/logs/index` | one bounded refresh: what was added per file and whether more waits (`busy` when another refresh held the lock too long) |
 | `GET /api/aperture/logs/similar?file=&offset=&limit=` | the entry, `matches` (file, offset, time, severity, category, text, score), `summary` (similar, of, first, last, threshold) and `method` |
 
 The offsets come from `GET /logs/read`, whose windows now carry the byte offset of every line
@@ -488,7 +489,7 @@ authentication, resource `%Admin_Operate`), and invokes `Aperture.Installer`
 (`ipm/cls/Aperture/Installer.cls`), whose Embedded Python `Configure` sets `Enabled=1`, adds
 password authentication to `AutheEnabled` (bit 32) and sets `JWTAuthEnabled=1` on `/api/admin`
 through `Security.Applications`; its `Doctor` prints a readiness report that includes the log
-reader and the files it can read. The Docker image (`docker/iris/Dockerfile`, the official Community image pinned by digest, plus the package manager pinned by version and SHA-256) signs in with the documented demonstration password SYS until a container sets `IRIS_PASSWORD`, which `docker/iris/start.sh` applies at every start, and runs that same package with
+reader and the files it can read. The Docker image (`docker/iris/Dockerfile`, the official Community image pinned by digest, plus the package manager pinned by version and SHA-256) signs in with the documented demonstration password SYS until a container sets `IRIS_PASSWORD`, which `docker/iris/start.sh` applies at the container's first start (to the accounts the build gave SYS, so a restart keeps passwords changed since), and runs that same package with
 `zpm "load"` at build time (`docker/iris/init.script`), so a `docker compose -f docker-compose.build.yml build` is also an
 install test of the IPM package.
 

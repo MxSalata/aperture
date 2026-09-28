@@ -15,4 +15,6 @@ blob-report/
 .env.*.local
 # Local secrets, never committed
 .secrets/
+# npm run verify:live writes here; the evidence kept is in the dated folders beside it
+docs/verification/latest.json
 __pycache__/

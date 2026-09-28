@@ -11,7 +11,8 @@ verified by two mechanisms instead of by hand:
    and prints the readiness report again from inside the running container. The JSON report is
    uploaded as the `iris-verification` artifact on every run.
 2. **`npm run verify:live`** (`scripts/live-check.mjs`) runs the same checks against any instance
-   you point it at and saves `docs/verification/latest.json` as evidence.
+   you point it at and saves the report to `docs/verification/latest.json` (not committed: a run worth
+   keeping goes into a dated folder beside it, like the ones there).
 
 ```bash
 IRIS_URL=http://iris.lan:52773 IRIS_USER=_SYSTEM IRIS_PASSWORD='…' \

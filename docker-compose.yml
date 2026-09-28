@@ -1,8 +1,8 @@
-# Aperture on IRIS Community 2026.2, ready to use: this file (and, if you like, a .env next to it)
-# is all it takes, no clone of the repository and no build.
+# Aperture on IRIS Community 2026.2, ready to use: this file and a .env next to it are all it takes,
+# no clone of the repository and no build (the README's "Docker Compose" section, step by step).
 #   docker compose up -d
 # then open http://localhost:52773/aperture/index.html and sign in as _SYSTEM with IRIS_PASSWORD
-# from .env (see .env.example), or with the demonstration password SYS when none is set.
+# from .env, or with the demonstration password SYS when none is set.
 #
 # The image, ghcr.io/mxsalata/aperture, is built from docker/iris/Dockerfile and checked against
 # the SysAdmin API by this repository's CI before it is published. To build it from the sources
@@ -13,9 +13,14 @@ services:
     image: ghcr.io/mxsalata/aperture:${APERTURE_VERSION:-latest}
     container_name: aperture
     command: --check-caps false --ISCAgent false
+    # Back after a reboot or a crash, unless you stopped it yourself.
+    restart: unless-stopped
+    # IRIS shuts down cleanly on a stop, which can take longer than Docker's default 10 seconds.
+    stop_grace_period: 60s
     environment:
-      # The password of _SYSTEM, SuperUser and the image's other accounts, applied at every start.
-      # Empty keeps the demonstration password SYS: set one for anything but a try-out.
+      # The password of _SYSTEM, SuperUser and the image's other accounts, applied at the container's
+      # first start (a restart keeps passwords changed in IRIS since; a new container applies it
+      # again). Empty keeps the demonstration password SYS: set one for anything but a try-out.
       - IRIS_PASSWORD=${IRIS_PASSWORD:-}
     # Published on this machine only by default. IRIS's web server here speaks plain HTTP: to
     # reach it from other hosts, set IRIS_PASSWORD, put TLS in front and start with
