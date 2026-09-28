@@ -7,7 +7,11 @@
   target (`File not copied: -2`), although the six classes, the vector property and its HNSW index
   compiled on IRIS Community 2026.2. The vectoriser now lives in `ipm/python/lib/`, copied as a
   directory to `{$mgrdir}aperture-python/`, beside the portal rather than inside it, so a reinstall
-  of the portal cannot take it away; the tests read it from there.
+  of the portal cannot take it away; the tests read it from there. Verified on IRIS for Health 2026.2
+  on 28 September: the reload copied it, one call indexed the whole `messages.log` (2,688 entries) in
+  5.2 s, a similar query took 0.3 to 0.6 s, `npm run verify:live` passed 26/26 with the wording index,
+  and the drawer showed the same alert with other figures at 100 %
+  (`docs/verification/2026-09-28-irishealth-2026.2/`, `e2e/live/similar.spec.ts`).
 - **Aperture in one command, from the GitHub Container Registry.**
   `docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture`, then
   `/aperture/index.html` as `_SYSTEM` / `SYS`: IRIS Community 2026.2 with the package installed,

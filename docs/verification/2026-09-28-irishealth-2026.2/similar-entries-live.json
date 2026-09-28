@@ -1,0 +1,17 @@
+{
+  "entry": "2026-09-28 03:12:54.980 severe 1035 Utility.Event [SYSTEM MONITOR] CPUusage Alert: CPUusage = 94, 93, 95 (Max value is 85).",
+  "seen": "Seen 2 times since 2026-09-28 02:07:58 (last 2026-09-28 03:12:54).",
+  "matches": 20,
+  "scores": [
+    "100 %",
+    "64 %",
+    "64 %",
+    "64 %",
+    "64 %",
+    "59 %",
+    "43 %",
+    "43 %",
+    "43 %",
+    "43 %"
+  ]
+}

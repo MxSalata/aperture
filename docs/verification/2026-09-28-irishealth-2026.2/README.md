@@ -11,3 +11,24 @@ durable %SYS), read to produce [`docs/COVERAGE.md`](../../COVERAGE.md).
 
 The sample objects stay on the instance for demonstrations; `scripts/live/sample-data.mjs --remove`
 deletes them.
+
+## Similar entries (IRIS Vector Search), 03:48 to 03:55
+
+The package reloaded from the working copy (`zpm "load /aperture -v"`, in `%SYS` on this run, so
+`/api/aperture` now runs there): the six classes compiled, including `Aperture.LogLine`'s
+`%Library.Vector(DATATYPE = "DOUBLE", LEN = 256)` property under its `%SQL.Index.HNSW(Distance =
+"Cosine")` index; the vectoriser was copied as a directory to `mgr/aperture-python/`; the readiness
+report passed its nine checks.
+
+| File | What it shows |
+| --- | --- |
+| `verify-live-vector.json` | `scripts/live-check.mjs`: 26/26 with JWT, among them the log reader (3 files, a window of 176 whole lines), the wording index (2,690 entries, 1 file, not stale, 256 dimensions, HNSW, cosine) and a similar query for the newest entry of `messages.log` (5 matches, best 1, 41 of the 250 nearest scoring 0.9 or more, 264 ms). |
+| `similar-entries-live.png`, `similar-entries-live.json` | `e2e/live/similar.spec.ts` through the portal: Logs, Messages log, a `CPUusage Alert` entry, Similar entries. The same alert with other figures scores 100 %, the `CPUusage Warning` entries 64 %, and the drawer says "Seen 2 times since 2026-09-28 02:07:58 (last 2026-09-28 03:12:54)". |
+
+Before the check, by hand through the reader: `GET /api/aperture/` answers version 1.1.0 with the
+three index routes; every window carries one byte offset per line, increasing from the window's
+start; the index started empty and stale, and one `POST /api/aperture/logs/index` indexed the whole
+`messages.log` (345 KB, 2,688 entries, each an HNSW insert) in 5.2 s, well under the 20 s at which
+the batch would need lowering; `TO_VECTOR(?, DOUBLE, 256)` with a parameter works. Uninstalling was
+not tried.
+
