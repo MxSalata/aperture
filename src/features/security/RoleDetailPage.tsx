@@ -16,7 +16,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
 import { IconArrowLeft, IconTrash } from '@tabler/icons-react';
-import { useEffect } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { putBody, sendsOnlyChanges } from '@/api/partialPut';
@@ -64,11 +64,13 @@ export default function RoleDetailPage() {
   });
   const [opened, { open, close }] = useDisclosure(false);
   const form = useForm<FormValues>({ initialValues: { Resources: [] } });
-  // Populate the form once the record arrives; the form object itself is stable.
+  // Populate the form once the record arrives, but not while the dialog is open: a background
+  // refetch must not overwrite what is being typed.
+  const populate = useEffectEvent((data: NonNullable<typeof q.data>) =>
+    form.setValues({ ...data, Resources: resourcesToTags(data.Resources) }),
+  );
   useEffect(() => {
-    // Not while the dialog is open: a background refetch must not overwrite what is being typed.
-    if (q.data && !opened) form.setValues({ ...q.data, Resources: resourcesToTags(q.data.Resources) });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (q.data && !opened) populate(q.data);
   }, [q.data, opened]);
   const r = q.data;
   // RoleOwnerList: the role's *direct* holders, users and roles alike (a user who holds it through

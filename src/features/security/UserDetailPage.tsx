@@ -18,7 +18,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
 import { IconArrowLeft, IconChevronDown, IconKey, IconTrash } from '@tabler/icons-react';
-import { useEffect } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { putBody, sendsOnlyChanges } from '@/api/partialPut';
@@ -69,11 +69,11 @@ export default function UserDetailPage() {
       Confirm: (v, all) => (v === all.Password ? null : 'Passwords differ'),
     },
   });
-  // Populate the form once the record arrives; the form object itself is stable.
+  // Populate the form once the record arrives, but not while the dialog is open: a background
+  // refetch must not overwrite what is being typed.
+  const populate = useEffectEvent((data: NonNullable<typeof q.data>) => form.setValues(data));
   useEffect(() => {
-    // Not while the dialog is open: a background refetch must not overwrite what is being typed.
-    if (q.data && !editOpen) form.setValues(q.data);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (q.data && !editOpen) populate(q.data);
   }, [q.data, editOpen]);
   const u = q.data;
 

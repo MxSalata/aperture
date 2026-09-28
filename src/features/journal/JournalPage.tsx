@@ -16,7 +16,7 @@ import { canUse } from '@/api/privileges';
 import { useSession } from '@/stores/session';
 import { useQuery } from '@tanstack/react-query';
 import { IconArrowsExchange, IconFolder, IconListDetails, IconShieldCheck } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { api, call, result, run, useApiMutation, useAsyncResult, jobHeaders, SILENT } from '@/api/hooks';
 import type { JournalFileList, JournalSettings } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
@@ -100,11 +100,10 @@ function FileDrawer({ file, onClose }: { file: string | null; onClose: () => voi
       ),
     { success: 'Integrity check queued - see Job Center', onSuccess: () => openDrawer(true) },
   );
-  const { reset } = records;
   // Another file was opened: forget the previous file's records.
+  const forgetRecords = useEffectEvent(() => records.reset());
   useEffect(() => {
-    reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    forgetRecords();
   }, [file]);
   const rows = (records.result ?? []).slice(0, RECORDS_PAGE);
   const recColumns: ColumnDef<Record<string, unknown>, unknown>[] = [
@@ -227,12 +226,13 @@ export default function JournalPage() {
   const form = useForm<JournalSettings>({ initialValues: EMPTY_SETTINGS });
   // Every read of the settings becomes the form's baseline; the fields follow it (e.g. after a
   // switch of directory) unless someone is editing them, whose typing a refetch must not undo.
-  useEffect(() => {
-    if (!settings.data) return;
+  const followSettings = useEffectEvent((data: JournalSettings) => {
     const editing = form.isDirty();
-    form.setInitialValues(settings.data);
-    if (!editing) form.setValues(settings.data);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    form.setInitialValues(data);
+    if (!editing) form.setValues(data);
+  });
+  useEffect(() => {
+    if (settings.data) followSettings(settings.data);
   }, [settings.data]);
 
   return (

@@ -1,5 +1,5 @@
 import { useQueries, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { readAsyncResult } from '@/api/hooks';
 import { isTerminal, selectActiveJobs, useJobs } from '@/stores/jobs';
@@ -39,7 +39,8 @@ export function JobPoller() {
     )
     .join('|');
 
-  useEffect(() => {
+  // Reads the newest `queries` and `active` whenever the signature says something changed.
+  const reconcile = useEffectEvent(() => {
     queries.forEach((q, i) => {
       const job = active[i];
       if (!job) return;
@@ -81,10 +82,11 @@ export function JobPoller() {
           update(job.id, { error: q.error instanceof Error ? q.error.message : 'Polling failed' });
       }
     });
-    // `signature` captures every input the body reads from `queries`/`active`; keying on it
-    // (rather than the fresh arrays) is what stops the effect from firing on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature, update, queryClient]);
+  });
+  // Keyed on `signature` rather than on the fresh arrays, which change on every render.
+  useEffect(() => {
+    reconcile();
+  }, [signature]);
 
   return null;
 }

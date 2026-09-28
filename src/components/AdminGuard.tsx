@@ -1,6 +1,6 @@
 import { Alert, Code, Stack, Text, TextInput } from '@mantine/core';
 import { IconShieldExclamation } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { queryClient } from '@/query';
 import { describeError } from '@/lib/errors';
 import { judge, loadAdminModel, type AdminChange } from '@/features/security/adminGuard';
@@ -101,15 +101,17 @@ export async function checkAdminChange(change: AdminChange): Promise<GuardOutcom
 export function useAdminGuard(guard: (() => Promise<GuardOutcome>) | undefined, confirmText: string) {
   const [outcome, setOutcome] = useState<GuardOutcome | null>(null);
   const [typed, setTyped] = useState('');
+  // The guard is judged once, for the change the dialog was opened with: a new guard function on a
+  // later render is not a reason to judge again.
+  const judge = useEffectEvent(() => guard?.());
   useEffect(() => {
-    if (!guard) return;
+    const judged = judge();
+    if (!judged) return;
     let live = true;
-    void guard().then((o) => live && setOutcome(o));
+    void judged.then((o) => live && setOutcome(o));
     return () => {
       live = false;
     };
-    // The guard is judged once, for the change the dialog was opened with.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const allowed =
     !guard || outcome?.status === 'ok' || (outcome?.status === 'unknown' && typed.trim() === confirmText);

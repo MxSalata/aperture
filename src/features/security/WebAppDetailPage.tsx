@@ -18,7 +18,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
 import { IconAlertTriangle, IconArrowLeft, IconTrash } from '@tabler/icons-react';
-import { useEffect } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { API_PREFIX } from '@/api/base';
@@ -69,11 +69,13 @@ export default function WebAppDetailPage() {
     onSuccess: () => navigate('/security/web-apps'),
   });
   const form = useForm<FormValues>({ initialValues: { flags: [] } });
-  // Populate the form once the record arrives; the form object itself is stable.
+  // Populate the form once the record arrives, but not while the dialog is open: a background
+  // refetch must not overwrite what is being typed.
+  const populate = useEffectEvent((data: NonNullable<typeof q.data>) =>
+    form.setValues({ ...data, flags: bitsToFlags(data.AutheEnabled).map(String) }),
+  );
   useEffect(() => {
-    // Not while the dialog is open: a background refetch must not overwrite what is being typed.
-    if (q.data && !opened) form.setValues({ ...q.data, flags: bitsToFlags(q.data.AutheEnabled).map(String) });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (q.data && !opened) populate(q.data);
   }, [q.data, opened]);
   const a = q.data;
 

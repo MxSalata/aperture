@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { IconDownload, IconListSearch, IconShieldCheck, IconTrash } from '@tabler/icons-react';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 import dayjs from 'dayjs';
@@ -65,36 +65,39 @@ export default function ActivityPage() {
   // Lookups take seconds; only the latest one may write to the drawer.
   const lookup = useRef(0);
 
-  const find = async (entry: ActivityEntry) => {
-    const expect = auditExpectation(entry.method, entry.path);
-    if (!expect) return;
-    const token = ++lookup.current;
-    const subject = auditSubject(entry.query);
-    setEvidence({ entry, expect, subject, status: 'running', returned: 0, matches: [], best: null });
-    try {
-      const query = {
-        beginDateTime: toIrisDateTime(entry.at - AUDIT_WINDOW_MS),
-        endDateTime: toIrisDateTime(entry.at + AUDIT_WINDOW_MS),
-        eventTypes: expect.eventType,
-        maxRows: 500,
-      };
-      const { data, response } = await call(
-        api().POST('/v2/security/audit/records', { params: { query }, headers: SILENT }),
-        'POST',
-      );
-      const id = await jobIdFromResponse(response, data);
-      if (!id) throw new Error('The server accepted the audit query but returned no task to follow.');
-      const records = (await awaitAsyncResult<AuditRow[]>(id)) ?? [];
-      const matches = matchAuditRecords(records, expect, subject);
-      const best = closest(matches, entry.at);
-      if (best) bind(entry.id, { index: String(best.AuditIndex), event: best.Event ?? '' });
-      if (token !== lookup.current) return;
-      setEvidence({ entry, expect, subject, status: 'done', returned: records.length, matches, best });
-    } catch (error) {
-      if (token !== lookup.current) return;
-      setEvidence((e) => (e ? { ...e, status: 'error', error } : e));
-    }
-  };
+  const find = useCallback(
+    async (entry: ActivityEntry) => {
+      const expect = auditExpectation(entry.method, entry.path);
+      if (!expect) return;
+      const token = ++lookup.current;
+      const subject = auditSubject(entry.query);
+      setEvidence({ entry, expect, subject, status: 'running', returned: 0, matches: [], best: null });
+      try {
+        const query = {
+          beginDateTime: toIrisDateTime(entry.at - AUDIT_WINDOW_MS),
+          endDateTime: toIrisDateTime(entry.at + AUDIT_WINDOW_MS),
+          eventTypes: expect.eventType,
+          maxRows: 500,
+        };
+        const { data, response } = await call(
+          api().POST('/v2/security/audit/records', { params: { query }, headers: SILENT }),
+          'POST',
+        );
+        const id = await jobIdFromResponse(response, data);
+        if (!id) throw new Error('The server accepted the audit query but returned no task to follow.');
+        const records = (await awaitAsyncResult<AuditRow[]>(id)) ?? [];
+        const matches = matchAuditRecords(records, expect, subject);
+        const best = closest(matches, entry.at);
+        if (best) bind(entry.id, { index: String(best.AuditIndex), event: best.Event ?? '' });
+        if (token !== lookup.current) return;
+        setEvidence({ entry, expect, subject, status: 'done', returned: records.length, matches, best });
+      } catch (error) {
+        if (token !== lookup.current) return;
+        setEvidence((e) => (e ? { ...e, status: 'error', error } : e));
+      }
+    },
+    [bind],
+  );
 
   const columns: ColumnDef<ActivityEntry, unknown>[] = useMemo(
     () => [
@@ -199,9 +202,7 @@ export default function ActivityPage() {
         },
       },
     ],
-    // `find` only closes over store actions and setState, which are stable.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [find],
   );
 
   const download = () =>

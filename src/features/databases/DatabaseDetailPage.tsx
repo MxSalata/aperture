@@ -20,7 +20,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
 import { IconArrowLeft, IconChevronDown, IconInfoCircle, IconTrash } from '@tabler/icons-react';
-import { useEffect } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api, call, result, run, useApiMutation, useAsyncResult, jobHeaders, SILENT } from '@/api/hooks';
 import type { Schemas } from '@/api/types';
@@ -64,9 +64,9 @@ function NumberModal({
   const form = useForm({ initialValues: { value: initial } });
   // The dialog is mounted with the page, before the metrics it defaults from have arrived:
   // take the current value each time it opens.
+  const takeCurrent = useEffectEvent(() => form.setValues({ value: initial }));
   useEffect(() => {
-    if (opened) form.setValues({ value: initial });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (opened) takeCurrent();
   }, [opened]);
   return (
     <Modal opened={opened} onClose={onClose} title={title} centered>
@@ -224,17 +224,17 @@ export default function DatabaseDetailPage() {
 
   const editForm = useForm<Schemas['LocalDatabase']>({ initialValues: {} });
   const configForm = useForm<Schemas['ConfigDatabase']>({ initialValues: {} });
-  // Populate the form once the record arrives; the form object itself is stable.
+  // Populate the forms once the records arrive, but not while their dialog is open: a background
+  // refetch must not overwrite what is being typed.
+  const populateEdit = useEffectEvent((data: NonNullable<typeof local.data>) => editForm.setValues(data));
+  const populateConfig = useEffectEvent((data: NonNullable<typeof config.data>) =>
+    configForm.setValues(data),
+  );
   useEffect(() => {
-    // Not while the dialog is open: a background refetch must not overwrite what is being typed.
-    if (local.data && !editOpen) editForm.setValues(local.data);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (local.data && !editOpen) populateEdit(local.data);
   }, [local.data, editOpen]);
-  // Populate the form once the record arrives; the form object itself is stable.
   useEffect(() => {
-    // Not while the dialog is open: a background refetch must not overwrite what is being typed.
-    if (config.data && !configOpen) configForm.setValues(config.data);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (config.data && !configOpen) populateConfig(config.data);
   }, [config.data, configOpen]);
 
   const m = metrics.result;
