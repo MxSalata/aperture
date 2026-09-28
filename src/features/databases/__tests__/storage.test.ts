@@ -149,6 +149,19 @@ describe('how full each disk is', () => {
     expect(bare.percentFree).toBeUndefined();
     expect(bare.totalMB).toBeUndefined();
   });
+
+  it('keeps a full disk at 0 % free, with no size to derive (the card says it is full)', () => {
+    const usage = new DiskUsage([
+      { name: 'iris_disk_percent_full', labels: { id: 'USER', dir: '/durable/iris/mgr/user/' }, value: 100 },
+    ]);
+    const [full] = storageLocations(
+      [{ name: 'USER', volumes: [vol('/durable/iris/mgr/user/', 11, 0)] }],
+      usage,
+    );
+    expect(full.percentFree).toBe(0);
+    expect(full.freeMB).toBe(0);
+    expect(full.totalMB).toBeUndefined();
+  });
 });
 
 describe('a database the monitor does not report', () => {

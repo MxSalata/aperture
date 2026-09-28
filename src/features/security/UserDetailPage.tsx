@@ -117,7 +117,10 @@ export default function UserDetailPage() {
                 <Menu.Item
                   onClick={() => {
                     if (!u) return;
-                    if (!u.Enabled) return save.mutate({ ...u, Enabled: true });
+                    if (!u.Enabled)
+                      return save.mutate(
+                        putBody('/v2/security/user', { ...u, Enabled: true }, { Enabled: true }),
+                      );
                     // Disabling can remove the last account able to administer security.
                     confirmDanger({
                       title: 'Disable account',

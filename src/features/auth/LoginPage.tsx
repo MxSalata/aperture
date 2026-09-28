@@ -26,6 +26,8 @@ import { useSession } from '@/stores/session';
 import { useReadOnly } from '@/stores/readOnly';
 import {
   baseUrlProblem,
+  crossOriginWarning,
+  pagePolicy,
   normalizeBaseUrl,
   newProfileId,
   nextProfileColor,
@@ -78,6 +80,8 @@ export default function LoginPage() {
       newBaseUrl: (v, values) => (values.connectionId === NEW_ID ? baseUrlProblem(v) : null),
     },
   });
+  // Another origin fails in the browser, twice over on the builds with their own policy: say so.
+  const newOriginWarning = crossOriginWarning(form.values.newBaseUrl, pagePolicy());
 
   useEffect(() => {
     if (status === 'authenticated') navigate(from, { replace: true });
@@ -247,11 +251,16 @@ export default function LoginPage() {
                   <TextInput label="Name" placeholder="Home server" {...form.getInputProps('newName')} />
                   <TextInput
                     label="Base URL"
-                    placeholder="http://iris.lan:52773"
+                    placeholder="/iris-b"
                     {...form.getInputProps('newBaseUrl')}
-                    description="Origin in front of /api/admin"
+                    description="What comes before /api/admin: a path prefix on this page's origin, or this origin"
                   />
                 </Group>
+              ) : null}
+              {form.values.connectionId === NEW_ID && newOriginWarning ? (
+                <Alert color="yellow" variant="light" p="xs">
+                  <Text size="xs">{newOriginWarning}</Text>
+                </Alert>
               ) : null}
 
               <TextInput

@@ -132,6 +132,43 @@ export function baseUrlProblem(url: string): string | null {
   return null;
 }
 
+/**
+ * What stands in the way of a base URL on another origin, or null when it is this page's origin or
+ * a path prefix. Two things do: /api/admin sends no CORS headers (the browser refuses the answer
+ * unless a proxy of yours adds them), and the builds that carry a Content-Security-Policy of their
+ * own (the portal IRIS serves, the demo) allow calls to their own origin only, unless built with
+ * VITE_CONNECT_SRC naming it.
+ */
+export function crossOriginWarning(url: string, page: { origin: string; csp: string | null }): string | null {
+  const text = url.trim();
+  if (!text || text.startsWith('/')) return null;
+  let origin: string;
+  try {
+    origin = new URL(text).origin;
+  } catch {
+    return null;
+  }
+  if (origin === page.origin) return null;
+  const connect =
+    page.csp
+      ?.match(/connect-src([^;]*)/)?.[1]
+      .trim()
+      .split(/\s+/) ?? null;
+  const blocked = connect !== null && !connect.includes(origin) && !connect.includes('*');
+  return (
+    `${origin} is another origin: IRIS's /api/admin sends no CORS headers, so the browser refuses its answers unless a proxy of yours adds them.` +
+    (blocked
+      ? " This build's Content-Security-Policy also allows calls to its own origin only; building with VITE_CONNECT_SRC naming that origin lifts it."
+      : '')
+  );
+}
+
+/** This page's origin and its own Content-Security-Policy, for crossOriginWarning. */
+export function pagePolicy(): { origin: string; csp: string | null } {
+  const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+  return { origin: location.origin, csp: meta?.getAttribute('content') ?? null };
+}
+
 export function normalizeBaseUrl(url: string): string {
   const trimmed = url.trim().replace(/\/+$/, '');
   return trimmed.replace(/\/api\/admin$/, '');

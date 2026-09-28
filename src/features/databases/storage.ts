@@ -171,6 +171,7 @@ export function storageLocations(
         path: commonDirectory(d.dirs),
         freeMB: d.free,
         percentFree,
+        // The disk's size follows from its free space and share; a full disk (0 %) gives none.
         totalMB: percentFree ? Math.round(d.free / (percentFree / 100)) : undefined,
         databases: [...d.names].sort(),
         usedMB: d.used,

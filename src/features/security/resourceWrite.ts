@@ -14,7 +14,7 @@ export class NotKeptError extends Error {
     readonly fields: string[],
   ) {
     super(
-      `IRIS answered 200 but did not keep the ${fields.join(' and ')} of ${resource}; the list shows what it holds now. A description longer than ${DESCRIPTION_MAX} characters is one value it drops without an error.`,
+      `IRIS answered 200 but did not keep the ${fields.join(' and ')} of ${resource} as sent; the list shows what it holds now. A description longer than ${DESCRIPTION_MAX} characters is one value it does not store, without an error.`,
     );
     this.name = 'NotKeptError';
   }

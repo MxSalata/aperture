@@ -35,6 +35,7 @@ import {
 import {
   absoluteBaseUrl,
   curlCommand,
+  CURL_SHELL_NOTE,
   fileStem,
   httpFile,
   postmanCollection,
@@ -78,7 +79,13 @@ function CopyCurl({ command, label }: { command: string; label: string }) {
   return (
     <CopyButton value={command}>
       {({ copied, failed, copy }) => (
-        <Tooltip label={copied ? 'Copied to clipboard' : failed ? 'Copying failed' : 'Copy as curl'}>
+        <Tooltip
+          label={
+            copied ? 'Copied to clipboard' : failed ? 'Copying failed' : `Copy as curl. ${CURL_SHELL_NOTE}`
+          }
+          multiline
+          w={300}
+        >
           <ActionIcon variant="subtle" color="gray" size="sm" aria-label={label} onClick={copy}>
             {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
           </ActionIcon>

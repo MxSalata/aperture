@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Alert,
   Button,
   ColorSwatch,
   Group,
@@ -20,7 +21,9 @@ import { useNavigate } from 'react-router';
 import { PageHeader } from '@/components/PageHeader';
 import {
   baseUrlProblem,
+  crossOriginWarning,
   newProfileId,
+  pagePolicy,
   nextProfileColor,
   normalizeBaseUrl,
   PROFILE_COLORS,
@@ -97,6 +100,10 @@ export default function ConnectionsPage() {
     close();
   });
   // Switching instances is exactly when the old session should stop being valid server-side too.
+  // Another origin fails in the browser, twice over on the builds with their own policy: say so.
+  const originWarning =
+    editing?.id === SAME_ORIGIN_ID ? null : crossOriginWarning(form.values.baseUrl, pagePolicy());
+
   const connect = async (p: ConnectionProfile) => {
     setLastUsed(p.id);
     await logout();
@@ -204,6 +211,11 @@ export default function ConnectionsPage() {
               description="e.g. /iris-b (an instance behind the same proxy) or https://gateway.example.org/iris (a gateway that is this page's origin)"
               {...form.getInputProps('baseUrl')}
             />
+            {originWarning ? (
+              <Alert color="yellow" variant="light" p="xs">
+                <Text size="xs">{originWarning}</Text>
+              </Alert>
+            ) : null}
             <Group grow>
               <Select
                 label="Authentication"

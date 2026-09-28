@@ -236,6 +236,10 @@ export function httpFile(target: ExportTarget, requests: GeneratedRequest[]): st
 
 const quote = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`;
 
+/** Where the curl commands run as they are: the single quotes are for POSIX shells. */
+export const CURL_SHELL_NOTE =
+  'Quoted for bash and zsh (macOS, Linux, WSL, Git Bash); in cmd.exe or Windows PowerShell, run it from Git Bash or WSL.';
+
 /** One curl command; `-u user` without a password makes curl ask for it. */
 export function curlCommand(target: Pick<ExportTarget, 'baseUrl' | 'username'>, r: GeneratedRequest): string {
   const parts = [`curl -u ${quote(target.username)}`, `-H 'Accept: application/json'`];

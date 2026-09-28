@@ -13,6 +13,7 @@ import { DEMO_BUILD, useDemo } from '@/stores/demo';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useSession } from '@/stores/session';
 import { APP_NAME } from '@/theme';
+import { HIGHLIGHTS, NEW_IN } from './whatsNew';
 
 const REPO = 'https://github.com/MxSalata/aperture';
 
@@ -22,23 +23,6 @@ interface ReaderInfo {
   /** Since 1.0.5; before it, `version` was the reader's own numbering. */
   readerApiVersion?: string;
 }
-
-/** The highlights of this release; the changelog has the rest. */
-const NEW_IN = '1.0.6';
-const HIGHLIGHTS: ReactNode[] = [
-  <>
-    The Tasks screen shows which tasks are suspended: IRIS&apos;s task list reports every task as active, so
-    each task&apos;s state now comes from its own read. The Health check finds suspended tasks the same way.
-  </>,
-  <>
-    Every resource save is read back, and the portal says when IRIS answered 200 without keeping a change; the
-    description stops at the 256 characters IRIS holds.
-  </>,
-  <>
-    The README&apos;s links work on Open Exchange, and it explains why the Docker image is IRIS and Aperture
-    in one.
-  </>,
-];
 
 const LINKS: [string, string][] = [
   ['Source code (MIT licence)', REPO],

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { baseUrlProblem, normalizeBaseUrl } from '../connections';
+import { baseUrlProblem, crossOriginWarning, normalizeBaseUrl } from '../connections';
 
 describe('connection base URLs', () => {
   it('accepts an http(s) origin with an optional path', () => {
@@ -20,5 +20,32 @@ describe('connection base URLs', () => {
     expect(baseUrlProblem('http://iris.lan:52773/#a')).toMatch(/fragment/);
     expect(baseUrlProblem('ftp://iris.lan')).toMatch(/http/);
     expect(baseUrlProblem('iris.lan:52773')).not.toBeNull();
+  });
+});
+
+describe('a base URL on another origin', () => {
+  const page = { origin: 'http://iris.lan:52773', csp: null };
+  const policy = "default-src 'self'; connect-src 'self'; worker-src 'self'";
+
+  it('says nothing for this origin or a path prefix', () => {
+    expect(crossOriginWarning('', page)).toBeNull();
+    expect(crossOriginWarning('/iris-b', page)).toBeNull();
+    expect(crossOriginWarning('http://iris.lan:52773/iris', page)).toBeNull();
+  });
+
+  it('names the missing CORS headers, and the build policy only when there is one that refuses it', () => {
+    const plain = crossOriginWarning('https://gw.example.org/iris', page)!;
+    expect(plain).toMatch(/^https:\/\/gw\.example\.org is another origin/);
+    expect(plain).toMatch(/CORS/);
+    expect(plain).not.toMatch(/Content-Security-Policy/);
+    expect(crossOriginWarning('https://gw.example.org/iris', { ...page, csp: policy })).toMatch(
+      /Content-Security-Policy also allows calls to its own origin only/,
+    );
+    // A build with VITE_CONNECT_SRC naming the origin.
+    const allowed = crossOriginWarning('https://gw.example.org', {
+      ...page,
+      csp: "connect-src 'self' https://gw.example.org",
+    })!;
+    expect(allowed).not.toMatch(/Content-Security-Policy/);
   });
 });

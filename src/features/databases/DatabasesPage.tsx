@@ -103,7 +103,9 @@ function DiskSpace({ locations }: { locations: StorageLocation[] }) {
                   aria-label={`${l.path}: ${formatShare(100 - l.percentFree)} of the disk in use`}
                 />
                 <Text size="xs" c="dimmed" className="tabular">
-                  {formatMB(l.freeMB)} free of {formatMB(l.totalMB)}
+                  {l.totalMB === undefined
+                    ? 'The disk is full'
+                    : `${formatMB(l.freeMB)} free of ${formatMB(l.totalMB)}`}
                 </Text>
               </>
             )}

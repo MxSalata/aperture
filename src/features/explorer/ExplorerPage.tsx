@@ -65,6 +65,7 @@ import { humanize } from '@/components/KeyValueList';
 import {
   absoluteBaseUrl,
   curlCommand,
+  CURL_SHELL_NOTE,
   fileStem,
   httpFile,
   postmanCollection,
@@ -150,6 +151,9 @@ function RequestForTools({
       </Tabs.List>
       <Tabs.Panel value="curl" pt="xs">
         <RequestText text={curlCommand(target, request)} />
+        <Text size="xs" c="dimmed" mt={4}>
+          {CURL_SHELL_NOTE}
+        </Text>
       </Tabs.Panel>
       <Tabs.Panel value="http" pt="xs">
         <RequestText text={httpFile(target, [request])} filename={`${stem}.http`} />

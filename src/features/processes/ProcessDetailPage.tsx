@@ -1,6 +1,12 @@
-import { Badge, Button, Grid, Group, Paper, Table, Text, Title } from '@mantine/core';
+import { Alert, Badge, Button, Grid, Group, Paper, Table, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { IconArrowLeft, IconPlayerPause, IconPlayerPlay, IconSkull } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconInfoCircle,
+  IconPlayerPause,
+  IconPlayerPlay,
+  IconSkull,
+} from '@tabler/icons-react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { PageHeader } from '@/components/PageHeader';
@@ -10,6 +16,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { JsonViewer } from '@/components/JsonViewer';
 import { confirmDanger } from '@/components/ConfirmDanger';
+import { isApiError } from '@/lib/errors';
 import { formatBytes, formatNumber } from '@/lib/format';
 import { redactDeep } from '@/lib/redact';
 import { procKeys } from './ProcessesPage';
@@ -21,8 +28,11 @@ export default function ProcessDetailPage() {
   const q = useQuery({
     queryKey: procKeys.one(pid),
     queryFn: () => result(api().GET('/v2/process', { params: { query: { id } } })),
-    refetchInterval: 5000,
+    // Every 5 seconds while the process answers; once a read fails (a process that ended answers
+    // 404) the page stops asking.
+    refetchInterval: (query) => (query.state.error ? false : 5000),
   });
+  const ended = isApiError(q.error) && q.error.isNotFound;
   const params = { params: { query: { id } } } as const;
   const invalidate = [procKeys.list, procKeys.one(pid)];
   const suspend = useApiMutation(() => run(api().POST('/v2/process/suspend', params)), { invalidate });
@@ -109,7 +119,14 @@ export default function ProcessDetailPage() {
           </>
         }
       />
-      {q.isError ? <ErrorAlert error={q.error} onRetry={() => q.refetch()} /> : null}
+      {ended ? (
+        <Alert color="gray" variant="light" icon={<IconInfoCircle size={16} />} mb="md">
+          Process {pid} has ended: IRIS no longer reports it
+          {p ? ', and what it last reported is below' : ''}. This page has stopped asking.
+        </Alert>
+      ) : q.isError ? (
+        <ErrorAlert error={q.error} onRetry={() => q.refetch()} />
+      ) : null}
       {p ? (
         <Grid gutter="md">
           <Grid.Col span={{ base: 12, md: 7 }}>
