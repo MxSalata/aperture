@@ -84,5 +84,18 @@ for (const { colorScheme, contrast, palette } of MODES) {
         expect(await audit(page)).toEqual([]);
       });
     }
+
+    // A drawer, open: its close button and its content are audited too (the theme names the button).
+    // Audited once it has settled: mid-transition, axe blends the drawer with its overlay.
+    test('Job Center drawer', async ({ page }) => {
+      await signIn(page);
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.getByRole('button', { name: 'Open Job Center' }).click();
+      await expect(page.getByRole('dialog').getByText('Job Center')).toBeVisible();
+      await expect
+        .poll(() => page.locator('.mantine-Drawer-overlay').evaluate((el) => getComputedStyle(el).opacity))
+        .toBe('1');
+      expect(await audit(page)).toEqual([]);
+    });
   });
 }

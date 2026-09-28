@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Every drawer's and modal's close button has a name.** Mantine's close button has no
+  accessible name of its own (axe-core rates the gap critical), and no drawer had been audited
+  open before. The theme now gives it "Close" everywhere (Job Center, Devices, Database detail,
+  Explorer, Activity, the log drawers), and the accessibility suite audits the Job Center drawer
+  open in every mode.
+
 ## 1.0.3 - a mark of its own, a Charts picker, and plain text for Open Exchange (28 September 2026)
 
 - **The package publishes from Open Exchange.** Submitting the application with "Publish in
