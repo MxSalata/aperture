@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.4 - Vector Search, a Health check, Pastel and the one-command Docker image (28 September 2026)
 
 - **Open Exchange's code quality check.** A workflow asks ObjectScript Quality to analyse the
   package's ObjectScript classes on every push to `main` (its community hook, pinned to a commit;
