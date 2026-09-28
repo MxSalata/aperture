@@ -1,7 +1,31 @@
 # Changelog
 
-## Unreleased
+## 1.0.6 - Suspended tasks as IRIS holds them, resource writes read back (28 September 2026)
 
+From the comments on the article about the specification: Joshua Brandt, building OcuPilot on the same
+API, found what Aperture had misread and one write it would have missed.
+
+- **Suspended tasks show as suspended.** `GET /v2/tasks` answers `Suspended` false for every task,
+  suspended ones included (sysadmin-api-specification issue #1; on IRIS for Health 2026.2, 2 of 19
+  tasks suspended by `/v2/task/info`, none by the list). Aperture had read it as a lag after a suspend.
+  The Tasks screen now reads each task's state from `/v2/task/info` (four at a time; "Unknown" for an
+  account without `%Admin_Operate:U`), the Health check finds suspended tasks the same way, the task
+  page no longer compares with the list, and the demo's task list answers as IRIS does. The quirk is
+  now `task-list-suspended-false`.
+- **A resource save is read back.** IRIS can answer 200 and keep nothing: a description longer than
+  the 256 characters `Security.Resources` holds leaves the resource as it was. Every resource write is
+  now read back, and when IRIS did not keep a field the portal names it and keeps the dialog open; the
+  description field stops at 256 characters. Quirk `resource-put-not-kept`; the demo drops a long
+  description the way IRIS does.
+- **The Job Center's progress bar follows every poll.** A poll that moved only the progress figures
+  in a task's `Result`, without a new console line, was dropped, so on a real instance the bar stalled
+  between lines; progress now counts as a change on its own.
+- **Similar entries don't wait out a busy index.** When another refresh holds the wording index, the
+  search stops refreshing and answers with what is indexed, rather than asking up to 12 times.
+- **The spec findings credit OcuPilot.** `docs/SPEC_FINDINGS.md` has a "Found with OcuPilot" section
+  (the task list, `GET /v2/web-app` without `Type`, `WSGIType` as a string, the resource write), and
+  notes that the OAuth field of finding 6 and the halved journal records reproduce on IRIS for Health
+  2026.2.
 - **Links that work on Open Exchange, and the second article.** Open Exchange rewrote the README's
   in-page links (the Docker and IPM badges, the jump links, the "more" links) to GitHub's file tree,
   where they lost their place; they now point at the section of the README on GitHub. The second

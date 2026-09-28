@@ -24,19 +24,20 @@ interface ReaderInfo {
 }
 
 /** The highlights of this release; the changelog has the rest. */
-const NEW_IN = '1.0.5';
+const NEW_IN = '1.0.6';
 const HIGHLIGHTS: ReactNode[] = [
-  <>Docker Compose step by step in the README, and a compose file that comes back after a reboot.</>,
   <>
-    The Docker image applies <code>IRIS_PASSWORD</code> at the container&apos;s first start only: a restart
-    keeps the passwords changed in IRIS since.
+    The Tasks screen shows which tasks are suspended: IRIS&apos;s task list reports every task as active, so
+    each task&apos;s state now comes from its own read. The Health check finds suspended tasks the same way.
   </>,
-  <>Similar entries: a query only reads, and the wording index refreshes one at a time.</>,
   <>
-    A Content-Security-Policy on the portal IRIS serves and on the demo, and a session IRIS revokes ends at
-    once.
+    Every resource save is read back, and the portal says when IRIS answered 200 without keeping a change; the
+    description stops at the 256 characters IRIS holds.
   </>,
-  <>A lighter first load: React DOM now stays cached from one release to the next.</>,
+  <>
+    The README&apos;s links work on Open Exchange, and it explains why the Docker image is IRIS and Aperture
+    in one.
+  </>,
 ];
 
 const LINKS: [string, string][] = [
