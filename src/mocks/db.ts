@@ -1109,6 +1109,25 @@ function seedTaskHistory(tasks: TaskRec[]) {
       LogDatetime: hoursAgo(i * 6 + 0.9),
     });
   }
+  // The failing task's newest run is a failure, whatever the draw above: the Tasks screen and the
+  // health check both have a failed run to show.
+  const failing = tasks.find((t) => t.Id === 12);
+  if (failing)
+    out.unshift({
+      LastStart: hoursAgo(0.6),
+      Completed: hoursAgo(0.5),
+      Name: failing.Name,
+      Status: 'Error',
+      Result: failing.Error || 'ERROR #5001: task failed',
+      TaskId: failing.Id,
+      Namespace: failing.Namespace,
+      Routine: failing.TaskClass,
+      Pid: '5999',
+      ErrDate: daysAgo(0).slice(0, 10),
+      ErrNumber: 5001,
+      Username: failing.RunAsUser,
+      LogDatetime: hoursAgo(0.5),
+    });
   return out;
 }
 
@@ -1156,7 +1175,8 @@ function seedUsers(): UserRec[] {
       Comment: 'Roles held by everybody',
       Enabled: true,
     }),
-    user('UnknownUser', 'Unauthenticated access', [], { Enabled: false }),
+    // Enabled on purpose: the health check has something to find (IRIS ships it disabled).
+    user('UnknownUser', 'Unauthenticated access', [], { Enabled: true }),
     user('CSPSystem', 'CSP Gateway user', ['%DB_IRISSYS'], {
       Namespace: '%SYS',
       Comment: 'Used by the web gateway',
@@ -1366,7 +1386,8 @@ function seedServices(): ServiceRec[] {
     service('%Service_Monitor', 'Controls SNMP and remote Monitor commands', false, 1024, 'N/A'),
     service('%Service_Shadow', 'Controls if this system can be the source of a shadow', false, 1024, 'N/A'),
     service('%Service_Sharding', 'Controls this system as a Shard Server', false, 1024, 'N/A'),
-    service('%Service_Terminal', 'Controls terminal session on Unix', true, 48, 'Yes'),
+    // 112 = password, OS and unauthenticated: an open terminal, for the health check to find.
+    service('%Service_Terminal', 'Controls terminal session on Unix', true, 112, 'Yes'),
     service('%Service_WebGateway', 'Controls Web Gateway access', true, 32, 'Yes', {
       HttpOnlyCookies: true,
       ClientSystems: ['127.0.0.1', '10.0.0.0/8'],
@@ -1438,6 +1459,11 @@ function seedWebApps(): WebAppRec[] {
       AutheEnabled: 64,
     }),
     webApp('/csp/user', 'USER', 'CSP', { NamespaceDefault: true, Path: `${MGR}../csp/user/` }),
+    // Its namespace was deleted; the application stayed. For the health check to find.
+    webApp('/csp/legacy', 'OLDAPP', 'CSP', {
+      Description: 'Legacy intranet application',
+      Path: `${MGR}../csp/legacy/`,
+    }),
     webApp('/api/admin', '%SYS', 'REST', {
       Resource: '',
       Description: 'System administration REST API',
@@ -1510,7 +1536,8 @@ function seedAuditEvents(): AuditEventRec[] {
     Lost: 0,
   });
   const list = [
-    mk('%System', '%Login', 'Login', 'Successful login'),
+    // Off on purpose, for the health check to find; the rest is on as IRIS ships it.
+    mk('%System', '%Login', 'Login', 'Successful login', false),
     mk('%System', '%Login', 'LoginFailure', 'Failed login attempt'),
     mk('%System', '%Login', 'Logout', 'Logout'),
     mk('%System', '%Login', 'JWTLogin', 'JWT token issued'),

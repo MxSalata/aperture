@@ -320,6 +320,27 @@ without the package the reader answers 404 and the screen says so; nothing else 
 mock (`mocks/handlers/logs.ts`) generates the same files with the same window algorithm, and
 `scripts/live-check.mjs` reads the catalogue and one window from a real instance.
 
+### 2.7e The Health check
+
+`Overview > Health check` runs sixteen checks over data the screens already read, with the signed-in
+account's own access, and answers the question an administrator asks first: what needs attention,
+how bad is it, and where do I fix it. Each check is a pure function in `src/features/health/checks.ts`
+(one unit test each): it takes plain data and the time it was read and returns findings, each with a
+severity (critical, warning, advice), an area, what it means, what to do, the evidence (the fields
+read with their values, the API they came from, when) and the Aperture screen where the fix is made,
+so the review and the confirmation that screen already gives apply. `runner.ts` fetches each source
+once per run (`GET /v2/monitor/dashboard/main` serves five checks), gates every check on
+`checkPrivileges` with the resources its data needs, and reports a check the account may not read as
+"not checked: needs %Admin_Secure" (or whatever it needs) rather than skipping it; a read the server
+refuses with 401 or 403 is reported the same way, any other failure as "failed" with the server's
+answer. There is no score: the report is the counts by severity, the findings, and the list of every
+check with its outcome. Licence use at or over the limit is critical, 85 % and above a warning, a
+peak at the limit since startup a warning. The severe-entries check needs the log reader and its
+password (`stores/mgmntAuth.ts`); each of its findings links to the entry's similar entries. The
+screen filters by severity and area, searches, runs again, and exports the report as Markdown or
+JSON; the dashboard's card shows the counts and the top three findings. Everything lives in the
+screen's lazily loaded chunk; the demo seeds a few findings without touching the databases.
+
 ### 2.8 Spec quirks
 
 `lib/quirks.ts` lists known differences between the specification and running instances with their

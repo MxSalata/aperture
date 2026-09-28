@@ -42,6 +42,22 @@
   demo's log repeats its messages with other numbers, so the online demo shows the feature. The
   drawer's close button now has a name for screen readers. `npm run verify:live` (CI's
   `verify-iris` job) reads the index and runs one similar query for the newest entry.
+- **A Health check.** Under Overview, a screen that runs sixteen deterministic, read-only checks
+  with the signed-in account's own access and lists the findings, highest severity first: disk
+  space per disk; databases not mounted, read-only, not mounted at startup or near their maximum
+  size; journal freeze-on-error and journal space; the last backup; UnknownUser; auditing and the
+  login events; services and web applications open to unauthenticated access, and applications
+  whose namespace is gone; accounts holding %All; X.509 certificates expired or expiring; tasks
+  that failed or are suspended; the system monitor; serious alerts; licence use (over the limit
+  is critical, 85 % a warning); and, with the log reader, severe entries of messages.log in the
+  last 24 hours, each linked to its similar entries. Every finding says what it means, what to do,
+  the evidence (the fields read, from which API, when) and opens the Aperture screen where the fix
+  is made with its review and confirmation. A check the account may not read is listed as "not
+  checked: needs %Admin_Secure", never silently skipped; there is no score, only the counts and
+  the list of checks. Filters by severity and area, a search, "Run again", and an export as
+  Markdown or JSON. The dashboard gets a card with the counts and the top three findings. The
+  demo seeds a few things to find (UnknownUser enabled, the Login audit event off, an open
+  terminal service, an application without its namespace); the databases are as they were.
 - **Coloured icons in the navigation.** Every entry's icon has a colour of its own (Dashboard teal,
   Databases green, Locks red, Journals orange, Users indigo, Roles violet ...), labels in the normal
   text colour, so the list is easy to scan; neighbours always differ. The colour is that colour's

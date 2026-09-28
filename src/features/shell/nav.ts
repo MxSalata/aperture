@@ -21,6 +21,7 @@ import {
   IconLock,
   IconLogs,
   IconServer,
+  IconShieldCheck,
   IconShieldLock,
   IconTable,
   IconUsers,
@@ -32,22 +33,20 @@ import {
 } from '@tabler/icons-react';
 
 /** The colours an entry's icon may take: Mantine colour names with a contrast-tuned `-text` token in styles.css. */
-export const NAV_COLORS = [
-  'teal',
-  'indigo',
-  'grape',
-  'green',
-  'violet',
-  'blue',
-  'cyan',
-  'red',
-  'orange',
-  'yellow',
-  'lime',
-  'pink',
-  'gray',
-] as const;
-export type NavColor = (typeof NAV_COLORS)[number];
+export type NavColor =
+  | 'teal'
+  | 'indigo'
+  | 'grape'
+  | 'green'
+  | 'violet'
+  | 'blue'
+  | 'cyan'
+  | 'red'
+  | 'orange'
+  | 'yellow'
+  | 'lime'
+  | 'pink'
+  | 'gray';
 
 export interface NavItem {
   label: string;
@@ -82,6 +81,15 @@ export const NAV: NavSection[] = [
         privileges: ['%Admin_Operate:U'],
         description: 'Live system health, performance and license usage',
         keywords: ['home', 'monitor', 'stats'],
+      },
+      {
+        label: 'Health check',
+        to: '/health',
+        icon: IconShieldCheck,
+        color: 'pink',
+        privileges: [],
+        description: 'Read-only checks of the instance: findings, evidence, where the fix is',
+        keywords: ['doctor', 'diagnose', 'findings'],
       },
       {
         label: 'Job Center',

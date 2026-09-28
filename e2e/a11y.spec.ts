@@ -27,6 +27,7 @@ async function audit(page: Page) {
 
 const SCREENS: [path: string, heading: string][] = [
   ['/', 'Dashboard'],
+  ['/health', 'Health check'],
   ['/databases', 'Databases'],
   ['/processes', 'Processes'],
   ['/tasks', 'Tasks'],
