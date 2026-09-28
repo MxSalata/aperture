@@ -1,5 +1,67 @@
 # Changelog
 
+## 1.0.5 - A review applied, and Docker Compose step by step (28 September 2026)
+
+A review of 1.0.4, applied, a new About page, and the README's instructions for Docker Compose.
+
+- **The About page says what this installation is.** Aperture's version, the instance and how you are
+  signed in, the SysAdmin API's specification, the log reader's version when the session may ask it
+  (or where to connect it), and where the portal is served from; then what is new in this release, the
+  keyboard shortcuts, a privacy note (Aperture talks to your IRIS and nothing else), and links to the
+  source, the changelog, the docs, the listing and the article.
+- **Docker Compose, step by step.** The README sets Aperture up from two files in a folder, with no
+  clone and no build: the compose file, a `.env` with the password, `docker compose up -d`, and the
+  commands for the log, restarts, updates and removal, with what each keeps. The compose file brings
+  the container back after a reboot (`restart: unless-stopped`) and gives IRIS 60 seconds to shut
+  down cleanly; a test keeps the README's copy of it identical to the file.
+- **A restart keeps the passwords changed in IRIS.** With `IRIS_PASSWORD` set, the image made it the
+  password of every enabled account at every start, including accounts an administrator created later
+  and passwords changed since. It now applies it once, at the container's first start (a marker beside
+  IRIS's data: the durable directory when `ISC_DATA_DIRECTORY` is set), and only to the accounts the
+  build gave `SYS`, which `init.script` records in `image-accounts`. CI changes `_SYSTEM`'s password in
+  IRIS, restarts the container and signs in with the new one.
+- **Similar entries: a GET only reads, and refreshes take turns.** `GET /api/aperture/logs/similar`
+  refreshed a stale index before answering, a write on a GET that two callers could run at once. It now
+  answers from what is indexed; the portal and `live-check.mjs` bring the index up to date with
+  `POST /logs/index` first, as the portal already did, and a refresh holds a lock on
+  `^Aperture.LogIndex` (a second one waits up to 20 seconds, then answers `busy` and adds nothing).
+- **The log reader reports the package's version.** `GET /api/aperture/` said `version: 1.1.0`, the
+  reader's own numbering. `version` is now the installed package's (from IPM's record of the module),
+  and the reader's routes have `readerApiVersion` (1.2.0: the GET above no longer writes).
+- **A Content-Security-Policy where IRIS or GitHub Pages serves the portal.** nginx sent one; the
+  `/aperture` web application and the demo did not, and the tokens live in sessionStorage. The builds
+  for them (`build:www`, `build:demo`) now carry nginx's policy as a meta element: scripts from the
+  portal's own files only, calls to its own origin only (`VITE_CONNECT_SRC` adds origins, for a proxy of
+  your own that sends CORS headers). The nginx build keeps relying on the header, which can allow more
+  origins at run time.
+- **React DOM leaves the entry chunk.** `react-dom/client` is an entry point of its own, which the
+  vendor chunk did not list, so React DOM (200 KB) was part of the app's entry chunk and was downloaded
+  again with every release. It is in the `react` chunk now, cached across releases; the entry is the
+  app shell alone (121 KB), and its budget goes from 334 KB to 135 KB.
+- **A revoked session signs out at once.** When the retry after a token refresh was refused too, the
+  portal stayed signed in until the next request failed; it now signs out then and there.
+- **Effects say what they react to.** The thirteen `react-hooks/exhaustive-deps` suppressions are gone:
+  the effects read the newest values through `useEffectEvent` (React 19.2), and the Activity page's
+  audit lookup is a stable callback.
+- **Smaller components.** The dashboard (878 lines) is the page, its chart cards, its host gauges and
+  the cards under the charts; the OAuth 2.0 tab (771) is its three roles in `security/oauth/`; the
+  Wallet tab (675) is the list and its two dialogs, each mounted afresh for every opening.
+- **CI.** The ObjectScript Quality hook is checked against its SHA-256 before it runs, and Dependabot
+  proposes updates for the actions, the npm packages and the portal image's base images, weekly and
+  grouped.
+- **The README, shorter.** The six contest areas and the Ideas Portal ideas are lists rather than
+  tables that scroll sideways; every screen is in `docs/FEATURES.md` and the 20 spec findings in
+  `docs/SPEC_FINDINGS.md`; the Docker section is the image, the sources and notes (the one-liner on a
+  host with more than 20 cores included); a security section; links to the listing, the article and the
+  contest; no test counts typed by hand. Spec finding 7 is corrected: the Arabic comes with
+  `Accept-Language: *`, which Node's `fetch` sends by default.
+- **Small fixes.** `live-check.mjs` no longer points at a `.secrets/iris-password` file and a script
+  that no longer exist; `.env.example` names the version tags without a number that goes stale;
+  `docs/verification/latest.json`, a copy of the 23 September evidence that every local
+  `verify:live` overwrote, is no longer tracked; the README's gallery shows the five screenshots the
+  smoke run made but nothing showed; the clipboard test no longer depends on the two seconds the
+  button says "Copied to clipboard".
+
 ## 1.0.4 - Vector Search, a Health check, Pastel and the one-command Docker image (28 September 2026)
 
 - **Open Exchange's code quality check.** A workflow asks ObjectScript Quality to analyse the
