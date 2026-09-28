@@ -1,0 +1,28 @@
+# Keeps the pins fresh: every action is pinned to a commit, every npm package by the lockfile and
+# the portal image's bases (docker/Dockerfile) by digest, and nothing else proposes updates. Weekly
+# and grouped, so each ecosystem opens a few pull requests at most. The IRIS base image is an ARG
+# default in docker/iris/Dockerfile, which Dependabot does not follow: that pin moves by hand with
+# an IRIS release, after the verify-iris job has checked the new build.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /docker
+    schedule:
+      interval: weekly

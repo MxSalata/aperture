@@ -3,7 +3,8 @@ name: ObjectScript Quality
 # Open Exchange's "Code quality check": ObjectScript Quality analyses the ObjectScript classes of
 # this public repository (ipm/cls). The hook asks its community server to clone the repository and
 # analyse the branch; it sends the repository's URL and the branch name, nothing else. The script
-# is pinned to a commit, like every action of ci.yml.
+# is pinned to a commit, like every action of ci.yml, and checked against its SHA-256 before it
+# runs, like the package manager in docker/iris/init.script.
 on:
   push:
     branches: [main]
@@ -16,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ask ObjectScript Quality to analyse this repository
+        env:
+          HOOK_SHA256: d4a4e05ee5213b92adf6a8caf6533053620612c554aeb6dfb4d0ba9e5ae74eb0
         run: |
           wget -q https://raw.githubusercontent.com/litesolutions/objectscriptquality-jenkins-integration/802100c3d255fd8f55f92b9378028bd50108455e/iris-community-hook.sh
+          echo "$HOOK_SHA256  iris-community-hook.sh" | sha256sum -c -
           sh ./iris-community-hook.sh
