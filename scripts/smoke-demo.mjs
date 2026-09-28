@@ -75,7 +75,13 @@ await step('login page renders', async () => {
 await step('demo login → dashboard', async () => {
   await page.getByRole('button', { name: /Try the demo/ }).click();
   await page.getByRole('heading', { name: 'Dashboard' }).waitFor({ timeout: 20000 });
-  await page.waitForTimeout(7500);
+  // The default charts draw once /api/monitor has been read twice (every 9 s).
+  await page
+    .locator('.mantine-Paper-root', { hasText: 'Message throughput per namespace' })
+    .locator('.recharts-line-curve')
+    .first()
+    .waitFor({ timeout: 30000 });
+  await page.waitForTimeout(1500);
   await shot('02-dashboard');
 });
 await step('dashboard has chart', async () => {
