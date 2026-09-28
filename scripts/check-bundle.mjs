@@ -5,13 +5,14 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const dir = join(process.argv[2] ?? 'dist', 'assets');
-// 300 KB would be the ideal. The entry is Mantine, React, the router, TanStack Query and the app
-// shell; it was ~301 KB at 0.2.0 and reached 319.8 KB at 1.0.1 (the read-only middleware, the
-// lock-out guard, the password gate), with 220 bytes left under the old 320 KB budget. 330 KB leaves
-// room for small features and still fails at once if the 180 KB spec index comes back, which the
-// check above also names. 1.0.4 reached 331.3 KB (the Health check's navigation entry, the coloured
-// icons, the copy that works over plain HTTP): 334 KB, the same margin.
-const BUDGET = 334_000;
+// The entry is the app shell: the layout, the session and its API client, the routes, the
+// navigation, the Job Center's poller, and the small libraries they use (dayjs, openapi-fetch,
+// zustand). React, Mantine, TanStack and the charts have chunks of their own, which stay cached
+// from one release to the next. Until 1.0.4 React DOM's client (200 KB) sat in the entry as well,
+// because react-dom/client is an entry point the vendor chunk did not list; the budget grew with
+// it to 334 KB. Without it the shell is 121 KB: 135 KB leaves room for small features, and fails at
+// once if React DOM or the 180 KB spec index comes back (the check above also names the index).
+const BUDGET = 135_000;
 const entry = readdirSync(dir).find((n) => /^index-.*\.js$/.test(n));
 if (!entry) {
   console.error(`check-bundle: no entry chunk in ${dir}`);
