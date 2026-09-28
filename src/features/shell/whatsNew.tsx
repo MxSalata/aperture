@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
 
 /**
- * What the About page lists as new. NEW_IN must be the package's version: a test fails the release
- * when package.json moves on and these lines do not.
+ * What the About page lists as new in the last feature release. A merged dependency update is a
+ * patch release of its own (1.1.1, 1.1.2, ...) with nothing new to list, so the package's version
+ * may be a higher patch of NEW_IN; a test fails the release when the minor moves on and these lines
+ * do not.
  */
-export const NEW_IN = '1.0.6';
+export const NEW_IN = '1.1.0';
 export const HIGHLIGHTS: ReactNode[] = [
   <>
     The Tasks screen shows which tasks are suspended: IRIS&apos;s task list reports every task as active, so

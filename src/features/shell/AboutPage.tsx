@@ -194,6 +194,11 @@ export default function AboutPage() {
               <Title order={5} mb="xs">
                 New in {NEW_IN}
               </Title>
+              {__APP_VERSION__ !== NEW_IN ? (
+                <Text size="sm" mb="xs">
+                  {__APP_VERSION__}: dependency updates since {NEW_IN}.
+                </Text>
+              ) : null}
               <List size="sm" spacing={4} mb="xs">
                 {HIGHLIGHTS.map((h, i) => (
                   <List.Item key={i}>{h}</List.Item>

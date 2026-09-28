@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.6 - Suspended tasks as IRIS holds them, resource writes read back (28 September 2026)
+## 1.1.0 - Suspended tasks as IRIS holds them, resource writes read back, the keyboard everywhere (28 September 2026)
 
 From the comments on the article about the specification (Joshua Brandt, building OcuPilot on the same
 API, found what Aperture had misread and one write it would have missed), and a second review of 1.0.5.
