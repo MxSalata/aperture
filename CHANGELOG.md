@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.3 - a mark of its own, a Charts picker, and plain text for Open Exchange (28 September 2026)
 
 - **The package publishes from Open Exchange.** Submitting the application with "Publish in
   Package Manager" failed with "invalid character 0x13 at line 7 offset 30" (error #6901, from its
