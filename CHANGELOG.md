@@ -17,6 +17,12 @@
   `main-<sha>` tag, and sets the version's tag once, when the registry has none: a release keeps its
   image.
 
+## 1.1.1 - Dependency updates (28 September 2026)
+
+- Bump globals from 16.5.0 to 17.12.0.
+- Bump node from `b6f26b3` to `0a7108b` in /docker.
+- Bump the minor-and-patch group across 1 directory with 4 updates: @tabler/icons-react 3.46.0 to 3.48.0, @tanstack/react-query 5.103.1 to 5.103.2, prettier 3.9.7 to 3.9.9, typescript-eslint 8.70.0 to 8.70.1.
+
 ## 1.1.0 - Suspended tasks as IRIS holds them, resource writes read back, the keyboard everywhere (28 September 2026)
 
 From the comments on the article about the specification (Joshua Brandt, building OcuPilot on the same
