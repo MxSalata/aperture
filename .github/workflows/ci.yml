@@ -131,7 +131,8 @@ jobs:
           git add -A www
           if [ -n "$version" ]; then
             git add package.json package-lock.json module.xml CHANGELOG.md
-            git commit -m "$version: dependency updates" -F - < release-notes.md
+            # The subject, a blank line, then the notes: git takes -m or -F, not both.
+            { printf '%s\n\n' "$version: dependency updates"; cat release-notes.md; } | git commit -F -
             git tag -a "v$version" -m "Aperture $version: dependency updates"
             git push origin HEAD:main "v$version"
             gh release create "v$version" --title "Aperture $version" --notes-file release-notes.md
