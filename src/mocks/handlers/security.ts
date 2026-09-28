@@ -267,6 +267,10 @@ export const securityHandlers = [
     if (!existing && body.PublicPermission === undefined)
       return fail(400, "ERROR #40301: Field 'PublicPermission' is required in the request body.");
     if (existing) {
+      // As IRIS for Health 2026.2 (reported by OcuPilot): a description longer than the 256
+      // characters Security.Resources holds is answered with 200, and nothing is stored.
+      if (typeof body.Description === 'string' && body.Description.length > 256)
+        return ok({}, { summary: `Resource ${name} updated` });
       Object.assign(existing, body);
       recordAudit(account, 'ResourceChange', `Resource ${name} modified`);
       return ok({}, { summary: `Resource ${name} updated` });

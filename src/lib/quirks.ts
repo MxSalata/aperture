@@ -143,6 +143,13 @@ export const SPEC_QUIRKS: SpecQuirk[] = [
       'Aperture live write probe, IRIS for Health 2026.2 Build 221U, 27 September 2026 (docs/verification/2026-09-27-irishealth-2026.2/writes.json); first reported for creation by the iris-fieldwork verification record',
   },
   {
+    id: 'resource-put-not-kept',
+    appliesTo: (op) => op.path === '/v2/security/resource' && op.method === 'PUT',
+    note: 'IRIS can answer 200 and keep nothing: a description longer than the 256 characters Security.Resources holds leaves the resource unchanged. Aperture reads every resource write back and says which fields IRIS did not keep.',
+    source:
+      'Reported by OcuPilot on IRIS for Health 2026.2 (300 characters); MAXLEN = 256 in the Security.Resources class reference',
+  },
+  {
     id: 'process-resume-state',
     appliesTo: (op) => op.path === '/v2/process/resume',
     note: 'A resumed process reports state HANG (waiting) rather than RUNW until it runs again.',

@@ -12,6 +12,7 @@ import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { reviewChanges } from '@/components/ReviewChanges';
+import { DESCRIPTION_MAX, putResource, type ResourceBody } from './resourceWrite';
 import { secKeys } from './keys';
 
 type Row = ResourceList[number];
@@ -26,7 +27,6 @@ const PERMS = [
   { value: '', label: 'none (the API refuses it)', disabled: true },
   ...['R', 'W', 'U', 'RW', 'RU', 'WU', 'RWU'].map((p) => ({ value: p, label: p })),
 ];
-type ResourceBody = { Description?: string; PublicPermission?: string };
 
 export default function ResourcesPage() {
   const list = useQuery({
@@ -40,9 +40,9 @@ export default function ResourcesPage() {
     initialValues: { Name: '', Description: '', PublicPermission: '' },
     validate: { Name: (v) => (/^[A-Za-z%][\w.-]*$/.test(v) ? null : 'Invalid resource name') },
   });
+  // Read back after every write: IRIS can answer 200 and keep nothing (resourceWrite.ts).
   const save = useApiMutation(
-    ({ name, body }: { name: string; body: ResourceBody }) =>
-      run(api().PUT('/v2/security/resource', { params: { query: { name } }, body }), 'PUT'),
+    ({ name, body }: { name: string; body: ResourceBody }) => putResource(name, body),
     {
       invalidate: [secKeys.resources],
       onSuccess: () => {
@@ -186,7 +186,12 @@ export default function ResourcesPage() {
         >
           <Stack gap="sm">
             <TextInput label="Name" disabled={!!editing} data-autofocus {...form.getInputProps('Name')} />
-            <TextInput label="Description" {...form.getInputProps('Description')} />
+            <TextInput
+              label="Description"
+              description={`${DESCRIPTION_MAX} characters at most: IRIS answers a longer one with 200 and keeps nothing.`}
+              maxLength={DESCRIPTION_MAX}
+              {...form.getInputProps('Description')}
+            />
             <Select
               label="Public permission"
               description="IRIS 2026.2 refuses a resource with no public permission, on creation and on edit."
