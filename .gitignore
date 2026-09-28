@@ -13,6 +13,6 @@ blob-report/
 .env
 .env.local
 .env.*.local
-# The Docker image's administrator password (npm run iris:password)
+# Local secrets, never committed
 .secrets/
 __pycache__/

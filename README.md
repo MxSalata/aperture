@@ -29,7 +29,7 @@ disagree are listed below.
 ## Evaluate in two minutes
 
 1. **Without an IRIS:** open the [online demo](https://mxsalata.github.io/aperture/) and press **Try the demo**. Press <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>K</kbd> and type `databases`, open `USER` and choose _Actions → Integrity check_: the `202 Accepted` lands in the Job Center with console output and progress. Open _Security → Users → jdoe_, remove a role and press Save: the review lists old → new and who loses which privilege. Open _Logs_ for every log in one place, _REST services_ for every REST route on the instance. Sign out and sign in as `operator` / `SYS`: the security area is gone and every disabled action names the resource it needs.
-2. **Against a real IRIS (five minutes, Docker):** `npm run iris:password && docker compose up --build`, then http://localhost:8080 with `_SYSTEM` and the password in `.secrets/iris-password`. The build log ends with the readiness report of the Embedded Python installer; `npm run verify:live` re-checks the API contract against the running instance.
+2. **Against a real IRIS (two minutes, Docker):** `docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture`, then http://localhost:52773/aperture/index.html as `_SYSTEM` / `SYS` (set your own password with `-e IRIS_PASSWORD=...`, or with `IRIS_PASSWORD` in a `.env` next to [`docker-compose.yml`](docker-compose.yml) and `docker compose up -d`). It is the image CI builds and checks against the SysAdmin API before publishing it; `npm run verify:live` re-checks the API contract against the running instance.
 3. **In the code:** the fetch middleware that adds the token, refreshes it and captures every `202` ([`src/api/client.ts`](src/api/client.ts)); the guard that refuses a change leaving nobody able to administer security ([`src/features/security/adminGuard.ts`](src/features/security/adminGuard.ts)); the mock instance that powers the demo and both test suites ([`src/mocks`](src/mocks)); the Embedded Python installer and log reader ([`ipm/cls/Aperture`](ipm/cls/Aperture)).
 
 ## Online demo
@@ -52,20 +52,36 @@ Every real deployment also has a **Try the demo** button on the login page.
 
 ## Quick start
 
-### 1. Docker Compose (IRIS + portal, one command)
+### 1. Docker
+
+The published image, IRIS Community 2026.2 with Aperture installed through its IPM package:
+
+```bash
+docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture
+```
+
+Then open http://localhost:52773/aperture/index.html (the built-in web server needs the file name, a
+bare `/aperture/` answers 404) and sign in as `_SYSTEM` (or `SuperUser`) with `SYS`. That is the
+image's demonstration password; `-e IRIS_PASSWORD=...` makes another one the password of every
+enabled account (but `CSPSystem`, the image's own Web Gateway account) at every start. With Docker
+Compose, [`docker-compose.yml`](docker-compose.yml) runs the same image and takes `IRIS_PASSWORD`
+from a `.env` next to it ([`.env.example`](.env.example)): `docker compose up -d`. CI publishes the
+image only after checking it against the SysAdmin API, both with a password set at start and with
+the demonstration one: `latest` and the version from `main`, `edge` from the development branch.
+
+From the sources, with nginx serving the portal in front of IRIS:
 
 ```bash
 git clone https://github.com/MxSalata/aperture.git
 cd aperture
-npm run iris:password   # or write any password of 12+ characters to .secrets/iris-password
-docker compose up --build
+docker compose -f docker-compose.build.yml up --build
 ```
 
 - http://localhost:8080 - Aperture behind nginx (proxies `/api/admin`, `/api/monitor`, `/api/mgmnt` and `/api/aperture` to IRIS: same origin, so no CORS and no Basic-auth pop-ups; sends a Content-Security-Policy). A second instance goes behind the same nginx under a path prefix (`/iris-b`, the pattern is documented in [`docker/nginx/default.conf.template`](docker/nginx/default.conf.template)) and gets a connection profile with that prefix as its base URL
-- http://localhost:52773/aperture/index.html - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`; the built-in web server needs the file name, a bare `/aperture/` answers 404)
-- Sign in as `_SYSTEM` (or `SuperUser`) with the password in `.secrets/iris-password`. The image has no well-known password: the build sets it on every enabled account from that file, passed as a BuildKit secret, so it is in no image layer, build context or log. `CSPSystem`, the account the image's own Web Gateway signs in with, keeps its own password and holds no role.
+- http://localhost:52773/aperture/index.html - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`)
+- Sign in as `_SYSTEM` with `IRIS_PASSWORD` from `.env`, or with `SYS` when none is set.
 - On a host with more than 20 CPU cores, IRIS Community stops at start-up with _Invalid Community Edition license, may have exceeded core limit_ (reported by the IRIS Atrium entry). Restrict the container's CPUs with a `docker-compose.override.yml` next to the compose file: `services: { iris: { cpuset: "0-19" } }`.
-- The ports are published on `127.0.0.1` only by default. To use it from other machines, put TLS in front of nginx (it serves plain HTTP), then start with `APERTURE_BIND=0.0.0.0 docker compose up`.
+- The ports are published on `127.0.0.1` only by default. To use it from other machines, set `IRIS_PASSWORD`, put TLS in front (nginx and IRIS's web server speak plain HTTP), then start with `APERTURE_BIND=0.0.0.0`.
 
 The `iris` service is built from [`docker/iris/Dockerfile`](docker/iris/Dockerfile) on top of
 `intersystems/iris-community:2026.2`, pinned by digest (`sha256:cd2ebcab…50bdaa`, Build 221U).
@@ -83,7 +99,7 @@ is created, and [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls), also Emb
 report; you can print it again at any time:
 
 ```bash
-docker exec aperture-iris iris session IRIS -U USER "##class(Aperture.Installer).Doctor()"
+docker exec aperture iris session IRIS -U USER "##class(Aperture.Installer).Doctor()"   # aperture-iris when built from the sources
 ```
 
 ### 2. IPM (ZPM) package

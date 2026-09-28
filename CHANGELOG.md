@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- **Aperture in one command, from the GitHub Container Registry.**
+  `docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture`, then
+  `/aperture/index.html` as `_SYSTEM` / `SYS`: IRIS Community 2026.2 with the package installed,
+  nothing to clone, build or install first. The image signs in with that documented demonstration
+  password until a container sets `IRIS_PASSWORD`, which becomes the password of every enabled
+  account but the Web Gateway's at every start (`docker/iris/start.sh`, `apply-password.sh`).
+  `docker-compose.yml` now runs the published image with the password from `.env`
+  (`.env.example` has the settings); `docker-compose.build.yml` builds it from the sources with
+  nginx in front, as the compose file did before, and the build no longer needs
+  `npm run iris:password` or a BuildKit secret (both removed). CI builds the image, checks it
+  against the SysAdmin API with a password set at start and with the demonstration one, and only
+  then publishes it: `latest` and the version from `main`, the version from a tag, `edge` from a
+  feature branch, which CI now also runs on. The Pages deployment stays with `main`.
 - **Disk free as a share of the disk.** A free size says little without the size of the disk behind
   it. The Databases screen's "Disk free" column now shows the share of each database's disk that is
   free; a click on a value, or the toolbar's "% of disk / Size" switch, shows sizes instead, and the

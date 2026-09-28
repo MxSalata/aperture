@@ -1,0 +1,58 @@
+# Aperture built from this repository's sources: IRIS Community 2026.2 with the package installed
+# at build time (docker/iris/Dockerfile, the image CI publishes) and nginx serving the portal in
+# front of it (docker/Dockerfile). To run the published image instead, use docker-compose.yml.
+#   docker compose -f docker-compose.build.yml up --build
+# then open http://localhost:8080 (nginx, browser routing) or
+#           http://localhost:52773/aperture/index.html (served by IRIS itself, hash routing),
+# and sign in as _SYSTEM (or SuperUser) with IRIS_PASSWORD from .env (see .env.example), or with
+# the demonstration password SYS when none is set.
+
+services:
+  iris:
+    # IRIS Community 2026.2 with Aperture pre-installed through its IPM package
+    # (docker/iris/Dockerfile), pinned by digest. Override the base image in a .env file; IRIS for
+    # Health Community 2026.2 (Build 221U) is tested too (docs/verification/2026-09-23-irishealth-2026.2):
+    #   IRIS_IMAGE=containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3
+    build:
+      context: .
+      dockerfile: docker/iris/Dockerfile
+      args:
+        IRIS_IMAGE: ${IRIS_IMAGE:-intersystems/iris-community:2026.2@sha256:cd2ebcab02d1ef80ec155def4418399f353d867162688c36a3705760e750bdaa}
+    image: aperture-iris:local
+    container_name: aperture-iris
+    command: --check-caps false --ISCAgent false
+    environment:
+      # The password of _SYSTEM, SuperUser and the other accounts, applied at every start; empty
+      # keeps the demonstration password SYS.
+      - IRIS_PASSWORD=${IRIS_PASSWORD:-}
+    # Published on this machine only by default, and nginx serves plain HTTP: to reach it from
+    # other hosts, set IRIS_PASSWORD, put TLS in front and start with APERTURE_BIND=0.0.0.0 (or a
+    # specific interface address).
+    ports:
+      - '${APERTURE_BIND:-127.0.0.1}:1972:1972'
+      - '${APERTURE_BIND:-127.0.0.1}:52773:52773'
+    healthcheck:
+      test: ['CMD-SHELL', 'iris qlist IRIS | grep -q running']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    # To keep configuration and data across `docker compose down` (durable %SYS), create
+    # the host directory first and hand it to the container user (uid 51773 = irisowner):
+    #   mkdir -p iris-data && sudo chown 51773:51773 iris-data
+    # then add ISC_DATA_DIRECTORY=/durable/iris to environment above and uncomment:
+    # volumes:
+    #   - ./iris-data:/durable
+
+  portal:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: aperture-portal
+    ports:
+      - '${APERTURE_BIND:-127.0.0.1}:8080:80'
+    environment:
+      - IRIS_UPSTREAM=http://iris:52773
+      - IRIS_API_PREFIX=/api/admin
+    depends_on:
+      iris:
+        condition: service_healthy

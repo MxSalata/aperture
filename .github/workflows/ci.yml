@@ -2,7 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    # Feature branches too, so the IRIS job checks the package before it reaches main; and version
+    # tags, which publish that version's image.
+    branches: [main, master, 'feature/**']
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -60,30 +63,36 @@ jobs:
           name: demo-site
           path: dist-demo
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-        if: vars.DEPLOY_DEMO == 'true'
+        if: vars.DEPLOY_DEMO == 'true' && github.ref == 'refs/heads/main'
         with:
           path: dist-demo
 
   # Builds the IRIS image (official IRIS Community 2026.2 image plus the package manager),
   # which installs Aperture through its own module.xml (zpm "load") and runs the Embedded
   # Python installer at build time; then starts it and checks the SysAdmin API behaves as
-  # Aperture assumes (JWT, shapes, 202 flow, portal served).
+  # Aperture assumes (JWT, shapes, 202 flow, portal served), with a password set at start and
+  # with the image's own. The image that passed is then published to the GitHub Container
+  # Registry: latest and the version from main, the version from a tag, edge from a feature branch.
   verify-iris:
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    env:
+      COMPOSE_FILE: docker-compose.build.yml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
-      # The image has no well-known password: the build takes one as a BuildKit secret.
-      - name: Generate the image's administrator password
+      # The container gets a password of its own at start (IRIS_PASSWORD), as users are told to
+      # do; the image's demonstration password is checked separately below.
+      - name: Choose the administrator password for this run
         run: |
-          mkdir -p .secrets
           pw=$(openssl rand -base64 18 | tr '+/' '-_')
           echo "::add-mask::$pw"
-          printf '%s\n' "$pw" > .secrets/iris-password
           echo "IRIS_PASSWORD=$pw" >> "$GITHUB_ENV"
       - name: Build the IRIS image (zpm "load" of the package, Embedded Python installer)
         run: docker compose --progress plain build iris
@@ -108,6 +117,34 @@ jobs:
           IRIS_URL: http://localhost:52773
           IRIS_USER: _SYSTEM
           PORTAL_URL: http://localhost:52773/aperture/index.html
+      - name: Without IRIS_PASSWORD, the image signs in with its demonstration password
+        run: |
+          docker run -d --name aperture-default -p 127.0.0.1:52774:52773 aperture-iris:local --check-caps false --ISCAgent false
+          code=
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -u "_SYSTEM:SYS" http://localhost:52774/api/admin/info || true)
+            if [ "$code" = "200" ]; then echo "_SYSTEM/SYS signs in after $((i*5))s"; break; fi
+            sleep 5
+          done
+          docker logs aperture-default 2>&1 | grep -i "aperture image" || true
+          docker rm -f aperture-default >/dev/null
+          [ "$code" = "200" ] || { echo "_SYSTEM/SYS did not sign in (last HTTP status: '$code')"; exit 1; }
+      - name: Publish the checked image
+        if: github.event_name == 'push'
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          version=$(node -p "require('./package.json').version")
+          case "$GITHUB_REF" in
+            refs/heads/main) tags="latest $version" ;;
+            refs/tags/v*) tags="$version" ;;
+            *) tags="edge" ;;
+          esac
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          for tag in $tags; do
+            docker tag aperture-iris:local "$image:$tag"
+            docker push "$image:$tag"
+          done
+          echo "Published $image with tags: $tags"
       - name: Readiness report (Embedded Python, inside the running container)
         if: always()
         run: docker exec aperture-iris iris session IRIS -U USER "##class(Aperture.Installer).Doctor()" || true
@@ -124,7 +161,7 @@ jobs:
   # Pages is enabled (Settings → Pages → Source: GitHub Actions) and the repository variable
   # DEPLOY_DEMO is set to 'true'.
   deploy-demo:
-    if: github.event_name != 'pull_request' && vars.DEPLOY_DEMO == 'true'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_DEMO == 'true'
     needs: verify
     runs-on: ubuntu-latest
     permissions:

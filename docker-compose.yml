@@ -1,62 +1,30 @@
-# Two commands to try Aperture against a real IRIS:
-#   npm run iris:password        (or write a password of 12+ characters to .secrets/iris-password)
-#   docker compose up --build
-# then open http://localhost:8080 (nginx, browser routing) or
-#           http://localhost:52773/aperture/index.html (served by IRIS itself, hash routing).
-# Sign in as _SYSTEM (or SuperUser) with the password in .secrets/iris-password: the image has
-# no well-known password (the build sets it from that file, passed as a BuildKit secret).
+# Aperture on IRIS Community 2026.2, ready to use: this file (and, if you like, a .env next to it)
+# is all it takes, no clone of the repository and no build.
+#   docker compose up -d
+# then open http://localhost:52773/aperture/index.html and sign in as _SYSTEM with IRIS_PASSWORD
+# from .env (see .env.example), or with the demonstration password SYS when none is set.
+#
+# The image, ghcr.io/mxsalata/aperture, is built from docker/iris/Dockerfile and checked against
+# the SysAdmin API by this repository's CI before it is published. To build it from the sources
+# instead, with nginx serving the portal in front, use docker-compose.build.yml.
 
 services:
   iris:
-    # IRIS Community 2026.2 with Aperture pre-installed through its IPM package
-    # (docker/iris/Dockerfile), pinned by digest. Override the base image in a .env file; IRIS for
-    # Health Community 2026.2 (Build 221U) is tested too (docs/verification/2026-09-23-irishealth-2026.2):
-    #   IRIS_IMAGE=containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3
-    build:
-      context: .
-      dockerfile: docker/iris/Dockerfile
-      args:
-        IRIS_IMAGE: ${IRIS_IMAGE:-intersystems/iris-community:2026.2@sha256:cd2ebcab02d1ef80ec155def4418399f353d867162688c36a3705760e750bdaa}
-      secrets:
-        - iris_password
-    image: aperture-iris:local
-    container_name: aperture-iris
+    image: ghcr.io/mxsalata/aperture:${APERTURE_VERSION:-latest}
+    container_name: aperture
     command: --check-caps false --ISCAgent false
-    # Published on this machine only by default. The accounts have your generated password, not
-    # SYS, but nginx serves plain HTTP: to reach it from other hosts, put TLS in front and start
-    # with APERTURE_BIND=0.0.0.0 (or a specific interface address).
+    environment:
+      # The password of _SYSTEM, SuperUser and the image's other accounts, applied at every start.
+      # Empty keeps the demonstration password SYS: set one for anything but a try-out.
+      - IRIS_PASSWORD=${IRIS_PASSWORD:-}
+    # Published on this machine only by default. IRIS's web server here speaks plain HTTP: to
+    # reach it from other hosts, set IRIS_PASSWORD, put TLS in front and start with
+    # APERTURE_BIND=0.0.0.0 (or a specific interface address).
     ports:
-      - '${APERTURE_BIND:-127.0.0.1}:1972:1972'
       - '${APERTURE_BIND:-127.0.0.1}:52773:52773'
+      - '${APERTURE_BIND:-127.0.0.1}:1972:1972'
     healthcheck:
       test: ['CMD-SHELL', 'iris qlist IRIS | grep -q running']
       interval: 10s
       timeout: 5s
       retries: 30
-    # To keep configuration and data across `docker compose down` (durable %SYS), create
-    # the host directory first and hand it to the container user (uid 51773 = irisowner):
-    #   mkdir -p iris-data && sudo chown 51773:51773 iris-data
-    # then uncomment:
-    # environment:
-    #   - ISC_DATA_DIRECTORY=/durable/iris
-    # volumes:
-    #   - ./iris-data:/durable
-
-  portal:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    container_name: aperture-portal
-    ports:
-      - '${APERTURE_BIND:-127.0.0.1}:8080:80'
-    environment:
-      - IRIS_UPSTREAM=http://iris:52773
-      - IRIS_API_PREFIX=/api/admin
-    depends_on:
-      iris:
-        condition: service_healthy
-
-secrets:
-  # Created by npm run iris:password (git- and docker-ignored); read by the image build only.
-  iris_password:
-    file: ./.secrets/iris-password
