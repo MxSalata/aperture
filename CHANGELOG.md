@@ -16,7 +16,8 @@
   written twice with identical output, Python for the package and TypeScript for the demo, checked
   by one fixture on both sides (`ipm/python/tests`, `src/lib/__tests__/logVectors.test.ts`); the
   demo's log repeats its messages with other numbers, so the online demo shows the feature. The
-  drawer's close button now has a name for screen readers.
+  drawer's close button now has a name for screen readers. `npm run verify:live` (CI's
+  `verify-iris` job) reads the index and runs one similar query for the newest entry.
 
 ## 1.0.2 - tested on a real IRIS for Health, with disk space, new themes and a choice of charts (28 September 2026)
 

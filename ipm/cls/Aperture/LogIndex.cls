@@ -292,6 +292,9 @@ ClassMethod SimilarPython(pydir, file, path, offset, limit, topk, same, dims, ma
             "text": row[5] or "",
             "score": round(float(row[6]), 4),
         })
+    # Equal scores newest first: the index orders by similarity only.
+    rows.sort(key=lambda r: r["time"], reverse=True)
+    rows.sort(key=lambda r: r["score"], reverse=True)
     matches = [r for r in rows if not (r["file"] == fid and r["offset"] == offset)][:limit]
     alike = [r for r in rows if r["score"] >= same]
     times = sorted(r["time"] for r in alike if r["time"])
