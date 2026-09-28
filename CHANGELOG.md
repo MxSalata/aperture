@@ -2,19 +2,21 @@
 
 ## Unreleased
 
-- **Groundwork for "similar entries" in the Messages log.** One wording vectoriser, written twice
-  with identical output: Python for the package on the instance (`ipm/python/aperture_vectors.py`)
-  and TypeScript for the demo (`src/lib/logVectors.ts`). An entry's time, pid and severity are
-  dropped, the rest lower-cased, file paths become `<path>`, hexadecimal ids `<h>` and numbers
-  `<n>`; its words and neighbouring word pairs are hashed (FNV-1a) into 256 signed buckets, weighted
-  `1 + ln(count)`, and normalised, so the same message with other numbers scores 1.0 by cosine and
-  unrelated messages near 0. One fixture (`ipm/python/tests/fixture.json`) is checked by both test
-  suites, the Python one without IRIS (`python3 -m unittest discover -s ipm/python/tests`). On the
-  instance, the package keeps a wording index of `messages.log` and its rotations: two tables of
-  its namespace (`Aperture.LogLine`, with an HNSW index over a 256-dimensional vector property, and
-  `Aperture.LogIndexFile`, a watermark per file), filled incrementally and within bounds; `/api/aperture`
-  gains `GET` and `POST /logs/index` and `GET /logs/similar?file=&offset=&limit=`, and every window
-  of `/logs/read` now carries the byte offset of each line.
+- **Similar entries in the Messages log, with IRIS Vector Search.** Open an entry and choose
+  "Similar entries": the drawer lists the entries worded like it across `messages.log` and its
+  rotations, each with a similarity percentage, and says how often the same message was seen and
+  when it was first and last seen. The matching is by wording, not by meaning: the package keeps a
+  wording index of the log on the instance, one row per entry with a 256-dimensional vector of its
+  hashed words (`Aperture.LogLine`, a `%Library.Vector` property under an `%SQL.Index.HNSW` index),
+  and answers `GET /api/aperture/logs/similar` with the nearest entries by `VECTOR_COSINE`. The
+  index is incremental and bounded (a file's newest 8 MB first, then what was appended, at most 2 MB
+  and 4,000 entries per call), refreshed before a search when it is behind, and the drawer says
+  "indexing" while that happens; `GET` and `POST /logs/index` show and refresh it, and every window
+  of `/logs/read` now carries the byte offset of each line, which names an entry. The vectoriser is
+  written twice with identical output, Python for the package and TypeScript for the demo, checked
+  by one fixture on both sides (`ipm/python/tests`, `src/lib/__tests__/logVectors.test.ts`); the
+  demo's log repeats its messages with other numbers, so the online demo shows the feature. The
+  drawer's close button now has a name for screen readers.
 
 ## 1.0.2 - tested on a real IRIS for Health, with disk space, new themes and a choice of charts (28 September 2026)
 

@@ -1,9 +1,18 @@
 import { Alert, Badge, Button, Code, Drawer, Group, MultiSelect, Select, Stack, Text } from '@mantine/core';
+import { IconListSearch } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { IconArrowLeft, IconArrowUp, IconInfoCircle } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { fetchLogSources, isReaderMissing, readLogWindow, type LogSource, type LogWindow } from '@/api/logs';
+import {
+  fetchLogSources,
+  isReaderMissing,
+  lineOffsets,
+  readLogWindow,
+  type LogSource,
+  type LogWindow,
+} from '@/api/logs';
+import { SimilarEntries } from './SimilarEntries';
 import { mgmntCredentials } from '@/api/mgmnt';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -80,6 +89,8 @@ export default function MessagesLogPage() {
   const [readError, setReadError] = useState<unknown>(null);
   const [severities, setSeverities] = useState<string[]>([]);
   const [open, setOpen] = useState<LogEntry | null>(null);
+  // The drawer shows the entry, or the entries worded like it (the package's wording index).
+  const [view, setView] = useState<'entry' | 'similar'>('entry');
 
   const latest = useQuery({
     queryKey: ['aperture-logs', 'window', file?.id],
@@ -95,8 +106,11 @@ export default function MessagesLogPage() {
   }, [latest.data, file, older]);
 
   const entries = useMemo(() => {
+    // One parse over every window, so a continuation line at a window's start still joins the
+    // entry before it; each line keeps its byte offset, which names it to the reader.
     const all = windows.flatMap((w) => w.lines);
-    return parseLogLines(all).reverse(); // newest first
+    const offsets = windows.flatMap((w) => lineOffsets(w));
+    return parseLogLines(all, offsets).reverse(); // newest first
   }, [windows]);
   const counts = useMemo(() => severityCounts(entries), [entries]);
   // The table's own filter box searches the text; this narrows by severity first.
@@ -296,9 +310,12 @@ export default function MessagesLogPage() {
               columns={columns}
               loading={latest.isPending}
               error={latest.error}
-              getRowId={(r) => `${r.index}-${r.time}-${r.pid ?? ''}`}
+              getRowId={(r) => `${r.offset ?? r.index}-${r.time}-${r.pid ?? ''}`}
               getRowLabel={(r) => `Log entry ${r.time || 'without a stamp'}`}
-              onRowClick={setOpen}
+              onRowClick={(r) => {
+                setView('entry');
+                setOpen(r);
+              }}
               pageSize={50}
               serverLimit={0}
               exportName={file ? file.id.replace(/\.log$/, '') : 'messages'}
@@ -346,9 +363,22 @@ export default function MessagesLogPage() {
         onClose={() => setOpen(null)}
         position="right"
         size="lg"
-        title={<b>Log entry</b>}
+        title={<b>{view === 'similar' ? 'Similar entries' : 'Log entry'}</b>}
+        closeButtonProps={{ 'aria-label': 'Close' }}
       >
-        {open ? (
+        {open && view === 'similar' && open.offset !== null && file ? (
+          <Stack gap="sm">
+            <Button
+              variant="subtle"
+              size="compact-sm"
+              onClick={() => setView('entry')}
+              style={{ alignSelf: 'flex-start' }}
+            >
+              Back to the entry
+            </Button>
+            <SimilarEntries entry={{ ...open, offset: open.offset }} file={file.id} />
+          </Stack>
+        ) : open ? (
           <Stack gap="sm">
             <Group gap="xs">
               <SeverityBadge severity={open.severity} />
@@ -359,6 +389,21 @@ export default function MessagesLogPage() {
             <Code block style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {open.raw}
             </Code>
+            {open.offset !== null && open.time ? (
+              <Button
+                variant="light"
+                size="xs"
+                leftSection={<IconListSearch size={14} />}
+                onClick={() => setView('similar')}
+                style={{ alignSelf: 'flex-start' }}
+              >
+                Similar entries
+              </Button>
+            ) : (
+              <Text size="xs" c="dimmed">
+                Similar entries are found for stamped lines of a file the reader indexes.
+              </Text>
+            )}
           </Stack>
         ) : null}
       </Drawer>
