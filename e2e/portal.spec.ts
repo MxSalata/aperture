@@ -31,17 +31,32 @@ test.describe('Aperture (demo mode)', () => {
     await expect(page.getByText('File size')).toBeVisible({ timeout: 20_000 });
   });
 
-  test('says how much room each disk behind the databases has left', async ({ page }) => {
+  test('says how much room each disk behind the databases has left, as a share or a size', async ({
+    page,
+  }) => {
     await loginDemo(page);
     await go(page, '/databases');
     const disks = page.locator('.mantine-Paper-root').filter({ hasText: 'Disk space' });
     await expect(disks.getByText('/irisdata/', { exact: true })).toBeVisible();
-    await expect(disks.getByText('9.2 GiB free')).toBeVisible();
+    await expect(disks.getByText('12% free', { exact: true })).toBeVisible();
+    await expect(disks.getByText('9.2 GiB free of 78.1 GiB')).toBeVisible();
     await expect(disks.getByText('low', { exact: true })).toBeVisible();
     await expect(disks.getByText('/usr/irissys/mgr/', { exact: true })).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: 'Open database CLINICAL' }).getByRole('cell', { name: '9.2 GiB low' }),
-    ).toBeVisible();
+    await expect(disks.getByText('36% free', { exact: true })).toBeVisible();
+
+    // The column shows the share of the disk; a click on a value shows sizes instead, without
+    // opening the database, and the choice is kept on this device.
+    const clinical = page.getByRole('button', { name: 'Open database CLINICAL' });
+    await expect(clinical.getByRole('cell', { name: '12% low' })).toBeVisible();
+    await clinical.getByText('12%', { exact: true }).click();
+    await expect(clinical.getByRole('cell', { name: '9.2 GiB low' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Databases', exact: true })).toBeVisible();
+    await page.reload();
+    await expect(clinical.getByRole('cell', { name: '9.2 GiB low' })).toBeVisible();
+
+    // The toolbar's switch does the same from the keyboard.
+    await page.getByText('% of disk', { exact: true }).click();
+    await expect(clinical.getByRole('cell', { name: '12% low' })).toBeVisible();
   });
 
   test('queues an integrity check and follows it in the Job Center', async ({ page }) => {

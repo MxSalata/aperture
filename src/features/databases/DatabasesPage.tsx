@@ -6,6 +6,8 @@ import {
   Modal,
   NumberInput,
   Paper,
+  Progress,
+  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
@@ -23,9 +25,11 @@ import { api, run } from '@/api/hooks';
 import { useApiMutation } from '@/api/hooks';
 import { PageHeader } from '@/components/PageHeader';
 import { RefreshControl } from '@/components/RefreshControl';
-import { DataTable, type ColumnDef } from '@/components/DataTable';
+import { DataTable, stop, type ColumnDef } from '@/components/DataTable';
 import { StatusBadge, BoolBadge } from '@/components/StatusBadge';
-import { formatMB } from '@/lib/format';
+import { formatMB, formatPercent } from '@/lib/format';
+import { useHostMetrics } from '@/features/monitor/useHostMetrics';
+import { useDiskFree, type DiskFreeUnit } from '@/stores/diskFree';
 import {
   dbKeys,
   dirKey,
@@ -36,7 +40,7 @@ import {
   useLocalDatabases,
   type DatabaseRow,
 } from './useDatabases';
-import { diskFreeOf, storageLocations, type SpaceLevel, type StorageLocation } from './storage';
+import { DiskUsage, diskFreeOf, storageLocations, type SpaceLevel, type StorageLocation } from './storage';
 
 export function databaseDetailUrl(row: { Name?: string; Directory?: string }) {
   const q = new URLSearchParams();
@@ -55,6 +59,9 @@ function SpaceBadge({ level }: { level?: SpaceLevel }) {
   );
 }
 
+/** A share of a disk: one decimal under 10 %, where the difference matters. */
+const formatShare = (percent: number) => formatPercent(percent, percent < 10 ? 1 : 0);
+
 /** Where the database files live and how much room each disk has left. */
 function DiskSpace({ locations }: { locations: StorageLocation[] }) {
   if (!locations.length) return null;
@@ -65,7 +72,7 @@ function DiskSpace({ locations }: { locations: StorageLocation[] }) {
           Disk space
         </Text>
         <Text size="xs" c="dimmed">
-          Free space IRIS reports on the disks that hold the database files
+          Free space on the disks that hold the database files, as IRIS reports it
         </Text>
       </Group>
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
@@ -78,8 +85,21 @@ function DiskSpace({ locations }: { locations: StorageLocation[] }) {
               <SpaceBadge level={l.level} />
             </Group>
             <Text size="lg" fw={650} className="tabular">
-              {formatMB(l.freeMB)} free
+              {l.percentFree === undefined ? formatMB(l.freeMB) : formatShare(l.percentFree)} free
             </Text>
+            {l.percentFree === undefined ? null : (
+              <>
+                <Progress
+                  size="sm"
+                  value={100 - l.percentFree}
+                  color={l.level === 'critical' ? 'red' : l.level === 'low' ? 'orange' : 'aperture'}
+                  aria-label={`${l.path}: ${formatShare(100 - l.percentFree)} of the disk in use`}
+                />
+                <Text size="xs" c="dimmed" className="tabular">
+                  {formatMB(l.freeMB)} free of {formatMB(l.totalMB)}
+                </Text>
+              </>
+            )}
             <Text size="xs" c="dimmed">
               {l.databases.length} database{l.databases.length === 1 ? '' : 's'} · {formatMB(l.usedMB)}:{' '}
               {l.databases.slice(0, 6).join(', ')}
@@ -92,7 +112,46 @@ function DiskSpace({ locations }: { locations: StorageLocation[] }) {
   );
 }
 
-const columns: ColumnDef<DatabaseRow, unknown>[] = [
+/**
+ * The free space of a database's disk, as a share of the disk or as a size: a click on the value
+ * switches the whole column (the toolbar's switch does the same from the keyboard), and the other
+ * figure is in its title.
+ */
+function DiskFreeCell({ row, unit, onToggle }: { row: DatabaseRow; unit: DiskFreeUnit; onToggle(): void }) {
+  const { DiskFreeMB: freeMB, DiskPercentFree: percent } = row;
+  if (freeMB === undefined && percent === undefined) return null;
+  const size = freeMB === undefined ? undefined : `${formatMB(freeMB)} free`;
+  const share = percent === undefined ? undefined : `${formatShare(percent)} of the disk free`;
+  const showShare = unit === 'percent' && percent !== undefined;
+  const both = size !== undefined && share !== undefined;
+  return (
+    <Group gap={6} wrap="nowrap">
+      <Text
+        span
+        size="sm"
+        className="tabular"
+        title={both ? (showShare ? size : share) : undefined}
+        style={{
+          whiteSpace: 'nowrap',
+          ...(both ? { cursor: 'pointer', textDecoration: 'underline dotted' } : {}),
+        }}
+        onClick={
+          both
+            ? (e) => {
+                stop(e);
+                onToggle();
+              }
+            : undefined
+        }
+      >
+        {showShare ? formatShare(percent) : formatMB(freeMB)}
+      </Text>
+      <SpaceBadge level={row.DiskLevel} />
+    </Group>
+  );
+}
+
+const columnsFor = (unit: DiskFreeUnit, onToggle: () => void): ColumnDef<DatabaseRow, unknown>[] => [
   {
     accessorKey: 'Name',
     header: 'Name',
@@ -115,22 +174,27 @@ const columns: ColumnDef<DatabaseRow, unknown>[] = [
   {
     accessorKey: 'SizeMB',
     header: 'Size',
-    cell: (c) => <span className="tabular">{formatMB(c.getValue() as number)}</span>,
+    cell: (c) => (
+      <span className="tabular" style={{ whiteSpace: 'nowrap' }}>
+        {formatMB(c.getValue() as number)}
+      </span>
+    ),
   },
   {
     accessorKey: 'MaxSize',
     header: 'Max size',
-    cell: (c) => <span className="tabular">{formatMB(c.getValue() as string)}</span>,
+    cell: (c) => (
+      <span className="tabular" style={{ whiteSpace: 'nowrap' }}>
+        {formatMB(c.getValue() as string)}
+      </span>
+    ),
   },
   {
-    accessorKey: 'DiskFreeMB',
+    // The id of the size-only column this replaced, so saved sorting and column choices still apply.
+    id: 'DiskFreeMB',
+    accessorFn: (r) => (unit === 'percent' ? (r.DiskPercentFree ?? undefined) : r.DiskFreeMB),
     header: 'Disk free',
-    cell: ({ row }) => (
-      <Group gap={6} wrap="nowrap">
-        <span className="tabular">{formatMB(row.original.DiskFreeMB)}</span>
-        <SpaceBadge level={row.original.DiskLevel} />
-      </Group>
-    ),
+    cell: ({ row }) => <DiskFreeCell row={row.original} unit={unit} onToggle={onToggle} />,
   },
   {
     accessorKey: 'Resource',
@@ -328,6 +392,13 @@ export default function DatabasesPage() {
   const joined = useMemo(() => joinDatabases(config.data, local.data), [config.data, local.data]);
   const dirs = useMemo(() => joined.flatMap((r) => (r.Directory && r.local ? [r.Directory] : [])), [joined]);
   const volumes = useDatabaseVolumes(dirs);
+  // How full each disk is comes from /api/monitor (the SysAdmin API reports free space only).
+  const host = useHostMetrics(60_000);
+  const usage = useMemo(() => new DiskUsage(host.data), [host.data]);
+  const unit = useDiskFree((s) => s.unit);
+  const setUnit = useDiskFree((s) => s.set);
+  const toggleUnit = useDiskFree((s) => s.toggle);
+  const columns = useMemo(() => columnsFor(unit, toggleUnit), [unit, toggleUnit]);
   const locations = useMemo(
     () =>
       storageLocations(
@@ -335,19 +406,26 @@ export default function DatabasesPage() {
           name: r.Name || r.Directory || '',
           volumes: (r.Directory && volumes.data?.get(dirKey(r.Directory))) || [],
         })),
+        usage,
       ),
-    [joined, volumes.data],
+    [joined, volumes.data, usage],
   );
   const rows = useMemo(
     () =>
       joined.map((r) => {
         const free = diskFreeOf(r.Directory ? volumes.data?.get(dirKey(r.Directory)) : undefined);
+        const percent = usage.percentFree(r.Directory);
         const name = r.Name || r.Directory || '';
-        return free === undefined
+        return free === undefined && percent === undefined
           ? r
-          : { ...r, DiskFreeMB: free, DiskLevel: locations.find((l) => l.databases.includes(name))?.level };
+          : {
+              ...r,
+              DiskFreeMB: free,
+              DiskPercentFree: percent,
+              DiskLevel: locations.find((l) => l.databases.includes(name))?.level,
+            };
       }),
-    [joined, volumes.data, locations],
+    [joined, volumes.data, usage, locations],
   );
   const totalMB = rows.reduce((a, r) => a + (r.SizeMB ?? 0), 0);
 
@@ -365,6 +443,7 @@ export default function DatabasesPage() {
                 config.refetch();
                 local.refetch();
                 volumes.refetch();
+                host.refetch();
               }}
               loading={config.isFetching || local.isFetching || volumes.isFetching}
             />
@@ -387,9 +466,23 @@ export default function DatabasesPage() {
         getRowId={(r) => r.Directory ?? r.Name ?? ''}
         initialSorting={[{ id: 'Name', desc: false }]}
         toolbar={
-          <Text size="xs" c="dimmed" className="tabular">
-            {rows.length} databases · {formatMB(totalMB)} on disk
-          </Text>
+          <Group gap="sm">
+            <Text size="xs" c="dimmed" className="tabular">
+              {rows.length} databases · {formatMB(totalMB)} on disk
+            </Text>
+            {rows.some((r) => r.DiskPercentFree !== undefined) ? (
+              <SegmentedControl
+                size="xs"
+                aria-label="Show disk free as"
+                value={unit}
+                onChange={(v) => setUnit(v as DiskFreeUnit)}
+                data={[
+                  { label: '% of disk', value: 'percent' },
+                  { label: 'Size', value: 'size' },
+                ]}
+              />
+            ) : null}
+          </Group>
         }
       />
       <CreateDatabaseModal opened={opened} onClose={close} rows={rows} />

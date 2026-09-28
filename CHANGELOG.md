@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **Disk free as a share of the disk.** A free size says little without the size of the disk behind
+  it. The Databases screen's "Disk free" column now shows the share of each database's disk that is
+  free; a click on a value, or the toolbar's "% of disk / Size" switch, shows sizes instead, and the
+  choice is kept on this device. The Disk space card shows both, with a bar of the disk in use and
+  its size ("9.2 GiB free of 78.1 GiB"). The share is `iris_disk_percent_full` of `/api/monitor`,
+  read per database directory, because the SysAdmin API reports free space only (the volumes'
+  `VolumeDirectoryTotalSize` is the database's own size; on IRIS for Health 2026.2 the durable disk
+  is 72.3 % free, the image's file system 77.3 %); where the monitor has no figure, the size is
+  shown as before. The demo's monitor now labels its disk metrics as IRIS does (`id` the database,
+  `dir` its directory) and reports whole disks rather than databases. Sizes no longer wrap in the
+  table.
 - **Similar entries in the Messages log, with IRIS Vector Search.** Open an entry and choose
   "Similar entries": the drawer lists the entries worded like it across `messages.log` and its
   rotations, each with a similarity percentage, and says how often the same message was seen and

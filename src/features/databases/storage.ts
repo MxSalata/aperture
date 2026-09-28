@@ -22,6 +22,9 @@ export interface StorageLocation {
   /** The deepest directory all the volumes on this disk share, e.g. `/durable/iris/mgr/`. */
   path: string;
   freeMB: number;
+  /** Per cent of the disk free, and its size in MB, when /api/monitor reports how full it is. */
+  percentFree?: number;
+  totalMB?: number;
   /** The databases with a volume here, by name. */
   databases: string[];
   /** What those volumes occupy, in MB. */
@@ -76,11 +79,59 @@ export function commonDirectory(dirs: string[]): string {
 }
 
 /**
+ * A directory as a join key: without its trailing separator, and case-folded when it is a
+ * Windows path (`C:\InterSystems\IRIS\mgr\user\` and `c:\intersystems\iris\mgr\USER` are
+ * one database; Windows file names are case-insensitive, Unix ones are not).
+ */
+export function dirKey(dir: string): string {
+  const trimmed = dir.replace(/[\\/]+$/, '');
+  return /^[a-z]:[\\/]|\\/i.test(trimmed) ? trimmed.toLowerCase().replace(/\//g, '\\') : trimmed;
+}
+
+/** A sample of /api/monitor/metrics: its name, labels and value. */
+interface Sample {
+  name: string;
+  labels: Record<string, string>;
+  value: number;
+}
+
+/**
+ * How full, in per cent, the disk behind each database directory is: `iris_disk_percent_full`
+ * of /api/monitor, labelled `id` (the database) and `dir` (its directory). A sample that carries
+ * the directory as its `id` instead is read too.
+ */
+export class DiskUsage {
+  private readonly byDir = new Map<string, number>();
+
+  constructor(samples: Sample[] | undefined) {
+    for (const s of samples ?? []) {
+      if (s.name !== 'iris_disk_percent_full' || !Number.isFinite(s.value)) continue;
+      const dir = s.labels.dir ?? (/[\\/]/.test(s.labels.id ?? '') ? s.labels.id : undefined);
+      if (dir) this.byDir.set(dirKey(dir), s.value);
+    }
+  }
+
+  /** Per cent of the disk behind `dir` in use, when reported. */
+  percentFull(dir: string | undefined): number | undefined {
+    return dir === undefined ? undefined : this.byDir.get(dirKey(dir));
+  }
+
+  /** Per cent of the disk behind `dir` free, when reported. */
+  percentFree(dir: string | undefined): number | undefined {
+    const full = this.percentFull(dir);
+    return full === undefined ? undefined : Math.max(0, 100 - full);
+  }
+}
+
+/**
  * The disks behind the databases, least free space first. Volumes are put on one disk when they
  * report the same free space (and, on Windows, the same drive); a disk is named by the deepest
  * directory its volumes share.
  */
-export function storageLocations(databases: { name: string; volumes: Volume[] }[]): StorageLocation[] {
+export function storageLocations(
+  databases: { name: string; volumes: Volume[] }[],
+  usage: DiskUsage = new DiskUsage([]),
+): StorageLocation[] {
   const disks: { free: number; drive: string; dirs: string[]; names: Set<string>; used: number }[] = [];
   for (const db of databases)
     for (const v of db.volumes) {
@@ -97,12 +148,19 @@ export function storageLocations(databases: { name: string; volumes: Volume[] }[
       disk.used += v.Size ?? 0;
     }
   return disks
-    .map((d) => ({
-      path: commonDirectory(d.dirs),
-      freeMB: d.free,
-      databases: [...d.names].sort(),
-      usedMB: d.used,
-      level: spaceLevel(d.free, d.used),
-    }))
+    .map((d) => {
+      // The directories of one disk report the same figure; the fullest reading wins.
+      const full = Math.max(...d.dirs.map((dir) => usage.percentFull(dir) ?? -1));
+      const percentFree = full < 0 ? undefined : Math.max(0, 100 - full);
+      return {
+        path: commonDirectory(d.dirs),
+        freeMB: d.free,
+        percentFree,
+        totalMB: percentFree ? Math.round(d.free / (percentFree / 100)) : undefined,
+        databases: [...d.names].sort(),
+        usedMB: d.used,
+        level: spaceLevel(d.free, d.used),
+      };
+    })
     .sort((a, b) => a.freeMB - b.freeMB);
 }

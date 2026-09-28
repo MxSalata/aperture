@@ -2,7 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api, result } from '@/api/client';
 import type { ConfigDatabaseList, Schemas } from '@/api/types';
 import { mapLimit } from '@/lib/limiter';
-import type { SpaceLevel, Volume } from './storage';
+import { dirKey, type SpaceLevel, type Volume } from './storage';
+
+export { dirKey };
 
 export type ConfigRow = ConfigDatabaseList[number];
 /** The spec declares LocalDatabaseList as an object; the server returns an array. Accept both. */
@@ -18,6 +20,8 @@ export interface DatabaseRow extends ConfigRow {
   /** Free space on the disk the database grows on, in MB (from its volumes). */
   DiskFreeMB?: number;
   DiskLevel?: SpaceLevel;
+  /** Per cent of that disk free, when /api/monitor reports how full it is. */
+  DiskPercentFree?: number;
 }
 
 export function normalizeLocal(raw: unknown): LocalRow[] {
@@ -69,16 +73,6 @@ export function useLocalDatabases() {
     queryKey: dbKeys.local,
     queryFn: async () => normalizeLocal(await result(api().GET('/v2/database-dirs'))),
   });
-}
-
-/**
- * A directory as a join key: without its trailing separator, and case-folded when it is a
- * Windows path (`C:\InterSystems\IRIS\mgr\user\` and `c:\intersystems\iris\mgr\USER` are
- * one database; Windows file names are case-insensitive, Unix ones are not).
- */
-export function dirKey(dir: string): string {
-  const trimmed = dir.replace(/[\\/]+$/, '');
-  return /^[a-z]:[\\/]|\\/i.test(trimmed) ? trimmed.toLowerCase().replace(/\//g, '\\') : trimmed;
 }
 
 /**

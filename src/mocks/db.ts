@@ -17,6 +17,15 @@ export function diskFreeMB(dir: string): number {
   return dir.startsWith(DATA) ? 9_421 : 184_320;
 }
 
+/**
+ * How full, in per cent, the disk that holds `dir` is, as /api/monitor's iris_disk_percent_full
+ * reports it: the data disk is small (about 78 GiB) and filling up, the other has 500 GiB.
+ */
+export function diskPercentFull(dir: string): number {
+  const total = dir.startsWith(DATA) ? 80_000 : 512_000;
+  return Math.round((1 - diskFreeMB(dir) / total) * 10_000) / 100;
+}
+
 export interface DbConfig {
   Name: string;
   Directory: string;

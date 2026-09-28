@@ -2,7 +2,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { resetDb } from '@/mocks/db';
 import { resetClients } from '@/api/client';
 import { useSession } from '@/stores/session';
-import { commonDirectory, diskFreeOf, spaceLevel, storageLocations, type Volume } from '../storage';
+import {
+  DiskUsage,
+  commonDirectory,
+  diskFreeOf,
+  spaceLevel,
+  storageLocations,
+  type Volume,
+} from '../storage';
 import { dirKey, fetchVolumes } from '../useDatabases';
 
 const vol = (VolumeDirectory: string, Size: number, DiskFree: number, VolumeNumber = 0): Volume => ({
@@ -81,6 +88,65 @@ describe('where the databases live and how much room is left', () => {
     expect(diskFreeOf([vol('/a/', 1, 900, 0), vol('/b/', 1, 12, 1)])).toBe(12);
     expect(diskFreeOf([])).toBeUndefined();
     expect(diskFreeOf([{ VolumeDirectory: '/a/' }])).toBeUndefined();
+  });
+});
+
+describe('how full each disk is', () => {
+  // /api/monitor/metrics on IRIS for Health 2026.2 (28 Sep): one sample per database, labelled with
+  // its name and directory; every directory of a disk reports the disk's figure.
+  const metrics = [
+    { name: 'iris_disk_percent_full', labels: { id: 'USER', dir: '/durable/iris/mgr/user/' }, value: 27.7 },
+    { name: 'iris_disk_percent_full', labels: { id: 'IRISSYS', dir: '/durable/iris/mgr/' }, value: 27.7 },
+    { name: 'iris_disk_percent_full', labels: { id: 'HSLIB', dir: '/usr/irissys/mgr/hslib/' }, value: 22.69 },
+    { name: 'iris_db_size_mb', labels: { id: 'USER', dir: '/durable/iris/mgr/user/' }, value: 11 },
+  ];
+
+  it('reads the share of the disk in use and free for a directory, with or without its trailing slash', () => {
+    const usage = new DiskUsage(metrics);
+    expect(usage.percentFull('/durable/iris/mgr/user/')).toBe(27.7);
+    expect(usage.percentFree('/durable/iris/mgr/user')).toBeCloseTo(72.3);
+    expect(usage.percentFree('/usr/irissys/mgr/hslib/')).toBeCloseTo(77.31);
+    expect(usage.percentFree('/elsewhere/')).toBeUndefined();
+    expect(usage.percentFree(undefined)).toBeUndefined();
+    expect(new DiskUsage(undefined).percentFree('/durable/iris/mgr/')).toBeUndefined();
+  });
+
+  it('also takes a directory given as the id, and ignores an id that is a database name', () => {
+    const usage = new DiskUsage([
+      { name: 'iris_disk_percent_full', labels: { id: '/usr/irissys/mgr/user/' }, value: 77 },
+      { name: 'iris_disk_percent_full', labels: { id: 'USER' }, value: 12 },
+    ]);
+    expect(usage.percentFull('/usr/irissys/mgr/user/')).toBe(77);
+    expect(usage.percentFull('USER')).toBeUndefined();
+  });
+
+  it('gives each disk its share free and its size, from the fullest reading of its directories', () => {
+    const usage = new DiskUsage([
+      ...metrics,
+      {
+        name: 'iris_disk_percent_full',
+        labels: { id: 'IRISTEMP', dir: '/durable/iris/mgr/iristemp/' },
+        value: 28,
+      },
+    ]);
+    const [image, durable] = storageLocations(
+      [
+        { name: 'USER', volumes: [vol('/durable/iris/mgr/user/', 11, 2_730_752)] },
+        { name: 'IRISTEMP', volumes: [vol('/durable/iris/mgr/iristemp/', 21, 2_730_752)] },
+        { name: 'HSLIB', volumes: [vol('/usr/irissys/mgr/hslib/', 1627, 79_109)] },
+      ],
+      usage,
+    );
+    expect(image).toMatchObject({ path: '/usr/irissys/mgr/hslib/', percentFree: expect.closeTo(77.31, 2) });
+    expect(image.totalMB).toBe(Math.round(79_109 / 0.7731));
+    expect(durable).toMatchObject({ path: '/durable/iris/mgr/', percentFree: 72 });
+    expect(durable.totalMB).toBe(Math.round(2_730_752 / 0.72));
+    // Without the monitor's figures, a disk has its free space only.
+    const [bare] = storageLocations([
+      { name: 'USER', volumes: [vol('/durable/iris/mgr/user/', 11, 2_730_752)] },
+    ]);
+    expect(bare.percentFree).toBeUndefined();
+    expect(bare.totalMB).toBeUndefined();
   });
 });
 

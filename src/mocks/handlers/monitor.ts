@@ -1,4 +1,4 @@
-import { mockDb } from '../db';
+import { diskFreeMB, diskPercentFull, mockDb } from '../db';
 import { counter, drift, ok, fmtDate } from '../util';
 import { http, HttpResponse } from 'msw';
 import { route, OPERATE } from '../secure';
@@ -84,11 +84,15 @@ function mainDashboard() {
 function prometheusText(): string {
   const cpu = drift(23, 12, 90, 2).toFixed(2);
   const mem = drift(64, 6, 200, 3).toFixed(2);
+  // Labelled as IRIS labels them: id is the database's name, dir its directory; the disk figures
+  // are those of the disk the directory is on (iris_directory_space in MB free).
   const dbs = mockDb.localDbs.map((d) => ({
+    id: mockDb.configDbs.find((c) => c.Directory === d.Directory)?.Name ?? d.Directory,
     dir: d.Directory,
     size: d.Size,
     free: Math.round(d.AvailableSpace),
-    full: Math.min(99, Math.round(100 - (d.AvailableSpace / Math.max(1, d.Size)) * 100)),
+    diskFree: diskFreeMB(d.Directory),
+    full: diskPercentFull(d.Directory),
   }));
   const lines = [
     '# HELP iris_cpu_usage Percentage of CPU used by the instance',
@@ -120,13 +124,16 @@ function prometheusText(): string {
     `iris_jrn_free_space{id="primary"} ${Math.round(drift(41_200, 200, 300))}`,
     '# HELP iris_db_size_mb Database size in MB',
     '# TYPE iris_db_size_mb gauge',
-    ...dbs.map((d) => `iris_db_size_mb{id="${d.dir}"} ${d.size}`),
+    ...dbs.map((d) => `iris_db_size_mb{id="${d.id}",dir="${d.dir}"} ${d.size}`),
     '# HELP iris_db_free_space Free space available to the database (MB)',
     '# TYPE iris_db_free_space gauge',
-    ...dbs.map((d) => `iris_db_free_space{id="${d.dir}"} ${d.free}`),
+    ...dbs.map((d) => `iris_db_free_space{id="${d.id}"} ${d.free}`),
+    '# HELP iris_directory_space Free space on the disk that holds the database directory (MB)',
+    '# TYPE iris_directory_space gauge',
+    ...dbs.map((d) => `iris_directory_space{id="${d.id}",dir="${d.dir}"} ${d.diskFree}`),
     '# HELP iris_disk_percent_full Percentage of the volume holding the database that is in use',
     '# TYPE iris_disk_percent_full gauge',
-    ...dbs.map((d) => `iris_disk_percent_full{id="${d.dir}"} ${d.full}`),
+    ...dbs.map((d) => `iris_disk_percent_full{id="${d.id}",dir="${d.dir}"} ${d.full.toFixed(2)}`),
     '# HELP iris_wd_cycle_time Write daemon cycle time in ms',
     '# TYPE iris_wd_cycle_time gauge',
     `iris_wd_cycle_time ${Math.round(drift(12, 6, 30))}`,
