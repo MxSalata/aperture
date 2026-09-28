@@ -31,10 +31,34 @@ import {
   type Icon,
 } from '@tabler/icons-react';
 
+/** The colours an entry's icon may take: Mantine colour names with a contrast-tuned `-text` token in styles.css. */
+export const NAV_COLORS = [
+  'teal',
+  'indigo',
+  'grape',
+  'green',
+  'violet',
+  'blue',
+  'cyan',
+  'red',
+  'orange',
+  'yellow',
+  'lime',
+  'pink',
+  'gray',
+] as const;
+export type NavColor = (typeof NAV_COLORS)[number];
+
 export interface NavItem {
   label: string;
   to: string;
   icon: Icon;
+  /**
+   * The icon's colour, drawn through `--mantine-color-<name>-text` (4.5:1 on every surface of
+   * every scheme, so 3:1 for the icon holds; high contrast draws it in the text colour). Meaning
+   * where it helps (security cool, logs and alerts warm, storage green), neighbours different.
+   */
+  color: NavColor;
   /** Any of these resources grants access. */
   privileges: string[];
   description?: string;
@@ -54,6 +78,7 @@ export const NAV: NavSection[] = [
         label: 'Dashboard',
         to: '/',
         icon: IconGauge,
+        color: 'teal',
         privileges: ['%Admin_Operate:U'],
         description: 'Live system health, performance and license usage',
         keywords: ['home', 'monitor', 'stats'],
@@ -62,6 +87,7 @@ export const NAV: NavSection[] = [
         label: 'Job Center',
         to: '/jobs',
         icon: IconClipboardList,
+        color: 'indigo',
         privileges: ['%Admin_Operate:U'],
         description: 'Long-running operations queued through the API',
         keywords: ['async', 'tasks', 'background'],
@@ -70,6 +96,7 @@ export const NAV: NavSection[] = [
         label: 'Activity',
         to: '/activity',
         icon: IconHistory,
+        color: 'grape',
         privileges: [],
         description: 'Changes sent from this tab and what the server answered',
         keywords: ['history', 'log', 'changes'],
@@ -83,6 +110,7 @@ export const NAV: NavSection[] = [
         label: 'Databases',
         to: '/databases',
         icon: IconDatabase,
+        color: 'green',
         // The spec says Manage or Operate; IRIS 2026.2 refuses the lists to %Operator (quirk
         // database-lists-need-manage).
         privileges: ['%Admin_Manage:U'],
@@ -92,6 +120,7 @@ export const NAV: NavSection[] = [
         label: 'Namespaces',
         to: '/namespaces',
         icon: IconLayoutGrid,
+        color: 'violet',
         privileges: ['%Admin_Manage:U'],
         description: 'Namespaces and their global, package and routine mappings',
       },
@@ -99,6 +128,7 @@ export const NAV: NavSection[] = [
         label: 'Processes',
         to: '/processes',
         icon: IconCpu,
+        color: 'blue',
         privileges: ['%Admin_Operate:U'],
         description: 'Running processes: examine, suspend, terminate, broadcast',
       },
@@ -106,6 +136,7 @@ export const NAV: NavSection[] = [
         label: 'Devices',
         to: '/devices',
         icon: IconDevices,
+        color: 'cyan',
         privileges: ['%Admin_Manage:U'],
         description: 'Terminal, printer, spool and tape devices and their settings',
         keywords: ['terminal', 'printer', 'spool', 'tape', 'telnet'],
@@ -114,6 +145,7 @@ export const NAV: NavSection[] = [
         label: 'Locks',
         to: '/locks',
         icon: IconLock,
+        color: 'red',
         privileges: ['%Admin_Operate:U'],
         description: 'Lock table',
       },
@@ -121,6 +153,7 @@ export const NAV: NavSection[] = [
         label: 'Journals',
         to: '/journal',
         icon: IconBook,
+        color: 'orange',
         privileges: ['%Admin_Operate:U', '%Admin_Journal:U'],
         description: 'Journal files, records, settings and switching',
       },
@@ -128,6 +161,7 @@ export const NAV: NavSection[] = [
         label: 'Logs',
         to: '/logs',
         icon: IconLogs,
+        color: 'yellow',
         privileges: [],
         description: 'messages.log, alerts.log, the audit log, journal records and task history in one place',
         keywords: [
@@ -146,6 +180,7 @@ export const NAV: NavSection[] = [
         label: 'Tasks',
         to: '/tasks',
         icon: IconActivity,
+        color: 'indigo',
         privileges: ['%Admin_Operate:U', '%Admin_Task:U'],
         description: 'Task manager schedules and history',
         keywords: ['schedule', 'cron'],
@@ -154,6 +189,7 @@ export const NAV: NavSection[] = [
         label: 'Web sessions',
         to: '/web-sessions',
         icon: IconWorld,
+        color: 'cyan',
         privileges: ['%Admin_Operate:U'],
         description: 'Active CSP/REST sessions',
       },
@@ -161,6 +197,7 @@ export const NAV: NavSection[] = [
         label: 'License',
         to: '/license',
         icon: IconLicense,
+        color: 'lime',
         privileges: ['%Admin_Manage:U', '%Admin_Operate:U'],
         description: 'License key, usage and license servers',
       },
@@ -168,6 +205,7 @@ export const NAV: NavSection[] = [
         label: 'Host monitor',
         to: '/monitor',
         icon: IconHeartRateMonitor,
+        color: 'pink',
         privileges: [],
         description: 'CPU, memory, disk and alerts from /api/monitor',
         keywords: ['metrics', 'prometheus', 'cpu', 'memory', 'disk', 'alerts'],
@@ -181,6 +219,7 @@ export const NAV: NavSection[] = [
         label: 'Users',
         to: '/security/users',
         icon: IconUsers,
+        color: 'indigo',
         privileges: ['%Admin_Secure:U'],
         description: 'User accounts, roles, passwords',
       },
@@ -188,6 +227,7 @@ export const NAV: NavSection[] = [
         label: 'Roles',
         to: '/security/roles',
         icon: IconUserShield,
+        color: 'violet',
         privileges: ['%Admin_Secure:U'],
         description: 'Roles and the resources they grant',
       },
@@ -195,6 +235,7 @@ export const NAV: NavSection[] = [
         label: 'Resources',
         to: '/security/resources',
         icon: IconKey,
+        color: 'grape',
         privileges: ['%Admin_Secure:U'],
         description: 'Protected resources and public permissions',
       },
@@ -202,6 +243,7 @@ export const NAV: NavSection[] = [
         label: 'Services',
         to: '/security/services',
         icon: IconPlug,
+        color: 'blue',
         privileges: ['%Admin_Secure:U'],
         description: 'System services such as %Service_Bindings',
       },
@@ -209,6 +251,7 @@ export const NAV: NavSection[] = [
         label: 'Web applications',
         to: '/security/web-apps',
         icon: IconAppWindow,
+        color: 'cyan',
         privileges: ['%Admin_Secure:U'],
         description: 'CSP and REST applications, JWT and CORS settings',
       },
@@ -216,6 +259,7 @@ export const NAV: NavSection[] = [
         label: 'Audit',
         to: '/security/audit',
         icon: IconListSearch,
+        color: 'orange',
         privileges: ['%Admin_Secure:U'],
         description: 'Audit events and the audit log',
       },
@@ -223,6 +267,7 @@ export const NAV: NavSection[] = [
         label: 'TLS & certificates',
         to: '/security/ssl',
         icon: IconCertificate,
+        color: 'teal',
         privileges: ['%Admin_Secure:U'],
         description: 'SSL/TLS configurations and X.509 credentials with certificate expiry',
         keywords: ['ssl', 'x509', 'certificate', 'expiry', 'expired'],
@@ -231,6 +276,7 @@ export const NAV: NavSection[] = [
         label: 'Wallet & OAuth',
         to: '/security/secrets',
         icon: IconWallet,
+        color: 'yellow',
         privileges: [
           '%Admin_Wallet:U',
           '%Admin_OAuth2_Client:U',
@@ -246,6 +292,7 @@ export const NAV: NavSection[] = [
         label: 'SQL privileges',
         to: '/security/sql',
         icon: IconTable,
+        color: 'pink',
         privileges: ['%Admin_Secure:U'],
         description: 'Table, view and admin privileges per user or role',
       },
@@ -258,6 +305,7 @@ export const NAV: NavSection[] = [
         label: 'API Explorer',
         to: '/explorer',
         icon: IconArrowsExchange,
+        color: 'teal',
         privileges: [],
         description:
           'Every operation in the SysAdmin API, generated from the OpenAPI spec; export as Postman or .http',
@@ -281,6 +329,7 @@ export const NAV: NavSection[] = [
         label: 'REST services',
         to: '/rest-services',
         icon: IconApi,
+        color: 'blue',
         privileges: [],
         description:
           'The REST applications of the instance and their routes, from /api/mgmnt; export as Postman or .http',
@@ -301,10 +350,18 @@ export const NAV: NavSection[] = [
         label: 'Connections',
         to: '/settings/connections',
         icon: IconServer,
+        color: 'gray',
         privileges: [],
         description: 'Saved IRIS instances',
       },
-      { label: 'About', to: '/about', icon: IconFileText, privileges: [], description: 'About Aperture' },
+      {
+        label: 'About',
+        to: '/about',
+        icon: IconFileText,
+        color: 'grape',
+        privileges: [],
+        description: 'About Aperture',
+      },
     ],
   },
 ];

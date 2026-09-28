@@ -1,5 +1,5 @@
 import { NavLink, Stack, Text, UnstyledButton, VisuallyHidden } from '@mantine/core';
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 import { NAV, type NavItem, type NavSection } from './nav';
@@ -144,11 +144,16 @@ export function NavList({ canUse, onNavigate }: Props) {
                     to={item.to}
                     draggable={false}
                     label={item.label}
-                    leftSection={<item.icon size={18} stroke={1.6} />}
+                    leftSection={<item.icon size={18} stroke={1.6} className="nav-icon" />}
                     active={active}
                     onClick={onNavigate}
                     onKeyDown={(e: KeyboardEvent<HTMLElement>) => onKeyDown(e, section, item)}
-                    style={{ borderRadius: 8 }}
+                    style={
+                      {
+                        borderRadius: 8,
+                        '--nav-icon': `var(--mantine-color-${item.color}-text)`,
+                      } as CSSProperties
+                    }
                   />
                 </div>
               );
