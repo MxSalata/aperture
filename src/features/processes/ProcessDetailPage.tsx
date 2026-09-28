@@ -69,13 +69,17 @@ export default function ProcessDetailPage() {
         privileges={['%Admin_Operate:U']}
         actions={
           <>
-            <RefreshControl screen="process" onRefresh={() => q.refetch()} loading={q.isFetching} />
+            {/* An ended process has nothing left to refresh or act on. */}
+            {ended ? null : (
+              <RefreshControl screen="process" onRefresh={() => q.refetch()} loading={q.isFetching} />
+            )}
             {suspended ? (
               <Button
                 size="xs"
                 variant="light"
                 color="teal"
                 leftSection={<IconPlayerPlay size={14} />}
+                disabled={ended}
                 onClick={() => resume.mutate()}
                 loading={resume.isPending}
               >
@@ -87,7 +91,7 @@ export default function ProcessDetailPage() {
                 variant="light"
                 color="yellow"
                 leftSection={<IconPlayerPause size={14} />}
-                disabled={p?.CanBeSuspended === false}
+                disabled={ended || p?.CanBeSuspended === false}
                 onClick={() => suspend.mutate()}
                 loading={suspend.isPending}
               >
@@ -99,7 +103,7 @@ export default function ProcessDetailPage() {
               color="red"
               variant="light"
               leftSection={<IconSkull size={14} />}
-              disabled={p?.CanBeTerminated === false}
+              disabled={ended || p?.CanBeTerminated === false}
               onClick={() =>
                 confirmDanger({
                   title: 'Terminate process',
