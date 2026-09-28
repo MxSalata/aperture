@@ -8,22 +8,23 @@
   <a href="https://github.com/MxSalata/aperture/actions/workflows/ci.yml"><img src="https://github.com/MxSalata/aperture/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
   <a href="https://github.com/MxSalata/aperture/tags"><img src="https://img.shields.io/github/v/tag/MxSalata/aperture?label=version&color=0e7299" alt="Version" /></a>
   <a href="https://mxsalata.github.io/aperture/"><img src="https://img.shields.io/badge/online%20demo-try%20it-45acd1" alt="Online demo" /></a>
-  <a href="#docker"><img src="https://img.shields.io/badge/docker-ghcr.io%2Fmxsalata%2Faperture-2496ed?logo=docker&logoColor=white" alt="Docker image" /></a>
-  <a href="#ipm"><img src="https://img.shields.io/badge/IPM-iris--aperture-095c7c" alt="IPM package" /></a>
+  <a href="https://github.com/MxSalata/aperture#docker"><img src="https://img.shields.io/badge/docker-ghcr.io%2Fmxsalata%2Faperture-2496ed?logo=docker&logoColor=white" alt="Docker image" /></a>
+  <a href="https://github.com/MxSalata/aperture#ipm"><img src="https://img.shields.io/badge/IPM-iris--aperture-095c7c" alt="IPM package" /></a>
   <a href="https://github.com/MxSalata/aperture/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="MIT licence" /></a>
 </p>
 <p align="center">
   <a href="https://mxsalata.github.io/aperture/"><b>Online demo</b></a> ·
-  <a href="#for-judges-two-minutes">For judges</a> ·
-  <a href="#why-aperture">Why Aperture</a> ·
-  <a href="#run-it-on-real-iris">Run it</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="#contest-technology-bonuses">Bonuses</a> ·
-  <a href="#verified-against-real-iris">Verification</a>
+  <a href="https://github.com/MxSalata/aperture#for-judges-two-minutes">For judges</a> ·
+  <a href="https://github.com/MxSalata/aperture#why-aperture">Why Aperture</a> ·
+  <a href="https://github.com/MxSalata/aperture#run-it-on-real-iris">Run it</a> ·
+  <a href="https://github.com/MxSalata/aperture#architecture">Architecture</a> ·
+  <a href="https://github.com/MxSalata/aperture#contest-technology-bonuses">Bonuses</a> ·
+  <a href="https://github.com/MxSalata/aperture#verified-against-real-iris">Verification</a>
 </p>
 <p align="center">
   <a href="https://openexchange.intersystems.com/package/Aperture">Open Exchange</a> ·
   <a href="https://community.intersystems.com/post/aperture-management-portal-intersystems-iris-no-separate-application-server">The article</a> ·
+  <a href="https://community.intersystems.com/post/20-places-where-sysadmin-api-specification-and-iris-disagree">The 20 spec findings</a> ·
   <a href="https://openexchange.intersystems.com/contest/48">Vote for Aperture in the contest (until 4 October)</a>
 </p>
 
@@ -41,21 +42,21 @@ Search beside it.
 
 1. **In your browser, nothing to install.** Open the [online demo](https://mxsalata.github.io/aperture/)
    and press **Try the demo**: a simulated IRIS 2026.2 runs inside the page, so change whatever you like.
-   - Press <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>⌘</kbd><kbd>K</kbd>), type `databases`, open `USER` and choose
-     _Actions → Integrity check_: the `202 Accepted` lands in the **Job Center** with console output and progress.
-   - Open _Security → Users → jdoe_, remove a role and press Save: the review lists old → new and
-     **who loses which privilege**.
-   - Open _Logs → Messages log_ (the reader asks for the password, `SYS`), open an entry and choose
-     **Similar entries**: IRIS Vector Search lists the entries worded like it, with how often and when.
    - Open **Health check**: sixteen read-only checks run with your own access, and every finding says
      what it means, what to do, shows its evidence and opens the screen that fixes it.
+   - Open _Logs → Messages log_ (the reader asks for the password, `SYS`), open an entry and choose
+     **Similar entries**: IRIS Vector Search lists the entries worded like it, with how often and when.
+   - Open _Security → Users → jdoe_, remove a role and press Save: the review lists old → new and
+     **who loses which privilege**.
+   - Press <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>⌘</kbd><kbd>K</kbd>), type `databases`, open `USER` and choose
+     _Actions → Integrity check_: the `202 Accepted` lands in the **Job Center** with console output and progress.
    - Open _REST services_ and export an application's routes as a Postman collection or a `.http` file.
    - Sign out and sign in as `operator` / `SYS`: the security area disappears, and every disabled
      action names the resource it needs.
 2. **On real IRIS, one command.** `docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture`,
-   then http://localhost:52773/aperture/index.html as `_SYSTEM` / `SYS` ([more](#docker)).
+   then http://localhost:52773/aperture/index.html as `_SYSTEM` / `SYS` ([more](https://github.com/MxSalata/aperture#docker)).
 3. **On your own IRIS 2026.2.** `zpm "install iris-aperture"`, then `/aperture/index.html` on the
-   instance's web server ([more](#ipm)).
+   instance's web server ([more](https://github.com/MxSalata/aperture#ipm)).
 
 | Demo account | Password | Privileges                                        | What it shows                                              |
 | ------------ | -------- | ------------------------------------------------- | ---------------------------------------------------------- |
@@ -93,9 +94,9 @@ unit and browser tests. Every real deployment also has a **Try the demo** button
   export as a Postman collection, a `.http` file or curl (Ideas Portal DPI-I-813).
 - **Disk space you can act on.** The databases screen shows how much of each disk behind the database
   files is free, as a share and as a size, and says when one is running low.
-- **Tested on real IRIS.** 139 operations verified on IRIS for Health 2026.2; CI builds IRIS Community
-  2026.2 with the package on every push and checks the API contract against it, and runs the unit and
-  browser suites, among them an accessibility audit of every screen in five appearance modes.
+- **Tested on real IRIS.** 139 operations verified on IRIS for Health 2026.2, the API contract checked
+  against IRIS Community 2026.2 on every push, and every screen audited for accessibility in five
+  appearance modes ([details](https://github.com/MxSalata/aperture#verified-against-real-iris)).
 - **Made for long sessions.** Light, Dark and Pastel themes and high contrast, a command palette, a
   navigation menu you arrange yourself, charts you choose, a colour per connection so production
   never looks like staging, and browser tabs you can make read-only.
@@ -168,7 +169,7 @@ Every screen and what it does, area by area: [docs/FEATURES.md](docs/FEATURES.md
 #### The image
 
 One container: the official IRIS Community 2026.2 image with Aperture installed in it through its IPM
-package ([why one image](#why-one-image)), in one command:
+package ([why one image](https://github.com/MxSalata/aperture#why-one-image)), in one command:
 
 ```bash
 docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture
@@ -178,7 +179,7 @@ Then open http://localhost:52773/aperture/index.html and sign in as `_SYSTEM` (o
 `SYS`, the image's demonstration password. For anything but a try-out, give the container a password of
 its own with `-e IRIS_PASSWORD=...`: it becomes the password of the image's accounts at the container's
 first start, and a restart keeps any password changed in IRIS since. To keep it running with a
-password of its own, use [Docker Compose](#docker-compose).
+password of its own, use [Docker Compose](https://github.com/MxSalata/aperture#docker-compose).
 
 CI publishes the image only after checking it against the SysAdmin API: with a password set at start,
 across a restart, and with the demonstration password. `latest` and the version come from `main`,
@@ -188,7 +189,7 @@ across a restart, and with the demonstration password. `latest` and the version 
 
 The same image, set up to stay: a password of its own, and back after a reboot. Compose runs it as one
 service, IRIS with Aperture inside, whose own web server serves the portal and the APIs it calls on one
-port, 52773 ([why one image](#why-one-image)).
+port, 52773 ([why one image](https://github.com/MxSalata/aperture#why-one-image)).
 
 Two files in a folder, with no clone and no build:
 
@@ -230,7 +231,7 @@ Two files in a folder, with no clone and no build:
 The instance lives in its container. It keeps its data across restarts, but not when the container is
 removed or replaced by an update, which starts again from the image and applies `IRIS_PASSWORD`
 afresh. That makes it a real IRIS to use Aperture on; to manage an IRIS you already run, install the
-package there with [IPM](#ipm). On a host with more than 20 CPU cores, see the [notes](#notes).
+package there with [IPM](https://github.com/MxSalata/aperture#ipm). On a host with more than 20 CPU cores, see the [notes](https://github.com/MxSalata/aperture#notes).
 
 <details>
 <summary>What <code>docker-compose.yml</code> contains</summary>
@@ -449,15 +450,15 @@ the network for the in-browser mock. More in [docs/ARCHITECTURE.md](docs/ARCHITE
 
 ## Contest technology bonuses
 
-| Bonus                       | Where to see it                                                                                                                                                                                                                                                                                                        |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Community Opportunity ideas | [DPI-I-966](https://ideas.intersystems.com/ideas/DPI-I-966): every rotated `messages.log` readable in the portal (Logs → Messages log). [DPI-I-813](https://ideas.intersystems.com/ideas/DPI-I-813): requests generated from OpenAPI for Postman, VS Code and curl (REST services → Export; API Explorer)              |
-| Embedded Python             | [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls) (configures `/api/admin`, prints the readiness report), [`Aperture.Logs`](ipm/cls/Aperture/Logs.cls) (the log reader), [`Aperture.LogIndex`](ipm/cls/Aperture/LogIndex.cls) and [`aperture_vectors.py`](ipm/python/lib/aperture_vectors.py) (the wording index) |
-| Vector Search               | [`Aperture.LogLine`](ipm/cls/Aperture/LogLine.cls): a `%Library.Vector` of 256 doubles under a `%SQL.Index.HNSW` index; `/api/aperture/logs/similar` ranks with `VECTOR_COSINE` (Logs → Messages log → Similar entries)                                                                                                |
-| Docker                      | `ghcr.io/mxsalata/aperture`, [`docker-compose.yml`](docker-compose.yml), [`docker-compose.build.yml`](docker-compose.build.yml)                                                                                                                                                                                        |
-| IPM                         | `zpm "install iris-aperture"` ([`module.xml`](module.xml))                                                                                                                                                                                                                                                             |
-| Online demo                 | https://mxsalata.github.io/aperture/                                                                                                                                                                                                                                                                                   |
-| Article                     | [Aperture: a management portal for InterSystems IRIS, with no separate application server](https://community.intersystems.com/post/aperture-management-portal-intersystems-iris-no-separate-application-server) on the Developer Community                                                                             |
+| Bonus                       | Where to see it                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Community Opportunity ideas | [DPI-I-966](https://ideas.intersystems.com/ideas/DPI-I-966): every rotated `messages.log` readable in the portal (Logs → Messages log). [DPI-I-813](https://ideas.intersystems.com/ideas/DPI-I-813): requests generated from OpenAPI for Postman, VS Code and curl (REST services → Export; API Explorer)                                                                                                                |
+| Embedded Python             | [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls) (configures `/api/admin`, prints the readiness report), [`Aperture.Logs`](ipm/cls/Aperture/Logs.cls) (the log reader), [`Aperture.LogIndex`](ipm/cls/Aperture/LogIndex.cls) and [`aperture_vectors.py`](ipm/python/lib/aperture_vectors.py) (the wording index)                                                                                                   |
+| Vector Search               | [`Aperture.LogLine`](ipm/cls/Aperture/LogLine.cls): a `%Library.Vector` of 256 doubles under a `%SQL.Index.HNSW` index; `/api/aperture/logs/similar` ranks with `VECTOR_COSINE` (Logs → Messages log → Similar entries)                                                                                                                                                                                                  |
+| Docker                      | `ghcr.io/mxsalata/aperture`, [`docker-compose.yml`](docker-compose.yml), [`docker-compose.build.yml`](docker-compose.build.yml)                                                                                                                                                                                                                                                                                          |
+| IPM                         | `zpm "install iris-aperture"` ([`module.xml`](module.xml))                                                                                                                                                                                                                                                                                                                                                               |
+| Online demo                 | https://mxsalata.github.io/aperture/                                                                                                                                                                                                                                                                                                                                                                                     |
+| Articles                    | [Aperture: a management portal for InterSystems IRIS, with no separate application server](https://community.intersystems.com/post/aperture-management-portal-intersystems-iris-no-separate-application-server) and [20 places where the SysAdmin API specification and IRIS disagree](https://community.intersystems.com/post/20-places-where-sysadmin-api-specification-and-iris-disagree), on the Developer Community |
 
 ## Ideas Portal ideas Aperture implements
 
@@ -487,8 +488,8 @@ Two ideas with the "Community Opportunity" status on the [InterSystems Ideas Por
 - **On IRIS for Health 2026.2** (Build 221U), [docs/COVERAGE.md](docs/COVERAGE.md) accounts for every
   one of the 273 operations: 139 verified on that instance (every read that had an object to read,
   and each write with its evidence, undone after its check); a hand-made screen calls 139 as well, a
-  different set with more writes in it, and the online demo answers 173. Every screen was walked as an administrator and as an operator, from
-  a browser in another time zone ([evidence](docs/verification/)).
+  different set with more writes in it, and the online demo answers 173. Every screen was walked as an
+  administrator and as an operator, from a browser in another time zone ([evidence](docs/verification/)).
 - **On IRIS Community 2026.2, in CI, on every push:** the `verify-iris` job builds the image
   (Aperture installed by `zpm "load"` of its `module.xml`, the Embedded Python installer), starts it
   and runs [`scripts/live-check.mjs`](scripts/live-check.mjs): JWT sign-in and refresh, `/info`, list
@@ -517,7 +518,8 @@ Implementing the whole specification against real instances turned up 20 places 
 2026.2 disagree: fields with another name or type, a row limit that returns half of what was asked, an
 operation served at another path, a finished task whose second read raises an alert on the instance.
 Each is in [docs/SPEC_FINDINGS.md](docs/SPEC_FINDINGS.md) with its evidence, and Aperture handles all
-of them.
+of them. They are also published, with the evidence, as
+[20 places where the SysAdmin API specification and IRIS disagree](https://community.intersystems.com/post/20-places-where-sysadmin-api-specification-and-iris-disagree) on the Developer Community.
 
 ## Documentation
 

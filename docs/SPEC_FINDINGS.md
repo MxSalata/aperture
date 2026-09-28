@@ -1,5 +1,9 @@
 # Spec findings: 20 places where the specification and IRIS 2026.2 disagree
 
+Also published, with the same evidence, as
+[20 places where the SysAdmin API specification and IRIS disagree](https://community.intersystems.com/post/20-places-where-sysadmin-api-specification-and-iris-disagree)
+on the Developer Community.
+
 Things noticed while implementing the whole specification against real instances: IRIS for Health 2026.2
 (Build 221U) and IRIS Community 2026.2 in CI. The specification is vendored at commit `f764aea427e5c0b1dd08a4c18a0457e0ff7b3b34` of
 [intersystems-community/sysadmin-api-specification](https://github.com/intersystems-community/sysadmin-api-specification).

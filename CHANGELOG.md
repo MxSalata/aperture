@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Links that work on Open Exchange, and the second article.** Open Exchange rewrote the README's
+  in-page links (the Docker and IPM badges, the jump links, the "more" links) to GitHub's file tree,
+  where they lost their place; they now point at the section of the README on GitHub. The second
+  article, "20 places where the SysAdmin API specification and IRIS disagree", is linked from the
+  header, the bonuses table, the spec findings section and `docs/SPEC_FINDINGS.md`. "For judges" starts
+  with the Health check and Similar entries, and "Tested on real IRIS" no longer repeats the
+  verification section.
 - **The README says why one image.** A "Why one image" section: the image is the official IRIS
   Community 2026.2 with the package installed, Aperture has no server of its own to put in a second
   container, part of it lives inside IRIS, the browser needs one origin, and what CI checked is what
