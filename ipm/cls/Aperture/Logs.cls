@@ -46,7 +46,8 @@ ClassMethod PathOf(id As %String) As %String
 }
 
 /// JSON: whole lines from a window of at most `bytes` bytes ending at `before` (0: the end of
-/// the file). `start` in the answer is the `before` for the window preceding this one.
+/// the file), each with its byte offset. `start` in the answer is the `before` for the window
+/// preceding this one; an offset names an entry to /logs/similar.
 ClassMethod Window(path As %String, before As %Integer = 0, bytes As %Integer = 0) As %String
 {
     Quit ..WindowPython(path, before, bytes, ..#MAXBYTES, ..#DEFAULTBYTES)
@@ -126,10 +127,11 @@ ClassMethod PathOfPython(mgr, console, id) As %String [ Language = python ]
     return ""
 }
 
-/// One window as JSON: `{size, start, end, lines, hasMore}`. The window ends at `before`
-/// (0 or past the end: the end of the file) and starts at most `nbytes` earlier, moved forward
-/// to the first whole line; `lines` are the whole lines in it. Paging: pass `start` back as
-/// `before`. `hasMore` says whether anything precedes `start`.
+/// One window as JSON: `{size, start, end, lines, offsets, hasMore}`. The window ends at
+/// `before` (0 or past the end: the end of the file) and starts at most `nbytes` earlier, moved
+/// forward to the first whole line; `lines` are the whole lines in it and `offsets` the byte
+/// offset each one starts at (counted on the raw bytes, so a CR LF file is exact). Paging: pass
+/// `start` back as `before`. `hasMore` says whether anything precedes `start`.
 ClassMethod WindowPython(path, before, nbytes, maxbytes, defaultbytes) As %String [ Language = python ]
 {
     import json
@@ -156,16 +158,22 @@ ClassMethod WindowPython(path, before, nbytes, maxbytes, defaultbytes) As %Strin
         else:
             start += cut + 1
             data = data[cut + 1:]
-    text = data.decode("utf-8", errors="replace")
-    lines = text.split("\n")
-    if text.endswith("\n"):
-        lines.pop()
+    raw_lines = data.split(b"\n")
+    if data.endswith(b"\n"):
+        raw_lines.pop()
+    offsets = []
+    position = start
+    for raw in raw_lines:
+        offsets.append(int(position))
+        position += len(raw) + 1
+    lines = [raw.decode("utf-8", errors="replace") for raw in raw_lines]
     lines = [line[:-1] if line.endswith("\r") else line for line in lines]
     return json.dumps({
         "size": int(size),
         "start": int(start),
         "end": int(end),
         "lines": lines,
+        "offsets": offsets,
         "hasMore": start > 0,
     })
 }

@@ -30,21 +30,40 @@ export interface LogWindow {
   start: number;
   end: number;
   lines: string[];
+  /** Byte offset of each line's start (reader 1.1.0 and later); what names an entry to /logs/similar. */
+  offsets?: number[];
   hasMore: boolean;
+}
+
+/**
+ * The byte offset of every line of a window: the reader's own when it sent them, otherwise
+ * counted from `start` over the UTF-8 bytes (exact unless the file has CR LF line endings).
+ */
+export function lineOffsets(w: LogWindow): number[] {
+  if (w.offsets && w.offsets.length === w.lines.length) return w.offsets;
+  const encoder = new TextEncoder();
+  const out: number[] = [];
+  let position = w.start;
+  for (const line of w.lines) {
+    out.push(position);
+    position += encoder.encode(line).length + 1;
+  }
+  return out;
 }
 
 /** The web application answers 404 on an instance without the package: not an error of the file. */
 export const LOG_READER_MISSING =
   'The log reader is not installed on this instance: /api/aperture is the web application the iris-aperture IPM package creates (zpm "install iris-aperture", or the Docker image). Everything else works without it.';
 
-async function logsFetch<T>(path: string): Promise<T> {
+/** A request to the reader, GET unless said otherwise (POST /logs/index refreshes the wording index). */
+export async function logsRequest<T>(path: string, method: 'GET' | 'POST' = 'GET'): Promise<T> {
   const url = `${useSession.getState().baseUrl.replace(/\/+$/, '')}${LOGS_PREFIX}${path}`;
   const credentials = mgmntCredentials();
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (credentials) headers.Authorization = `Basic ${credentials}`;
   let res: Response;
   try {
-    res = await fetch(url, { headers, credentials: 'omit' });
+    res = await fetch(url, { method, headers, credentials: 'omit' });
   } catch (e) {
     throw new ApiError({ status: 0, url, summary: e instanceof Error ? e.message : 'Network error' });
   }
@@ -75,7 +94,7 @@ async function logsFetch<T>(path: string): Promise<T> {
 }
 
 export function fetchLogSources(): Promise<LogSource[]> {
-  return logsFetch<LogSource[]>('/logs');
+  return logsRequest<LogSource[]>('/logs');
 }
 
 /**
@@ -84,7 +103,7 @@ export function fetchLogSources(): Promise<LogSource[]> {
  */
 export function readLogWindow(file: string, before = 0, bytes = 65536): Promise<LogWindow> {
   const q = new URLSearchParams({ file, before: String(before), bytes: String(bytes) });
-  return logsFetch<LogWindow>(`/logs/read?${q}`);
+  return logsRequest<LogWindow>(`/logs/read?${q}`);
 }
 
 /** Whether the instance answered 404 for the reader itself (not installed), as opposed to a file. */

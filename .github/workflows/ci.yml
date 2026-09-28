@@ -29,6 +29,8 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm test
+      - name: Python vectoriser tests (the package's twin of src/lib/logVectors.ts, no IRIS needed)
+        run: python3 -m unittest discover -s ipm/python/tests -p 'test_*.py'
       - run: npm run build
       - name: Entry chunk stays small and free of the spec index
         run: npm run check:bundle

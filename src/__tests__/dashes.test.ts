@@ -21,7 +21,7 @@ const FILES = [
   'playwright.live.config.ts',
   'eslint.config.js',
 ];
-const TEXT = /\.(tsx?|m?js|cjs|json|md|cls|xml|html|css|ya?ml|conf|template|sh|svg|txt)$/;
+const TEXT = /\.(tsx?|m?js|cjs|json|md|cls|xml|html|css|ya?ml|conf|template|sh|svg|txt|py)$/;
 const NOT_OURS = /^(docs\/verification\/|src\/api\/(schema\.d\.ts|spec-index\.json)$)/;
 const DASH = /[\u2013\u2014]/;
 

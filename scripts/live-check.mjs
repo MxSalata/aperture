@@ -365,6 +365,60 @@ try {
         read.status === 200 && lines > 0,
         `HTTP ${read.status}, ${lines} whole lines from bytes ${win?.start ?? '?'}-${win?.end ?? '?'} of ${win?.size ?? '?'}`,
       );
+
+      // 5d. The wording index behind "similar entries" (Aperture.LogIndex, IRIS Vector Search):
+      // what it holds, then one similar query for the newest stamped entry of the window, which
+      // indexes the newest lines on the way (GET /logs/similar refreshes a stale index first).
+      const status = await fetch(`${IRIS_URL}/api/aperture/logs/index`, {
+        headers: { Accept: 'application/json', Authorization: basic },
+      });
+      const statusBody = status.status === 200 ? await status.json() : null;
+      hardFailure |= !record(
+        'Wording index GET /api/aperture/logs/index',
+        status.status === 200 && Array.isArray(statusBody?.files) && statusBody.index === 'HNSW',
+        status.status === 200
+          ? `${statusBody?.lines ?? '?'} entries indexed, ${statusBody?.files?.length ?? '?'} file(s), stale=${statusBody?.stale}, ${statusBody?.dims} dims, ${statusBody?.index}/${statusBody?.distance}`
+          : `HTTP ${status.status} ${(await status.text()).slice(0, 160)}`,
+        { status: status.status },
+      );
+      const offsets = Array.isArray(win?.offsets) ? win.offsets : [];
+      const stampedAt = /^\d{2}\/\d{2}\/\d{2}-\d{2}:\d{2}:\d{2}/;
+      let newest = -1;
+      for (let i = lines - 1; i >= 0; i--) {
+        if (stampedAt.test(win.lines[i]) && typeof offsets[i] === 'number') {
+          newest = offsets[i];
+          break;
+        }
+      }
+      if (newest < 0) {
+        hardFailure |= !record(
+          'Similar entries of the newest entry',
+          false,
+          'the window carries no offsets (reader older than 1.1.0?) or no stamped line',
+        );
+      } else {
+        const started = Date.now();
+        const similar = await fetch(
+          `${IRIS_URL}/api/aperture/logs/similar?file=${encodeURIComponent(first.id)}&offset=${newest}&limit=5`,
+          { headers: { Accept: 'application/json', Authorization: basic } },
+        );
+        const body = similar.status === 200 ? await similar.json() : null;
+        const ok =
+          similar.status === 200 &&
+          body?.entry?.offset === newest &&
+          Array.isArray(body?.matches) &&
+          body.matches.every((m, i, all) => i === 0 || all[i - 1].score >= m.score) &&
+          typeof body?.summary?.similar === 'number';
+        report.quirks.wordingIndex = ok ? 'answers' : `HTTP ${similar.status}`;
+        hardFailure |= !record(
+          `Similar entries of ${first.id} at offset ${newest}`,
+          ok,
+          ok
+            ? `${body.matches.length} match(es), best ${body.matches[0]?.score ?? '-'}, seen ${body.summary.similar} of ${body.summary.of} in ${Date.now() - started} ms; ${body.method}`
+            : `HTTP ${similar.status} ${JSON.stringify(body ?? (await similar.text()).slice(0, 200))}`,
+          { status: similar.status },
+        );
+      }
     }
   }
 

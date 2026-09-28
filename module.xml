@@ -4,8 +4,8 @@
     <Module>
       <Name>iris-aperture</Name>
       <Version>1.0.3</Version>
-      <Description>Aperture: a modern management portal for InterSystems IRIS built on the SysAdmin REST API (/api/admin v2). Dashboard, databases, namespaces, processes, devices, journals, tasks, security (users, roles, web applications, TLS, X.509, wallet, OAuth 2.0), a Job Center for asynchronous operations, a spec-driven explorer for all 273 API operations, and a read-only Embedded Python log reader (/api/aperture) for messages.log, alerts.log and SystemMonitor.log, which the SysAdmin API does not expose.</Description>
-      <Keywords>management portal,sysadmin,rest,admin,dashboard,logs,contest,react,embedded python</Keywords>
+      <Description>Aperture: a modern management portal for InterSystems IRIS built on the SysAdmin REST API (/api/admin v2). Dashboard, databases, namespaces, processes, devices, journals, tasks, security (users, roles, web applications, TLS, X.509, wallet, OAuth 2.0), a Job Center for asynchronous operations, a spec-driven explorer for all 273 API operations, and a read-only Embedded Python log reader (/api/aperture) for messages.log, alerts.log and SystemMonitor.log, which the SysAdmin API does not expose, with "similar entries" over the wording of messages.log through IRIS Vector Search (an HNSW index of hashed words).</Description>
+      <Keywords>management portal,sysadmin,rest,admin,dashboard,logs,contest,react,embedded python,vector search</Keywords>
       <Author>
         <Person>MxSalata</Person>
         <CopyrightDate>2026</CopyrightDate>
@@ -25,6 +25,17 @@
            Python file reader (ipm/cls/Aperture/Logs.cls). Read-only; needs %Admin_Operate:USE. -->
       <Resource Name="Aperture.API.CLS"/>
       <Resource Name="Aperture.Logs.CLS"/>
+
+      <!-- "Similar entries": the wording index of messages.log (ipm/cls/Aperture/LogIndex.cls),
+           two persistent classes of this namespace (Aperture.LogLine, with its HNSW index over
+           a 256-dimensional vector property, and Aperture.LogIndexFile, a watermark per file),
+           and the pure-Python vectoriser they import, copied beside the portal. The package
+           writes to these two tables only. Uninstalling removes the classes; to empty the
+           tables first: Do ##class(Aperture.LogIndex).Drop() -->
+      <Resource Name="Aperture.LogLine.CLS"/>
+      <Resource Name="Aperture.LogIndexFile.CLS"/>
+      <Resource Name="Aperture.LogIndex.CLS"/>
+      <FileCopy Name="ipm/python/aperture_vectors.py" Target="{$mgrdir}aperture/python/"/>
 
       <!-- The built portal (www/, from `npm run build:www`) is copied under the instance's
            manager directory, not its csp directory: in a container the csp directory belongs to

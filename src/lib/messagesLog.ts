@@ -23,6 +23,8 @@ export interface LogEntry {
   raw: string;
   /** 0-based index of the line in the window it came from; entries are numbered, not lines. */
   index: number;
+  /** Byte offset of the stamped line in the file (what names the entry to the reader), when known. */
+  offset: number | null;
 }
 
 const STAMPED =
@@ -36,7 +38,7 @@ export const SEVERITY_LABEL: Record<LogSeverity, string> = {
 };
 
 /** One stamped line, or null when the line carries no stamp (a banner or a continuation). */
-export function parseLogLine(line: string, index = 0): LogEntry | null {
+export function parseLogLine(line: string, index = 0, offset: number | null = null): LogEntry | null {
   const m = STAMPED.exec(line);
   if (!m) return null;
   const [, mm, dd, yy, hh, mi, ss, ms, pid, sev, category, message] = m;
@@ -49,6 +51,7 @@ export function parseLogLine(line: string, index = 0): LogEntry | null {
     message: message.trimEnd(),
     raw: line,
     index,
+    offset,
   };
 }
 
@@ -57,11 +60,11 @@ export function parseLogLine(line: string, index = 0): LogEntry | null {
  * appended, with the raw line kept); an unstamped line with no entry before it becomes an entry
  * of its own so nothing read is dropped.
  */
-export function parseLogLines(lines: string[]): LogEntry[] {
+export function parseLogLines(lines: string[], offsets?: number[]): LogEntry[] {
   const out: LogEntry[] = [];
   lines.forEach((line, i) => {
     if (!line.trim()) return;
-    const entry = parseLogLine(line, i);
+    const entry = parseLogLine(line, i, offsets?.[i] ?? null);
     if (entry) {
       out.push(entry);
       return;
@@ -80,6 +83,7 @@ export function parseLogLines(lines: string[]): LogEntry[] {
         message: line.trimEnd(),
         raw: line,
         index: i,
+        offset: offsets?.[i] ?? null,
       });
     }
   });

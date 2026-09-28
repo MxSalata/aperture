@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+- **Similar entries in the Messages log, with IRIS Vector Search.** Open an entry and choose
+  "Similar entries": the drawer lists the entries worded like it across `messages.log` and its
+  rotations, each with a similarity percentage, and says how often the same message was seen and
+  when it was first and last seen. The matching is by wording, not by meaning: the package keeps a
+  wording index of the log on the instance, one row per entry with a 256-dimensional vector of its
+  hashed words (`Aperture.LogLine`, a `%Library.Vector` property under an `%SQL.Index.HNSW` index),
+  and answers `GET /api/aperture/logs/similar` with the nearest entries by `VECTOR_COSINE`. The
+  index is incremental and bounded (a file's newest 8 MB first, then what was appended, at most 2 MB
+  and 4,000 entries per call), refreshed before a search when it is behind, and the drawer says
+  "indexing" while that happens; `GET` and `POST /logs/index` show and refresh it, and every window
+  of `/logs/read` now carries the byte offset of each line, which names an entry. The vectoriser is
+  written twice with identical output, Python for the package and TypeScript for the demo, checked
+  by one fixture on both sides (`ipm/python/tests`, `src/lib/__tests__/logVectors.test.ts`); the
+  demo's log repeats its messages with other numbers, so the online demo shows the feature. The
+  drawer's close button now has a name for screen readers. `npm run verify:live` (CI's
+  `verify-iris` job) reads the index and runs one similar query for the newest entry.
+
 ## 1.0.3 - a mark of its own, a Charts picker, and plain text for Open Exchange (28 September 2026)
 
 - **The package publishes from Open Exchange.** Submitting the application with "Publish in

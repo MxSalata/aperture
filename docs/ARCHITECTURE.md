@@ -239,14 +239,6 @@ its `WWW-Authenticate` header. The application keeps `CSPZENEnabled` at its defa
 as on the static `/aperture` application, IRIS answers 404 to every request for a dispatch class
 (found by CI run 36070001055; run 36070924998 passed with the default).
 
-The browser does the rest (`api/logs.ts`, `lib/messagesLog.ts`): it parses each line's stamp
-(`MM/DD/YY-HH:MM:SS:mmm (pid) severity [Category] message`, the category absent on older writers),
-folds unstamped banner and continuation lines into the entry before them, shows the newest window
-first and prepends older ones on request (`features/logs/MessagesLogPage.tsx`). On an instance
-without the package the reader answers 404 and the screen says so; nothing else depends on it. The
-mock (`mocks/handlers/logs.ts`) generates the same files with the same window algorithm, and
-`scripts/live-check.mjs` reads the catalogue and one window from a real instance.
-
 ### 2.7c Requests for other tools (lib/requestExport.ts)
 
 `GeneratedRequest` is a request as a description implies it: method, absolute path (`{name}` for
@@ -266,6 +258,67 @@ same-origin deployments export a usable URL. The password never leaves the brows
 builders pass a body through `redactDeep` first. This is Ideas Portal idea DPI-I-813 done in the
 portal; the REST services drawer and the Explorer (page header, and one section per operation)
 are its screens.
+
+### 2.7d Similar entries: the wording index (IRIS Vector Search)
+
+"Similar" on an entry of the Messages log lists the entries worded like it across `messages.log`
+and its rotations, with how often and when the same message was seen. The matching is by
+**wording**, not meaning: no embedding model is installed with the portal (`%Embedding.Config` is
+empty on a stock instance, and a language model has no place in a management package), so the
+vector of an entry is a **feature hash of its words**, computed twice with identical output:
+
+| Side | Where | Used by |
+| --- | --- | --- |
+| Python | `ipm/python/aperture_vectors.py`, copied by `module.xml` to `{$mgrdir}aperture/python/` and imported by `Aperture.LogIndex` | the package on the instance |
+| TypeScript | `src/lib/logVectors.ts` | the demo's mock (`src/mocks/handlers/logs.ts`) |
+
+Both read one fixture, `ipm/python/tests/fixture.json`, which the Python side writes
+(`make_fixture.py`): entries with their templates and six-decimal vectors, and pairs with a
+threshold. The entry's stamped line is parsed like `src/lib/messagesLog.ts` does (the time, pid
+and severity are dropped, the category and message stay, continuation lines are appended); the
+template is lower-cased with file paths as `<path>`, hexadecimal ids as `<h>` and numbers as
+`<n>`; the features are the template's words and its neighbouring word pairs; each is hashed
+with FNV-1a (32 bits over UTF-8) into one of 256 buckets, the ninth bit gives the sign, the
+weight is `1 + ln(count)`, and the vector is normalised to unit length. Cosine similarity is thus
+a dot product: the same message with other numbers scores 1.0, a message differing in one word
+around 0.7, unrelated messages near 0.
+
+On the instance, `Aperture.LogIndex` keeps the index in two persistent classes of the package's
+namespace and nowhere else:
+
+| Class | Holds |
+| --- | --- |
+| `Aperture.LogLine` | one row per indexed entry: the file's catalogue id and the byte offset of its stamped line (unique together), the stamp, severity and category, the raw entry and its template (capped), and `Embedding As %Library.Vector(DATATYPE = "DOUBLE", LEN = 256)` under `Index Wording On (Embedding) As %SQL.Index.HNSW(Distance = "Cosine")` |
+| `Aperture.LogIndexFile` | the watermark of each file: bytes indexed so far, size and line count when last read, a SHA-256 of the first 512 bytes (a rotation puts another file under the same name; a truncation shrinks it: either way the file starts afresh) |
+
+Indexing is **incremental and bounded**: a file is first indexed from its newest 8 MB, then only
+what was appended since the watermark; one call indexes at most 2 MB and 4,000 entries over all
+files (each entry is an HNSW insert), and reports what is still pending. `GET /logs/similar`
+runs one such refresh when the index is behind, so the newest lines are always in the answer;
+the screen calls `POST /logs/index` until nothing is pending before it asks. A query reads the
+one entry at the offset it was given from the file (a bounded read, like a window), vectorises
+it, and asks SQL for the 250 nearest rows by `VECTOR_COSINE(Embedding, TO_VECTOR(?, DOUBLE,
+256))` in `ORDER BY ... DESC`, which the HNSW index serves; the answer lists the nearest `limit`
+(the entry itself left out) with their score, and a summary: how many of the 250 score 0.9 or
+more, and the first and last stamp among them.
+
+| Route | Answer |
+| --- | --- |
+| `GET /api/aperture/logs/index` | per file: size, bytes indexed, entries, last indexed; totals; `stale` and `pendingBytes`; the bounds |
+| `POST /api/aperture/logs/index` | one bounded refresh: what was added per file and whether more waits |
+| `GET /api/aperture/logs/similar?file=&offset=&limit=` | the entry, `matches` (file, offset, time, severity, category, text, score), `summary` (similar, of, first, last, threshold) and `method` |
+
+The offsets come from `GET /logs/read`, whose windows now carry the byte offset of every line
+(counted on the raw bytes, so a CR LF file is exact). Uninstalling the package removes the
+classes; `Do ##class(Aperture.LogIndex).Drop()` empties the two tables first.
+
+The browser does the rest (`api/logs.ts`, `lib/messagesLog.ts`): it parses each line's stamp
+(`MM/DD/YY-HH:MM:SS:mmm (pid) severity [Category] message`, the category absent on older writers),
+folds unstamped banner and continuation lines into the entry before them, shows the newest window
+first and prepends older ones on request (`features/logs/MessagesLogPage.tsx`). On an instance
+without the package the reader answers 404 and the screen says so; nothing else depends on it. The
+mock (`mocks/handlers/logs.ts`) generates the same files with the same window algorithm, and
+`scripts/live-check.mjs` reads the catalogue and one window from a real instance.
 
 ### 2.8 Spec quirks
 
