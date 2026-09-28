@@ -19,11 +19,13 @@
 ///                                  the `before` of the previous window, so a client pages
 ///                                  backwards at constant cost
 ///   GET  /api/aperture/logs/index  what the wording index holds, and whether it is behind
-///   POST /api/aperture/logs/index  index what was appended since (bounded per call)
+///   POST /api/aperture/logs/index  index what was appended since (bounded per call, one at a
+///                                  time); call it while GET /logs/index says `stale`
 ///   GET  /api/aperture/logs/similar?file=messages.log&offset=12345&limit=20
 ///                                  the entry at that offset, the entries worded most like it
 ///                                  (VECTOR_COSINE over the HNSW index) with their score, and
-///                                  how often and when the same message was seen
+///                                  how often and when the same message was seen; reads only,
+///                                  from what is indexed
 Class Aperture.API Extends %CSP.REST
 {
 
@@ -72,7 +74,9 @@ ClassMethod Info() As %Status
     If '..Allowed() Quit ..Refuse(403, "Requires "_..#RESOURCE_":USE")
     Set info = {}
     Set info.application = "Aperture log reader"
-    Set info.version = "1.1.0"
+    // The package's version as IPM installed it; the routes below have a version of their own.
+    Set info.version = ..PackageVersion()
+    Set info.readerApiVersion = "1.2.0"
     Set info.readOnly = 1
     Set info.resource = ..#RESOURCE_":USE"
     Set info.routes = ["GET /logs", "GET /logs/read?file=&before=&bytes=", "GET /logs/index", "POST /logs/index", "GET /logs/similar?file=&offset=&limit="]
@@ -85,6 +89,19 @@ ClassMethod Info() As %Status
     Set info.similarity = similarity
     Write info.%ToJSON()
     Quit $$$OK
+}
+
+/// The version of the iris-aperture package from IPM's record of the installed module, or ""
+/// when the classes were loaded without IPM.
+ClassMethod PackageVersion() As %String
+{
+    Set version = ""
+    Try {
+        Set module = $ClassMethod("%IPM.Storage.Module", "NameOpen", "iris-aperture")
+        If $IsObject(module) Set version = module.VersionString
+    } Catch {
+    }
+    Quit version
 }
 
 ClassMethod Sources() As %Status
@@ -131,10 +148,9 @@ ClassMethod IndexRefresh() As %Status
     Quit $$$OK
 }
 
-/// The entry at `offset` of the catalogued file `file` and the entries worded most like it.
-/// When the index is behind the files, one bounded refresh runs first, so the answer includes
-/// the newest lines; a client that wants the whole backlog indexed calls POST /logs/index until
-/// the answer's `stale` is false.
+/// The entry at `offset` of the catalogued file `file` and the entries worded most like it, from
+/// what is indexed. A GET changes nothing: a client that wants the newest lines included calls
+/// POST /logs/index first, while GET /logs/index says `stale` (the portal does).
 ClassMethod Similar() As %Status
 {
     If '..Allowed() Quit ..Refuse(403, "Requires "_..#RESOURCE_":USE")
@@ -148,8 +164,6 @@ ClassMethod Similar() As %Status
     Set path = ##class(Aperture.Logs).PathOf(file)
     If path = "" Quit ..Refuse(404, "Not a catalogued log file: "_file)
     Try {
-        Set status = {}.%FromJSON(##class(Aperture.LogIndex).Status())
-        If status.stale Do ##class(Aperture.LogIndex).Refresh()
         Set answer = ##class(Aperture.LogIndex).Similar(file, path, +offset, limit)
         Set parsed = {}.%FromJSON(answer)
         If parsed.error '= "" Return ..Refuse(parsed.status, parsed.error)

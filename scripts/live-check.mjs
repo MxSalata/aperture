@@ -6,26 +6,22 @@
 // and the known spec quirks. Prints a report and optionally saves JSON evidence.
 //
 //   IRIS_URL=http://localhost:52773 IRIS_USER=_SYSTEM IRIS_PASSWORD=… node scripts/live-check.mjs [--save docs/verification/latest.json]
-//   (without IRIS_PASSWORD, the password of the Docker image is read from .secrets/iris-password)
-//   PORTAL_URL=http://localhost:52773/aperture/   (optional: also check the portal is served)
+//   PORTAL_URL=http://localhost:52773/aperture/index.html   (optional: also check the portal is served)
 //   IRIS_API_PREFIX=/api/admin                    (or /iris/api/admin behind a web gateway)
 //   --mutate                                      (opt-in: suspend and resume one task to check
 //                                                  that the read-back reflects the change; CI passes it,
 //                                                  a production instance should not)
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 const IRIS_URL = (process.env.IRIS_URL ?? 'http://localhost:52773').replace(/\/+$/, '');
 const PREFIX = process.env.IRIS_API_PREFIX ?? '/api/admin';
 const USER = process.env.IRIS_USER ?? '_SYSTEM';
-// No default password: the Docker image has none that is well known (npm run iris:password).
-const PASSWORD =
-  process.env.IRIS_PASSWORD ??
-  (existsSync('.secrets/iris-password') ? readFileSync('.secrets/iris-password', 'utf8').trim() : undefined);
+// No default: the Docker image signs in with SYS unless its container set IRIS_PASSWORD, and a
+// real instance has a password of its own.
+const PASSWORD = process.env.IRIS_PASSWORD;
 if (!PASSWORD) {
-  console.error(
-    'Set IRIS_PASSWORD (or create .secrets/iris-password with npm run iris:password for the Docker image).',
-  );
+  console.error("Set IRIS_PASSWORD (the Docker image's is SYS, unless its container set another).");
   process.exit(2);
 }
 const PORTAL_URL = process.env.PORTAL_URL;
@@ -367,8 +363,8 @@ try {
       );
 
       // 5d. The wording index behind "similar entries" (Aperture.LogIndex, IRIS Vector Search):
-      // what it holds, then one similar query for the newest stamped entry of the window, which
-      // indexes the newest lines on the way (GET /logs/similar refreshes a stale index first).
+      // what it holds, then, as the portal does, bounded refreshes while it is behind (GET
+      // /logs/similar reads only), and one similar query for the newest stamped entry of the window.
       const status = await fetch(`${IRIS_URL}/api/aperture/logs/index`, {
         headers: { Accept: 'application/json', Authorization: basic },
       });
@@ -398,6 +394,15 @@ try {
         );
       } else {
         const started = Date.now();
+        let refreshes = 0;
+        for (let stale = statusBody?.stale === true; stale && refreshes < 12; refreshes++) {
+          const refreshed = await fetch(`${IRIS_URL}/api/aperture/logs/index`, {
+            method: 'POST',
+            headers: { Accept: 'application/json', Authorization: basic },
+          });
+          if (refreshed.status !== 200) break;
+          stale = (await refreshed.json())?.stale === true;
+        }
         const similar = await fetch(
           `${IRIS_URL}/api/aperture/logs/similar?file=${encodeURIComponent(first.id)}&offset=${newest}&limit=5`,
           { headers: { Accept: 'application/json', Authorization: basic } },
@@ -414,7 +419,7 @@ try {
           `Similar entries of ${first.id} at offset ${newest}`,
           ok,
           ok
-            ? `${body.matches.length} match(es), best ${body.matches[0]?.score ?? '-'}, seen ${body.summary.similar} of ${body.summary.of} in ${Date.now() - started} ms; ${body.method}`
+            ? `${body.matches.length} match(es), best ${body.matches[0]?.score ?? '-'}, seen ${body.summary.similar} of ${body.summary.of} in ${Date.now() - started} ms (${refreshes} refresh(es) first); ${body.method}`
             : `HTTP ${similar.status} ${JSON.stringify(body ?? (await similar.text()).slice(0, 200))}`,
           { status: similar.status },
         );

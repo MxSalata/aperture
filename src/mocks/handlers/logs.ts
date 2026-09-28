@@ -248,8 +248,8 @@ export function windowOf(text: string, before: number, nbytes: number) {
 
 /**
  * The wording index of the demo: every entry of the messages files with its vector, built on the
- * first refresh (or the first similar query), like Aperture.LogIndex on an instance. GET
- * /logs/index says "stale" until then, so the screen's "indexing" state shows in the demo too.
+ * first refresh (POST /logs/index), like Aperture.LogIndex on an instance. GET /logs/index says
+ * "stale" until then, so the screen's "indexing" state shows in the demo too.
  */
 interface IndexedEntry {
   file: string;
@@ -360,8 +360,10 @@ function similarTo(f: LogFile, offset: number, limit: number) {
   const entry = entryAt(f, offset);
   if (!entry) return null;
   const vector = vectoriseLogText(entry.text);
-  const rows = buildIndex()
-    .entries.map((e) => ({ ...e, score: Math.round(cosine(vector, e.vector) * 10_000) / 10_000 }))
+  // A query reads what is indexed; POST /logs/index builds it, as on an instance.
+  const indexed = isBuilt() ? index!.entries : [];
+  const rows = indexed
+    .map((e) => ({ ...e, score: Math.round(cosine(vector, e.vector) * 10_000) / 10_000 }))
     .sort((a, b) => b.score - a.score || b.time.localeCompare(a.time))
     .slice(0, TOPK)
     .map(({ vector: _v, ...r }) => r);
@@ -397,7 +399,8 @@ export const logsHandlers = [
     if (!account.privileges.includes(OPERATE)) return refuse(403, 'Requires %Admin_Operate:USE');
     return HttpResponse.json({
       application: 'Aperture log reader',
-      version: '1.1.0',
+      version: __APP_VERSION__,
+      readerApiVersion: '1.2.0',
       readOnly: true,
       resource: '%Admin_Operate:USE',
       routes: [

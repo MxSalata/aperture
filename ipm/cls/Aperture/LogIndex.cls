@@ -34,6 +34,9 @@ Parameter MAXTEXT = 2000;
 
 Parameter MAXTEMPLATE = 1000;
 
+/// Seconds a refresh waits for another one to finish before it answers `busy`.
+Parameter REFRESHWAIT = 20;
+
 /// Where module.xml copies ipm/python/lib/ (aperture_vectors.py).
 ClassMethod PythonDir() As %String
 {
@@ -46,10 +49,22 @@ ClassMethod Status() As %String
     Quit ..StatusPython(..PythonDir(), ##class(Aperture.Logs).Catalog(), ..#MAXBYTESPERCALL, ..#MAXLINESPERCALL, ..#FIRSTTAIL, ..#DIMS)
 }
 
-/// JSON: indexes what was appended since the last call, within the bounds above.
+/// JSON: indexes what was appended since the last call, within the bounds above. One refresh at a
+/// time: a second caller waits for the first, then finds little or nothing left to index. If the
+/// first is still running after REFRESHWAIT seconds, the answer adds nothing and says `busy` and
+/// `stale`, so the caller asks again.
 ClassMethod Refresh() As %String
 {
-    Quit ..RefreshPython(..PythonDir(), ##class(Aperture.Logs).Catalog(), ..#MAXBYTESPERCALL, ..#MAXLINESPERCALL, ..#FIRSTTAIL, ..#MAXTEXT, ..#MAXTEMPLATE, ..#DIMS)
+    Lock +^Aperture.LogIndex:..#REFRESHWAIT
+    If '$Test Quit {"files":[], "lines":0, "indexedAt":"", "stale":true, "busy":true}.%ToJSON()
+    Try {
+        Set answer = ..RefreshPython(..PythonDir(), ##class(Aperture.Logs).Catalog(), ..#MAXBYTESPERCALL, ..#MAXLINESPERCALL, ..#FIRSTTAIL, ..#MAXTEXT, ..#MAXTEMPLATE, ..#DIMS)
+    } Catch ex {
+        Lock -^Aperture.LogIndex
+        Throw ex
+    }
+    Lock -^Aperture.LogIndex
+    Quit answer
 }
 
 /// JSON: the entry at `offset` of the catalogued file at `path` (id `file`), the entries worded

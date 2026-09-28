@@ -93,4 +93,14 @@ describe('/api/aperture/logs/similar (the wording index)', () => {
       (e: unknown) => e instanceof ApiError && e.status === 404 && /No stamped entry/.test(e.summary),
     );
   });
+
+  it('reads only on a GET: the index grows through POST /logs/index, never through a query', async () => {
+    const messages = (await fetchLogSources()).find((s) => s.kind === 'messages' && s.current)!;
+    const w = await readLogWindow(messages.id, 0, 16384);
+    const entry = parseLogLines(w.lines, w.offsets).find((e) => /expanded by/.test(e.message))!;
+    const unindexed = await fetchSimilarEntries(messages.id, entry.offset!, 5);
+    expect(unindexed.entry.offset).toBe(entry.offset);
+    expect(unindexed.matches).toEqual([]);
+    expect((await fetchLogIndex()).stale).toBe(true);
+  });
 });
