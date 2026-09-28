@@ -33,6 +33,7 @@ test('copies a request over plain HTTP, where the browser has no clipboard API',
   await expect(page.locator('.mantine-Notification-root', { hasText: 'Copied to clipboard' })).toBeVisible();
   const copied = await page.evaluate(() => (window as unknown as { copied: string[] }).copied);
   expect(copied.at(-1)).toContain('POST {{baseUrl}}/api/admin/v2/database-dir/compact');
-  // The focus is back on the button, not on the text area the copy used.
-  await expect(page.getByRole('button', { name: 'Copied to clipboard' })).toBeFocused();
+  // The focus is back on the button, not on the text area the copy used. The button says "Copied to
+  // clipboard" for two seconds only, which a busy machine can outlast by now: find it by either label.
+  await expect(page.getByRole('button', { name: /^(Copy|Copied to clipboard)$/ })).toBeFocused();
 });
