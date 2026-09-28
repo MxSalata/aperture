@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **The package installs its Python vectoriser.** The first CI build with Vector Search stopped at
+  IPM's Activate phase: a `FileCopy` of the single file `aperture_vectors.py` went to an empty
+  target (`File not copied: -2`), although the six classes, the vector property and its HNSW index
+  compiled on IRIS Community 2026.2. The vectoriser now lives in `ipm/python/lib/`, copied as a
+  directory to `{$mgrdir}aperture-python/`, beside the portal rather than inside it, so a reinstall
+  of the portal cannot take it away; the tests read it from there.
 - **Aperture in one command, from the GitHub Container Registry.**
   `docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture`, then
   `/aperture/index.html` as `_SYSTEM` / `SYS`: IRIS Community 2026.2 with the package installed,

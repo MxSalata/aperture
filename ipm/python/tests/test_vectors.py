@@ -6,7 +6,7 @@ import sys
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), 'lib'))
 import aperture_vectors as av  # noqa: E402
 
 with open(os.path.join(HERE, "fixture.json")) as f:

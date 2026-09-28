@@ -1,6 +1,6 @@
 /// One indexed entry of messages.log or of one of its rotations: where it is, when it was
 /// written, what it says, and the vector of its wording, which Aperture.LogIndex computes with
-/// ipm/python/aperture_vectors.py and Aperture.API's /logs/similar searches with VECTOR_COSINE
+/// ipm/python/lib/aperture_vectors.py and Aperture.API's /logs/similar searches with VECTOR_COSINE
 /// over the HNSW index. The package writes to this table and to Aperture.LogIndexFile, and to
 /// nothing else of the instance.
 Class Aperture.LogLine Extends %Persistent

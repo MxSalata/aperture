@@ -1,7 +1,7 @@
 /// The index behind "Similar entries" in the Messages log: the entries of messages.log and its
 /// rotations with the vector of their wording, in Aperture.LogLine under an HNSW index, and a
 /// watermark per file in Aperture.LogIndexFile. The vectors come from
-/// ipm/python/aperture_vectors.py (module.xml copies it to {$mgrdir}aperture/python/), the same
+/// ipm/python/lib/aperture_vectors.py (module.xml copies it to {$mgrdir}aperture-python/), the same
 /// arithmetic the demo runs in TypeScript.
 ///
 /// Bounded and incremental: a file is first indexed from its newest FIRSTTAIL bytes, then only
@@ -34,10 +34,10 @@ Parameter MAXTEXT = 2000;
 
 Parameter MAXTEMPLATE = 1000;
 
-/// Where module.xml copies ipm/python/aperture_vectors.py.
+/// Where module.xml copies ipm/python/lib/ (aperture_vectors.py).
 ClassMethod PythonDir() As %String
 {
-    Quit ##class(%File).NormalizeDirectory("aperture/python", ##class(%File).ManagerDirectory())
+    Quit ##class(%File).NormalizeDirectory("aperture-python", ##class(%File).ManagerDirectory())
 }
 
 /// JSON: what is indexed, per file and in total, and whether a refresh has work to do.

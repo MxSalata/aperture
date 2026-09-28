@@ -269,7 +269,7 @@ vector of an entry is a **feature hash of its words**, computed twice with ident
 
 | Side | Where | Used by |
 | --- | --- | --- |
-| Python | `ipm/python/aperture_vectors.py`, copied by `module.xml` to `{$mgrdir}aperture/python/` and imported by `Aperture.LogIndex` | the package on the instance |
+| Python | `ipm/python/lib/aperture_vectors.py`, copied by `module.xml` (the directory) to `{$mgrdir}aperture-python/` and imported by `Aperture.LogIndex` | the package on the instance |
 | TypeScript | `src/lib/logVectors.ts` | the demo's mock (`src/mocks/handlers/logs.ts`) |
 
 Both read one fixture, `ipm/python/tests/fixture.json`, which the Python side writes

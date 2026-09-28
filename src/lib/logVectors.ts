@@ -1,7 +1,7 @@
 import { parseLogLine } from './messagesLog';
 
 /**
- * Wording vectors for messages.log entries: the twin of ipm/python/aperture_vectors.py, which
+ * Wording vectors for messages.log entries: the twin of ipm/python/lib/aperture_vectors.py, which
  * the package runs on the instance; this one serves the demo's mock. Both must give the same
  * vector for the same text, and ipm/python/tests/fixture.json holds the cases both test suites
  * check. An entry becomes a template (time, pid and severity dropped; lower-cased; file paths
