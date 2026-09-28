@@ -6,6 +6,7 @@ import {
   DiskUsage,
   commonDirectory,
   diskFreeOf,
+  percentFreeFor,
   spaceLevel,
   storageLocations,
   type Volume,
@@ -147,6 +148,33 @@ describe('how full each disk is', () => {
     ]);
     expect(bare.percentFree).toBeUndefined();
     expect(bare.totalMB).toBeUndefined();
+  });
+});
+
+describe('a database the monitor does not report', () => {
+  it('takes the share of its disk from the other databases on that disk', () => {
+    // /api/monitor on IRIS for Health 2026.2: no iris_disk_percent_full for IRISLIB, none for
+    // IRISLOCALDATA at 04:10, while their neighbours on the same disks have one.
+    const usage = new DiskUsage([
+      { name: 'iris_disk_percent_full', labels: { id: 'USER', dir: '/durable/iris/mgr/user/' }, value: 28 },
+      { name: 'iris_disk_percent_full', labels: { id: 'HSLIB', dir: '/usr/irissys/mgr/hslib/' }, value: 23 },
+    ]);
+    const locations = storageLocations(
+      [
+        { name: 'USER', volumes: [vol('/durable/iris/mgr/user/', 11, 2_747_422)] },
+        { name: 'IRISLOCALDATA', volumes: [vol('/durable/iris/mgr/irislocaldata/', 11, 2_747_422)] },
+        { name: 'HSLIB', volumes: [vol('/usr/irissys/mgr/hslib/', 1627, 79_109)] },
+        { name: 'IRISLIB', volumes: [vol('/usr/irissys/mgr/irislib/', 379, 79_109)] },
+      ],
+      usage,
+    );
+    expect(percentFreeFor('IRISLOCALDATA', '/durable/iris/mgr/irislocaldata/', locations, usage)).toBe(72);
+    expect(percentFreeFor('IRISLIB', '/usr/irissys/mgr/irislib/', locations, usage)).toBe(77);
+    expect(percentFreeFor('USER', '/durable/iris/mgr/user/', locations, usage)).toBe(72);
+    // A disk where no database has a reading has no share.
+    expect(
+      percentFreeFor('USER', '/durable/iris/mgr/user/', storageLocations([]), new DiskUsage([])),
+    ).toBeUndefined();
   });
 });
 

@@ -32,8 +32,9 @@
   its size ("9.2 GiB free of 78.1 GiB"). The share is `iris_disk_percent_full` of `/api/monitor`,
   read per database directory, because the SysAdmin API reports free space only (the volumes'
   `VolumeDirectoryTotalSize` is the database's own size; on IRIS for Health 2026.2 the durable disk
-  is 72.3 % free, the image's file system 77.3 %); where the monitor has no figure, the size is
-  shown as before. The demo's monitor now labels its disk metrics as IRIS does (`id` the database,
+  is 72.3 % free, the image's file system 77.3 %); a database the monitor leaves out (IRIS does not report every one: IRISLIB never, on IRIS for
+  Health 2026.2, IRISLOCALDATA at times) shows its disk's share, taken from the other databases on
+  that disk; where a disk has no figure at all, the size is shown as before. The demo's monitor now labels its disk metrics as IRIS does (`id` the database,
   `dir` its directory) and reports whole disks rather than databases. Sizes no longer wrap in the
   table.
 - **Similar entries in the Messages log, with IRIS Vector Search.** Open an entry and choose

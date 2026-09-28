@@ -124,6 +124,21 @@ export class DiskUsage {
 }
 
 /**
+ * The share of its disk that is free for one database: its own reading of iris_disk_percent_full
+ * when /api/monitor has one, else its disk's, taken from the other databases on that disk. IRIS
+ * does not report every database there (IRISLIB never, on IRIS for Health 2026.2; others come and
+ * go), and a disk's figure is the same for all of them.
+ */
+export function percentFreeFor(
+  name: string,
+  dir: string | undefined,
+  locations: StorageLocation[],
+  usage: DiskUsage,
+): number | undefined {
+  return usage.percentFree(dir) ?? locations.find((l) => l.databases.includes(name))?.percentFree;
+}
+
+/**
  * The disks behind the databases, least free space first. Volumes are put on one disk when they
  * report the same free space (and, on Windows, the same drive); a disk is named by the deepest
  * directory its volumes share.

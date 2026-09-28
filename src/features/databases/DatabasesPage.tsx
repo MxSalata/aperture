@@ -40,7 +40,14 @@ import {
   useLocalDatabases,
   type DatabaseRow,
 } from './useDatabases';
-import { DiskUsage, diskFreeOf, storageLocations, type SpaceLevel, type StorageLocation } from './storage';
+import {
+  DiskUsage,
+  diskFreeOf,
+  percentFreeFor,
+  storageLocations,
+  type SpaceLevel,
+  type StorageLocation,
+} from './storage';
 
 export function databaseDetailUrl(row: { Name?: string; Directory?: string }) {
   const q = new URLSearchParams();
@@ -414,8 +421,8 @@ export default function DatabasesPage() {
     () =>
       joined.map((r) => {
         const free = diskFreeOf(r.Directory ? volumes.data?.get(dirKey(r.Directory)) : undefined);
-        const percent = usage.percentFree(r.Directory);
         const name = r.Name || r.Directory || '';
+        const percent = percentFreeFor(name, r.Directory, locations, usage);
         return free === undefined && percent === undefined
           ? r
           : {

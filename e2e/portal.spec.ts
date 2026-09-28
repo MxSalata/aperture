@@ -57,6 +57,13 @@ test.describe('Aperture (demo mode)', () => {
     // The toolbar's switch does the same from the keyboard.
     await page.getByText('% of disk', { exact: true }).click();
     await expect(clinical.getByRole('cell', { name: '12% low' })).toBeVisible();
+
+    // IRISLIB has no disk figure of its own (as on a real instance): it shows its disk's.
+    await expect(
+      page
+        .getByRole('button', { name: 'Open database IRISLIB' })
+        .getByRole('cell', { name: '36%', exact: true }),
+    ).toBeVisible();
   });
 
   test('queues an integrity check and follows it in the Job Center', async ({ page }) => {

@@ -133,7 +133,10 @@ function prometheusText(): string {
     ...dbs.map((d) => `iris_directory_space{id="${d.id}",dir="${d.dir}"} ${d.diskFree}`),
     '# HELP iris_disk_percent_full Percentage of the volume holding the database that is in use',
     '# TYPE iris_disk_percent_full gauge',
-    ...dbs.map((d) => `iris_disk_percent_full{id="${d.id}",dir="${d.dir}"} ${d.full.toFixed(2)}`),
+    // As on IRIS for Health 2026.2, not every database has one: IRISLIB is left out.
+    ...dbs
+      .filter((d) => d.id !== 'IRISLIB')
+      .map((d) => `iris_disk_percent_full{id="${d.id}",dir="${d.dir}"} ${d.full.toFixed(2)}`),
     '# HELP iris_wd_cycle_time Write daemon cycle time in ms',
     '# TYPE iris_wd_cycle_time gauge',
     `iris_wd_cycle_time ${Math.round(drift(12, 6, 30))}`,
