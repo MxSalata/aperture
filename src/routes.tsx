@@ -43,6 +43,7 @@ const ActivityPage = lazy(() => import('./features/activity/ActivityPage'));
 const MonitorPage = lazy(() => import('./features/monitor/MonitorPage'));
 const LogsPage = lazy(() => import('./features/logs/LogsPage'));
 const MessagesLogPage = lazy(() => import('./features/logs/MessagesLogPage'));
+const HealthPage = lazy(() => import('./features/health/HealthPage'));
 
 // Hash routing lets the same bundle run from any path without server-side rewrites
 // (GitHub Pages, IRIS serving /aperture/); browser routing is used behind nginx / Vite.
@@ -61,6 +62,7 @@ export const router = createRouter(
           element: <AppLayout />,
           children: [
             { index: true, element: <LandingRedirect /> },
+            { path: 'health', element: <HealthPage /> },
             { path: 'jobs', element: <JobsPage /> },
             { path: 'activity', element: <ActivityPage /> },
             { path: 'monitor', element: <MonitorPage /> },

@@ -1,5 +1,6 @@
 import {
   Badge,
+  Box,
   Button,
   Grid,
   Group,
@@ -43,6 +44,7 @@ import { SERIES_DASH } from '@/lib/chartColors';
 import { CHART_TITLES, orderCharts, useDashboard, type DashboardChart } from '@/stores/dashboard';
 import { ChartPicker } from './ChartPicker';
 import { interopByNamespace, interopNamespaces } from './interop';
+import { HealthCard } from '@/features/health/HealthCard';
 import { useHostMetrics } from '@/features/monitor/useHostMetrics';
 import { metric } from '@/api/monitor';
 import { describeError } from '@/lib/errors';
@@ -582,6 +584,10 @@ export default function DashboardPage() {
           />
         </SimpleGrid>
       )}
+
+      <Box mb="md">
+        <HealthCard />
+      </Box>
 
       <Group justify="space-between" mb={6}>
         <Text size="xs" c="dimmed" fw={600} tt="uppercase" style={{ letterSpacing: 0.4 }}>

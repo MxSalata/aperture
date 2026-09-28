@@ -1,5 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { NAV, NAV_COLORS } from '../nav';
+import { NAV, type NavColor } from '../nav';
+
+/** Every colour with a contrast-tuned text token (styles.css); the type keeps nav.ts to these. */
+const NAV_COLORS: NavColor[] = [
+  'teal',
+  'indigo',
+  'grape',
+  'green',
+  'violet',
+  'blue',
+  'cyan',
+  'red',
+  'orange',
+  'yellow',
+  'lime',
+  'pink',
+  'gray',
+];
 
 describe('navigation colours', () => {
   it('gives every entry a colour with a contrast-tuned text token', () => {

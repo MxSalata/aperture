@@ -99,6 +99,21 @@ export default function MessagesLogPage() {
     return parseLogLines(all).reverse(); // newest first
   }, [windows]);
   const counts = useMemo(() => severityCounts(entries), [entries]);
+  // ?at=<stamp> (a link from the Health check) opens that entry once it is on screen.
+  const atParam = params.get('at');
+  const named = useMemo(
+    () => (atParam ? entries.find((e) => e.time === atParam) : undefined),
+    [entries, atParam],
+  );
+  const opened = open ?? named ?? null;
+  const closeEntry = () => {
+    setOpen(null);
+    if (atParam) {
+      const next = new URLSearchParams(params);
+      next.delete('at');
+      setParams(next, { replace: true });
+    }
+  };
   // The table's own filter box searches the text; this narrows by severity first.
   const shown = useMemo(() => {
     const wanted = new Set(severities.map(Number));
@@ -341,23 +356,17 @@ export default function MessagesLogPage() {
           </Alert>
         ) : null}
       </Stack>
-      <Drawer
-        opened={!!open}
-        onClose={() => setOpen(null)}
-        position="right"
-        size="lg"
-        title={<b>Log entry</b>}
-      >
-        {open ? (
+      <Drawer opened={!!opened} onClose={closeEntry} position="right" size="lg" title={<b>Log entry</b>}>
+        {opened ? (
           <Stack gap="sm">
             <Group gap="xs">
-              <SeverityBadge severity={open.severity} />
-              {open.time ? <Timestamp value={open.time} /> : null}
-              {open.pid !== null ? <Text size="sm">PID {open.pid}</Text> : null}
-              {open.category ? <span className="mono">{open.category}</span> : null}
+              <SeverityBadge severity={opened.severity} />
+              {opened.time ? <Timestamp value={opened.time} /> : null}
+              {opened.pid !== null ? <Text size="sm">PID {opened.pid}</Text> : null}
+              {opened.category ? <span className="mono">{opened.category}</span> : null}
             </Group>
             <Code block style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-              {open.raw}
+              {opened.raw}
             </Code>
           </Stack>
         ) : null}
