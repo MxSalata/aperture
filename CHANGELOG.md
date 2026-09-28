@@ -9,10 +9,12 @@
   current" check (the build is still checked); on the push that merges it into `main`, a job
   rebuilds `www/` and commits it as github-actions[bot], and the image is built from that commit, so
   `main` always carries the build the IPM package ships. No run that Dependabot starts holds a write
-  token. On
-  `main`, CI publishes the image as `latest` and an immutable `main-<sha>` tag, and sets the
-  version's tag once, when the registry has none: a dependency update merged after a release gives a
-  fresh `latest` and `main-<sha>` and leaves the release's image as it was.
+  token. A merged update
+  that changed `package.json` is a patch release of its own: the last figure of the version moves
+  (`package.json`, `module.xml`), the changelog gets a section naming the packages, the commit is
+  tagged and released on GitHub, and the image is published as that version. On `main`, CI publishes
+  the image as `latest` and an immutable `main-<sha>` tag, and sets the version's tag once, when the
+  registry has none: a release keeps its image.
 - **Links that work on Open Exchange, and the second article.** Open Exchange rewrote the README's
   in-page links (the Docker and IPM badges, the jump links, the "more" links) to GitHub's file tree,
   where they lost their place; they now point at the section of the README on GitHub. The second

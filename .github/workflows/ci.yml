@@ -80,10 +80,15 @@ jobs:
           path: dist-demo
 
   # A merged Dependabot pull request changes the bundle but not the committed www/, which the IPM
-  # package and the image ship. On that push to main, and on no other event, this job rebuilds www/
-  # and commits it as github-actions[bot]; verify-iris then builds the image from that commit. Only a
-  # maintainer's merge starts it, so no run that Dependabot starts holds a write token. A push made
-  # with GITHUB_TOKEN starts no workflow, so the commit is checked by the next push to main.
+  # package and the image ship. On that push to main, and on no other event, this job makes the
+  # update a patch release: when the merge changed package.json, the last figure of the version
+  # moves (npm version patch; module.xml follows), the CHANGELOG gets a section naming the packages
+  # (scripts/dependency-release.mjs), www/ is rebuilt after the bump so the About page shows the
+  # new version, and the commit is pushed to main with its annotated tag and a GitHub release;
+  # verify-iris then builds the image from that commit and publishes latest, main-<sha> and the
+  # version. A merge that changed only workflows or a Dockerfile rebuilds nothing and bumps nothing.
+  # Only a maintainer's merge starts this job, so no run that Dependabot starts holds a write token.
+  # A push made with GITHUB_TOKEN starts no workflow, so the commit is checked by the next push.
   www-after-dependabot-merge:
     needs: verify
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(toJson(github.event.commits.*.author.username), 'dependabot[bot]')
@@ -101,22 +106,42 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Rebuild www/ and, when it changed, commit it to main
+      - name: Make the dependency update a patch release, with www/ rebuilt
         id: commit
+        env:
+          COMMITS: ${{ toJson(github.event.commits) }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          bump=$(printf '%s' "$COMMITS" | jq -r '[.[] | (.added + .modified)[]] | index("package.json") != null')
+          version=""
+          if [ "$bump" = "true" ]; then
+            version=$(npm version patch --no-git-tag-version)
+            version=${version#v}
+            sed -i "s|<Version>[^<]*</Version>|<Version>$version</Version>|" module.xml
+            printf '%s' "$COMMITS" | node scripts/dependency-release.mjs "$version" > release-notes.md
+          fi
           npm run build:www
-          if [ -z "$(git status --porcelain -- www)" ]; then
-            echo "www/ is current"
+          if [ -z "$version" ] && [ -z "$(git status --porcelain -- www)" ]; then
+            echo "package.json unchanged and www/ current: nothing to commit"
             echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A www
-          git commit -m "www/ rebuilt for the dependency update"
-          git push origin HEAD:main
+          if [ -n "$version" ]; then
+            git add package.json package-lock.json module.xml CHANGELOG.md
+            git commit -m "$version: dependency updates" -F - < release-notes.md
+            git tag -a "v$version" -m "Aperture $version: dependency updates"
+            git push origin HEAD:main "v$version"
+            gh release create "v$version" --title "Aperture $version" --notes-file release-notes.md
+            echo "Released $version from the dependency update"
+          else
+            git commit -m "www/ rebuilt for the dependency update"
+            git push origin HEAD:main
+            echo "Committed the rebuilt www/ to main"
+          fi
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "Committed the rebuilt www/ to main"
 
   # Builds the IRIS image (official IRIS Community 2026.2 image plus the package manager),
   # which installs Aperture through its own module.xml (zpm "load") and runs the Embedded
