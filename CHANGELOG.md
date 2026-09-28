@@ -2,18 +2,20 @@
 
 ## Unreleased
 
-- **Dependency updates arrive monthly and rebuild `www/` themselves.** Dependabot runs monthly, with the
+- **Dependency updates arrive monthly and release themselves.** Dependabot runs monthly, with the
   Mantine packages as one group at every update type (they share a version, so a major arrives for all
   of them at once) and the ESLint packages as another; the build stage's Node major is ignored (an LTS
   line, moved by hand). A pull request from Dependabot no longer fails the "www/ is current" check (the
-  build is still checked); on the push that merges it into `main`, a job rebuilds `www/` and commits it
-  as github-actions[bot], and the image is built from that commit, so `main` always carries the build
-  the IPM package ships. No run that Dependabot starts holds a write token. A merged update that changed
-  `package.json` is a patch release of its own: the last figure of the version moves (`package.json`,
-  `module.xml`), the changelog gets a section naming the packages, the commit is tagged and released on
-  GitHub, and the image is published as that version. On `main`, CI publishes the image as `latest` and
-  an immutable `main-<sha>` tag, and sets the version's tag once, when the registry has none: a release
-  keeps its image.
+  build is still checked). Once merged into `main`, the updates make a patch release: a job reads the
+  Dependabot commits since the last version tag, so pull requests merged together make one release that
+  names them all. When one of them changed `package.json` or its lockfile, the last figure of the version
+  moves (`package.json`, `module.xml`), the changelog gets a section naming every update, `www/` is
+  rebuilt, and the commit (by github-actions[bot]) is tagged and released on GitHub; the image is built
+  from it and published as that version, so `main` always carries the build the IPM package ships. No
+  run that Dependabot starts holds a write token, and runs on `main` no longer cancel each other, so a
+  release is never cut off halfway. On `main`, CI publishes the image as `latest` and an immutable
+  `main-<sha>` tag, and sets the version's tag once, when the registry has none: a release keeps its
+  image.
 
 ## 1.1.0 - Suspended tasks as IRIS holds them, resource writes read back, the keyboard everywhere (28 September 2026)
 

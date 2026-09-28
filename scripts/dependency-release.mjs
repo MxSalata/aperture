@@ -1,24 +1,33 @@
 #!/usr/bin/env node
-// A dependency update merged into main is a patch release of its own (ci.yml, the
-// www-after-dependabot-merge job): this writes the release's CHANGELOG section from the merged
-// commits, whose Dependabot messages name each package and its versions, and prints the same
-// lines for the GitHub release. The section goes after "## Unreleased", which keeps what the next
-// feature release will say.
+// Dependency updates merged into main make a patch release (ci.yml, the
+// www-after-dependabot-merge job): this writes the release's CHANGELOG section from the Dependabot
+// commits since the last version tag, whose messages name each package and its versions, and
+// prints the same lines for the GitHub release. It reads the history rather than a push, so
+// updates merged together, or whose own run a newer push replaced, are all named. The section goes
+// after "## Unreleased", which keeps what the next feature release will say.
 //
-// Usage: node scripts/dependency-release.mjs <version> < commits.json
-// commits.json: the push event's commits (message, added, modified ...), as GitHub sends them.
+// Usage: node scripts/dependency-release.mjs <version> <last version tag>
+import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const version = process.argv[2];
-if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {
-  console.error('usage: dependency-release.mjs <major.minor.patch> < commits.json');
+const [version, since] = process.argv.slice(2);
+if (!/^\d+\.\d+\.\d+$/.test(version ?? '') || !since) {
+  console.error('usage: dependency-release.mjs <major.minor.patch> <last version tag>');
   process.exit(1);
 }
-const commits = JSON.parse(readFileSync(0, 'utf8'));
+// Oldest first; %x1e (the record separator) ends each message, which never contains it.
+const messages = execFileSync(
+  'git',
+  ['log', '--reverse', '--author=dependabot\\[bot\\]', '--format=%B%x1e', `${since}..HEAD`],
+  { encoding: 'utf8' },
+)
+  .split('\x1e')
+  .map((message) => message.trim())
+  .filter(Boolean);
 
 const bullets = [];
-for (const commit of Array.isArray(commits) ? commits : []) {
-  const [title, ...body] = String(commit.message ?? '').split('\n');
+for (const message of messages) {
+  const [title, ...body] = message.split('\n');
   if (!/^Bump\b/.test(title)) continue;
   // "Updates `@tabler/icons-react` from 3.46.0 to 3.48.0" lines of a grouped update, or the title
   // of a single one ("Bump globals from 16.5.0 to 17.12.0"), which already names the versions.

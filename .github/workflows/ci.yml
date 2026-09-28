@@ -13,16 +13,22 @@ on:
 permissions:
   contents: read
 
-# One queue per branch, and a superseded push cancels the run it replaces.
+# One queue per branch, and a superseded push cancels the run it replaces, except on main: a run
+# there may be in the middle of a dependency release (a commit, a tag, a GitHub release), so every
+# run on main finishes. A run still waiting there is replaced by a newer one, which releases the
+# same updates, since the release reads the history since the last version tag.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The whole history with its tags: the www/ check looks for updates since the last release.
+          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
@@ -38,20 +44,21 @@ jobs:
       - name: Entry chunk stays small and free of the spec index
         run: npm run check:bundle
       - name: www/ is current (the IPM package ships the committed build)
-        env:
-          COMMITS: ${{ toJson(github.event.commits) }}
         run: |
           npm run build:www
           if [ -z "$(git status --porcelain -- www)" ]; then exit 0; fi
           # A dependency update changes the bundle. On Dependabot's pull request the build is checked
-          # and the comparison skipped; on the push that merges it into main, the job below commits
-          # the rebuilt www/. Everyone else commits www/ with the change, as before.
+          # and the comparison skipped; on main, while npm updates merged since the last version tag
+          # are unreleased, the job below commits the rebuilt www/. Everyone else commits www/ with
+          # the change, as before.
           if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.user.login }}" = "dependabot[bot]" ]; then
             echo "www/ changes with this dependency update; it is rebuilt and committed when the pull request is merged"
             exit 0
           fi
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && printf '%s' "$COMMITS" | jq -e 'map(.author.username) | index("dependabot[bot]")' > /dev/null; then
-            echo "www/ changes with the merged dependency update; the www-after-dependabot-merge job commits it to main"
+          last=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2> /dev/null || true)
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ -n "$last" ] &&
+            [ -n "$(git log --format=%h --author='dependabot\[bot\]' "$last..HEAD" -- package.json package-lock.json)" ]; then
+            echo "www/ changes with the dependency updates merged since $last; the www-after-dependabot-merge job commits it to main"
             exit 0
           fi
           echo "www/ is stale: run 'npm run build:www' and commit the result"; git status --porcelain -- www; exit 1
@@ -79,19 +86,21 @@ jobs:
         with:
           path: dist-demo
 
-  # A merged Dependabot pull request changes the bundle but not the committed www/, which the IPM
-  # package and the image ship. On that push to main, and on no other event, this job makes the
-  # update a patch release: when the merge changed package.json, the last figure of the version
-  # moves (npm version patch; module.xml follows), the CHANGELOG gets a section naming the packages
-  # (scripts/dependency-release.mjs), www/ is rebuilt after the bump so the About page shows the
-  # new version, and the commit is pushed to main with its annotated tag and a GitHub release;
-  # verify-iris then builds the image from that commit and publishes latest, main-<sha> and the
-  # version. A merge that changed only workflows or a Dockerfile rebuilds nothing and bumps nothing.
-  # Only a maintainer's merge starts this job, so no run that Dependabot starts holds a write token.
-  # A push made with GITHUB_TOKEN starts no workflow, so the commit is checked by the next push.
+  # Merged Dependabot pull requests change the bundle but not the committed www/, which the IPM
+  # package and the image ship. This job makes them a patch release. It runs on every push to main
+  # and reads the history, not the push: the Dependabot commits since the last version tag are the
+  # unreleased updates, however many pull requests were merged together and whichever runs a newer
+  # push replaced. When any of them changed package.json or package-lock.json, the last figure of
+  # the version moves (npm version patch; module.xml follows), the CHANGELOG gets a section naming
+  # every update (scripts/dependency-release.mjs), www/ is rebuilt after the bump so the About page
+  # shows the new version, and the commit is pushed to main with its annotated tag and a GitHub
+  # release; verify-iris then builds the image from that commit and publishes latest, main-<sha>
+  # and the version. Updates to workflows or a Dockerfile alone bump nothing (the next release
+  # names them). Pull requests never reach this job, so no run that Dependabot starts holds a write
+  # token. A push made with GITHUB_TOKEN starts no workflow, so the commit is checked by the next push.
   www-after-dependabot-merge:
     needs: verify
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(toJson(github.event.commits.*.author.username), 'dependabot[bot]')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -101,29 +110,37 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
+          # The whole history with its tags, back to the last release.
+          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - name: Make the dependency update a patch release, with www/ rebuilt
+      - name: Make the dependency updates since the last release a patch release, with www/ rebuilt
         id: commit
         env:
-          COMMITS: ${{ toJson(github.event.commits) }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          bump=$(printf '%s' "$COMMITS" | jq -r '[.[] | (.added + .modified)[]] | index("package.json") != null')
+          last=$(git describe --tags --abbrev=0 --match 'v[0-9]*')
+          dependabot_since() { git log --format=%h --author='dependabot\[bot\]' "$last..HEAD" "$@"; }
+          # main as checked out here: this push, or newer, with any release made by an earlier run.
+          if [ -z "$(dependabot_since)" ]; then
+            echo "No Dependabot commit since $last: nothing to release"
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          npm ci
           version=""
-          if [ "$bump" = "true" ]; then
+          if [ -n "$(dependabot_since -- package.json package-lock.json)" ]; then
             version=$(npm version patch --no-git-tag-version)
             version=${version#v}
             sed -i "s|<Version>[^<]*</Version>|<Version>$version</Version>|" module.xml
-            printf '%s' "$COMMITS" | node scripts/dependency-release.mjs "$version" > release-notes.md
+            node scripts/dependency-release.mjs "$version" "$last" > release-notes.md
           fi
           npm run build:www
           if [ -z "$version" ] && [ -z "$(git status --porcelain -- www)" ]; then
-            echo "package.json unchanged and www/ current: nothing to commit"
-            echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+            echo "No npm update since $last and www/ current: nothing to commit"
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name 'github-actions[bot]'
@@ -136,7 +153,7 @@ jobs:
             git tag -a "v$version" -m "Aperture $version: dependency updates"
             git push origin HEAD:main "v$version"
             gh release create "v$version" --title "Aperture $version" --notes-file release-notes.md
-            echo "Released $version from the dependency update"
+            echo "Released $version from the dependency updates since $last"
           else
             git commit -m "www/ rebuilt for the dependency update"
             git push origin HEAD:main
@@ -152,8 +169,8 @@ jobs:
   # Registry: latest and the version from main, the version from a tag, edge from a feature branch.
   verify-iris:
     needs: [verify, www-after-dependabot-merge]
-    # Runs after verify whether or not the rebuild job had anything to do (it is skipped on every
-    # event but a dependency merge).
+    # Runs after verify whether or not the release job had anything to do (it runs on pushes to
+    # main only, and is skipped everywhere else).
     if: ${{ !cancelled() && needs.verify.result == 'success' && (needs.www-after-dependabot-merge.result == 'success' || needs.www-after-dependabot-merge.result == 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
