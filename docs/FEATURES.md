@@ -59,7 +59,7 @@ _Notable:_ `ipm/cls/Aperture/API.cls`, `Logs.cls`, `LogIndex.cls` (Embedded Pyth
 
 ## Security
 
-Users, roles, resources, services, web applications (JWT, CORS), audit events + log + purge, TLS/SSL configs + test, X.509 credentials with certificate expiry, wallet collections and write-only secrets, OAuth 2.0 in its three roles, SQL privileges.
+Users, roles, resources, services, web applications (JWT, CORS), audit events + log + purge, SQL privileges; _TLS & certificates_ (TLS/SSL configurations with a connection test, X.509 credentials with certificate expiry); _Wallet & OAuth_ (wallet collections and write-only secrets, OAuth 2.0 in its three roles).
 
 _Notable:_ secrets are redacted at the render boundary.
 

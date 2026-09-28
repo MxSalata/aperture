@@ -5,7 +5,17 @@ import { readAsyncResult } from '@/api/hooks';
 import { isTerminal, selectActiveJobs, useJobs } from '@/stores/jobs';
 import { notifications } from '@mantine/notifications';
 import { isApiError } from '@/lib/errors';
+import type { AsyncTask } from '@/api/types';
 import { affectedBy } from './jobEffects';
+
+/**
+ * The progress figures IRIS reports in a running task's Result. A poll can move them without a
+ * new console line, so they count as a change on their own.
+ */
+function progressOf(task: AsyncTask | undefined): string {
+  const r = task?.Result as { ProgressCurrent?: number; ProgressTotal?: number } | undefined;
+  return `${r?.ProgressCurrent ?? ''}/${r?.ProgressTotal ?? ''}`;
+}
 
 /** Query families that must not be refetched just because a job finished. */
 const UNTOUCHED_BY_JOBS = new Set(['async-result', 'session']);
@@ -35,7 +45,7 @@ export function JobPoller() {
   const signature = queries
     .map(
       (q, i) =>
-        `${active[i]?.id}:${q.data?.State ?? ''}:${q.data?.Console?.length ?? 0}:${q.isError ? 'E' : ''}`,
+        `${active[i]?.id}:${q.data?.State ?? ''}:${q.data?.Console?.length ?? 0}:${progressOf(q.data)}:${q.isError ? 'E' : ''}`,
     )
     .join('|');
 
@@ -47,7 +57,11 @@ export function JobPoller() {
       if (q.data) {
         const task = q.data;
         const state = task.State ?? 'Unknown';
-        if (job.state !== state || job.task?.Console?.length !== task.Console?.length) {
+        if (
+          job.state !== state ||
+          job.task?.Console?.length !== task.Console?.length ||
+          progressOf(job.task) !== progressOf(task)
+        ) {
           update(job.id, { state, task });
         }
         if (isTerminal(state) && !job.notified) {

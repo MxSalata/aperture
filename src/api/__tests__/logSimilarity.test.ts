@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/mocks/node';
 import { fetchLogIndex, fetchSimilarEntries, refreshLogIndex, similarEntries } from '../logSimilarity';
 import { fetchLogSources, lineOffsets, readLogWindow } from '../logs';
 import { resetClients } from '../client';
@@ -92,6 +94,22 @@ describe('/api/aperture/logs/similar (the wording index)', () => {
     await expect(fetchSimilarEntries('messages.log', 0)).rejects.toSatisfy(
       (e: unknown) => e instanceof ApiError && e.status === 404 && /No stamped entry/.test(e.summary),
     );
+  });
+
+  it('searches with what is indexed when another refresh holds the index', async () => {
+    let refreshes = 0;
+    server.use(
+      http.post('*/api/aperture/logs/index', () => {
+        refreshes++;
+        return HttpResponse.json({ files: [], lines: 0, indexedAt: '', stale: true, busy: true });
+      }),
+    );
+    const messages = (await fetchLogSources()).find((s) => s.kind === 'messages' && s.current)!;
+    const w = await readLogWindow(messages.id, 0, 16384);
+    const entry = parseLogLines(w.lines, w.offsets).find((e) => /expanded by/.test(e.message))!;
+    const answer = await similarEntries(messages.id, entry.offset!, 5, () => undefined);
+    expect(refreshes).toBe(1);
+    expect(answer.entry.offset).toBe(entry.offset);
   });
 
   it('reads only on a GET: the index grows through POST /logs/index, never through a query', async () => {

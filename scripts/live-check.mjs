@@ -401,7 +401,9 @@ try {
             headers: { Accept: 'application/json', Authorization: basic },
           });
           if (refreshed.status !== 200) break;
-          stale = (await refreshed.json())?.stale === true;
+          const answer = await refreshed.json();
+          // Another refresh at work: search with what is indexed rather than wait.
+          stale = answer?.stale === true && answer?.busy !== true;
         }
         const similar = await fetch(
           `${IRIS_URL}/api/aperture/logs/similar?file=${encodeURIComponent(first.id)}&offset=${newest}&limit=5`,

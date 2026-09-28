@@ -35,6 +35,8 @@ export interface LogIndexRefresh {
   lines: number;
   indexedAt: string;
   stale: boolean;
+  /** Another refresh held the index for longer than the server waits (Aperture.LogIndex REFRESHWAIT): nothing was added. */
+  busy?: boolean;
 }
 
 export interface SimilarMatch {
@@ -103,7 +105,8 @@ export async function similarEntries(
   for (let i = 0; i < MAX_REFRESHES && status.stale; i++) {
     onProgress({ phase: 'indexing', pendingBytes: status.pendingBytes });
     const done = await refreshLogIndex();
-    if (!done.stale) break;
+    // Up to date, or another refresh is at work: search with what is indexed rather than wait.
+    if (!done.stale || done.busy) break;
     status = await fetchLogIndex();
   }
   onProgress({ phase: 'searching' });
