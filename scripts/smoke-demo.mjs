@@ -259,10 +259,13 @@ await step('messages log through the reader', async () => {
 await step('similar entries (IRIS Vector Search)', async () => {
   // A message the demo's log repeats with other numbers; the drawer lists the entries worded like it.
   await page.getByRole('textbox', { name: 'Filter rows' }).fill('expanded by');
-  await page
+  // Wait for the filter: the first row before it applies is another message.
+  const repeated = page
     .getByRole('button', { name: /^Log entry / })
-    .first()
-    .click();
+    .filter({ hasText: 'expanded by' })
+    .first();
+  await repeated.waitFor({ timeout: 10000 });
+  await repeated.click();
   const drawer = page.getByRole('dialog');
   await drawer.getByRole('button', { name: 'Similar entries' }).click();
   await drawer.getByText(/Seen (at least )?\d+ times since/).waitFor({ timeout: 20000 });
@@ -312,6 +315,12 @@ await step('command palette', async () => {
   await page.waitForTimeout(500);
   await shot('12-palette');
   await page.keyboard.press('Escape');
+});
+await step('health check', async () => {
+  await page.goto(url(`/health`));
+  await page.getByText(/^\d+ findings$/).waitFor({ timeout: 20000 });
+  await page.waitForTimeout(600);
+  await shot('33-health-check');
 });
 await step('pastel theme', async () => {
   await page.goto(url(`/`));

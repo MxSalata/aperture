@@ -42,6 +42,8 @@ Search beside it.
      **who loses which privilege**.
    - Open _Logs → Messages log_ (the reader asks for the password, `SYS`), open an entry and choose
      **Similar entries**: IRIS Vector Search lists the entries worded like it, with how often and when.
+   - Open **Health check**: sixteen read-only checks run with your own access, and every finding says
+     what it means, what to do, shows its evidence and opens the screen that fixes it.
    - Open _REST services_ and export an application's routes as a Postman collection or a `.http` file.
    - Sign out and sign in as `operator` / `SYS`: the security area disappears, and every disabled
      action names the resource it needs.
@@ -71,6 +73,11 @@ unit and browser tests. Every real deployment also has a **Try the demo** button
 - **Who loses what, before you save.** Every edit is reviewed old → new against a fresh read of the
   object. A user or role change lists every account it reaches with the privileges gained and lost,
   and a change that would leave nobody able to administer security is refused.
+- **A health check that shows its work.** Sixteen deterministic, read-only checks (disks, databases,
+  journal, backups, auditing, open services and applications, `%All` holders, certificates, tasks,
+  the licence, severe log entries) run with your own access. Each finding says what it means and what
+  to do, shows the fields it read and where, and opens the Aperture screen that fixes it; a check your
+  account may not read is listed as not checked, with the privilege it needs. No invented score.
 - **Every background job in one place.** `202 Accepted` answers become jobs by themselves; the Job
   Center follows them with console output, progress, pause, resume and cancel.
 - **Every log, and the entries worded like it.** `messages.log`, `alerts.log`, `SystemMonitor.log` and
@@ -90,6 +97,7 @@ unit and browser tests. Every real deployment also has a **Try the demo** button
 
 |                                                           |                                                                |
 | --------------------------------------------------------- | -------------------------------------------------------------- |
+| ![Health check](docs/screenshots/33-health-check.png)     | ![Messages log](docs/screenshots/29-messages-log.png)          |
 | ![Who loses what](docs/screenshots/24-who-loses-what.png) | ![Similar entries](docs/screenshots/31-similar-entries.png)    |
 | ![Job Center](docs/screenshots/05-job-center.png)         | ![Databases and disk space](docs/screenshots/03-databases.png) |
 | ![Request export](docs/screenshots/30-request-export.png) | ![API Explorer](docs/screenshots/11-explorer.png)              |
