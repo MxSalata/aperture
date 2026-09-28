@@ -125,7 +125,16 @@ export default function TaskDetailPage() {
             <Button
               size="xs"
               leftSection={<IconPlayerPlay size={14} />}
-              onClick={() => runNow.mutate()}
+              onClick={() =>
+                confirmDanger({
+                  title: `Run ${t?.Name ?? `task ${id}`} now`,
+                  message:
+                    'The task runs at once, outside its schedule, with its own settings: a purge deletes, a journal switch switches.',
+                  confirmLabel: 'Run now',
+                  color: 'aperture',
+                  onConfirm: () => runNow.mutateAsync(),
+                })
+              }
               loading={runNow.isPending}
             >
               Run now

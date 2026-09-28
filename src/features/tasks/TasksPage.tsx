@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { canUse } from '@/api/privileges';
 import type { TaskList } from '@/api/types';
+import { confirmDanger } from '@/components/ConfirmDanger';
 import { PageHeader } from '@/components/PageHeader';
 import { RefreshControl } from '@/components/RefreshControl';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
@@ -223,7 +224,16 @@ export default function TasksPage() {
                   color="teal"
                   variant="light"
                   leftSection={<IconPlayerPlay size={14} />}
-                  onClick={() => resumeMgr.mutate()}
+                  onClick={() =>
+                    confirmDanger({
+                      title: 'Resume the task manager',
+                      message:
+                        'Scheduled tasks run on their schedules again, in every namespace, from the next due time.',
+                      confirmLabel: 'Resume',
+                      color: 'aperture',
+                      onConfirm: () => resumeMgr.mutateAsync(),
+                    })
+                  }
                   loading={resumeMgr.isPending}
                 >
                   Resume
@@ -234,7 +244,16 @@ export default function TasksPage() {
                   color="yellow"
                   variant="light"
                   leftSection={<IconPlayerPause size={14} />}
-                  onClick={() => suspendMgr.mutate()}
+                  onClick={() =>
+                    confirmDanger({
+                      title: 'Suspend the task manager',
+                      message:
+                        'No scheduled task runs, in any namespace, until the task manager is resumed: purges, journal switches, backups and integrity checks included.',
+                      confirmLabel: 'Suspend',
+                      color: 'aperture',
+                      onConfirm: () => suspendMgr.mutateAsync(),
+                    })
+                  }
                   loading={suspendMgr.isPending}
                 >
                   Suspend

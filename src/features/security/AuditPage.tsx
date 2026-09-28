@@ -333,7 +333,18 @@ function SettingsTab() {
             size="md"
             checked={!!on}
             disabled={enabled.isPending}
-            onChange={(e) => set.mutate(e.currentTarget.checked)}
+            onChange={(e) => {
+              // Switching auditing off stops every audit record, security changes included: confirm it.
+              if (e.currentTarget.checked) set.mutate(true);
+              else
+                confirmDanger({
+                  title: 'Switch auditing off',
+                  message:
+                    'IRIS stops writing audit records for every event, logins and security changes included, until auditing is switched on again. What happens meanwhile leaves no audit trail.',
+                  confirmLabel: 'Switch off',
+                  onConfirm: () => set.mutateAsync(false),
+                });
+            }}
             label={on ? 'On' : 'Off'}
           />
         </Group>
