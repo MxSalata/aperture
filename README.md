@@ -37,7 +37,7 @@ Aperture is an entry for the [InterSystems Programming Contest: Build Your Own M
 
 1. **In your browser, nothing to install.** Open the [online demo](https://mxsalata.github.io/aperture/) and press **Try the demo**: a simulated IRIS 2026.2 runs inside the page, so change whatever you like.
    - Open **Health check**: sixteen read-only checks run with your own access, and every finding says what it means, what to do, shows its evidence and opens the screen that fixes it.
-   - Open _Logs → Messages log_ (the reader asks for the password, `SYS`), open an entry and choose **Similar entries**: IRIS Vector Search lists the entries worded like it, with how often and when.
+   - Open _Logs → Messages log_ (the reader asks for the password, `SYS`) and open an entry: it says how often that message was logged, and **Show similar entries** lists the entries worded like it, with when (IRIS Vector Search).
    - Open _Security → Users → jdoe_, remove a role and press Save: the review lists old → new and **who loses which privilege**.
    - Press <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>⌘</kbd><kbd>K</kbd>), type `databases`, open `USER` and choose _Actions → Integrity check_: the `202 Accepted` lands in the **Job Center** with console output and progress.
    - Open _REST services_ and export an application's routes as a Postman collection or a `.http` file.
@@ -311,7 +311,7 @@ The portal and the APIs share an origin (the SysAdmin API sends no CORS headers,
 | --- | --- |
 | Community Opportunity ideas | [DPI-I-966](https://ideas.intersystems.com/ideas/DPI-I-966): every rotated `messages.log` readable in the portal (Logs → Messages log). [DPI-I-813](https://ideas.intersystems.com/ideas/DPI-I-813): requests generated from OpenAPI for Postman, VS Code and curl (REST services → Export; API Explorer) |
 | Embedded Python | [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls) (configures `/api/admin`, prints the readiness report), [`Aperture.Logs`](ipm/cls/Aperture/Logs.cls) (the log reader), [`Aperture.LogIndex`](ipm/cls/Aperture/LogIndex.cls) and [`aperture_vectors.py`](ipm/python/lib/aperture_vectors.py) (the wording index) |
-| Vector Search | [`Aperture.LogLine`](ipm/cls/Aperture/LogLine.cls): a `%Library.Vector` of 256 doubles under a `%SQL.Index.HNSW` index; `/api/aperture/logs/similar` ranks with `VECTOR_COSINE` (Logs → Messages log → Similar entries) |
+| Vector Search | [`Aperture.LogLine`](ipm/cls/Aperture/LogLine.cls): a `%Library.Vector` of 256 doubles under a `%SQL.Index.HNSW` index; `/api/aperture/logs/similar` ranks with `VECTOR_COSINE` (Logs → Messages log: open an entry) |
 | Docker | `ghcr.io/mxsalata/aperture`, [`docker-compose.yml`](docker-compose.yml), [`docker-compose.build.yml`](docker-compose.build.yml) |
 | IPM | `zpm "install iris-aperture"` ([`module.xml`](module.xml)) |
 | Online demo | https://mxsalata.github.io/aperture/ |

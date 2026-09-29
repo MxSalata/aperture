@@ -1,9 +1,11 @@
 import { setupWorker } from 'msw/browser';
 import { handlers } from './handlers';
+import { keepLogIndexCurrent } from './handlers/logs';
 
 export const worker = setupWorker(...handlers);
 
 export async function startMockWorker() {
+  keepLogIndexCurrent();
   await worker.start({
     onUnhandledRequest: 'bypass',
     quiet: true,

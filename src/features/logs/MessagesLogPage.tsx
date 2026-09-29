@@ -1,5 +1,4 @@
 import { Alert, Badge, Button, Code, Drawer, Group, MultiSelect, Select, Stack, Text } from '@mantine/core';
-import { IconListSearch } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { IconArrowLeft, IconArrowUp, IconInfoCircle } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
@@ -12,7 +11,7 @@ import {
   type LogSource,
   type LogWindow,
 } from '@/api/logs';
-import { SimilarEntries } from './SimilarEntries';
+import { SimilarCount, SimilarEntries } from './SimilarEntries';
 import { mgmntCredentials } from '@/api/mgmnt';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -219,7 +218,7 @@ export default function MessagesLogPage() {
       </Group>
       <PageHeader
         title="Messages log"
-        description="messages.log, alerts.log and SystemMonitor.log as IRIS writes them, newest first, read in bounded windows by Aperture's own log reader on the instance (/api/aperture, Embedded Python). Older lines load on request; a 100 MB log costs the same per page as a small one."
+        description="messages.log, alerts.log and SystemMonitor.log as IRIS writes them, newest first, read in bounded windows by Aperture's own log reader on the instance (/api/aperture, Embedded Python). Older lines load on request; a 100 MB log costs the same per page as a small one. Open any entry to see how often its message was logged, found with IRIS Vector Search."
         privileges={['%Admin_Operate:U']}
         actions={
           ready && file ? (
@@ -404,16 +403,8 @@ export default function MessagesLogPage() {
             <Code block style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {opened.raw}
             </Code>
-            {opened.offset !== null && opened.time ? (
-              <Button
-                variant="light"
-                size="xs"
-                leftSection={<IconListSearch size={14} />}
-                onClick={() => setView('similar')}
-                style={{ alignSelf: 'flex-start' }}
-              >
-                Similar entries
-              </Button>
+            {opened.offset !== null && opened.time && file ? (
+              <SimilarCount file={file.id} offset={opened.offset} onShow={() => setView('similar')} />
             ) : (
               <Text size="xs" c="dimmed">
                 Similar entries are found for stamped lines of a file the reader indexes.

@@ -1,8 +1,14 @@
 import { Alert, Badge, Button, Group, Loader, Paper, Stack, Text } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { IconInfoCircle, IconRefresh } from '@tabler/icons-react';
-import { useState } from 'react';
-import { fetchLogIndex, refreshLogIndex, similarEntries, type SimilarMatch } from '@/api/logSimilarity';
+import { IconInfoCircle, IconListSearch, IconRefresh } from '@tabler/icons-react';
+import { useState, type ReactNode } from 'react';
+import {
+  fetchLogIndex,
+  fetchSimilarEntries,
+  refreshLogIndex,
+  similarEntries,
+  type SimilarMatch,
+} from '@/api/logSimilarity';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { Timestamp } from '@/components/Timestamp';
 import { formatBytes, formatNumber } from '@/lib/format';
@@ -184,5 +190,70 @@ export function SimilarEntries({ entry, file }: Props) {
         </>
       ) : null}
     </Stack>
+  );
+}
+
+/**
+ * How often an entry's message was logged, shown as soon as the entry opens: the wording index is
+ * read as it stands (GET /logs/index, then GET /logs/similar for one match), never refreshed from
+ * here, so opening an entry costs two reads and indexing waits for "Show similar entries".
+ */
+export function SimilarCount({ file, offset, onShow }: { file: string; offset: number; onShow: () => void }) {
+  const status = useQuery({ queryKey: ['aperture-logs', 'index'], queryFn: fetchLogIndex, retry: false });
+  const indexed = (status.data?.lines ?? 0) > 0;
+  const count = useQuery({
+    queryKey: ['aperture-logs', 'similar', file, offset, 'count'],
+    queryFn: () => fetchSimilarEntries(file, offset, 1),
+    enabled: indexed,
+    retry: false,
+    staleTime: 60_000,
+  });
+  const summary = count.data?.summary;
+
+  // An error leaves the button: the list says what went wrong when it is opened.
+  let text: ReactNode = null;
+  if (status.isPending || (indexed && count.isPending)) text = 'Counting the entries worded like this one…';
+  else if (status.error || count.error) text = null;
+  else if (!indexed) text = 'The wording index is not built yet; showing similar entries builds it first.';
+  else if (summary && summary.similar > 1)
+    text = (
+      <>
+        Seen {summary.capped ? 'at least ' : ''}
+        {formatNumber(summary.similar)} times since <Timestamp value={summary.first} /> (last{' '}
+        <Timestamp value={summary.last} />
+        ).
+      </>
+    );
+  else text = 'Not seen elsewhere in the indexed logs.';
+
+  return (
+    <Paper p="sm" withBorder>
+      <Stack gap={6}>
+        <Text size="sm" fw={600}>
+          Similar entries
+        </Text>
+        <Text size="sm" aria-live="polite">
+          {text}
+        </Text>
+        {indexed && status.data?.stale ? (
+          <Text size="xs" c="dimmed">
+            The newest {formatBytes(status.data.pendingBytes)} of the logs are not indexed yet.
+          </Text>
+        ) : null}
+        <Text size="xs" c="dimmed">
+          Found with IRIS Vector Search: the entries worded like this one, across messages.log and its
+          rotations.
+        </Text>
+        <Button
+          variant="light"
+          size="xs"
+          leftSection={<IconListSearch size={14} />}
+          onClick={onShow}
+          style={{ alignSelf: 'flex-start' }}
+        >
+          Show similar entries
+        </Button>
+      </Stack>
+    </Paper>
   );
 }

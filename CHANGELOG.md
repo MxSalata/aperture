@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **An opened log entry says how often its message was logged.** The Messages log's entry panel now shows the
+  count of entries worded like it ("Seen at least 250 times since ...") as it opens, read from the wording index
+  as it stands, without indexing anything; **Show similar entries** lists them as before. The page says so under
+  its title, and the demo's index is ready from the start, as on an instance that has used it, so Similar entries
+  (IRIS Vector Search) no longer hides behind a button nobody knew to press.
+- **The README links the video** and lists two more bonuses in its table: the YouTube video and the first-time
+  contribution.
 - **Dependency updates arrive monthly and release themselves.** Dependabot runs monthly, with the
   Mantine packages as one group at every update type (they share a version, so a major arrives for all
   of them at once) and the ESLint packages as another; the build stage's Node major is ignored (an LTS

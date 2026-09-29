@@ -2,9 +2,9 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * "Similar entries" in the Messages log on the demo build: an entry's drawer leads to the
- * entries worded like it, with how often the same message was seen; the index is built on the
- * first search (the "indexing" state); the drawer passes the accessibility audit in every mode.
+ * "Similar entries" in the Messages log on the demo build: an opened entry says how often its
+ * message was logged (the demo keeps its wording index current, as an instance that has used it)
+ * and leads to the entries worded like it; the drawer passes the accessibility audit in every mode.
  */
 async function openMessagesLog(page: Page) {
   await page.goto('/#/login');
@@ -16,7 +16,7 @@ async function openMessagesLog(page: Page) {
   await expect(page.getByRole('button', { name: /^Log entry / }).first()).toBeVisible();
 }
 
-test('an entry leads to the entries worded like it, with how often the same message was seen', async ({
+test('an entry says how often its message was logged and leads to the entries worded like it', async ({
   page,
 }) => {
   await openMessagesLog(page);
@@ -27,7 +27,10 @@ test('an entry leads to the entries worded like it, with how often the same mess
   await firstRow.click();
   const drawer = page.getByRole('dialog');
   await expect(drawer.getByText('Log entry')).toBeVisible();
-  await drawer.getByRole('button', { name: 'Similar entries' }).click();
+  // The count shows as the entry opens, before anyone asks for the list.
+  await expect(drawer.getByText(/Seen (at least )?\d+ times since/)).toBeVisible({ timeout: 20_000 });
+  await expect(drawer.getByText(/Found with IRIS Vector Search/)).toBeVisible();
+  await drawer.getByRole('button', { name: 'Show similar entries' }).click();
   await expect(drawer.getByText('Similar entries')).toBeVisible();
   await expect(drawer.getByText(/Seen (at least )?\d+ times since/)).toBeVisible({ timeout: 20_000 });
   const scores = drawer.getByText(/^\d+ %$/);
@@ -37,7 +40,7 @@ test('an entry leads to the entries worded like it, with how often the same mess
   await expect(drawer.getByText(/Matched by wording with IRIS Vector Search/)).toBeVisible();
   await expect(drawer.getByText(/entries indexed from/)).toBeVisible();
   await drawer.getByRole('button', { name: 'Back to the entry' }).click();
-  await expect(drawer.getByRole('button', { name: 'Similar entries' })).toBeVisible();
+  await expect(drawer.getByRole('button', { name: 'Show similar entries' })).toBeVisible();
 });
 
 const MODES = [
@@ -61,13 +64,33 @@ for (const { colorScheme, contrast, palette } of MODES) {
           ),
         ),
       );
+    test('passes the accessibility audit with an entry and its count open', async ({ page }) => {
+      await openMessagesLog(page);
+      await page
+        .getByRole('button', { name: /^Log entry / })
+        .first()
+        .click();
+      await expect(page.getByRole('dialog').getByText(/Found with IRIS Vector Search/)).toBeVisible();
+      await expect(page.getByRole('dialog').getByText(/Counting the entries/)).toHaveCount(0, {
+        timeout: 20_000,
+      });
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .analyze();
+      expect(
+        results.violations
+          .filter((v) => v.impact === 'serious' || v.impact === 'critical')
+          .map((v) => `${v.id} (${v.impact}) ×${v.nodes.length}: ${v.nodes[0]?.target.join(' ')}`),
+      ).toEqual([]);
+    });
+
     test('passes the accessibility audit with the list open', async ({ page }) => {
       await openMessagesLog(page);
       await page
         .getByRole('button', { name: /^Log entry / })
         .first()
         .click();
-      await page.getByRole('dialog').getByRole('button', { name: 'Similar entries' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Show similar entries' }).click();
       await expect(page.getByRole('dialog').getByText(/Matched by wording/)).toBeVisible({ timeout: 20_000 });
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

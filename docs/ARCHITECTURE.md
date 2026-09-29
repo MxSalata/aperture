@@ -295,8 +295,11 @@ Indexing is **incremental and bounded**: a file is first indexed from its newest
 what was appended since the watermark; one call indexes at most 2 MB and 4,000 entries over all
 files (each entry is an HNSW insert), and reports what is still pending. Refreshes run one at a
 time (a lock on `^Aperture.LogIndex`): a second caller waits up to 20 seconds for the first, then
-finds little or nothing left, or answers `busy` and adds nothing. `GET /logs/similar` only reads;
-the screen calls `POST /logs/index` until nothing is pending before it asks. A query reads the
+finds little or nothing left, or answers `busy` and adds nothing. `GET /logs/similar` only reads.
+An opened entry shows its count at once from the index as it stands (`GET /logs/index`, then
+`GET /logs/similar` for one match; no refresh); **Show similar entries** calls `POST /logs/index`
+until nothing is pending, then asks. The browser demo's mock keeps its index current, as on an
+instance whose logs the package has already indexed; the tests start without one. A query reads the
 one entry at the offset it was given from the file (a bounded read, like a window), vectorises
 it, and asks SQL for the 250 nearest rows by `VECTOR_COSINE(Embedding, TO_VECTOR(?, DOUBLE,
 256))` in `ORDER BY ... DESC`, which the HNSW index serves; the answer lists the nearest `limit`

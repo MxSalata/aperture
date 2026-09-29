@@ -249,7 +249,8 @@ export function windowOf(text: string, before: number, nbytes: number) {
 /**
  * The wording index of the demo: every entry of the messages files with its vector, built on the
  * first refresh (POST /logs/index), like Aperture.LogIndex on an instance. GET /logs/index says
- * "stale" until then, so the screen's "indexing" state shows in the demo too.
+ * "stale" until then, so the tests see the "indexing" state; the browser demo keeps it current
+ * instead (keepLogIndexCurrent), as on an instance whose logs the package has already indexed.
  */
 interface IndexedEntry {
   file: string;
@@ -295,7 +296,17 @@ function buildIndex() {
   return index;
 }
 
-const isBuilt = () => !!index && index.startedAt === mockDb.startedAt;
+let keptCurrent = false;
+
+/** The browser demo's index is ready from its first read, so an opened entry shows its count at once. */
+export function keepLogIndexCurrent() {
+  keptCurrent = true;
+}
+
+const isBuilt = () => {
+  if (keptCurrent) buildIndex();
+  return !!index && index.startedAt === mockDb.startedAt;
+};
 
 function indexStatus() {
   const messages = files().filter((f) => f.kind === 'messages');

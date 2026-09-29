@@ -36,7 +36,7 @@ test('an entry of messages.log leads to the entries worded like it', async ({ pa
   await rows.first().click();
 
   const drawer = page.getByRole('dialog');
-  await drawer.getByRole('button', { name: 'Similar entries' }).click();
+  await drawer.getByRole('button', { name: 'Show similar entries' }).click();
   const seen = drawer.getByText(/^Seen /);
   await expect(seen).toBeVisible({ timeout: 60_000 });
   const scores = drawer.getByText(/^\d+ %$/);
