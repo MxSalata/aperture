@@ -24,6 +24,7 @@
 <p align="center">
   <a href="https://openexchange.intersystems.com/package/Aperture">Open Exchange</a> ·
   <a href="https://community.intersystems.com/post/aperture-management-portal-intersystems-iris-no-separate-application-server">The article</a> ·
+  <a href="https://youtu.be/5U8rcPj7wJ4">The video</a> ·
   <a href="https://community.intersystems.com/post/20-places-where-sysadmin-api-specification-and-iris-disagree">The 20 spec findings</a> ·
   <a href="https://openexchange.intersystems.com/contest/48">Vote for Aperture in the contest (until 4 October)</a>
 </p>
@@ -43,6 +44,7 @@ Aperture is an entry for the [InterSystems Programming Contest: Build Your Own M
    - Sign out and sign in as `operator` / `SYS`: the security area disappears, and every disabled action names the resource it needs.
 2. **On real IRIS, one command.** `docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture`, then http://localhost:52773/aperture/index.html as `_SYSTEM` / `SYS` ([more](https://github.com/MxSalata/aperture#docker)).
 3. **On your own IRIS 2026.2.** `zpm "install iris-aperture"`, then `/aperture/index.html` on the instance's web server ([more](https://github.com/MxSalata/aperture#ipm)).
+4. **Or watch it.** The [walkthrough on YouTube](https://youtu.be/5U8rcPj7wJ4) (19 minutes) runs all three and goes through every screen.
 
 | Demo account | Password | Privileges | What it shows |
 | --- | --- | --- | --- |
@@ -314,6 +316,8 @@ The portal and the APIs share an origin (the SysAdmin API sends no CORS headers,
 | IPM | `zpm "install iris-aperture"` ([`module.xml`](module.xml)) |
 | Online demo | https://mxsalata.github.io/aperture/ |
 | Articles | [Aperture: a management portal for InterSystems IRIS, with no separate application server](https://community.intersystems.com/post/aperture-management-portal-intersystems-iris-no-separate-application-server) and [20 places where the SysAdmin API specification and IRIS disagree](https://community.intersystems.com/post/20-places-where-sysadmin-api-specification-and-iris-disagree), on the Developer Community |
+| YouTube video | [Aperture: a Management Portal for InterSystems IRIS on the SysAdmin REST API](https://youtu.be/5U8rcPj7wJ4): the online demo, the IPM install on IRIS for Health 2026.2 and the Docker image, then every screen |
+| First-time contribution | The author's first InterSystems programming contest (the Newcomer badge on the contest page) |
 
 ## Ideas Portal ideas Aperture implements
 
