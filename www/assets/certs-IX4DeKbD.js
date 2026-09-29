@@ -1,1 +1,0 @@
-import{ag as o}from"./index-DlJtk0Tk.js";const r=30;function c(t,e=Date.now()){const n=o(t);if(!n)return{state:"unknown",days:null};const a=n.valueOf()-e,s=Math.round(a/864e5)||0;return{state:a<0?"expired":s<=r?"expiring":"ok",days:s}}function u(t){const e=/(?:^|[,/])\s*CN=([^,/]+)/i.exec(t??"");return e?e[1].trim():t??""}export{r as E,u as a,c};

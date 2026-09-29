@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 - Similar entries in plain sight, dependency updates that release themselves (29 September 2026)
 
 - **An opened log entry says how often its message was logged.** The Messages log's entry panel now shows the
   count of entries worded like it ("Seen at least 250 times since ...") as it opens, read from the wording index

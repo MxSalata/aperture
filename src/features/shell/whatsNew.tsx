@@ -2,22 +2,18 @@ import type { ReactNode } from 'react';
 
 /**
  * What the About page lists as new in the last feature release. A merged dependency update is a
- * patch release of its own (1.1.1, 1.1.2, ...) with nothing new to list, so the package's version
+ * patch release of its own (1.2.1, 1.2.2, ...) with nothing new to list, so the package's version
  * may be a higher patch of NEW_IN; a test fails the release when the minor moves on and these lines
  * do not.
  */
-export const NEW_IN = '1.1.0';
+export const NEW_IN = '1.2.0';
 export const HIGHLIGHTS: ReactNode[] = [
   <>
-    The Tasks screen shows which tasks are suspended: IRIS&apos;s task list reports every task as active, so
-    each task&apos;s state now comes from its own read. The Health check finds suspended tasks the same way.
+    Opening an entry of the Messages log says how often its message was logged, and since when, found with
+    IRIS Vector Search; <b>Show similar entries</b> lists them. Nothing is indexed until you ask.
   </>,
   <>
-    Every resource save is read back, and the portal says when IRIS answered 200 without keeping a change; the
-    description stops at the 256 characters IRIS holds.
-  </>,
-  <>
-    The README&apos;s links work on Open Exchange, and it explains why the Docker image is IRIS and Aperture
-    in one.
+    Dependency updates arrive once a month, and each merged batch is a patch release of its own, with the
+    image published as that version.
   </>,
 ];
