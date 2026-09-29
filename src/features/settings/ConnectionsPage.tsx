@@ -18,6 +18,7 @@ import { useForm } from '@mantine/form';
 import { IconPencil, IconPlugConnected, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { CardTable } from '@/components/CardTable';
 import { PageHeader } from '@/components/PageHeader';
 import {
   baseUrlProblem,
@@ -122,79 +123,85 @@ export default function ConnectionsPage() {
         }
       />
       <Paper p="md">
-        <Table fz="sm">
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Name</Table.Th>
-              <Table.Th>Base URL</Table.Th>
-              <Table.Th>Auth</Table.Th>
-              <Table.Th>Default user</Table.Th>
-              <Table.Th>Time zone</Table.Th>
-              <Table.Th></Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {profiles.map((p) => (
-              <Table.Tr key={p.id}>
-                <Table.Td>
-                  <Group gap="xs">
-                    <ColorSwatch color={`var(--mantine-color-${profileColor(p)}-6)`} size={12} aria-hidden />
-                    <b>{p.name}</b>
-                    {p.id === current ? (
-                      <Text size="xs" c="teal">
-                        ● connected{signedInAs ? ` as ${signedInAs}` : ''}
-                      </Text>
-                    ) : null}
-                  </Group>
-                </Table.Td>
-                <Table.Td className="mono">{p.baseUrl || '(same origin)'}</Table.Td>
-                <Table.Td>{p.auth}</Table.Td>
-                <Table.Td>{p.username}</Table.Td>
-                <Table.Td>{p.timezone ?? <span className="muted">browser</span>}</Table.Td>
-                <Table.Td>
-                  <Group gap={2} justify="flex-end" wrap="nowrap">
-                    <Tooltip label="Connect">
-                      <ActionIcon
-                        size="sm"
-                        variant="subtle"
-                        aria-label="Connect"
-                        disabled={p.id === current}
-                        onClick={() => connect(p)}
-                      >
-                        <IconPlugConnected size={14} />
-                      </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Edit">
-                      <ActionIcon size="sm" variant="subtle" aria-label="Edit" onClick={() => startEdit(p)}>
-                        <IconPencil size={14} />
-                      </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Delete">
-                      <ActionIcon
-                        size="sm"
-                        variant="subtle"
-                        color="red"
-                        aria-label="Delete"
-                        disabled={p.id === SAME_ORIGIN_ID}
-                        onClick={() =>
-                          confirmDanger({
-                            title: 'Delete connection',
-                            message: `Forget ${p.name}?`,
-                            confirmLabel: 'Delete',
-                            changesInstance: false,
-                            onConfirm: () => remove(p.id),
-                          })
-                        }
-                      >
-                        <IconTrash size={14} />
-                      </ActionIcon>
-                    </Tooltip>
-                  </Group>
-                </Table.Td>
+        <CardTable label="Connections" focusable={false}>
+          <Table fz="sm">
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Name</Table.Th>
+                <Table.Th>Base URL</Table.Th>
+                <Table.Th>Auth</Table.Th>
+                <Table.Th>Default user</Table.Th>
+                <Table.Th>Time zone</Table.Th>
+                <Table.Th></Table.Th>
               </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
+            </Table.Thead>
+            <Table.Tbody>
+              {profiles.map((p) => (
+                <Table.Tr key={p.id}>
+                  <Table.Td>
+                    <Group gap="xs">
+                      <ColorSwatch
+                        color={`var(--mantine-color-${profileColor(p)}-6)`}
+                        size={12}
+                        aria-hidden
+                      />
+                      <b>{p.name}</b>
+                      {p.id === current ? (
+                        <Text size="xs" c="teal">
+                          ● connected{signedInAs ? ` as ${signedInAs}` : ''}
+                        </Text>
+                      ) : null}
+                    </Group>
+                  </Table.Td>
+                  <Table.Td className="mono">{p.baseUrl || '(same origin)'}</Table.Td>
+                  <Table.Td>{p.auth}</Table.Td>
+                  <Table.Td>{p.username}</Table.Td>
+                  <Table.Td>{p.timezone ?? <span className="muted">browser</span>}</Table.Td>
+                  <Table.Td>
+                    <Group gap={2} justify="flex-end" wrap="nowrap">
+                      <Tooltip label="Connect">
+                        <ActionIcon
+                          size="sm"
+                          variant="subtle"
+                          aria-label="Connect"
+                          disabled={p.id === current}
+                          onClick={() => connect(p)}
+                        >
+                          <IconPlugConnected size={14} />
+                        </ActionIcon>
+                      </Tooltip>
+                      <Tooltip label="Edit">
+                        <ActionIcon size="sm" variant="subtle" aria-label="Edit" onClick={() => startEdit(p)}>
+                          <IconPencil size={14} />
+                        </ActionIcon>
+                      </Tooltip>
+                      <Tooltip label="Delete">
+                        <ActionIcon
+                          size="sm"
+                          variant="subtle"
+                          color="red"
+                          aria-label="Delete"
+                          disabled={p.id === SAME_ORIGIN_ID}
+                          onClick={() =>
+                            confirmDanger({
+                              title: 'Delete connection',
+                              message: `Forget ${p.name}?`,
+                              confirmLabel: 'Delete',
+                              changesInstance: false,
+                              onConfirm: () => remove(p.id),
+                            })
+                          }
+                        >
+                          <IconTrash size={14} />
+                        </ActionIcon>
+                      </Tooltip>
+                    </Group>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </CardTable>
       </Paper>
       <Modal
         opened={opened}

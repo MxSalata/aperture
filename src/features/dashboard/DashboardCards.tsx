@@ -119,21 +119,22 @@ export function UpcomingTasksCard({ d }: { d: MainStats | undefined }) {
         </Button>
       </Group>
       {d?.UpcomingTasks?.length ? (
-        <Table verticalSpacing={4} fz="sm">
+        // Fixed layout, so a long name is cut to its column rather than widening the table past the
+        // card (a cell's max-width is ignored in automatic layout); the card is narrow at most widths,
+        // so the time sits under the name and the status keeps its column.
+        <Table verticalSpacing={4} fz="sm" layout="fixed">
           <Table.Tbody>
             {d.UpcomingTasks.slice(0, 8).map((t, i) => (
               <Table.Tr key={i}>
-                <Table.Td style={{ maxWidth: 180 }}>
-                  <Text size="sm" truncate>
+                <Table.Td>
+                  <Text size="sm" truncate title={t.Task}>
                     {t.Task}
                   </Text>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="xs" c="dimmed" className="tabular" style={{ whiteSpace: 'nowrap' }}>
+                  <Text size="xs" c="dimmed" className="tabular">
                     {t.Time}
                   </Text>
                 </Table.Td>
-                <Table.Td>
+                <Table.Td w={92} ta="right">
                   <StatusBadge status={t.Status} />
                 </Table.Td>
               </Table.Tr>

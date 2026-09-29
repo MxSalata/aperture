@@ -24,6 +24,7 @@ import { useEffect, useEffectEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api, call, result, run, useApiMutation, useAsyncResult, jobHeaders, SILENT } from '@/api/hooks';
 import type { Schemas } from '@/api/types';
+import { CardTable } from '@/components/CardTable';
 import { PageHeader } from '@/components/PageHeader';
 import { RefreshControl } from '@/components/RefreshControl';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
@@ -472,28 +473,30 @@ export default function DatabaseDetailPage() {
             {volumes.data ? (
               // VolumeFiles: one row per volume file of the database.
               volumes.data.length ? (
-                <Table fz="sm" verticalSpacing={4}>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>#</Table.Th>
-                      <Table.Th>File</Table.Th>
-                      <Table.Th>Size</Table.Th>
-                      <Table.Th>Directory</Table.Th>
-                      <Table.Th>Disk free</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {volumes.data.map((vol, i) => (
-                      <Table.Tr key={`${vol.VolumeNumber ?? i}-${vol.File ?? ''}`}>
-                        <Table.Td className="tabular">{vol.VolumeNumber ?? i}</Table.Td>
-                        <Table.Td className="mono">{vol.File}</Table.Td>
-                        <Table.Td className="tabular">{formatMB(vol.Size)}</Table.Td>
-                        <Table.Td className="mono">{vol.VolumeDirectory}</Table.Td>
-                        <Table.Td className="tabular">{formatMB(vol.DiskFree)}</Table.Td>
+                <CardTable label="Volumes">
+                  <Table fz="sm" verticalSpacing={4}>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>#</Table.Th>
+                        <Table.Th>File</Table.Th>
+                        <Table.Th>Size</Table.Th>
+                        <Table.Th>Directory</Table.Th>
+                        <Table.Th>Disk free</Table.Th>
                       </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {volumes.data.map((vol, i) => (
+                        <Table.Tr key={`${vol.VolumeNumber ?? i}-${vol.File ?? ''}`}>
+                          <Table.Td className="tabular">{vol.VolumeNumber ?? i}</Table.Td>
+                          <Table.Td className="mono">{vol.File}</Table.Td>
+                          <Table.Td className="tabular">{formatMB(vol.Size)}</Table.Td>
+                          <Table.Td className="mono">{vol.VolumeDirectory}</Table.Td>
+                          <Table.Td className="tabular">{formatMB(vol.DiskFree)}</Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </CardTable>
               ) : (
                 <Text size="sm" c="dimmed">
                   Single volume (IRIS.DAT)

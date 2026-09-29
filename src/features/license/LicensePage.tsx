@@ -6,6 +6,7 @@ import { IconKey } from '@tabler/icons-react';
 import { api, result, run, useApiMutation } from '@/api/hooks';
 import { PageHeader } from '@/components/PageHeader';
 import { RefreshControl } from '@/components/RefreshControl';
+import { CardTable } from '@/components/CardTable';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { KeyValueList, objectToItems } from '@/components/KeyValueList';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -88,26 +89,28 @@ export default function LicensePage() {
               License servers
             </Title>
             {servers.data ? (
-              <Table fz="sm" verticalSpacing={4}>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Name</Table.Th>
-                    <Table.Th>Address</Table.Th>
-                    <Table.Th>Port</Table.Th>
-                    <Table.Th>Key directory</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {(servers.data as AnyRow[]).map((s, i) => (
-                    <Table.Tr key={i}>
-                      <Table.Td>{String(s.Name ?? '')}</Table.Td>
-                      <Table.Td className="mono">{String(s.Address ?? '')}</Table.Td>
-                      <Table.Td>{String(s.Port ?? '')}</Table.Td>
-                      <Table.Td className="mono">{String(s.KeyDirectory ?? '')}</Table.Td>
+              <CardTable label="License servers">
+                <Table fz="sm" verticalSpacing={4}>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Name</Table.Th>
+                      <Table.Th>Address</Table.Th>
+                      <Table.Th>Port</Table.Th>
+                      <Table.Th>Key directory</Table.Th>
                     </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {(servers.data as AnyRow[]).map((s, i) => (
+                      <Table.Tr key={i}>
+                        <Table.Td>{String(s.Name ?? '')}</Table.Td>
+                        <Table.Td className="mono">{String(s.Address ?? '')}</Table.Td>
+                        <Table.Td>{String(s.Port ?? '')}</Table.Td>
+                        <Table.Td className="mono">{String(s.KeyDirectory ?? '')}</Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              </CardTable>
             ) : servers.isError ? (
               <Text size="sm" c="dimmed">
                 Requires %Admin_Manage

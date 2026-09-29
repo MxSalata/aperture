@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Nothing spills out of its card on a narrow screen.** The dashboard's upcoming tasks put the time under the
+  name and keep the status inside the card (on a 1280-pixel laptop the badges sat 92 pixels outside it, on a
+  phone the page scrolled sideways); a database's volumes, the license servers and the connections scroll
+  sideways inside their card on a phone (`CardTable`). A browser test opens every screen at 360 and 1024 pixels
+  and fails when anything scrolls the page sideways or leaves its card.
+
 ## 1.2.0 - Similar entries in plain sight, dependency updates that release themselves (29 September 2026)
 
 - **An opened log entry says how often its message was logged.** The Messages log's entry panel now shows the
