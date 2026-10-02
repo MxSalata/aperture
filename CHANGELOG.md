@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 - Every screen fits a phone and a laptop (2 October 2026)
 
 - **Nothing spills out of its card on a narrow screen.** The dashboard's upcoming tasks put the time under the
   name and keep the status inside the card (on a 1280-pixel laptop the badges sat 92 pixels outside it, on a

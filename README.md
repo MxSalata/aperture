@@ -140,7 +140,7 @@ Two files in a folder, with no clone and no build:
    IRIS_PASSWORD=choose-a-password
    # Optional: the address the ports are published on (0.0.0.0 for every interface)
    # APERTURE_BIND=127.0.0.1
-   # Optional: the image tag, latest, a version such as 1.2.0, or edge
+   # Optional: the image tag, latest, a version such as 1.3.0, or edge
    # APERTURE_VERSION=latest
    ```
 
