@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.5.0 - SQL as yourself: queries, the catalogue, plans and the statements (18 October 2026)
 
 - **SQL.** A new screen in Operations runs SQL in any namespace as the signed-in account, so IRIS applies that
   account's SQL privileges: parameters, a row limit, results with each column's SQL type (sortable, filterable,
