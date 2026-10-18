@@ -12,6 +12,10 @@
   takes a password only, so a JWT session gives it once, as for REST services. The demo runs the statements in a
   small SQL evaluator of its own over a few tables (an engine that compiles SQL to JavaScript would need
   `unsafe-eval`, which the Content-Security-Policy refuses).
+- **A comment can no longer hide a change.** The statement is read left to right in one pass, so an apostrophe in a
+  comment (`-- don't`) no longer opens a string that swallows the `DELETE` after it, and `--` inside a string or a
+  delimited name starts no comment. Such a statement was taken for a read: no confirmation, sent from a read-only
+  tab, not recorded in Activity. A text of comments only is not run.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 

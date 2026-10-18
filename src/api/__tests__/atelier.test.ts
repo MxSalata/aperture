@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fetchAtelierServer, runSql, SqlError } from '../atelier';
+import { fetchAtelierServer, NOTHING_TO_RUN, runSql, SqlError } from '../atelier';
 import { basicCredentials } from '../base';
 import { resetClients } from '../client';
 import { resetDb } from '@/mocks/db';
@@ -81,6 +81,16 @@ describe('SQL through Atelier, on the demo instance', () => {
     useReadOnly.getState().setReadOnly(true);
     await expect(runSql('USER', 'DELETE FROM Sample.Person')).rejects.toBeInstanceOf(NotSentError);
     expect((await runSql('USER', 'SELECT COUNT(*) AS n FROM Sample.Person')).rows).toEqual([[8]]);
+    // A comment's apostrophe hides no change.
+    await expect(
+      runSql('USER', "-- don't\nDELETE FROM Sample.Person WHERE City = 'Hull'"),
+    ).rejects.toBeInstanceOf(NotSentError);
+  });
+
+  it('sends nothing for a text with no statement in it', async () => {
+    await signIn('_SYSTEM', 'basic');
+    await expect(runSql('USER', '-- a note')).rejects.toThrow(NOTHING_TO_RUN);
+    expect(useActivity.getState().entries).toEqual([]);
   });
 
   it('reports SQL errors with their SQLCODE, and refuses an account without %Development', async () => {

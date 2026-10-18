@@ -186,6 +186,7 @@ export default function SqlPage() {
 
   const run = (text = sql) => {
     const k = classifyStatement(text);
+    if (!k.keyword) return;
     if (k.read) return void execute(text);
     confirmDanger({
       title: 'Run a statement that changes data',
@@ -284,7 +285,7 @@ export default function SqlPage() {
                   ))}
                 </SimpleGrid>
               ) : null}
-              {!kind.read ? (
+              {!kind.read && kind.keyword ? (
                 <Alert
                   color="yellow"
                   icon={<IconAlertTriangle size={16} />}
@@ -300,10 +301,10 @@ export default function SqlPage() {
                   leftSection={<IconPlayerPlay size={14} />}
                   onClick={() => run()}
                   loading={running}
-                  disabled={!sql.trim() || (!kind.read && readOnly)}
-                  color={kind.read ? undefined : 'red'}
+                  disabled={!kind.keyword || (!kind.read && readOnly)}
+                  color={kind.read || !kind.keyword ? undefined : 'red'}
                 >
-                  {kind.read ? 'Run' : `Run ${kind.keyword}`}
+                  {kind.read || !kind.keyword ? 'Run' : `Run ${kind.keyword}`}
                 </Button>
                 <Button
                   variant="default"

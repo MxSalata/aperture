@@ -24,6 +24,8 @@ import { READ_ONLY_REFUSAL } from './readOnly';
 export const ATELIER_PREFIX = '/api/atelier';
 const VERSION = 'v8';
 
+export const NOTHING_TO_RUN = 'There is no statement to run: the text is empty or only comments.';
+
 export interface SqlColumn {
   name: string;
   type: string;
@@ -132,6 +134,7 @@ export async function runSql(
 ): Promise<SqlResult> {
   const kind = classifyStatement(query);
   const path = `/${VERSION}/${encodeURIComponent(namespace)}/action/query`;
+  if (!kind.keyword) throw new NotSentError(NOTHING_TO_RUN, `${ATELIER_PREFIX}${path}`);
   if (!kind.read && useReadOnly.getState().readOnly)
     throw new NotSentError(READ_ONLY_REFUSAL, `${ATELIER_PREFIX}${path}`);
   const started = Date.now();

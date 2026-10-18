@@ -6,7 +6,6 @@ describe('what a statement does', () => {
     expect(classifyStatement('SELECT 1')).toMatchObject({ read: true, keyword: 'SELECT' });
     expect(classifyStatement('  explain select * from t')).toMatchObject({ read: true, keyword: 'EXPLAIN' });
     expect(classifyStatement('WITH x AS (SELECT 1 AS a) SELECT a FROM x')).toMatchObject({ read: true });
-    expect(classifyStatement('')).toMatchObject({ read: true, keyword: '' });
   });
 
   it('changes data with everything else, a CALL and a writing CTE included', () => {
@@ -32,5 +31,29 @@ describe('what a statement does', () => {
     expect(classifyStatement('/* SELECT */ DROP TABLE t')).toMatchObject({ read: false, keyword: 'DROP' });
     expect(stripSql("SELECT 'it''s' -- c")).toBe("SELECT ''");
     expect(placeholders("SELECT ? FROM t WHERE a = '?' AND b = ?")).toBe(2);
+  });
+
+  it('reads comments, strings and delimited names in one pass, left to right', () => {
+    // An apostrophe in a comment opens no string.
+    expect(classifyStatement("-- don't\nDELETE FROM t WHERE a = 'x'")).toMatchObject({
+      read: false,
+      keyword: 'DELETE',
+    });
+    expect(classifyStatement("/* it's */ UPDATE t SET a = 1")).toMatchObject({ keyword: 'UPDATE' });
+    // `--` and `/*` in a string or a delimited name start no comment.
+    expect(stripSql('SELECT \'--\' AS a, "/*" FROM t -- c')).toBe('SELECT \'\' AS a, "" FROM t');
+    expect(classifyStatement('WITH "DELETE" AS (SELECT 1 AS a) SELECT a FROM "DELETE"')).toMatchObject({
+      read: true,
+    });
+    expect(stripSql('SELECT "a""b", \'c\'\'d\' FROM t')).toBe('SELECT "", \'\' FROM t');
+    expect(placeholders('SELECT "?" FROM t /* ? */ WHERE a = ? -- ?')).toBe(1);
+    // An unclosed comment or literal runs to the end.
+    expect(stripSql('SELECT 1 /* DELETE FROM t')).toBe('SELECT 1');
+    expect(stripSql("SELECT 'x -- y")).toBe("SELECT ''");
+  });
+
+  it('has nothing to run in an empty text or one of comments only, and it is no read', () => {
+    expect(classifyStatement('')).toEqual({ read: false, keyword: '' });
+    expect(classifyStatement('  -- just a note\n/* and another */ ')).toEqual({ read: false, keyword: '' });
   });
 });

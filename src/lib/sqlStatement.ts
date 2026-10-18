@@ -8,7 +8,10 @@
  */
 export interface StatementKind {
   read: boolean;
-  /** The first keyword, upper case (`SELECT`, `INSERT`, `CREATE`, ...); empty for an empty text. */
+  /**
+   * The first keyword, upper case (`SELECT`, `INSERT`, `CREATE`, ...); empty when there is no statement
+   * (an empty text, or comments only), which is not a read: nothing is sent.
+   */
   keyword: string;
   /** For a change: what it touches, in a few words, for the warning. */
   effect?: string;
@@ -30,20 +33,43 @@ const EFFECTS: Record<string, string> = {
   INSERT_OR_UPDATE: 'adds or changes rows',
 };
 
-/** The text without comments (`-- ...` and `/* ... *\/`) and without string literals' contents. */
+/**
+ * The text without comments (`-- ...` and `/* ... *\/`) and without the contents of string literals
+ * (`'...'`) and delimited identifiers (`"..."`), read left to right in one pass, so an apostrophe in a
+ * comment or `--` in a string hides nothing. An unclosed literal or comment runs to the end.
+ */
 export function stripSql(sql: string): string {
-  return sql
-    .replace(/'(?:[^']|'')*'/g, "''")
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/--[^\n]*/g, ' ')
-    .trim();
+  let out = '';
+  let i = 0;
+  while (i < sql.length) {
+    const c = sql[i];
+    if (c === "'" || c === '"') {
+      // A doubled quote inside is the quote itself.
+      let j = i + 1;
+      while (j < sql.length && (sql[j] !== c || sql[j + 1] === c)) j += sql[j] === c ? 2 : 1;
+      out += c + c;
+      i = j + 1;
+    } else if (c === '-' && sql[i + 1] === '-') {
+      const end = sql.indexOf('\n', i);
+      out += ' ';
+      i = end < 0 ? sql.length : end;
+    } else if (c === '/' && sql[i + 1] === '*') {
+      const end = sql.indexOf('*/', i + 2);
+      out += ' ';
+      i = end < 0 ? sql.length : end + 2;
+    } else {
+      out += c;
+      i++;
+    }
+  }
+  return out.trim();
 }
 
 export function classifyStatement(sql: string): StatementKind {
   const text = stripSql(sql);
   const words = text.toUpperCase().match(/[A-Z_%]+/g) ?? [];
   const first = words[0] ?? '';
-  if (!first) return { read: true, keyword: '' };
+  if (!first) return { read: false, keyword: '' };
   if (first === 'SELECT' || first === 'EXPLAIN') return { read: true, keyword: first };
   if (first === 'WITH') {
     // A CTE reads unless the statement it feeds writes.
