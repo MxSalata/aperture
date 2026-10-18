@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 
 - **Productions.** A new Interoperability group: every production of every namespace the account may use for
   interoperability, its state and its hosts by status; a production's hosts with their errors of the last 24 hours
