@@ -87,46 +87,48 @@ jobs:
           path: dist-demo
 
   # Merged Dependabot pull requests change the bundle but not the committed www/, which the IPM
-  # package and the image ship. This job makes them a patch release. It runs on every push to main
-  # and reads the history, not the push: the Dependabot commits since the last version tag are the
-  # unreleased updates, however many pull requests were merged together and whichever runs a newer
-  # push replaced. When any of them changed package.json or package-lock.json, the last figure of
-  # the version moves (npm version patch; module.xml follows), the CHANGELOG gets a section naming
+  # package and the image ship. These two jobs make them a patch release. They run on every push to
+  # main and read the history, not the push: the Dependabot commits since the last version tag are
+  # the unreleased updates, however many pull requests were merged together and whichever runs a
+  # newer push replaced. When any of them changed package.json or package-lock.json, the last figure
+  # of the version moves (npm version patch; module.xml follows), the CHANGELOG gets a section naming
   # every update (scripts/dependency-release.mjs), www/ is rebuilt after the bump so the About page
   # shows the new version, and the commit is pushed to main with its annotated tag and a GitHub
   # release; verify-iris then builds the image from that commit and publishes latest, main-<sha>
   # and the version. Updates to workflows or a Dockerfile alone bump nothing (the next release
-  # names them). Pull requests never reach this job, so no run that Dependabot starts holds a write
+  # names them). Pull requests never reach these jobs, so no run that Dependabot starts holds a write
   # token. A push made with GITHUB_TOKEN starts no workflow, so the commit is checked by the next push.
-  www-after-dependabot-merge:
+  #
+  # The first job runs the updated packages (npm ci, the build) with a read-only token that it does
+  # not keep, and hands its commit over as a git bundle; the second holds the write token and runs no
+  # package code: it checks the commit touches only the release's files, then pushes, tags and
+  # releases it. Both work on this push's commit, never a newer one, and when main has moved on the
+  # release is left to the run for the newer push, so nothing is published that its own verify job
+  # has not checked.
+  dependency-release-build:
     needs: verify
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     outputs:
-      sha: ${{ steps.commit.outputs.sha }}
+      commit: ${{ steps.build.outputs.commit }}
+      version: ${{ steps.build.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
           # The whole history with its tags, back to the last release.
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: npm
       - name: Make the dependency updates since the last release a patch release, with www/ rebuilt
-        id: commit
-        env:
-          GH_TOKEN: ${{ github.token }}
+        id: build
         run: |
           last=$(git describe --tags --abbrev=0 --match 'v[0-9]*')
           dependabot_since() { git log --format=%h --author='dependabot\[bot\]' "$last..HEAD" "$@"; }
-          # main as checked out here: this push, or newer, with any release made by an earlier run.
           if [ -z "$(dependabot_since)" ]; then
             echo "No Dependabot commit since $last: nothing to release"
-            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           npm ci
@@ -140,7 +142,6 @@ jobs:
           npm run build:www
           if [ -z "$version" ] && [ -z "$(git status --porcelain -- www)" ]; then
             echo "No npm update since $last and www/ current: nothing to commit"
-            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name 'github-actions[bot]'
@@ -150,16 +151,72 @@ jobs:
             git add package.json package-lock.json module.xml CHANGELOG.md
             # The subject, a blank line, then the notes: git takes -m or -F, not both.
             { printf '%s\n\n' "$version: dependency updates"; cat release-notes.md; } | git commit -F -
-            git tag -a "v$version" -m "Aperture $version: dependency updates"
-            git push origin HEAD:main "v$version"
-            gh release create "v$version" --title "Aperture $version" --notes-file release-notes.md
-            echo "Released $version from the dependency updates since $last"
           else
             git commit -m "www/ rebuilt for the dependency update"
-            git push origin HEAD:main
+          fi
+          mkdir -p "$RUNNER_TEMP/release"
+          git bundle create "$RUNNER_TEMP/release/release.bundle" "$GITHUB_SHA..HEAD"
+          [ -z "$version" ] || cp release-notes.md "$RUNNER_TEMP/release/"
+          echo "commit=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: steps.build.outputs.commit == 'true'
+        with:
+          name: dependency-release
+          path: ${{ runner.temp }}/release
+          retention-days: 1
+
+  www-after-dependabot-merge:
+    needs: dependency-release-build
+    if: needs.dependency-release-build.outputs.commit == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.push.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: dependency-release
+          path: ${{ runner.temp }}/release
+      - name: Push the release commit with its tag and GitHub release
+        id: push
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.dependency-release-build.outputs.version }}
+        run: |
+          release="$RUNNER_TEMP/release"
+          git fetch -q "$release/release.bundle" HEAD
+          commit=$(git rev-parse FETCH_HEAD)
+          # One commit on this push's, touching only what a dependency release changes.
+          if [ "$(git rev-list --count "$GITHUB_SHA..$commit")" != 1 ] || [ "$(git rev-parse "$commit^")" != "$GITHUB_SHA" ]; then
+            echo "The bundle is not one commit on $GITHUB_SHA"; exit 1
+          fi
+          other=$(git diff --name-only "$GITHUB_SHA" "$commit" | grep -vE '^(www/|package\.json$|package-lock\.json$|module\.xml$|CHANGELOG\.md$)' || true)
+          if [ -n "$other" ]; then echo "The release commit changes other files:"; echo "$other"; exit 1; fi
+          if [ -n "$VERSION" ] && { ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || [ "$(git show "$commit:package.json" | jq -r .version)" != "$VERSION" ]; }; then
+            echo "The release commit does not carry version '$VERSION'"; exit 1
+          fi
+          if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$GITHUB_SHA" ]; then
+            echo "main has moved on since this push: the run for the newer push releases these updates"
+            exit 0
+          fi
+          if [ -n "$VERSION" ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git tag -a "v$VERSION" -m "Aperture $VERSION: dependency updates" "$commit"
+            # Atomic: if main moved in the meantime, neither main nor the tag changes.
+            git push --atomic origin "$commit:refs/heads/main" "v$VERSION"
+            gh release create "v$VERSION" --title "Aperture $VERSION" --notes-file "$release/release-notes.md"
+            echo "Released $VERSION from the dependency updates"
+          else
+            git push origin "$commit:refs/heads/main"
             echo "Committed the rebuilt www/ to main"
           fi
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "sha=$commit" >> "$GITHUB_OUTPUT"
 
   # Builds the IRIS image (official IRIS Community 2026.2 image plus the package manager),
   # which installs Aperture through its own module.xml (zpm "load") and runs the Embedded
@@ -168,10 +225,10 @@ jobs:
   # with the image's own. The image that passed is then published to the GitHub Container
   # Registry: latest and the version from main, the version from a tag, edge from a feature branch.
   verify-iris:
-    needs: [verify, www-after-dependabot-merge]
-    # Runs after verify whether or not the release job had anything to do (it runs on pushes to
-    # main only, and is skipped everywhere else).
-    if: ${{ !cancelled() && needs.verify.result == 'success' && (needs.www-after-dependabot-merge.result == 'success' || needs.www-after-dependabot-merge.result == 'skipped') }}
+    needs: [verify, dependency-release-build, www-after-dependabot-merge]
+    # Runs after verify whether or not the release jobs had anything to do (they run on pushes to
+    # main only, and are skipped everywhere else).
+    if: ${{ !cancelled() && needs.verify.result == 'success' && (needs.dependency-release-build.result == 'success' || needs.dependency-release-build.result == 'skipped') && (needs.www-after-dependabot-merge.result == 'success' || needs.www-after-dependabot-merge.result == 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -182,7 +239,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # The commit the rebuild job made, when it made one; the pushed commit otherwise.
+          # The release commit, when one was pushed; this push's commit otherwise (never a newer one).
           ref: ${{ needs.www-after-dependabot-merge.outputs.sha || github.sha }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
