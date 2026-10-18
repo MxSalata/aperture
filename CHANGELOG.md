@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **nginx passes the client's address to every IRIS route.** `/api/monitor/`, `/api/aperture/` and `/api/mgmnt/`
+  now set `X-Forwarded-For` and `X-Forwarded-Proto` as `/api/admin/` already did.
+
 ## 1.3.0 - Every screen fits a phone and a laptop (2 October 2026)
 
 - **Nothing spills out of its card on a narrow screen.** The dashboard's upcoming tasks put the time under the
