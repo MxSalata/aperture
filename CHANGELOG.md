@@ -4,6 +4,7 @@
 
 - **nginx passes the client's address to every IRIS route.** `/api/monitor/`, `/api/aperture/` and `/api/mgmnt/`
   now set `X-Forwarded-For` and `X-Forwarded-Proto` as `/api/admin/` already did.
+- **source-map-js 1.2.2** (a build-time dependency) closes GHSA-68fv-2mgg-jv7q; `npm audit` reports nothing.
 
 ## 1.3.0 - Every screen fits a phone and a laptop (2 October 2026)
 
