@@ -81,6 +81,17 @@ export default defineConfig(({ mode }) => {
             });
           },
         },
+        // The Atelier API (the SQL screen): a password only, and its 401 names Basic.
+        '/api/atelier': {
+          target: irisUrl,
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy) => {
+            proxy.on('proxyRes', (proxyRes) => {
+              delete proxyRes.headers['www-authenticate'];
+            });
+          },
+        },
         // IRIS's interoperability API (the Productions screens); it takes the session's own token.
         '/api/interop-editors': {
           target: irisUrl,

@@ -51,6 +51,12 @@ Live list, detail with variables and roles, suspend/resume/terminate, broadcast.
 
 Lock removal with transaction check, devices with the telnet and default-device settings, journal files/records/settings/switching, task schedules + history + task manager (state re-read after every change), session ending, license key/usage/servers.
 
+## SQL
+
+Run SQL in any namespace as yourself: parameters, a row limit, results with each column's SQL type, `EXPLAIN`; the catalogue (schemas, tables, columns, first 100 rows); the statements running now and the statement index. A change is named, confirmed and recorded first.
+
+_Notable:_ the Atelier API (`/api/atelier`), password only; `src/api/atelier.ts`, `src/lib/sqlStatement.ts`, `src/features/sql/`; the demo's evaluator `src/mocks/sql.ts`.
+
 ## Interoperability: Productions
 
 Every production in every namespace the account may use for interoperability, with its state and hosts by status; a production's hosts with their errors of the last 24 hours and the newest error, from each host's event log; a host's event log, messages, queue, connections and settings in a drawer; start and stop the production or a host, confirmed and read back.

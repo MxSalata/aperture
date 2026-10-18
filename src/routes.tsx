@@ -44,6 +44,7 @@ const MonitorPage = lazy(() => import('./features/monitor/MonitorPage'));
 const LogsPage = lazy(() => import('./features/logs/LogsPage'));
 const MessagesLogPage = lazy(() => import('./features/logs/MessagesLogPage'));
 const HealthPage = lazy(() => import('./features/health/HealthPage'));
+const SqlPage = lazy(() => import('./features/sql/SqlPage'));
 const ProductionsPage = lazy(() => import('./features/interop/ProductionsPage'));
 const ProductionPage = lazy(() => import('./features/interop/ProductionPage'));
 
@@ -83,6 +84,7 @@ export const router = createRouter(
             { path: 'tasks/:id', element: <TaskDetailPage /> },
             { path: 'web-sessions', element: <WebSessionsPage /> },
             { path: 'license', element: <LicensePage /> },
+            { path: 'sql', element: <SqlPage /> },
             { path: 'interop/productions', element: <ProductionsPage /> },
             { path: 'interop/productions/:namespace/:production', element: <ProductionPage /> },
             { path: 'security', element: <Navigate to="/security/users" replace /> },

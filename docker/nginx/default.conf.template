@@ -93,6 +93,16 @@ server {
     proxy_hide_header WWW-Authenticate;
   }
 
+  # The Atelier API (the SQL screen). It takes a password; its 401 names Basic. A long query may
+  # take a while.
+  location /api/atelier/ {
+    proxy_pass ${IRIS_UPSTREAM}/api/atelier/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_read_timeout 300s;
+    proxy_hide_header WWW-Authenticate;
+  }
+
   # IRIS's interoperability API (the Productions screens). It takes the session's own token.
   location /api/interop-editors/ {
     proxy_pass ${IRIS_UPSTREAM}/api/interop-editors/;

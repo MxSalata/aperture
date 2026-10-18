@@ -26,6 +26,7 @@ const SCREENS = [
   '/tasks/1',
   '/web-sessions',
   '/license',
+  '/sql',
   '/interop/productions',
   '/interop/productions/INTEROP/HL7.Production',
   '/security',

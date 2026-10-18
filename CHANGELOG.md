@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- **SQL.** A new screen in Operations runs SQL in any namespace as the signed-in account, so IRIS applies that
+  account's SQL privileges: parameters, a row limit, results with each column's SQL type (sortable, filterable,
+  CSV), `EXPLAIN`'s plan, and recent statements in the tab. The catalogue lists schemas, tables and columns from
+  `INFORMATION_SCHEMA`, with the first 100 rows of any table; two more tabs show the statements running now and the
+  statement index with its statistics, the SQL diagnostics that stayed in the classic portal until now. A statement
+  that changes data is named before it runs (what it does, in which namespace, with no undo), confirmed, refused in
+  a read-only tab and recorded in Activity. Through the Atelier API (`/api/atelier`, the API VS Code uses), which
+  takes a password only, so a JWT session gives it once, as for REST services. The demo runs the statements in a
+  small SQL evaluator of its own over a few tables (an engine that compiles SQL to JavaScript would need
+  `unsafe-eval`, which the Content-Security-Policy refuses).
+
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 
 - **Productions.** A new Interoperability group: every production of every namespace the account may use for

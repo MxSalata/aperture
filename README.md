@@ -280,6 +280,7 @@ Other scripts:
 | `/api/admin` | SysAdmin API v2: administration, sign-in (JWT, or HTTP Basic where JWT is off) and the account's privileges |
 | `/api/monitor` | host CPU, memory and disk, licence use and the interoperability metrics |
 | `/api/mgmnt` | the instance's REST applications and the routes their dispatch classes declare |
+| `/api/atelier` | SQL: queries, plans, the catalogue, running statements and the statement index, as the signed-in account (password only) |
 | `/api/interop-editors` | interoperability productions: their state, hosts, event logs, messages and queues (the API of IRIS's own Interoperability UI, with the session's own token) |
 | `/api/aperture` | the package's own read-only log reader and wording index (Embedded Python, IRIS Vector Search) |
 
@@ -336,7 +337,7 @@ Two ideas with the "Community Opportunity" status on the [InterSystems Ideas Por
 ## What it does not do yet
 
 - Mirroring, ECP, LDAP, MFT, encryption, external language servers and file-system access are reachable through the API Explorer rather than hand-made screens.
-- SQL, globals and classes are outside the SysAdmin API, and outside Aperture; `^ERRORS` and SQL diagnostics stay in the classic Management Portal.
+- Globals and classes are outside Aperture, and `^ERRORS` stays in the classic Management Portal. SQL runs through the Atelier API (the SQL screen); there is no query builder.
 - Interoperability productions can be read (hosts, errors, event logs, messages, queues) but not edited: no production editor, rule or DTL editor.
 - Similar entries match wording, not meaning: two messages that describe one fault in different words are not paired.
 - The log reader and the wording index need the IPM package (or the Docker image); without them the Messages log says so and everything else works.

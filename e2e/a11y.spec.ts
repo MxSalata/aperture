@@ -39,6 +39,7 @@ const SCREENS: [path: string, heading: string][] = [
   ['/security/secrets', 'Wallet & OAuth 2.0'],
   ['/devices', 'Devices'],
   ['/rest-services', 'REST services'],
+  ['/sql', 'SQL'],
   ['/interop/productions', 'Productions'],
   ['/interop/productions/INTEROP/HL7.Production', 'HL7.Production'],
   ['/activity', 'Activity'],

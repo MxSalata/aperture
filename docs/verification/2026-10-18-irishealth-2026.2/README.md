@@ -24,4 +24,10 @@ What the screens rely on, as recorded here and while building them:
   `&hostID=` the item id for one host): both work, and a stopped host reads `stopped` while staying enabled. The
   route answers `{"Success":1}` to any other value too (`restart`, `recover`, `bogus`), and `restart` stopped a
   host: Aperture sends `start` or `stop`, and `recover` for a troubled production, and reads the state back afterwards. What `recover` does was taken from the `%Api.InteropEditors` source (`RecoverProduction`), not recorded here.
+- **SQL through Atelier** (`/api/atelier`, API 8, password only, `%Development`): `?positional=1` answers
+  `[{ columns: [{ name, type }], content: [[...]] }]`; `EXPLAIN` one `Plan` column in the 2026 plain-text form; an
+  error is HTTP 200 with `status.errors[0]` `{ code: 5540, id: "SQLCode", params: ["-30", "Table ... not found"] }`;
+  `CREATE TABLE`, `INSERT`, `UPDATE` and `DROP TABLE` answer `result: []` with no row count;
+  `INFORMATION_SCHEMA.CURRENT_STATEMENTS` has no statement text, `STATEMENTS` has the statistics.
+  `e2e/live/sql.spec.ts` checks the screen, and its @mutate test creates, fills, reads and drops a table in APERTURELAB.
 - **Jobs**: `{}` throughout, even while a host was working; the screens do not show them.

@@ -29,6 +29,7 @@ import {
   IconWallet,
   IconWorld,
   IconPlug,
+  IconSql,
   IconTopologyStar3,
   type Icon,
 } from '@tabler/icons-react';
@@ -132,6 +133,17 @@ export const NAV: NavSection[] = [
         color: 'violet',
         privileges: ['%Admin_Manage:U'],
         description: 'Namespaces and their global, package and routine mappings',
+      },
+      {
+        label: 'SQL',
+        to: '/sql',
+        icon: IconSql,
+        color: 'grape',
+        // Atelier needs %Development:USE, which /info does not report: the screen says when IRIS refuses.
+        privileges: [],
+        description:
+          'Run SQL as yourself in any namespace; the catalogue, query plans, running and past statements',
+        keywords: ['query', 'select', 'tables', 'schema', 'explain', 'plan', 'statements', 'atelier'],
       },
       {
         label: 'Processes',

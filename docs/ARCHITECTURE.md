@@ -387,6 +387,33 @@ they mean, were recorded on IRIS for Health 2026.2 (`docs/verification/2026-10-1
 - **Language.** Names and messages follow the request's `Accept-Language` (none or `*` gets Arabic, the first
   language IRIS has): the screens read raw fields, never the `Localized*` ones.
 
+### 2.7g SQL (/api/atelier)
+
+The SysAdmin API has SQL privileges but no way to run SQL. The SQL screen (`features/sql`) posts to the Atelier
+API's query action, `POST /api/atelier/v8/{ns}/action/query?positional=1&max=N` with `{ query, parameters }`
+(`api/atelier.ts`), which runs one statement as the signed-in account.
+
+- **A password only.** `/api/atelier` has JWT off and the resource `%Development`: a Basic session sends its
+  credentials, a JWT session gives the password once (`stores/mgmntAuth.ts`, shared with `/api/mgmnt` and
+  `/api/aperture`); a refused password is forgotten at once, and a 403 says `%Development:USE` is missing.
+  `%Api.Atelier` keeps a CSP session, so the browser sends its `/api/atelier/` cookie back (`credentials:
+  'same-origin'`): one session per tab, not one per request.
+- **The answer.** With `positional=1`, one entry per result set: `columns` (`name`, SQL `type`) and `content`
+  (rows as arrays). `max` is sent as the limit plus one, so the screen knows when rows were cut. An SQL error is
+  an HTTP 200 whose `status.errors[0]` has `id: "SQLCode"` and `params: [SQLCODE, message]` (`SqlError`); a change
+  answers `result: []`, with no row count.
+- **Changes are named first.** `lib/sqlStatement.ts` reads the first keyword outside comments and strings:
+  `SELECT`, `EXPLAIN` and a `WITH` that feeds a `SELECT` are reads, everything else (a `CALL` included) is a
+  change. A change shows a warning as it is typed, is confirmed with its kind and namespace, is refused in a
+  read-only tab and is recorded in Activity. It is a warning, not a control: the account's SQL privileges decide.
+- **The catalogue and the diagnostics** are queries too: `INFORMATION_SCHEMA.TABLES` and `COLUMNS`,
+  `CURRENT_STATEMENTS` (which has no column with the statement's text) and `STATEMENTS` (count, total and average
+  time, rows), each per namespace. System schemas are hidden until asked for (`isSystemSchema`).
+- **The demo** answers from `mocks/sql.ts`, a small evaluator (one table per `SELECT`, `WHERE`, `GROUP BY`,
+  `ORDER BY`, `TOP`, the five aggregates, `INSERT`, `UPDATE`, `DELETE`, `CREATE TABLE`, `DROP TABLE`, `EXPLAIN`)
+  with IRIS's SQLCODEs for what it cannot do. An SQL engine compiled to JavaScript at run time was tried: it needs
+  `unsafe-eval`, which the portal's Content-Security-Policy refuses, and the demo runs inside the real portal.
+
 ### 2.8 Spec quirks
 
 `lib/quirks.ts` lists known differences between the specification and running instances with their

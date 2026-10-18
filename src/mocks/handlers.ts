@@ -13,6 +13,7 @@ import { licenseHandlers } from './handlers/license';
 import { mgmntHandlers } from './handlers/mgmnt';
 import { logsHandlers } from './handlers/logs';
 import { interopHandlers } from './handlers/interop';
+import { atelierHandlers } from './handlers/atelier';
 import { genericHandler } from './handlers/generic';
 
 /** Order matters: specific handlers first, the spec-driven fallback last. */
@@ -33,5 +34,6 @@ export const handlers = [
   ...mgmntHandlers,
   ...logsHandlers,
   ...interopHandlers,
+  ...atelierHandlers,
   genericHandler,
 ];
