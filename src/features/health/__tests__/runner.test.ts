@@ -97,6 +97,26 @@ describe('the health check runner', () => {
     expect(reportToMarkdown(report, 'x')).toContain('not checked: needs %Admin_Secure');
   });
 
+  it('leaves the log check to accounts holding %Admin_Operate, without a request IRIS would refuse', async () => {
+    await signIn('auditor');
+    let requests = 0;
+    server.use(
+      http.all('*/api/aperture/*', () => {
+        requests++;
+        return new HttpResponse(null, { status: 401 });
+      }),
+    );
+    const report = await runHealthCheck({
+      info: useSession.getState().info,
+      account: 'auditor',
+      logsReady: true,
+    });
+    const log = report.results.find((r) => r.check === 'messages-log');
+    expect(log?.status).toBe('not-checked');
+    expect(log?.needs).toBe('%Admin_Operate');
+    expect(requests).toBe(0);
+  });
+
   it('says when the state of tasks could not be read rather than taking them for active', async () => {
     await signIn('_SYSTEM');
     server.use(

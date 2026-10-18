@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fetchLogSources, isReaderMissing, readLogWindow } from '../logs';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/mocks/node';
+import { fetchLogSources, isReaderMissing, LOG_READER_FORBIDDEN, readLogWindow } from '../logs';
 import { basicCredentials } from '../base';
 import { resetClients } from '../client';
 import { resetDb } from '@/mocks/db';
@@ -68,7 +70,7 @@ describe('/api/aperture (the log reader)', () => {
     expect(older.lines.length).toBeGreaterThan(10);
   });
 
-  it('asks a JWT session for the password, refuses an account without %Admin_Operate, and names a missing file', async () => {
+  it('asks a JWT session for the password, and names a missing file', async () => {
     await signIn('_SYSTEM', 'jwt');
     await expect(fetchLogSources()).rejects.toSatisfy(
       (e: unknown) => e instanceof ApiError && e.status === 401 && /needs your password/.test(e.summary),
@@ -78,9 +80,25 @@ describe('/api/aperture (the log reader)', () => {
     await expect(readLogWindow('../../etc/passwd')).rejects.toSatisfy(
       (e: unknown) => e instanceof ApiError && e.status === 404 && !isReaderMissing(e),
     );
+  });
+
+  it('answers an account without %Admin_Operate itself: IRIS would refuse it with a 401', async () => {
     await signIn('auditor', 'basic');
-    await expect(fetchLogSources()).rejects.toSatisfy(
-      (e: unknown) => e instanceof ApiError && e.status === 403,
+    // The web application's resource check comes first on IRIS: a bodiless 401, as for a wrong password.
+    const direct = await fetch('http://iris.test/api/aperture/logs', {
+      headers: { Authorization: `Basic ${basicCredentials('auditor', 'SYS')}` },
+    });
+    expect(direct.status).toBe(401);
+    let requests = 0;
+    server.use(
+      http.all('*/api/aperture/*', () => {
+        requests++;
+        return new HttpResponse(null, { status: 401 });
+      }),
     );
+    await expect(fetchLogSources()).rejects.toSatisfy(
+      (e: unknown) => e instanceof ApiError && e.status === 403 && e.summary === LOG_READER_FORBIDDEN,
+    );
+    expect(requests).toBe(0);
   });
 });

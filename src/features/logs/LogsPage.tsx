@@ -37,6 +37,7 @@ function useCanRead(privileges: readonly string[]): boolean {
 const AUDIT = ['%Admin_Secure:U'] as const;
 const JOURNAL = ['%Admin_Operate:U', '%Admin_Journal:U'] as const;
 const TASKS = ['%Admin_Operate:U', '%Admin_Task:U'] as const;
+const OPERATE = ['%Admin_Operate:U'] as const;
 
 function LogCard({ title, source, to, privileges, children }: CardProps) {
   const allowed = useCanRead(privileges);
@@ -313,7 +314,8 @@ function TaskHistoryCard() {
  */
 function MessagesLogCard() {
   useMgmntAuth((s) => s.basic);
-  const ready = !!mgmntCredentials();
+  // IRIS answers an account without the web application's resource with a 401 (a LoginFailure).
+  const ready = useCanRead(OPERATE) && !!mgmntCredentials();
   const sources = useQuery({
     queryKey: ['aperture-logs', 'sources'],
     queryFn: fetchLogSources,
@@ -328,7 +330,7 @@ function MessagesLogCard() {
       title="messages.log"
       source="GET /api/aperture/logs · /logs/read (Aperture's log reader, Embedded Python)"
       to="/logs/messages"
-      privileges={['%Admin_Operate:U']}
+      privileges={OPERATE}
     >
       {!ready ? (
         <Text size="sm" c="dimmed">

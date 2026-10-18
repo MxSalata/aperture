@@ -13,6 +13,7 @@ import {
 } from '@/api/logs';
 import { SimilarCount, SimilarEntries } from './SimilarEntries';
 import { mgmntCredentials } from '@/api/mgmnt';
+import { canUse } from '@/api/privileges';
 import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { PageHeader } from '@/components/PageHeader';
@@ -36,6 +37,8 @@ const KIND_LABEL: Record<string, string> = {
   alerts: 'alerts.log',
   monitor: 'SystemMonitor.log',
 };
+
+const OPERATE = ['%Admin_Operate:U'] as const;
 
 /** The window size a page load or an "older" click asks for. */
 const WINDOW_BYTES = 65_536;
@@ -63,7 +66,10 @@ function SeverityBadge({ severity }: { severity: LogSeverity | null }) {
 export default function MessagesLogPage() {
   useMgmntAuth((s) => s.basic); // re-render when the password is given or forgotten
   const mode = useSession((s) => s.mode);
-  const ready = !!mgmntCredentials();
+  // The web application requires %Admin_Operate; IRIS refuses an account without it with a 401,
+  // as if the password were wrong, so nothing is asked for or sent.
+  const allowed = useSession((s) => canUse(s.info, OPERATE));
+  const ready = allowed && !!mgmntCredentials();
   const [params, setParams] = useSearchParams();
   const requested = params.get('file');
 
@@ -219,7 +225,7 @@ export default function MessagesLogPage() {
       <PageHeader
         title="Messages log"
         description="messages.log, alerts.log and SystemMonitor.log as IRIS writes them, newest first, read in bounded windows by Aperture's own log reader on the instance (/api/aperture, Embedded Python). Older lines load on request; a 100 MB log costs the same per page as a small one. Open any entry to see how often its message was logged, found with IRIS Vector Search."
-        privileges={['%Admin_Operate:U']}
+        privileges={OPERATE}
         actions={
           ready && file ? (
             <RefreshControl
@@ -234,7 +240,12 @@ export default function MessagesLogPage() {
         }
       />
       <Stack gap="sm">
-        {!ready && mode === 'jwt' ? (
+        {!allowed ? (
+          <Text size="sm" c="dimmed">
+            This account does not hold %Admin_Operate:USE, which the log reader's web application requires.
+          </Text>
+        ) : null}
+        {allowed && !ready && mode === 'jwt' ? (
           <PasswordGate application="/api/aperture" action="Read the logs" resetKeys={[['aperture-logs']]} />
         ) : null}
         {notInstalled ? (

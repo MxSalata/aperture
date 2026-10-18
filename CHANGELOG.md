@@ -12,6 +12,12 @@
   release is left to the newer push's run, and the image job builds the push's commit. Before, a run could check
   out a commit pushed while it was running and publish it as `latest`, and as the version, before that commit's
   own checks had run.
+- **The log reader is not asked for by an account without %Admin_Operate.** `/api/aperture`'s web application
+  requires that resource, and IRIS refuses an account without it with a 401, as if the password were wrong, and
+  audits a LoginFailure. Such an account no longer sends that request from the Logs page, the Messages log, the
+  About page or the health check: the Messages log says which resource it needs instead of asking for a password
+  (a JWT session's stored password is no longer forgotten), and the health check lists the log check as needing
+  %Admin_Operate. The demo answers such an account with IRIS's 401.
 
 ## 1.3.0 - Every screen fits a phone and a laptop (2 October 2026)
 

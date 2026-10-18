@@ -244,6 +244,10 @@ export async function runHealthCheck(ctx: RunContext): Promise<HealthReport> {
   const results: CheckResult[] = [];
   for (const check of CHECKS) {
     const base = { check: check.id, title: check.title, area: check.area };
+    if (check.needs.length && checkPrivileges(ctx.info, check.needs) === 'denied') {
+      results.push({ ...base, status: 'not-checked', needs: needsLabel(check.needs), findings: [] });
+      continue;
+    }
     if (check.id === 'messages-log' && !ctx.logsReady) {
       results.push({
         ...base,
@@ -251,10 +255,6 @@ export async function runHealthCheck(ctx: RunContext): Promise<HealthReport> {
         needs: 'the password for /api/aperture (Logs, Messages log asks for it once)',
         findings: [],
       });
-      continue;
-    }
-    if (check.needs.length && checkPrivileges(ctx.info, check.needs) === 'denied') {
-      results.push({ ...base, status: 'not-checked', needs: needsLabel(check.needs), findings: [] });
       continue;
     }
     try {

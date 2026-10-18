@@ -189,7 +189,7 @@ export const CHECKS: CheckInfo[] = [
     id: 'messages-log',
     title: 'Severe entries of messages.log in the last 24 hours',
     area: 'Logs',
-    needs: [],
+    needs: ['%Admin_Operate:U'],
     reads: 'GET /api/aperture/logs/read (the newest window)',
   },
 ];

@@ -2,6 +2,7 @@ import { useSession } from '@/stores/session';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { ApiError } from '@/lib/errors';
 import { mgmntCredentials } from './mgmnt';
+import { canUse } from './privileges';
 
 /**
  * Aperture's own log reader, `/api/aperture` (ipm/cls/Aperture/API.cls, created by the IPM
@@ -55,9 +56,21 @@ export function lineOffsets(w: LogWindow): number[] {
 export const LOG_READER_MISSING =
   'The log reader is not installed on this instance: /api/aperture is the web application the iris-aperture IPM package creates (zpm "install iris-aperture", or the Docker image). Everything else works without it.';
 
-/** A request to the reader, GET unless said otherwise (POST /logs/index refreshes the wording index). */
+/** What an account without the web application's resource is told; IRIS itself answers 401. */
+export const LOG_READER_FORBIDDEN =
+  'Reading the logs needs %Admin_Operate:USE, which this account does not hold.';
+
+/**
+ * A request to the reader, GET unless said otherwise (POST /logs/index refreshes the wording index).
+ * /api/aperture's web application requires %Admin_Operate, and IRIS refuses an account without it
+ * with a 401, as if the password were wrong (and audits a LoginFailure), so such an account is
+ * answered here without a request.
+ */
 export async function logsRequest<T>(path: string, method: 'GET' | 'POST' = 'GET'): Promise<T> {
-  const url = `${useSession.getState().baseUrl.replace(/\/+$/, '')}${LOGS_PREFIX}${path}`;
+  const { baseUrl, info } = useSession.getState();
+  const url = `${baseUrl.replace(/\/+$/, '')}${LOGS_PREFIX}${path}`;
+  if (!canUse(info, ['%Admin_Operate:U']))
+    throw new ApiError({ status: 403, url, summary: LOG_READER_FORBIDDEN });
   const credentials = mgmntCredentials();
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (credentials) headers.Authorization = `Basic ${credentials}`;
@@ -86,7 +99,7 @@ export async function logsRequest<T>(path: string, method: 'GET' | 'POST' = 'GET
           ? 'The instance refused the password for /api/aperture.'
           : 'The log reader needs your password: its web application accepts a password only.'
         : res.status === 403
-          ? message || 'Reading the logs needs %Admin_Operate:USE, which this account does not hold.'
+          ? message || LOG_READER_FORBIDDEN
           : res.status === 404 && !message
             ? LOG_READER_MISSING
             : message || `HTTP ${res.status}`,

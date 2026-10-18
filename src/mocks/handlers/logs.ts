@@ -8,9 +8,10 @@ import { parseLogLine, parseLogLines } from '@/lib/messagesLog';
 /**
  * Aperture's log reader (`/api/aperture`, ipm/cls/Aperture/API.cls) as it answers on an
  * instance with the package: a password only (a missing or refused one is a bodiless 401),
- * %Admin_Operate:USE, a catalogue of log files and bounded windows of whole lines, paged
- * backwards by byte offset. The files are generated to look like a container's messages.log,
- * alerts.log and SystemMonitor.log over the days since the mock instance started.
+ * %Admin_Operate:USE (the web application's resource: IRIS refuses an account without it with the
+ * same bodiless 401, before Aperture.API runs), a catalogue of log files and bounded windows of
+ * whole lines, paged backwards by byte offset. The files are generated to look like a container's
+ * messages.log, alerts.log and SystemMonitor.log over the days since the mock instance started.
  */
 function basicAccount(request: Request) {
   const header = request.headers.get('authorization') ?? '';
@@ -407,7 +408,7 @@ export const logsHandlers = [
   http.get('*/api/aperture/', ({ request }) => {
     const account = basicAccount(request);
     if (!account) return unauthorized();
-    if (!account.privileges.includes(OPERATE)) return refuse(403, 'Requires %Admin_Operate:USE');
+    if (!account.privileges.includes(OPERATE)) return unauthorized();
     return HttpResponse.json({
       application: 'Aperture log reader',
       version: __APP_VERSION__,
@@ -428,7 +429,7 @@ export const logsHandlers = [
   http.get('*/api/aperture/logs', ({ request }) => {
     const account = basicAccount(request);
     if (!account) return unauthorized();
-    if (!account.privileges.includes(OPERATE)) return refuse(403, 'Requires %Admin_Operate:USE');
+    if (!account.privileges.includes(OPERATE)) return unauthorized();
     return HttpResponse.json(
       files().map((f) => ({
         id: f.id,
@@ -443,7 +444,7 @@ export const logsHandlers = [
   http.get('*/api/aperture/logs/read', ({ request }) => {
     const account = basicAccount(request);
     if (!account) return unauthorized();
-    if (!account.privileges.includes(OPERATE)) return refuse(403, 'Requires %Admin_Operate:USE');
+    if (!account.privileges.includes(OPERATE)) return unauthorized();
     const q = new URL(request.url).searchParams;
     const id = q.get('file') ?? '';
     if (!id) return refuse(400, 'file is required: the id of a catalogued log file (GET /logs)');
@@ -456,13 +457,13 @@ export const logsHandlers = [
   http.get('*/api/aperture/logs/index', ({ request }) => {
     const account = basicAccount(request);
     if (!account) return unauthorized();
-    if (!account.privileges.includes(OPERATE)) return refuse(403, 'Requires %Admin_Operate:USE');
+    if (!account.privileges.includes(OPERATE)) return unauthorized();
     return HttpResponse.json(indexStatus());
   }),
   http.post('*/api/aperture/logs/index', ({ request }) => {
     const account = basicAccount(request);
     if (!account) return unauthorized();
-    if (!account.privileges.includes(OPERATE)) return refuse(403, 'Requires %Admin_Operate:USE');
+    if (!account.privileges.includes(OPERATE)) return unauthorized();
     const before = indexStatus();
     buildIndex();
     const after = indexStatus();
@@ -482,7 +483,7 @@ export const logsHandlers = [
   http.get('*/api/aperture/logs/similar', ({ request }) => {
     const account = basicAccount(request);
     if (!account) return unauthorized();
-    if (!account.privileges.includes(OPERATE)) return refuse(403, 'Requires %Admin_Operate:USE');
+    if (!account.privileges.includes(OPERATE)) return unauthorized();
     const q = new URL(request.url).searchParams;
     const id = q.get('file') ?? '';
     const offset = q.get('offset');
