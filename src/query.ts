@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { isApiError } from '@/lib/errors';
+import { isApiError, RefusedError } from '@/lib/errors';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -8,8 +8,9 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       retry: (failureCount, error) => {
         if (isApiError(error)) {
-          // One retry after a 401: the client middleware refreshes the JWT in between.
-          if (error.isUnauthorized) return failureCount < 1;
+          // One retry after a 401: the client middleware refreshes the JWT in between. A refusal
+          // the client has already retried with a fresh token is final.
+          if (error.isUnauthorized) return !(error instanceof RefusedError) && failureCount < 1;
           if (error.status >= 400 && error.status < 500) return false;
         }
         return failureCount < 2;

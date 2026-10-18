@@ -14,6 +14,11 @@
   confirmed (stopping a production on a LIVE instance asks for its name), refused in a read-only tab and recorded in
   Activity. IRIS answers success to any request on that route, so Aperture reads the state back and says what IRIS
   reports now, or that the change did not happen. The buttons follow the privileges IRIS reports for the account.
+- **The other applications' sign-in follows the SysAdmin client.** A refused refresh ends the session there too,
+  answers count for the reachability pill (a 502 from the proxy turns it red), and a 401 the client has already
+  answered with a fresh token is final: nothing retries it, so it no longer rotates the session's tokens again, and
+  it says which web application refused the token and why it may, not that the credentials are wrong. A page
+  where JSON was expected (a path no proxy passes on to IRIS) is an error, not an empty list.
 - **nginx passes the client's address to every IRIS route.** `/api/monitor/`, `/api/aperture/` and `/api/mgmnt/`
   now set `X-Forwarded-For` and `X-Forwarded-Proto` as `/api/admin/` already did.
 - **source-map-js 1.2.2** (a build-time dependency) closes GHSA-68fv-2mgg-jv7q; `npm audit` reports nothing.

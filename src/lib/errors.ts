@@ -57,6 +57,12 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * A 401 the client has already answered (with a refreshed token, or with the password of a Basic
+ * session): another attempt would only rotate the session's tokens again, so nothing retries it.
+ */
+export class RefusedError extends ApiError {}
+
 export function httpStatusText(status: number): string {
   switch (status) {
     case 0:

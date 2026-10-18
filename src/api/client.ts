@@ -71,22 +71,25 @@ export async function jobIdFromResponse(response: Response, parsedBody?: unknown
 }
 
 /**
- * Everything that has to happen once the *final* response of a request is known:
- * reachability, Job Center registration of a 202, and the activity record of a write.
- * Runs for the normal response and for the retry after a token refresh alike.
- */
-/**
  * What a reverse proxy or the Web Gateway answers when the instance behind it does not:
  * the request reached the proxy, not IRIS, so the instance counts as unreachable.
  */
 const GATEWAY_DOWN = new Set([502, 503, 504]);
 
-async function finalize(request: Request, response: Response, entry: Inflight | undefined): Promise<void> {
-  if (GATEWAY_DOWN.has(response.status))
-    useHealth
-      .getState()
-      .markFail(`HTTP ${response.status}: the gateway in front of the instance got no answer`);
+/** What an answer of this status says about reachability (also for the other applications, `sessionFetch`). */
+export function noteReachability(status: number): void {
+  if (GATEWAY_DOWN.has(status))
+    useHealth.getState().markFail(`HTTP ${status}: the gateway in front of the instance got no answer`);
   else useHealth.getState().markOk();
+}
+
+/**
+ * Everything that has to happen once the *final* response of a request is known:
+ * reachability, Job Center registration of a 202, and the activity record of a write.
+ * Runs for the normal response and for the retry after a token refresh alike.
+ */
+async function finalize(request: Request, response: Response, entry: Inflight | undefined): Promise<void> {
+  noteReachability(response.status);
 
   // Long-running operations: the API queues a task and tells us where to poll.
   let jobId: string | null = null;
