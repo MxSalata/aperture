@@ -1,5 +1,5 @@
 import { useSession } from '@/stores/session';
-import { useMgmntAuth } from '@/stores/mgmntAuth';
+import { useAtelierAuth } from '@/stores/atelierAuth';
 import { useActivity } from '@/stores/activity';
 import { useReadOnly } from '@/stores/readOnly';
 import { ApiError, NotSentError, normalizeErrors } from '@/lib/errors';
@@ -15,7 +15,8 @@ import { READ_ONLY_REFUSAL } from './readOnly';
  * Checked on IRIS for Health 2026.2 (18 Oct 2026, `docs/verification/2026-10-18-irishealth-2026.2/`):
  * the web application takes a password only (JWT off) and needs `%Development:USE`, so a Basic
  * session sends its credentials and a JWT session gives the password once (`stores/mgmntAuth.ts`,
- * shared with /api/mgmnt and /api/aperture). It serves API version 8; `?positional=1` answers one
+ * shared with /api/mgmnt and /api/aperture). An account without `%Development:USE` gets a 401, as a
+ * wrong password does, so a refusal is remembered for Atelier alone (`stores/atelierAuth.ts`). It serves API version 8; `?positional=1` answers one
  * entry per result set with the columns' names and SQL types, `?max=` caps the rows, and an SQL error
  * is an HTTP 200 whose `status.errors` carry the SQLCODE and IRIS's message. `%Api.Atelier` opens a
  * CSP session and sets its cookie, and that cookie alone runs SQL as the account, with no password:
@@ -24,6 +25,9 @@ import { READ_ONLY_REFUSAL } from './readOnly';
  */
 export const ATELIER_PREFIX = '/api/atelier';
 const VERSION = 'v8';
+
+const REFUSED =
+  'The instance refused the password for /api/atelier: a wrong password, or the account lacks %Development:USE.';
 
 export const NOTHING_TO_RUN = 'There is no statement to run: the text is empty or only comments.';
 
@@ -63,6 +67,9 @@ async function atelierFetch<T>(
 ): Promise<{ json: T; res: Response }> {
   const url = `${useSession.getState().baseUrl.replace(/\/+$/, '')}${ATELIER_PREFIX}${path}`;
   const credentials = mgmntCredentials();
+  // Credentials Atelier refused are not sent again: each try counts toward the invalid-login limit.
+  if (credentials && credentials === useAtelierAuth.getState().refused)
+    throw new ApiError({ status: 401, url, method: init.method ?? 'GET', summary: REFUSED });
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (credentials) headers.Authorization = `Basic ${credentials}`;
   if (init.body !== undefined) headers['Content-Type'] = 'application/json';
@@ -84,9 +91,8 @@ async function atelierFetch<T>(
     /* no JSON body */
   }
   if (res.ok) return { json: json as T, res };
-  // A refused password is forgotten at once: sending it again would count toward the account's
-  // invalid-login limit.
-  if (res.status === 401) useMgmntAuth.getState().clear();
+  // The shared password stays: the same 401 may mean only that this account lacks %Development.
+  if (res.status === 401 && credentials) useAtelierAuth.getState().refuse(credentials);
   const n = normalizeErrors(json);
   throw new ApiError({
     status: res.status,
@@ -96,7 +102,7 @@ async function atelierFetch<T>(
     summary:
       res.status === 401
         ? credentials
-          ? 'The instance refused the password for /api/atelier.'
+          ? REFUSED
           : '/api/atelier needs your password.'
         : res.status === 403
           ? 'This account may not use /api/atelier: it needs %Development:USE.'

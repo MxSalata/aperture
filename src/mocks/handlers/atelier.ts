@@ -6,7 +6,8 @@ import { runStatement, SqlCode } from '../sql';
 /**
  * The Atelier REST API (`/api/atelier`) as IRIS for Health 2026.2 answers what the SQL explorer
  * calls: a password only (a token or nothing is a bodiless 401), `%Development:USE` (held by the
- * demo's %All accounts only), the server descriptor, and the query action with `positional` and
+ * demo's %All accounts only; IRIS answers an account without it with the same 401 as a wrong
+ * password, and audits a LoginFailure), the server descriptor, and the query action with `positional` and
  * `max`. An SQL error is an HTTP 200 whose `status.errors` carry the SQLCODE, as on IRIS; the
  * statements run in the demo's SQL engine (`mocks/sql.ts`).
  */
@@ -23,7 +24,6 @@ function basicAccount(request: Request) {
 
 const unauthorized = () =>
   new HttpResponse(null, { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="IRIS"' } });
-const forbidden = () => new HttpResponse(null, { status: 403 });
 const envelope = (result: unknown, errors: unknown[] = []) =>
   HttpResponse.json({
     status: { errors, summary: errors.length ? String((errors[0] as { error: string }).error) : '' },
@@ -34,7 +34,7 @@ const envelope = (result: unknown, errors: unknown[] = []) =>
 function allowed(request: Request) {
   const account = basicAccount(request);
   if (!account) return { refusal: unauthorized() };
-  if (!account.roles.includes('%All')) return { refusal: forbidden() };
+  if (!account.roles.includes('%All')) return { refusal: unauthorized() };
   return { account };
 }
 

@@ -19,6 +19,10 @@
 - **No Atelier session outlives sign-out.** The browser kept the CSP session cookie `/api/atelier` sets, and that
   cookie alone ran SQL as the account after sign-out. Aperture now keeps no cookie from it (as for `/api/mgmnt`):
   every request carries its own credentials.
+- **Opening SQL no longer signs the other screens out.** IRIS answers an account without `%Development:USE` with
+  a 401, as for a wrong password, and the SQL screen then forgot the password the Messages log, REST services and
+  the Health check share. Now only `/api/atelier` remembers the refusal, never sends those credentials there again,
+  and says it was a wrong password or a missing `%Development:USE`.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 

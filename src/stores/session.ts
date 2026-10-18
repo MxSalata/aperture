@@ -9,6 +9,7 @@ import { useMetrics } from '@/stores/metrics';
 import { useActivity } from '@/stores/activity';
 import { useHealth } from '@/stores/health';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
+import { useAtelierAuth } from '@/stores/atelierAuth';
 import { logsRefusal } from '@/stores/logsRefusal';
 import { queryClient } from '@/query';
 import { forgetEndedTasks } from '@/api/endedTasks';
@@ -251,6 +252,7 @@ export function resetInstanceState(): void {
   useActivity.getState().clear();
   useHealth.getState().reset();
   useMgmntAuth.getState().clear();
+  useAtelierAuth.getState().clear();
   logsRefusal.forget();
 }
 

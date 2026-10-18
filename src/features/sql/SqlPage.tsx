@@ -27,8 +27,10 @@ import { ErrorAlert } from '@/components/ErrorAlert';
 import { PageHeader } from '@/components/PageHeader';
 import { PasswordGate } from '@/components/PasswordGate';
 import { classifyStatement, placeholders } from '@/lib/sqlStatement';
+import { useAtelierAuth } from '@/stores/atelierAuth';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useReadOnly } from '@/stores/readOnly';
+import { useSession } from '@/stores/session';
 
 const LIMITS = ['100', '500', '1000', '5000'];
 const HISTORY_KEY = 'aperture.sql.history';
@@ -117,8 +119,12 @@ function QueryTable({
 
 export default function SqlPage() {
   const basic = useMgmntAuth((s) => s.basic);
+  const refused = useAtelierAuth((s) => s.refused);
+  const mode = useSession((s) => s.mode);
   const readOnly = useReadOnly((s) => s.readOnly);
-  const unlocked = !!(basic ?? mgmntCredentials());
+  const credentials = basic ?? mgmntCredentials();
+  // A JWT session whose password Atelier refused may give another one; the other screens keep theirs.
+  const unlocked = !!credentials && !(mode === 'jwt' && credentials === refused);
   const server = useQuery({
     queryKey: sqlKeys.server,
     queryFn: fetchAtelierServer,
@@ -219,6 +225,12 @@ export default function SqlPage() {
           title="SQL"
           description="Run SQL in any namespace as yourself, through the Atelier API."
         />
+        {credentials ? (
+          <Alert color="red" icon={<IconAlertTriangle size={16} />} mb="sm" maw={520}>
+            The instance refused the password for /api/atelier: a wrong password, or the account lacks
+            %Development:USE. It is not sent there again; the other screens keep it.
+          </Alert>
+        ) : null}
         <PasswordGate application="/api/atelier" action="Open the SQL explorer" resetKeys={[sqlKeys.all]} />
       </>
     );

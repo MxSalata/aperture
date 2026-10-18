@@ -4,7 +4,8 @@ import { basicCredentials } from '../base';
 import { resetClients } from '../client';
 import { resetDb } from '@/mocks/db';
 import { resetSql } from '@/mocks/sql';
-import { useSession } from '@/stores/session';
+import { resetInstanceState, useSession } from '@/stores/session';
+import { useAtelierAuth } from '@/stores/atelierAuth';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useReadOnly } from '@/stores/readOnly';
 import { useActivity } from '@/stores/activity';
@@ -22,6 +23,7 @@ describe('SQL through Atelier, on the demo instance', () => {
     resetClients();
     resetSql();
     useMgmntAuth.getState().clear();
+    useAtelierAuth.getState().clear();
     useReadOnly.getState().setReadOnly(false);
     useActivity.getState().clear();
   });
@@ -117,6 +119,38 @@ describe('SQL through Atelier, on the demo instance', () => {
     expect((e as SqlError).message).toMatch(/^SQLCODE -30: Table 'SAMPLE.NOPE' not found/);
     await expect(runSql('USER', 'SELEC 1')).rejects.toMatchObject({ sqlcode: -1 });
     await signIn('operator', 'basic');
-    await expect(runSql('USER', 'SELECT 1')).rejects.toMatchObject({ status: 403 });
+    await expect(runSql('USER', 'SELECT 1')).rejects.toMatchObject({
+      status: 401,
+      message: expect.stringContaining('lacks %Development:USE') as unknown,
+    });
+  });
+
+  it('keeps the shared password when Atelier refuses it, and does not send it there again', async () => {
+    // IRIS answers an account without %Development with a 401, as for a wrong password.
+    await signIn('operator', 'jwt');
+    const shared = basicCredentials('operator', 'SYS');
+    useMgmntAuth.getState().set(shared);
+    let sent = 0;
+    server.events.on('request:start', ({ request }) => {
+      if (request.url.includes('/api/atelier/')) sent++;
+    });
+    try {
+      await expect(fetchAtelierServer()).rejects.toMatchObject({ status: 401 });
+      await expect(runSql('USER', 'SELECT 1')).rejects.toMatchObject({ status: 401 });
+      await expect(fetchAtelierServer()).rejects.toMatchObject({ status: 401 });
+      expect(sent).toBe(1);
+      // The log reader, REST services and the Health check still have it.
+      expect(useMgmntAuth.getState().basic).toBe(shared);
+      expect(useAtelierAuth.getState().refused).toBe(shared);
+      // Another password is tried.
+      useMgmntAuth.getState().set(basicCredentials('operator', 'other'));
+      await expect(fetchAtelierServer()).rejects.toMatchObject({ status: 401 });
+      expect(sent).toBe(2);
+    } finally {
+      server.events.removeAllListeners();
+    }
+    // Sign-out forgets the refusal.
+    resetInstanceState();
+    expect(useAtelierAuth.getState().refused).toBeNull();
   });
 });
