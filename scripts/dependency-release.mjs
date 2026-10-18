@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Dependency updates merged into main make a patch release (ci.yml, the
-// www-after-dependabot-merge job): this writes the release's CHANGELOG section from the Dependabot
+// dependency-release-build job): this writes the release's CHANGELOG section from the Dependabot
 // commits since the last version tag, whose messages name each package and its versions, and
 // prints the same lines for the GitHub release. It reads the history rather than a push, so
 // updates merged together, or whose own run a newer push replaced, are all named. The section goes

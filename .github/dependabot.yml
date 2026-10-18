@@ -1,10 +1,11 @@
 # Keeps the pins fresh: every action is pinned to a commit, every npm package by the lockfile and
 # the portal image's bases (docker/Dockerfile) by digest, and nothing else proposes updates.
-# Monthly, so the rebuild of www/ that a dependency update needs (ci.yml, www-for-dependabot)
-# happens once a month, and grouped, so the packages that must move together arrive as one pull
-# request: the Mantine packages share one version, and the ESLint packages one major line. The IRIS
-# base image is an ARG default in docker/iris/Dockerfile, which Dependabot does not follow: that pin
-# moves by hand with an IRIS release, after the verify-iris job has checked the new build.
+# Monthly, so the patch release that a merged dependency update makes (ci.yml, the jobs
+# dependency-release-build and www-after-dependabot-merge: www/ rebuilt, version bumped, tagged and
+# released) happens once a month, and grouped, so the packages that must move together arrive as one
+# pull request: the Mantine packages share one version, and the ESLint packages one major line. The
+# IRIS base image is an ARG default in docker/iris/Dockerfile, which Dependabot does not follow:
+# that pin moves by hand with an IRIS release, after the verify-iris job has checked the new build.
 version: 2
 updates:
   - package-ecosystem: github-actions
