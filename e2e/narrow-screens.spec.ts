@@ -27,6 +27,8 @@ const SCREENS = [
   '/web-sessions',
   '/license',
   '/sql',
+  '/health/fhir',
+  '/health/fhir/CLINICAL/1',
   '/interop/productions',
   '/interop/productions/INTEROP/HL7.Production',
   '/security',

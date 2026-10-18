@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- **FHIR servers** (IRIS for Health and Health Connect), in a new Health group: every FHIR-enabled namespace and its
+  servers with their FHIR version, storage, state and resources stored; a server's configuration, resources per
+  type and re-index progress, the resource types and interactions its CapabilityStatement declares, and its jobs;
+  the FHIR packages loaded. A server can be disabled and enabled (read back from IRIS), and reset, decommissioned or
+  deleted after its URL is typed, each as a job followed to its end. A server whose CapabilityStatement answers
+  without credentials is called out, as is debug mode. Through InterSystems' FHIR Server Management API
+  (`/csp/fhir-management/api`), with the session's own sign-in; on IRIS, the screen says the API is not there.
+
 ## 1.5.0 - SQL as yourself: queries, the catalogue, plans and the statements (18 October 2026)
 
 - **SQL.** A new screen in Operations runs SQL in any namespace as the signed-in account, so IRIS applies that

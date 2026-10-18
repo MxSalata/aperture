@@ -40,6 +40,8 @@ const SCREENS: [path: string, heading: string][] = [
   ['/devices', 'Devices'],
   ['/rest-services', 'REST services'],
   ['/sql', 'SQL'],
+  ['/health/fhir', 'FHIR servers'],
+  ['/health/fhir/CLINICAL/1', 'Clinical R4'],
   ['/interop/productions', 'Productions'],
   ['/interop/productions/INTEROP/HL7.Production', 'HL7.Production'],
   ['/activity', 'Activity'],

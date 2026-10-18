@@ -32,6 +32,12 @@ const COLORS: Record<string, string> = {
   'network stopped': 'orange',
   retry: 'orange',
   inactive: 'yellow',
+  // FHIR servers and their jobs
+  decommissioned: 'gray',
+  reindexing: 'yellow',
+  complete: 'teal',
+  pending: 'gray',
+  internal_error: 'red',
   completed: 'teal',
   normal: 'teal',
   warning: 'yellow',

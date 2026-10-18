@@ -51,6 +51,12 @@ Live list, detail with variables and roles, suspend/resume/terminate, broadcast.
 
 Lock removal with transaction check, devices with the telnet and default-device settings, journal files/records/settings/switching, task schedules + history + task manager (state re-read after every change), session ending, license key/usage/servers.
 
+## Health: FHIR servers
+
+IRIS for Health's FHIR servers, namespace by namespace: version, storage, state and resources; a server's configuration, resources per type, CapabilityStatement and jobs; the FHIR packages. Enable and disable (read back), reset, decommission and delete (typed URL, a job followed to its end); open servers and debug mode called out.
+
+_Notable:_ InterSystems' FHIR Server Management API with the session's own token; `src/api/fhir.ts`, `src/features/fhir/`.
+
 ## SQL
 
 Run SQL in any namespace as yourself: parameters, a row limit, results with each column's SQL type, `EXPLAIN`; the catalogue (schemas, tables, columns, first 100 rows); the statements running now and the statement index. A change is named, confirmed and recorded first.

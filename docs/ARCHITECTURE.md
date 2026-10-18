@@ -423,6 +423,25 @@ API's query action, `POST /api/atelier/v8/{ns}/action/query?positional=1&max=N` 
   with IRIS's SQLCODEs for what it cannot do. An SQL engine compiled to JavaScript at run time was tried: it needs
   `unsafe-eval`, which the portal's Content-Security-Policy refuses, and the demo runs inside the real portal.
 
+### 2.7h FHIR servers (/csp/fhir-management/api)
+
+IRIS for Health and Health Connect manage their FHIR servers through InterSystems' FHIR Server Management API,
+documented as Swagger 2.0 and served by `/api/mgmnt` from every Foundation namespace too. `api/fhir.ts` reads it with
+the session's own token (the same `%ISCMgtPortal` group as `/api/admin`; `api/sessionFetch.ts`); on IRIS it answers
+404 and the screens say the instance is not IRIS for Health. Recorded on IRIS for Health 2026.2
+(`docs/verification/2026-10-18-irishealth-2026.2/`):
+
+- **Reads:** `GET /info` (namespaces and the instance's system mode), `GET /namespaces?endpoints=true&metrics=rsrc-count`
+  (the list), `GET /endpoints/{id}?namespace=&metrics=all&jobs=true` (one server, its resources per type, its
+  jobs), `GET /packages?namespace=`. An endpoint's `serviceId` is a number in the lists and a string read alone.
+- **Changes:** `PUT /endpoints/{id}` merges, so `updateEndpoint` sends only what changes (`{ serviceId, enabled }`),
+  and the screen reads the server again before it says what IRIS holds. `DELETE /endpoints/{id}?action=reset|
+  decommission|delete` answers with a job (`job_key`), which `waitForJob` follows through `GET /jobs/{key}` until it
+  is no longer pending or running; the screen asks for the server's URL first. IRIS keeps jobs only for a while.
+- **What a server serves** is its own CapabilityStatement (`GET <url>/metadata`), asked for without credentials: the
+  server's FHIR API does not take the portal's token (401), a new server answers anyone (so the screen calls it
+  open), and a disabled one answers 503 with an OperationOutcome.
+
 ### 2.8 Spec quirks
 
 `lib/quirks.ts` lists known differences between the specification and running instances with their

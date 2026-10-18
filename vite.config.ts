@@ -81,6 +81,19 @@ export default defineConfig(({ mode }) => {
             });
           },
         },
+        // FHIR Server Management API (the FHIR screens; the session's own token) and the FHIR
+        // endpoints themselves, whose CapabilityStatements the screens read without credentials.
+        '/csp/fhir-management/api': { target: irisUrl, changeOrigin: true, secure: false },
+        '/csp/healthshare': {
+          target: irisUrl,
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy) => {
+            proxy.on('proxyRes', (proxyRes) => {
+              delete proxyRes.headers['www-authenticate'];
+            });
+          },
+        },
         // The Atelier API (the SQL screen): a password only, and its 401 names Basic.
         '/api/atelier': {
           target: irisUrl,

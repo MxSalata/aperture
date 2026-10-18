@@ -30,6 +30,7 @@ import {
   IconWorld,
   IconPlug,
   IconSql,
+  IconStethoscope,
   IconTopologyStar3,
   type Icon,
 } from '@tabler/icons-react';
@@ -340,6 +341,22 @@ export const NAV: NavSection[] = [
           'event log',
           'hl7',
         ],
+      },
+    ],
+  },
+  {
+    label: 'Health',
+    items: [
+      {
+        label: 'FHIR servers',
+        to: '/health/fhir',
+        icon: IconStethoscope,
+        color: 'red',
+        // IRIS for Health and Health Connect only; elsewhere the screen says so.
+        privileges: [],
+        description:
+          'FHIR servers of IRIS for Health: what they store and serve, enable, disable, reset; FHIR packages',
+        keywords: ['fhir', 'healthcare', 'r4', 'endpoint', 'capability', 'packages', 'healthshare'],
       },
     ],
   },

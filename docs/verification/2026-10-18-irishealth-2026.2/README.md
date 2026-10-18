@@ -30,4 +30,10 @@ What the screens rely on, as recorded here and while building them:
   `CREATE TABLE`, `INSERT`, `UPDATE` and `DROP TABLE` answer `result: []` with no row count;
   `INFORMATION_SCHEMA.CURRENT_STATEMENTS` has no statement text, `STATEMENTS` has the statistics.
   `e2e/live/sql.spec.ts` checks the screen, and its @mutate test creates, fills, reads and drops a table in APERTURELAB.
+- **FHIR servers**: the test server "Aperture lab R4" (`/csp/healthshare/aperturelab/fhir/r4`) was made with
+  `POST /csp/fhir-management/api/endpoints?namespace=APERTURELAB` (303 to its job, complete in 38 s; enabling
+  interoperability in a namespace of IRIS for Health makes it a Foundation namespace, FHIR-enabled). A `PUT` with
+  `{ serviceId, enabled }` alone disables or enables it; disabled, its `/metadata` answers 503; enabled, it answers
+  without credentials and refuses the portal's token (401). `e2e/live/fhir.spec.ts` reads the screens, and its
+  @mutate test disables and enables the server.
 - **Jobs**: `{}` throughout, even while a host was working; the screens do not show them.

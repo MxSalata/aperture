@@ -93,6 +93,21 @@ server {
     proxy_hide_header WWW-Authenticate;
   }
 
+  # FHIR Server Management API (the FHIR screens), and FHIR endpoints, whose CapabilityStatements
+  # the screens read.
+  location /csp/fhir-management/api/ {
+    proxy_pass ${IRIS_UPSTREAM}/csp/fhir-management/api/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_hide_header WWW-Authenticate;
+  }
+  location /csp/healthshare/ {
+    proxy_pass ${IRIS_UPSTREAM}/csp/healthshare/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_hide_header WWW-Authenticate;
+  }
+
   # The Atelier API (the SQL screen). It takes a password; its 401 names Basic. A long query may
   # take a while.
   location /api/atelier/ {
