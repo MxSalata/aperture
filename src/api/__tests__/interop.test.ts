@@ -15,12 +15,17 @@ import {
   hostStatus,
   messageStatus,
   productionState,
+  setProductionState,
   utcInstant,
   type EventLogEntry,
   type ProductionItem,
 } from '../interop';
 import { resetClients } from '../client';
 import { resetDb } from '@/mocks/db';
+import { resetInteropMock } from '@/mocks/handlers/interop';
+import { useActivity } from '@/stores/activity';
+import { useReadOnly } from '@/stores/readOnly';
+import { NotSentError } from '@/lib/errors';
 import { useSession } from '@/stores/session';
 import { ApiError } from '@/lib/errors';
 
@@ -114,6 +119,9 @@ describe('the demo instance', () => {
   beforeEach(() => {
     resetDb();
     resetClients();
+    resetInteropMock();
+    useReadOnly.getState().setReadOnly(false);
+    useActivity.getState().clear();
   });
 
   it('lists the namespaces and productions with the session token, as IRIS does', async () => {
@@ -169,5 +177,45 @@ describe('the demo instance', () => {
     await signIn('operator', 'basic');
     expect(useSession.getState().mode).toBe('basic');
     expect(await fetchProductions('CLINICAL')).toEqual(['FHIR.Production']);
+  });
+
+  it('stops and starts a host and a production, and records each change', async () => {
+    await signIn('_SYSTEM');
+    const host = (await fetchProduction('INTEROP', 'HL7.Production')).Items.find(
+      (i) => i.name === 'HL7.Out.PAS.TCP',
+    )!;
+    expect(await setProductionState('INTEROP', 'HL7.Production', 'stop', host.itemId)).toEqual({
+      Success: 1,
+    });
+    const stopped = (await fetchProduction('INTEROP', 'HL7.Production')).Items.find(
+      (i) => i.itemId === host.itemId,
+    )!;
+    expect(hostStatus(stopped)).toBe('Stopped');
+    await setProductionState('INTEROP', 'HL7.Production', 'start', host.itemId);
+    expect(
+      hostStatus(
+        (await fetchProduction('INTEROP', 'HL7.Production')).Items.find((i) => i.itemId === host.itemId)!,
+      ),
+    ).toBe('OK');
+    await setProductionState('INTEROP', 'HL7.Production', 'stop');
+    expect(await fetchProductionStatus('INTEROP')).toEqual({ State: 2, ProdRunning: '' });
+    const recorded = useActivity.getState().entries;
+    expect(recorded).toHaveLength(3);
+    expect(recorded.map((e) => e.query)).toContain('state=stop');
+    expect(recorded.every((e) => e.path.startsWith('/api/interop-editors/v7/INTEROP/'))).toBe(true);
+  });
+
+  it('refuses a change in a read-only tab before sending it, and refuses the operator', async () => {
+    await signIn('_SYSTEM');
+    useReadOnly.getState().setReadOnly(true);
+    await expect(setProductionState('INTEROP', 'HL7.Production', 'stop')).rejects.toBeInstanceOf(
+      NotSentError,
+    );
+    expect(await fetchProductionStatus('INTEROP')).toEqual({ State: 1, ProdRunning: 'HL7.Production' });
+    useReadOnly.getState().setReadOnly(false);
+    await signIn('operator');
+    await expect(setProductionState('INTEROP', 'HL7.Production', 'stop')).rejects.toMatchObject({
+      status: 403,
+    });
   });
 });

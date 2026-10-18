@@ -37,6 +37,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Timestamp } from '@/components/Timestamp';
 import { parseIrisDate } from '@/lib/format';
 import { HostCounts } from './ProductionsPage';
+import { HostStateButton, ProductionStateButton } from './actions';
 
 type HostRow = ProductionItem & { errors?: HostErrors };
 
@@ -218,12 +219,14 @@ function HostDrawer({
   production,
   item,
   connections,
+  running,
   onClose,
 }: {
   ns: string;
   production: string;
   item: ProductionItem | null;
   connections: ItemConnections[] | undefined;
+  running: boolean;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<string | null>('log');
@@ -259,6 +262,17 @@ function HostDrawer({
     >
       {item ? (
         <Stack gap="sm">
+          {running && item.enabled ? (
+            <Group>
+              <HostStateButton
+                ns={ns}
+                production={production}
+                id={item.itemId}
+                name={item.name}
+                stopped={hostStatus(item) === 'Stopped'}
+              />
+            </Group>
+          ) : null}
           <KeyValueList
             items={[
               { label: 'Type', value: hostType(item.type) },
@@ -453,14 +467,19 @@ export default function ProductionPage() {
           </>
         }
         actions={
-          <RefreshControl
-            screen="production"
-            onRefresh={() => {
-              void definition.refetch();
-              void connections.refetch();
-            }}
-            loading={definition.isFetching}
-          />
+          <>
+            {d ? (
+              <ProductionStateButton ns={namespace} production={production} running={state === 'Running'} />
+            ) : null}
+            <RefreshControl
+              screen="production"
+              onRefresh={() => {
+                void definition.refetch();
+                void connections.refetch();
+              }}
+              loading={definition.isFetching}
+            />
+          </>
         }
       />
       {definition.error ? <ErrorAlert error={definition.error} onRetry={() => definition.refetch()} /> : null}
@@ -507,8 +526,9 @@ export default function ProductionPage() {
       <HostDrawer
         ns={namespace}
         production={production}
-        item={open}
+        item={open ? (items.find((i) => i.itemId === open.itemId) ?? open) : null}
         connections={connections.data}
+        running={state === 'Running'}
         onClose={() => setOpen(null)}
       />
     </>

@@ -22,6 +22,8 @@ import type {
 type Host = Omit<ProductionItem, 'itemId' | 'enabled' | 'isMissingClass' | 'hasDups'> & {
   enabled?: number;
   error?: string;
+  /** Stopped by hand while its production runs (state=stop with its hostID). */
+  stopped?: boolean;
 };
 
 interface MockProduction {
@@ -156,7 +158,14 @@ function itemsOf(p: MockProduction): ProductionItem[] {
     adapterClassName: '',
     ipaddress: h.ipaddress ?? '',
     poolsize: h.poolsize,
-    status: p.running ? (h.enabled === 0 ? 'disabled' : h.status) : 'stopped',
+    status:
+      !p.running || h.stopped
+        ? h.enabled === 0
+          ? 'disabled'
+          : 'stopped'
+        : h.enabled === 0
+          ? 'disabled'
+          : h.status,
     hasDups: 0,
   }));
 }
@@ -311,7 +320,48 @@ function readable(resolver: (ctx: Ctx) => Response | Promise<Response>) {
 
 const V = '*/api/interop-editors/v7';
 
+const INITIAL = PRODUCTIONS.map((p) => p.running);
+
+/** Back to the seeded states (tests). */
+export function resetInteropMock() {
+  PRODUCTIONS.forEach((p, i) => {
+    p.running = INITIAL[i];
+    for (const h of p.hosts) h.stopped = false;
+  });
+}
+
 export const interopHandlers = [
+  // Start or stop a production, or one host (hostID, the item id). As on IRIS, the answer is
+  // {"Success":1} whatever the state says: anything but start stops a host, and a production only
+  // changes for start or stop.
+  http.post(`${V}/:ns/productions/production/state/:production`, async ({ request, params }) => {
+    const account = authenticate(request);
+    if (!account) return unauthorized();
+    const url = new URL(request.url);
+    const state = url.searchParams.get('state');
+    const hostId = url.searchParams.get('hostID');
+    if (!state)
+      return HttpResponse.json(
+        {
+          errors: [{ code: 8727, error: 'ERROR #8727: Parameter required: state.' }],
+          summary: 'ERROR #8727: Parameter required: state.',
+        },
+        { status: 400 },
+      );
+    const allowed = privilegesOf(account).production;
+    if (!(hostId ? allowed?.runItem : allowed?.run)) return forbidden();
+    const p = find(String(params.ns), decodeURIComponent(String(params.production)));
+    if (!p) return notFound('Cannot open production');
+    if (hostId) {
+      const host = p.hosts[Number(hostId) - 1];
+      if (host && p.running) host.stopped = state !== 'start';
+    } else if (state === 'start' || state === 'stop') {
+      for (const q of PRODUCTIONS) if (q.namespace === p.namespace && state === 'start') q.running = false;
+      p.running = state === 'start';
+      for (const h of p.hosts) h.stopped = false;
+    }
+    return HttpResponse.json({ Success: 1 });
+  }),
   http.get('*/api/interop-editors/info', ({ request }) => {
     const account = authenticate(request);
     if (!account) return unauthorized();

@@ -210,6 +210,24 @@ export const fetchHostSettings = (ns: string, production: string, itemId: string
     { missing: MISSING },
   ).then((r) => r?.children ?? []);
 
+/**
+ * Start or stop a production, or one of its hosts (`hostId`, the item id). The route answers
+ * `{"Success":1}` to any value of `state` (on 2026.2 `restart` stopped a host), so only these two are
+ * ever sent, and the caller reads the state back: the answer itself proves nothing.
+ */
+export const setProductionState = (
+  ns: string,
+  production: string,
+  state: 'start' | 'stop',
+  hostId?: string,
+) =>
+  sessionFetch<{ Success?: number }>(
+    `${V}/${enc(ns)}/productions/production/state/${enc(production)}?state=${state}${
+      hostId ? `&hostID=${enc(hostId)}` : ''
+    }`,
+    { method: 'POST', missing: MISSING },
+  );
+
 export const PRODUCTION_STATES: Record<number, string> = {
   1: 'Running',
   2: 'Stopped',

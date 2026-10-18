@@ -372,6 +372,11 @@ they mean, were recorded on IRIS for Health 2026.2 (`docs/verification/2026-10-1
 - **Host routes take the item id** for settings (a name answers 404); log, messages and queue take the name.
 - **Clocks.** Event log times and a queue's `TimeCreated` are the instance's wall clock; message `Date`s are UTC
   without a designator, so `utcInstant` adds one and `Timestamp` shows them on the instance's clock.
+- **Start and stop** (`POST {ns}/productions/production/state/{production}?state=start|stop`, `&hostID=` for one
+  host, by item id). The route answers `{"Success":1}` to any value of `state` (`restart` stopped a host on 2026.2),
+  so `setProductionState` sends only these two, and `features/interop/actions.tsx` reads the state back for up to
+  20 s and reports what IRIS says, or that it did not change. `sessionFetch` refuses the call in a read-only tab and
+  records it in Activity; the buttons follow `privileges.production.run` and `runItem`.
 - **Language.** Names and messages follow the request's `Accept-Language` (none or `*` gets Arabic, the first
   language IRIS has): the screens read raw fields, never the `Localized*` ones.
 

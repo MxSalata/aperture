@@ -58,3 +58,19 @@ test('the productions of the instance, one production, and a failing host', asyn
   await drawer.getByRole('tab', { name: 'Connections' }).click();
   await expect(drawer.getByText('Hears from')).toBeVisible();
 });
+
+test('a host stopped and started again, read back from IRIS @mutate', async ({ page }) => {
+  const host = process.env.LIVE_STOP_HOST ?? 'Lab.Slow';
+  await signIn(page, admin!);
+  await page.goto(`/interop/productions/${encodeURIComponent(NS)}/${encodeURIComponent(PRODUCTION)}`);
+  await page.getByRole('button', { name: `Open ${host}` }).click();
+  const drawer = page.getByRole('dialog');
+  await drawer.getByRole('button', { name: 'Stop host' }).click();
+  await page.getByRole('dialog', { name: 'Stop host' }).getByRole('button', { name: 'Stop' }).click();
+  await expect(page.getByText(`${host}: IRIS now reports Stopped.`)).toBeVisible({ timeout: 30_000 });
+  await drawer.getByRole('button', { name: 'Start host' }).click();
+  await page.getByRole('dialog', { name: 'Start host' }).getByRole('button', { name: 'Start' }).click();
+  await expect(page.getByText(new RegExp(`${host}: IRIS now reports (OK|Error)\\.`))).toBeVisible({
+    timeout: 30_000,
+  });
+});

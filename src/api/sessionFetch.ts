@@ -1,6 +1,9 @@
 import { useSession } from '@/stores/session';
 import { useHealth } from '@/stores/health';
-import { ApiError, normalizeErrors, textFromBody } from '@/lib/errors';
+import { useActivity } from '@/stores/activity';
+import { useReadOnly } from '@/stores/readOnly';
+import { ApiError, NotSentError, normalizeErrors, textFromBody } from '@/lib/errors';
+import { READ_ONLY_REFUSAL } from './readOnly';
 
 /**
  * A call to another web application of the instance that takes this session's own credentials.
@@ -14,12 +17,18 @@ import { ApiError, normalizeErrors, textFromBody } from '@/lib/errors';
  * and once after a 401, unless a refresh finished while the request was out, in which case it is
  * simply resent with the newer token. A second 401 is that application's refusal, not the end of the
  * session: it is reported and the session goes on.
+ *
+ * A write (anything but GET, unless `read` says the POST only reads) is refused in a read-only tab
+ * before it is sent, and recorded in the Activity screen with the server's answer, as the SysAdmin
+ * client does for its own.
  */
 export interface SessionFetchInit {
   method?: string;
   body?: unknown;
   /** What to say when the application itself is missing (404 without an answer of its own). */
   missing?: string;
+  /** A POST that changes nothing (a search): allowed in a read-only tab, not recorded as a change. */
+  read?: boolean;
 }
 
 function headersFor(auth: string | null, hasBody: boolean): Record<string, string> {
@@ -31,6 +40,9 @@ function headersFor(auth: string | null, hasBody: boolean): Record<string, strin
 
 export async function sessionFetch<T>(path: string, init: SessionFetchInit = {}): Promise<T> {
   const method = init.method ?? 'GET';
+  const write = method !== 'GET' && method !== 'HEAD' && !init.read;
+  if (write && useReadOnly.getState().readOnly) throw new NotSentError(READ_ONLY_REFUSAL, path.split('?')[0]);
+  const startedAt = Date.now();
   const session = useSession.getState();
   if (
     session.mode === 'jwt' &&
@@ -70,9 +82,23 @@ export async function sessionFetch<T>(path: string, init: SessionFetchInit = {})
   } catch {
     json = undefined;
   }
+  const n = json === undefined ? { errors: [], summary: '' } : normalizeErrors(json);
+  if (write) {
+    const [p, query = ''] = path.split('?');
+    useActivity.getState().record({
+      at: startedAt,
+      method,
+      path: p,
+      query,
+      status: res.status,
+      ok: res.ok,
+      summary: n.summary || n.errors[0] || '',
+      durationMs: Date.now() - startedAt,
+      jobId: null,
+    });
+  }
   if (res.ok) return json as T;
 
-  const n = json === undefined ? { errors: [], summary: '' } : normalizeErrors(json);
   const fromBody = n.summary || n.errors[0] || (json === undefined && text ? textFromBody(text) : '');
   throw new ApiError({
     status: res.status,

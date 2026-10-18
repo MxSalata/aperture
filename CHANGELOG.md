@@ -10,6 +10,10 @@
   are shown on the instance's clock like everything else. Checked in a browser against IRIS for Health 2026.2
   (`e2e/live/productions.spec.ts`, with the test production of `scripts/live/lab.mjs`); the demo has the two
   productions its dashboard already charts.
+- **Start and stop a production or one of its hosts.** From the production's header and a host's drawer, each
+  confirmed (stopping a production on a LIVE instance asks for its name), refused in a read-only tab and recorded in
+  Activity. IRIS answers success to any request on that route, so Aperture reads the state back and says what IRIS
+  reports now, or that the change did not happen. The buttons follow the privileges IRIS reports for the account.
 - **nginx passes the client's address to every IRIS route.** `/api/monitor/`, `/api/aperture/` and `/api/mgmnt/`
   now set `X-Forwarded-For` and `X-Forwarded-Proto` as `/api/admin/` already did.
 - **source-map-js 1.2.2** (a build-time dependency) closes GHSA-68fv-2mgg-jv7q; `npm audit` reports nothing.

@@ -222,30 +222,6 @@ export const NAV: NavSection[] = [
     ],
   },
   {
-    label: 'Interoperability',
-    items: [
-      {
-        label: 'Productions',
-        to: '/interop/productions',
-        icon: IconTopologyStar3,
-        color: 'violet',
-        // IRIS reports interoperability privileges through /api/interop-editors itself, not as %Admin_*.
-        privileges: [],
-        description: 'Productions in every namespace, their hosts, event log, messages and queues',
-        keywords: [
-          'interoperability',
-          'ensemble',
-          'hosts',
-          'business service',
-          'business operation',
-          'queue',
-          'event log',
-          'hl7',
-        ],
-      },
-    ],
-  },
-  {
     label: 'Security',
     items: [
       {
@@ -328,6 +304,30 @@ export const NAV: NavSection[] = [
         color: 'pink',
         privileges: ['%Admin_Secure:U'],
         description: 'Table, view and admin privileges per user or role',
+      },
+    ],
+  },
+  {
+    label: 'Interoperability',
+    items: [
+      {
+        label: 'Productions',
+        to: '/interop/productions',
+        icon: IconTopologyStar3,
+        color: 'violet',
+        // IRIS reports interoperability privileges through /api/interop-editors itself, not as %Admin_*.
+        privileges: [],
+        description: 'Productions in every namespace, their hosts, event log, messages and queues',
+        keywords: [
+          'interoperability',
+          'ensemble',
+          'hosts',
+          'business service',
+          'business operation',
+          'queue',
+          'event log',
+          'hl7',
+        ],
       },
     ],
   },
