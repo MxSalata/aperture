@@ -1,7 +1,7 @@
 # Architecture
 
 Aperture is a front-end: everything it shows or changes goes through the InterSystems IRIS
-**SysAdmin REST API v2** (`/api/admin`), with two native services beside it (`/api/monitor` for host
+**SysAdmin REST API v2** (`/api/admin`), with three native services beside it (`/api/interop-editors` for productions, `/api/monitor` for host
 metrics, `/api/mgmnt` for REST routes) and one small read-only REST class of its own on the instance
 for the log files the API has no route for (§2.7b). This document explains how the pieces fit, in
 enough detail to extend the portal or reuse the patterns.
@@ -349,6 +349,31 @@ password (`stores/mgmntAuth.ts`); each of its findings links to the entry's simi
 screen filters by severity and area, searches, runs again, and exports the report as Markdown or
 JSON; the dashboard's card shows the counts and the top three findings. Everything lives in the
 screen's lazily loaded chunk; the demo seeds a few findings without touching the databases.
+
+### 2.7f Productions (/api/interop-editors)
+
+The SysAdmin API has one interoperability operation (`POST /v2/namespace/enable-interop`). The productions
+screens (`features/interop`) read `/api/interop-editors`, the API of IRIS's own Interoperability UI, which ships
+with IRIS outside the SysAdmin spec. It is not documented: its dispatch classes are marked internal and
+`/api/mgmnt` cannot describe it, so `api/interop.ts` calls the routes IRIS's own UI calls, at the version that UI
+pins (v7 on 2026.2; `GET /info` reports `apiVersion`, and an older one is said on screen). The shapes, and what
+they mean, were recorded on IRIS for Health 2026.2 (`docs/verification/2026-10-18-irishealth-2026.2/`).
+
+- **The session's own token.** IRIS accepts the JWT of `/api/admin/login` on the JWT-enabled applications of the
+  same by-ID group (`%ISCMgtPortal`), this one among them. `api/sessionFetch.ts` sends it (or a Basic session's
+  credentials) with the SysAdmin client's refresh rules: shortly before expiry, and once after a 401 unless a
+  refresh finished meanwhile; a second 401 is reported as that application's refusal and the session goes on.
+- **IRIS's own privilege answer.** `GET /info` reports the namespaces the account may use and what it may do there
+  (`production.read`, `run`, `readEventLog`, ...); interoperability rights are `%Ens_*` resources, not `%Admin_*`,
+  so the menu entry has no `%Admin_*` badge and the screens say what IRIS reported.
+- **Errors come from the event log.** A host's `status` is the outcome of its last message (`ok`, `error`, `ok`
+  again), so it hides a host that fails now and then. The production screen reads the event log of each host (the
+  first 60) and counts its errors of the 24 hours before the reading (`hostErrors`).
+- **Host routes take the item id** for settings (a name answers 404); log, messages and queue take the name.
+- **Clocks.** Event log times and a queue's `TimeCreated` are the instance's wall clock; message `Date`s are UTC
+  without a designator, so `utcInstant` adds one and `Timestamp` shows them on the instance's clock.
+- **Language.** Names and messages follow the request's `Accept-Language` (none or `*` gets Arabic, the first
+  language IRIS has): the screens read raw fields, never the `Localized*` ones.
 
 ### 2.8 Spec quirks
 

@@ -29,6 +29,7 @@ import {
   IconWallet,
   IconWorld,
   IconPlug,
+  IconTopologyStar3,
   type Icon,
 } from '@tabler/icons-react';
 
@@ -217,6 +218,30 @@ export const NAV: NavSection[] = [
         privileges: [],
         description: 'CPU, memory, disk and alerts from /api/monitor',
         keywords: ['metrics', 'prometheus', 'cpu', 'memory', 'disk', 'alerts'],
+      },
+    ],
+  },
+  {
+    label: 'Interoperability',
+    items: [
+      {
+        label: 'Productions',
+        to: '/interop/productions',
+        icon: IconTopologyStar3,
+        color: 'violet',
+        // IRIS reports interoperability privileges through /api/interop-editors itself, not as %Admin_*.
+        privileges: [],
+        description: 'Productions in every namespace, their hosts, event log, messages and queues',
+        keywords: [
+          'interoperability',
+          'ensemble',
+          'hosts',
+          'business service',
+          'business operation',
+          'queue',
+          'event log',
+          'hl7',
+        ],
       },
     ],
   },

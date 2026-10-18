@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Productions.** A new Interoperability group: every production of every namespace the account may use for
+  interoperability, its state and its hosts by status; a production's hosts with their errors of the last 24 hours
+  and the newest one, read from each host's event log (a host's status only tells how its last message went); and a
+  host's event log, messages, queue, connections and settings in a drawer. Read through `/api/interop-editors`,
+  the API of IRIS's own Interoperability UI, with the session's own sign-in. Message dates, which IRIS sends in UTC,
+  are shown on the instance's clock like everything else. Checked in a browser against IRIS for Health 2026.2
+  (`e2e/live/productions.spec.ts`, with the test production of `scripts/live/lab.mjs`); the demo has the two
+  productions its dashboard already charts.
 - **nginx passes the client's address to every IRIS route.** `/api/monitor/`, `/api/aperture/` and `/api/mgmnt/`
   now set `X-Forwarded-For` and `X-Forwarded-Proto` as `/api/admin/` already did.
 - **source-map-js 1.2.2** (a build-time dependency) closes GHSA-68fv-2mgg-jv7q; `npm audit` reports nothing.

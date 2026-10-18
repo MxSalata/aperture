@@ -51,6 +51,12 @@ Live list, detail with variables and roles, suspend/resume/terminate, broadcast.
 
 Lock removal with transaction check, devices with the telnet and default-device settings, journal files/records/settings/switching, task schedules + history + task manager (state re-read after every change), session ending, license key/usage/servers.
 
+## Interoperability: Productions
+
+Every production in every namespace the account may use for interoperability, with its state and hosts by status; a production's hosts with their errors of the last 24 hours and the newest error, from each host's event log; a host's event log, messages, queue, connections and settings in a drawer.
+
+_Notable:_ `/api/interop-editors` (the API of IRIS's own Interoperability UI) with the session's own token; `src/api/interop.ts`, `src/features/interop/`.
+
 ## Logs
 
 A hub over every log of the instance, and a Messages log screen: `messages.log`, `alerts.log`, `SystemMonitor.log` and their rotations read in bounded windows through the package's `/api/aperture` reader, newest first, older on request, severity filter, the raw line of every entry; "Similar" on any entry lists the entries worded like it across `messages.log` and its rotations, with how often and when, through IRIS Vector Search (an HNSW index over hashed words, matched by wording, not by meaning).

@@ -26,6 +26,12 @@ const COLORS: Record<string, string> = {
   queued: 'gray',
   scheduled: 'blue',
   'not running': 'red',
+  // interoperability (production states, host statuses)
+  ok: 'teal',
+  stopped: 'gray',
+  'network stopped': 'orange',
+  retry: 'orange',
+  inactive: 'yellow',
   completed: 'teal',
   normal: 'teal',
   warning: 'yellow',

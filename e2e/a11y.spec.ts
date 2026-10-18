@@ -39,6 +39,8 @@ const SCREENS: [path: string, heading: string][] = [
   ['/security/secrets', 'Wallet & OAuth 2.0'],
   ['/devices', 'Devices'],
   ['/rest-services', 'REST services'],
+  ['/interop/productions', 'Productions'],
+  ['/interop/productions/INTEROP/HL7.Production', 'HL7.Production'],
   ['/activity', 'Activity'],
   // Detail screens with a raw JSON panel, and the Explorer and About page, which have one too.
   ['/databases/detail?dir=%2Fusr%2Firissys%2Fmgr%2Fuser%2F', '/usr/irissys/mgr/user/'],
@@ -93,6 +95,23 @@ for (const { colorScheme, contrast, palette } of MODES) {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.getByRole('button', { name: 'Open Job Center' }).click();
       await expect(page.getByRole('dialog').getByText('Job Center')).toBeVisible();
+      await expect
+        .poll(() => page.locator('.mantine-Drawer-overlay').evaluate((el) => getComputedStyle(el).opacity))
+        .toBe('1');
+      expect(await audit(page)).toEqual([]);
+    });
+
+    test('Production host drawer', async ({ page }) => {
+      await signIn(page);
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await go(page, '/interop/productions/INTEROP/HL7.Production');
+      await page.getByRole('button', { name: 'Open HL7.Out.Results.TCP' }).click();
+      await expect(
+        page
+          .getByRole('dialog')
+          .getByText(/ERROR #6059/)
+          .first(),
+      ).toBeVisible();
       await expect
         .poll(() => page.locator('.mantine-Drawer-overlay').evaluate((el) => getComputedStyle(el).opacity))
         .toBe('1');
