@@ -17,9 +17,10 @@ import { READ_ONLY_REFUSAL } from './readOnly';
  * session sends its credentials and a JWT session gives the password once (`stores/mgmntAuth.ts`,
  * shared with /api/mgmnt and /api/aperture). It serves API version 8; `?positional=1` answers one
  * entry per result set with the columns' names and SQL types, `?max=` caps the rows, and an SQL error
- * is an HTTP 200 whose `status.errors` carry the SQLCODE and IRIS's message. `%Api.Atelier` keeps a
- * CSP session, so the browser's cookie for `/api/atelier/` is sent back (one session per tab rather
- * than one per request).
+ * is an HTTP 200 whose `status.errors` carry the SQLCODE and IRIS's message. `%Api.Atelier` opens a
+ * CSP session and sets its cookie, and that cookie alone runs SQL as the account, with no password:
+ * the browser keeps no cookie from it (`credentials: 'omit'`, as for /api/mgmnt), so every request
+ * carries its own credentials and nothing outlives sign-out.
  */
 export const ATELIER_PREFIX = '/api/atelier';
 const VERSION = 'v8';
@@ -71,7 +72,7 @@ async function atelierFetch<T>(
       method: init.method ?? 'GET',
       headers,
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
-      credentials: 'same-origin',
+      credentials: 'omit',
     });
   } catch (e) {
     throw new ApiError({ status: 0, url, summary: e instanceof Error ? e.message : 'Network error' });

@@ -396,8 +396,9 @@ API's query action, `POST /api/atelier/v8/{ns}/action/query?positional=1&max=N` 
 - **A password only.** `/api/atelier` has JWT off and the resource `%Development`: a Basic session sends its
   credentials, a JWT session gives the password once (`stores/mgmntAuth.ts`, shared with `/api/mgmnt` and
   `/api/aperture`); a refused password is forgotten at once, and a 403 says `%Development:USE` is missing.
-  `%Api.Atelier` keeps a CSP session, so the browser sends its `/api/atelier/` cookie back (`credentials:
-  'same-origin'`): one session per tab, not one per request.
+  `%Api.Atelier` opens a CSP session whose cookie alone runs SQL as the account, with no password, and sign-out
+  could not end it, so the browser keeps no cookie from it (`credentials: 'omit'`, as for `/api/mgmnt`): every
+  request carries its own credentials.
 - **The answer.** With `positional=1`, one entry per result set: `columns` (`name`, SQL `type`) and `content`
   (rows as arrays). `max` is sent as the limit plus one, so the screen knows when rows were cut. An SQL error is
   an HTTP 200 whose `status.errors[0]` has `id: "SQLCode"` and `params: [SQLCODE, message]` (`SqlError`); a change

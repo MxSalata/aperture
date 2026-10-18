@@ -9,6 +9,7 @@ import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useReadOnly } from '@/stores/readOnly';
 import { useActivity } from '@/stores/activity';
 import { NotSentError } from '@/lib/errors';
+import { server } from '@/mocks/node';
 
 const signIn = (username: string, auth: 'jwt' | 'basic') =>
   useSession
@@ -85,6 +86,21 @@ describe('SQL through Atelier, on the demo instance', () => {
     await expect(
       runSql('USER', "-- don't\nDELETE FROM Sample.Person WHERE City = 'Hull'"),
     ).rejects.toBeInstanceOf(NotSentError);
+  });
+
+  it('keeps no CSP session cookie: every request carries its own credentials', async () => {
+    await signIn('_SYSTEM', 'basic');
+    const seen: RequestCredentials[] = [];
+    server.events.on('request:start', ({ request }) => {
+      if (request.url.includes('/api/atelier/')) seen.push(request.credentials);
+    });
+    try {
+      await fetchAtelierServer();
+      await runSql('USER', 'SELECT 1 AS One');
+    } finally {
+      server.events.removeAllListeners();
+    }
+    expect(seen).toEqual(['omit', 'omit']);
   });
 
   it('sends nothing for a text with no statement in it', async () => {

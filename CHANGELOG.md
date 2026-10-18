@@ -16,6 +16,9 @@
   comment (`-- don't`) no longer opens a string that swallows the `DELETE` after it, and `--` inside a string or a
   delimited name starts no comment. Such a statement was taken for a read: no confirmation, sent from a read-only
   tab, not recorded in Activity. A text of comments only is not run.
+- **No Atelier session outlives sign-out.** The browser kept the CSP session cookie `/api/atelier` sets, and that
+  cookie alone ran SQL as the account after sign-out. Aperture now keeps no cookie from it (as for `/api/mgmnt`):
+  every request carries its own credentials.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 
