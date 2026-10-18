@@ -24,6 +24,10 @@
 #   }
 #   location /iris-b/api/monitor/ { proxy_pass http://iris-b:52773/api/monitor/; proxy_hide_header WWW-Authenticate; }
 #   location /iris-b/api/mgmnt/   { proxy_pass http://iris-b:52773/api/mgmnt/;   proxy_hide_header WWW-Authenticate; }
+#   location /iris-b/api/interop-editors/ { proxy_pass http://iris-b:52773/api/interop-editors/; proxy_hide_header WWW-Authenticate; }
+#
+# Every API a screen reads needs its prefixed location: a path left out reaches the SPA fallback,
+# which answers with index.html, and the screen says the path did not reach IRIS.
 
 map $http_upgrade $connection_upgrade {
   default upgrade;
