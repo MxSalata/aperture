@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6.0 - FHIR servers of IRIS for Health (18 October 2026)
 
 - **FHIR servers** (IRIS for Health and Health Connect), in a new Health group: every FHIR-enabled namespace and its
   servers with their FHIR version, storage, state and resources stored; a server's configuration, resources per
