@@ -10,6 +10,7 @@ import { useActivity } from '@/stores/activity';
 import { useHealth } from '@/stores/health';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useAtelierAuth } from '@/stores/atelierAuth';
+import { useSqlHistory } from '@/stores/sqlHistory';
 import { logsRefusal } from '@/stores/logsRefusal';
 import { queryClient } from '@/query';
 import { forgetEndedTasks } from '@/api/endedTasks';
@@ -253,6 +254,7 @@ export function resetInstanceState(): void {
   useHealth.getState().reset();
   useMgmntAuth.getState().clear();
   useAtelierAuth.getState().clear();
+  useSqlHistory.getState().clear();
   logsRefusal.forget();
 }
 

@@ -14,6 +14,7 @@ import { useAtelierAuth } from '@/stores/atelierAuth';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useReadOnly } from '@/stores/readOnly';
 import { useSession } from '@/stores/session';
+import { useSqlHistory } from '@/stores/sqlHistory';
 import { server } from '@/mocks/node';
 
 const signIn = (username: string, auth: 'jwt' | 'basic') =>
@@ -45,6 +46,7 @@ describe('the SQL screen', () => {
     useAtelierAuth.getState().clear();
     useReadOnly.getState().setReadOnly(false);
     window.sessionStorage.clear();
+    useSqlHistory.getState().clear();
     // Floating UI asks every popover's ancestors whether they match `:modal` or `:popover-open`, and
     // jsdom's selector engine answers those through itself until the stack overflows: minutes a page.
     const matches = Element.prototype.matches;

@@ -35,6 +35,9 @@
 - **A procedure's result set is shown.** A CALL (or a SELECT that calls a stored function) that answers rows now
   shows them in the table, with their CSV export, where the screen used to say that IRIS reports nothing for a
   change.
+- **Recent statements keep no passwords and end at sign-out.** A statement that may carry a password
+  (`IDENTIFIED BY`, `PASSWORD`) is no longer kept in the tab's list of recent statements, and the list is
+  forgotten at sign-out, so the next account on the tab does not see it.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 

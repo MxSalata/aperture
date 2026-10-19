@@ -31,9 +31,9 @@ import { useAtelierAuth } from '@/stores/atelierAuth';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useReadOnly } from '@/stores/readOnly';
 import { useSession } from '@/stores/session';
+import { useSqlHistory } from '@/stores/sqlHistory';
 
 const LIMITS = ['100', '500', '1000', '5000'];
-const HISTORY_KEY = 'aperture.sql.history';
 
 type Row = Record<string, unknown>;
 
@@ -71,14 +71,6 @@ function asRows(result: SqlResult): { columns: ColumnDef<Row, unknown>[]; rows: 
     },
   }));
   return { columns, rows: result.rows.map((r) => Object.fromEntries(ids.map((id, i) => [id, r[i]]))) };
-}
-
-function readHistory(): string[] {
-  try {
-    return JSON.parse(window.sessionStorage.getItem(HISTORY_KEY) ?? '[]') as string[];
-  } catch {
-    return [];
-  }
 }
 
 /** A fixed query of the catalogue or the diagnostics, as a table. */
@@ -149,7 +141,8 @@ export default function SqlPage() {
   );
   const [values, setValues] = useState<string[]>([]);
   const [limit, setLimit] = useState('500');
-  const [history, setHistory] = useState<string[]>(readHistory);
+  const history = useSqlHistory((s) => s.statements);
+  const remember = useSqlHistory((s) => s.add);
   const [result, setResult] = useState<{
     sql: string;
     kind: ReturnType<typeof classifyStatement>;
@@ -173,13 +166,7 @@ export default function SqlPage() {
     try {
       const data = await runSql(ns, text, values.slice(0, placeholders(text)), Number(limit));
       setResult({ sql: text, kind: k, data });
-      const next = [text, ...history.filter((h) => h !== text)].slice(0, 20);
-      setHistory(next);
-      try {
-        window.sessionStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-      } catch {
-        /* the history is a convenience */
-      }
+      remember(text);
       // A change may have altered the catalogue.
       if (!k.read) void qc.invalidateQueries({ queryKey: sqlKeys.all });
     } catch (e) {
