@@ -80,9 +80,10 @@ and commit the JSON report next to this file.
 ## Productions, SQL and FHIR servers, 18 and 19 October 2026
 
 The screens of 1.4.0 to 1.6.0 call APIs outside the SysAdmin specification: `/api/interop-editors`,
-`/api/atelier` and `/csp/fhir-management/api`. Their answers on the same IRIS for Health 2026.2
-instance, with a test production (`scripts/live/lab.mjs`) and a test FHIR server, are in
-[`2026-10-18-irishealth-2026.2/`](2026-10-18-irishealth-2026.2/). The browser tests
+`/api/atelier` and `/csp/fhir-management/api`. On the same IRIS for Health 2026.2 instance, with a
+test production (`scripts/live/lab.mjs`) and a test FHIR server, the `/api/interop-editors` answers
+are recorded in [`2026-10-18-irishealth-2026.2/`](2026-10-18-irishealth-2026.2/) (`p-interop.json`),
+and that folder's README describes what the other two answered. The browser tests
 `e2e/live/productions.spec.ts`, `sql.spec.ts` and `fhir.spec.ts` read those screens on the instance
 (`npm run test:live`); with `LIVE_MUTATE=1` their @mutate tests stop and start a host, create and drop a
 table, and disable and enable the FHIR server, each read back. All passed on 19 October, and with the
