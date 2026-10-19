@@ -217,7 +217,7 @@ cd aperture
 docker compose -f docker-compose.build.yml up --build
 ```
 
-- http://localhost:8080 - Aperture behind nginx (proxies `/api/admin`, `/api/monitor`, `/api/mgmnt` and `/api/aperture` to IRIS: same origin, so no CORS and no Basic-auth pop-ups; sends a Content-Security-Policy). A second instance goes behind the same nginx under a path prefix (`/iris-b`, the pattern is documented in [`docker/nginx/default.conf.template`](docker/nginx/default.conf.template)) and gets a connection profile with that prefix as its base URL
+- http://localhost:8080 - Aperture behind nginx (proxies `/api/admin`, `/api/monitor`, `/api/mgmnt`, `/api/aperture`, `/api/atelier`, `/api/interop-editors` and `/csp/fhir-management/api` to IRIS, and of `/csp/healthshare` only what the FHIR screens read: same origin, so no CORS and no Basic-auth pop-ups; sends a Content-Security-Policy). A second instance goes behind the same nginx under a path prefix (`/iris-b`, the pattern is documented in [`docker/nginx/default.conf.template`](docker/nginx/default.conf.template)) and gets a connection profile with that prefix as its base URL
 - http://localhost:52773/aperture/index.html - Aperture served by IRIS itself (the committed `www/` build, refreshed with `npm run build:www`)
 - Sign in as `_SYSTEM` with `IRIS_PASSWORD` from `.env`, or with `SYS` when none is set.
 

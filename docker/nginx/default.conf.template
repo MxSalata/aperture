@@ -24,6 +24,8 @@
 #   }
 #   location /iris-b/api/monitor/ { proxy_pass http://iris-b:52773/api/monitor/; proxy_hide_header WWW-Authenticate; }
 #   location /iris-b/api/mgmnt/   { proxy_pass http://iris-b:52773/api/mgmnt/;   proxy_hide_header WWW-Authenticate; }
+#   location /iris-b/api/aperture/ { proxy_pass http://iris-b:52773/api/aperture/; proxy_hide_header WWW-Authenticate; }
+#   location /iris-b/api/atelier/  { proxy_pass http://iris-b:52773/api/atelier/;  proxy_read_timeout 300s; proxy_hide_header WWW-Authenticate; }
 #   location /iris-b/api/interop-editors/ { proxy_pass http://iris-b:52773/api/interop-editors/; proxy_hide_header WWW-Authenticate; }
 #   location /iris-b/csp/fhir-management/api/ { proxy_pass http://iris-b:52773/csp/fhir-management/api/; proxy_hide_header WWW-Authenticate; }
 #
