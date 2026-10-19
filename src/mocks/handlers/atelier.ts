@@ -8,7 +8,7 @@ import { runStatement, SqlCode } from '../sql';
  * calls: a password only (a token or nothing is a bodiless 401), `%Development:USE` (held by the
  * demo's %All accounts only; IRIS answers an account without it with the same 401 as a wrong
  * password, and audits a LoginFailure), the server descriptor, and the query action with `positional` and
- * `max`. An SQL error is an HTTP 200 whose `status.errors` carry the SQLCODE, as on IRIS; the
+ * `max` (a namespace that does not exist is a bodiless 404). An SQL error is an HTTP 200 whose `status.errors` carry the SQLCODE, as on IRIS; the
  * statements run in the demo's SQL engine (`mocks/sql.ts`).
  */
 function basicAccount(request: Request) {
@@ -58,15 +58,8 @@ export const atelierHandlers = [
     if (refusal) return refusal;
     const url = new URL(request.url);
     const ns = decodeURIComponent(String(params.ns));
-    if (!mockDb.namespaces.some((n) => n.Name === ns))
-      return HttpResponse.json(
-        {
-          status: { errors: [{ error: `ERROR #8754: Unable to use namespace: ${ns}.` }], summary: '' },
-          console: [],
-          result: {},
-        },
-        { status: 500 },
-      );
+    // A namespace that does not exist is a bodiless 404, as on IRIS.
+    if (!mockDb.namespaces.some((n) => n.Name === ns)) return new HttpResponse(null, { status: 404 });
     const body = (await request.json().catch(() => ({}))) as { query?: string; parameters?: unknown[] };
     const max = Number(url.searchParams.get('max')) || 1000;
     try {

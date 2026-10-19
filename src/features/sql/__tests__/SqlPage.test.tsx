@@ -137,4 +137,13 @@ describe('the SQL screen', () => {
     await waitFor(() => expect(screen.getByRole('textbox', { name: 'Namespace' })).toHaveValue('CLINICAL'));
     expect(screen.queryByText(/1 rows in/)).toBeNull();
   }, 30_000);
+
+  it('gives way to the default namespace when the link names one the instance does not list', async () => {
+    await signIn('_SYSTEM', 'basic');
+    open('/sql?ns=GONE');
+    expect(
+      await screen.findByText(/There is no namespace GONE on this instance/, {}, { timeout: 10_000 }),
+    ).toHaveTextContent('showing USER');
+    expect(screen.getByRole('textbox', { name: 'Namespace' })).toHaveValue('USER');
+  }, 30_000);
 });

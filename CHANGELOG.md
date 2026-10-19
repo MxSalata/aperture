@@ -44,6 +44,10 @@
 - **Changing the namespace starts afresh.** The last result, a run still out and the catalogue's chosen schema and
   table no longer carry over to another namespace, and a result's CSV export is named after the namespace it came
   from.
+- **A namespace that is not there says so.** IRIS answers a query in a namespace that does not exist with a
+  bodiless 404, which read as "the /api/atelier web application is not enabled"; the message now names the
+  namespace, and a link whose `?ns=` the instance does not list (a stale bookmark, a typo) opens the default
+  namespace with a note. The demo answers such a namespace as IRIS does.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 

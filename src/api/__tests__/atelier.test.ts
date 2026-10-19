@@ -63,7 +63,9 @@ describe('SQL through Atelier, on the demo instance', () => {
     const plan = await runSql('USER', 'EXPLAIN SELECT Name FROM Sample.Person');
     expect(String(plan.rows[0][0])).toContain('Read master map Sample.Person');
     // The values typed for the query itself are not sent with its EXPLAIN, which IRIS would refuse.
-    const withValue = await runSql('USER', 'EXPLAIN SELECT Name FROM Sample.Person WHERE City = ?', ['Leeds']);
+    const withValue = await runSql('USER', 'EXPLAIN SELECT Name FROM Sample.Person WHERE City = ?', [
+      'Leeds',
+    ]);
     expect(String(withValue.rows[0][0])).toContain('Sample.Person');
     expect(
       (await runSql('USER', "SELECT Name FROM Sample.Person WHERE Name %STARTSWITH 'Ada'")).rows,
@@ -121,6 +123,11 @@ describe('SQL through Atelier, on the demo instance', () => {
     expect((e as SqlError).sqlcode).toBe(-30);
     expect((e as SqlError).message).toMatch(/^SQLCODE -30: Table 'SAMPLE.NOPE' not found/);
     await expect(runSql('USER', 'SELEC 1')).rejects.toMatchObject({ sqlcode: -1 });
+    // IRIS answers a namespace that does not exist with a bodiless 404, though Atelier itself answers.
+    await expect(runSql('NOPE', 'SELECT 1')).rejects.toMatchObject({
+      status: 404,
+      message: 'There is no namespace NOPE on this instance, or this account may not use it.',
+    });
     await signIn('operator', 'basic');
     await expect(runSql('USER', 'SELECT 1')).rejects.toMatchObject({
       status: 401,

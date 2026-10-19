@@ -61,6 +61,17 @@ export class SqlError extends ApiError {
   }
 }
 
+/**
+ * What a 404 means: IRIS answers an action in a namespace that does not exist, or that the account
+ * may not use, with a bodiless 404, while the web application itself answers.
+ */
+function missing(path: string): string {
+  const ns = /^\/v\d+\/([^/]+)\//.exec(path)?.[1];
+  return ns
+    ? `There is no namespace ${decodeURIComponent(ns)} on this instance, or this account may not use it.`
+    : 'The /api/atelier web application is not enabled on this instance.';
+}
+
 async function atelierFetch<T>(
   path: string,
   init: { method?: string; body?: unknown } = {},
@@ -107,7 +118,7 @@ async function atelierFetch<T>(
         : res.status === 403
           ? 'This account may not use /api/atelier: it needs %Development:USE.'
           : res.status === 404
-            ? 'The /api/atelier web application is not enabled on this instance.'
+            ? missing(path)
             : n.summary || n.errors[0] || `HTTP ${res.status}`,
   });
 }

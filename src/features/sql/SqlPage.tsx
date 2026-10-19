@@ -127,7 +127,10 @@ export default function SqlPage() {
   const namespaces = (server.data?.namespaces ?? []).filter(
     (n) => n !== '%SYS' && !/^HSSYSLOCALTEMP$/.test(n),
   );
-  const ns = params.get('ns') ?? (namespaces.includes('USER') ? 'USER' : (namespaces[0] ?? ''));
+  // A namespace the instance does not list (a stale link, a typo) gives way to the default one.
+  const asked = params.get('ns');
+  const unknownNs = !!asked && !!server.data && !namespaces.includes(asked);
+  const ns = asked && !unknownNs ? asked : namespaces.includes('USER') ? 'USER' : (namespaces[0] ?? '');
 
   const [tab, setTab] = useState<string | null>('query');
   const [sql, setSql] = useState(
@@ -178,10 +181,11 @@ export default function SqlPage() {
 
   // What was chosen or run in one namespace says nothing about another.
   const setNs = (v: string | null) => {
-    if (!v || v === ns) return;
+    if (!v) return;
     const next = new URLSearchParams(params);
     next.set('ns', v);
     setParams(next, { replace: true });
+    if (v === ns) return;
     latest.current++;
     setRunning(false);
     setResult(null);
@@ -242,6 +246,12 @@ export default function SqlPage() {
         description="Run SQL in any namespace as yourself: IRIS applies your SQL privileges. Through the Atelier API (VS Code's), with the catalogue, query plans, and the statements running now and run before."
       />
       {server.error ? <ErrorAlert error={server.error} onRetry={() => server.refetch()} /> : null}
+      {unknownNs ? (
+        <Alert color="yellow" icon={<IconAlertTriangle size={16} />} mb="sm">
+          There is no namespace {asked} on this instance, or this account may not use it: showing{' '}
+          {ns || 'none'}.
+        </Alert>
+      ) : null}
       {server.data ? (
         <Tabs value={tab} onChange={setTab}>
           <Tabs.List>
