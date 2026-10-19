@@ -19,7 +19,7 @@ const short = (id: string) => id.split('/').pop() ?? id;
 const names = (ids: string[]) => ids.map(short).join(' and ');
 
 const auditLink = (
-  <Anchor component={Link} to="/security/audit" size="sm">
+  <Anchor component={Link} to="/security/audit" size="sm" underline="always">
     Security &gt; Audit
   </Anchor>
 );
@@ -192,24 +192,12 @@ export function SqlAuditNotice() {
         ) : null}
         <Group gap="xs">
           {state.auditing === false ? (
-            <Button
-              size="compact-sm"
-              variant="light"
-              color="orange"
-              disabled={!mayChange || busy}
-              onClick={switchOn}
-            >
+            <Button size="compact-sm" variant="default" disabled={!mayChange || busy} onClick={switchOn}>
               Switch auditing on…
             </Button>
           ) : null}
           {state.changeEvents.length ? (
-            <Button
-              size="compact-sm"
-              variant="light"
-              color="orange"
-              disabled={!mayChange || busy}
-              onClick={auditChanges}
-            >
+            <Button size="compact-sm" variant="default" disabled={!mayChange || busy} onClick={auditChanges}>
               Audit SQL changes…
             </Button>
           ) : null}
