@@ -6,12 +6,8 @@ import { api, result, useApiMutation } from '@/api/hooks';
 import { checkPrivileges } from '@/api/privileges';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { isApiError } from '@/lib/errors';
-import {
-  enableAuditing,
-  enableSqlAuditEvents,
-  sqlAuditState,
-  type AuditEventRow,
-} from '@/features/security/audit';
+import { sqlAuditState, type AuditEventRow } from '@/lib/sqlAudit';
+import { enableAuditing, enableSqlAuditEvents } from '@/features/security/audit';
 import { secKeys } from '@/features/security/keys';
 import { useReadOnly } from '@/stores/readOnly';
 import { useSession } from '@/stores/session';

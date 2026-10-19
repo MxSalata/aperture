@@ -1,7 +1,7 @@
 import { certificateStatus, EXPIRY_WARNING_DAYS } from '@/lib/certs';
 import { parseIrisDate } from '@/lib/format';
 import { serviceEnabled } from '@/features/security/keys';
-import { sqlAuditState } from '@/features/security/audit';
+import { sqlAuditState } from '@/lib/sqlAudit';
 import type { StorageLocation } from '@/features/databases/storage';
 
 /**

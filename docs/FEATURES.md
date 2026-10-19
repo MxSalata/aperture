@@ -61,7 +61,7 @@ _Notable:_ InterSystems' FHIR Server Management API with the session's own token
 
 Run SQL in any namespace as yourself: parameters, a row limit, results with each column's SQL type, `EXPLAIN`; the catalogue (schemas, tables, columns, first 100 rows); the statements running now and the statement index. A change is named, confirmed and recorded first. The screen says whether IRIS writes its statements to the audit log ("IRIS SQL audit is disabled" as IRIS ships), and an account with `%Admin_Secure:U` can switch change auditing on, and query auditing as a separate step, each confirmed, read back and recorded.
 
-_Notable:_ the Atelier API (`/api/atelier`), password only; `src/api/atelier.ts`, `src/lib/sqlStatement.ts`, `src/features/sql/`; the demo's evaluator `src/mocks/sql.ts`; the audit state from `/v2/security/audit/enabled` and `/events`, `src/features/security/audit.ts`.
+_Notable:_ the Atelier API (`/api/atelier`), password only; `src/api/atelier.ts`, `src/lib/sqlStatement.ts`, `src/features/sql/`; the demo's evaluator `src/mocks/sql.ts`; the audit state from `/v2/security/audit/enabled` and `/events`, `src/lib/sqlAudit.ts` (pure) and `src/features/security/audit.ts` (the writes).
 
 ## Interoperability: Productions
 

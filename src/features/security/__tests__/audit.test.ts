@@ -5,15 +5,8 @@ import { mockDb, resetDb } from '@/mocks/db';
 import { server } from '@/mocks/node';
 import { useActivity } from '@/stores/activity';
 import { useSession } from '@/stores/session';
-import {
-  auditEventId,
-  enableAuditing,
-  enableSqlAuditEvents,
-  readSqlAudit,
-  splitEvent,
-  sqlAuditState,
-  SQL_AUDIT,
-} from '../audit';
+import { auditEventId, sqlAuditState, SQL_AUDIT } from '@/lib/sqlAudit';
+import { enableAuditing, enableSqlAuditEvents, readSqlAudit, splitEvent } from '../audit';
 
 const signIn = () =>
   useSession.getState().login({
