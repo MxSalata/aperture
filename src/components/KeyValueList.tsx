@@ -64,11 +64,13 @@ export function KeyValueList({ items, cols = 2 }: Props) {
   return (
     <SimpleGrid cols={{ base: 1, sm: cols }} spacing="sm" verticalSpacing="sm">
       {items.map((it) => (
-        <Stack key={it.label} gap={2}>
+        // A grid item is as wide as its longest word unless told otherwise: a class name or a path
+        // with no break in it would widen the page on a phone.
+        <Stack key={it.label} gap={2} miw={0}>
           <Text size="xs" c="dimmed" fw={500} tt="uppercase" style={{ letterSpacing: 0.3 }}>
             {it.label}
           </Text>
-          <div className={it.mono ? 'mono' : undefined}>
+          <div className={it.mono ? 'mono' : undefined} style={{ overflowWrap: 'anywhere' }}>
             {typeof it.value === 'string' || typeof it.value === 'number' ? (
               <Text size="sm">{it.value}</Text>
             ) : (
