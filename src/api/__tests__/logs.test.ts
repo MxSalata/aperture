@@ -33,6 +33,33 @@ describe('a window of a log file', () => {
     expect(seen).toEqual(text.trimEnd().split('\n'));
   });
 
+  it('pages past a line longer than the window, in pieces that add up to the file', () => {
+    const text = `a 1\n${'b'.repeat(5000)}\nc 2\nd 3\n${'e'.repeat(3000)}`;
+    const windows: ReturnType<typeof windowOf>[] = [];
+    let before = 0;
+    for (let guard = 0; guard < 50; guard++) {
+      const w = windowOf(text, before, 1024);
+      if (before) expect(w.start).toBeLessThan(before);
+      expect(w.lines.length).toBeGreaterThan(0);
+      windows.unshift(w);
+      if (!w.hasMore) break;
+      before = w.start;
+    }
+    // The same windows as Aperture.Logs.WindowPython gives for this file.
+    expect(windows.map((w) => [w.start, w.end])).toEqual([
+      [0, 909],
+      [909, 1933],
+      [1933, 2957],
+      [2957, 3981],
+      [3981, 5005],
+      [5005, 5965],
+      [5965, 6989],
+      [6989, 8013],
+    ]);
+    expect(windows[4].lines).toEqual(['b'.repeat(1023)]);
+    expect(windows.flatMap((w) => w.lines).join('')).toBe(text.replace(/\n/g, ''));
+  });
+
   it('answers the tail of a file that ends without a newline', () => {
     const w = windowOf('a\nb\npartial', 0, 4096);
     expect(w.lines).toEqual(['a', 'b', 'partial']);

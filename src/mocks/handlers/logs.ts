@@ -224,11 +224,9 @@ export function windowOf(text: string, before: number, nbytes: number) {
   let start = Math.max(0, end - want);
   let slice = data.subarray(start, end);
   if (start > 0) {
+    // A line longer than the window keeps its tail as a line of its own, so paging moves on.
     const cut = slice.indexOf(10);
-    if (cut < 0) {
-      slice = new Uint8Array();
-      start = end;
-    } else {
+    if (cut >= 0 && cut < slice.length - 1) {
       start += cut + 1;
       slice = slice.subarray(cut + 1);
     }
@@ -236,7 +234,7 @@ export function windowOf(text: string, before: number, nbytes: number) {
   const lines: string[] = [];
   const offsets: number[] = [];
   let from = 0;
-  for (let i = 0; i <= slice.length; i++) {
+  for (let i = 0; slice.length && i <= slice.length; i++) {
     if (i === slice.length || slice[i] === 10) {
       if (i === slice.length && from === slice.length && slice.length > 0) break; // ended with a newline
       offsets.push(start + from);

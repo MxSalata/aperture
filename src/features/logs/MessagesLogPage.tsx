@@ -92,6 +92,7 @@ export default function MessagesLogPage() {
   });
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [readError, setReadError] = useState<unknown>(null);
+  const [stalledAt, setStalledAt] = useState<{ file: string; start: number } | null>(null);
   const [severities, setSeverities] = useState<string[]>([]);
   const [open, setOpen] = useState<LogEntry | null>(null);
   // The drawer shows the entry, or the entries worded like it (the package's wording index); a
@@ -141,6 +142,7 @@ export default function MessagesLogPage() {
   }, [entries, severities]);
 
   const oldest = windows[0];
+  const stalled = !!file && !!oldest && stalledAt?.file === file.id && stalledAt.start === oldest.start;
   const loadOlder = async () => {
     if (!file || !oldest?.hasMore) return;
     setLoadingOlder(true);
@@ -148,6 +150,12 @@ export default function MessagesLogPage() {
     const base = latest.data?.start ?? -1;
     try {
       const w = await readLogWindow(file.id, oldest.start, WINDOW_BYTES);
+      // A reader from 1.3.0 or earlier answers a line longer than the window with the same, empty
+      // window: say so rather than add it again on every click.
+      if (w.start >= oldest.start) {
+        setStalledAt({ file: file.id, start: oldest.start });
+        return;
+      }
       setOlder((cur) => ({
         file: file.id,
         base,
@@ -355,7 +363,12 @@ export default function MessagesLogPage() {
             <Group justify="space-between" wrap="wrap">
               <Text size="xs" c="dimmed">
                 {oldest ? (
-                  oldest.hasMore ? (
+                  stalled ? (
+                    <>
+                      Read from byte {formatNumber(oldest.start)}; the line before it is longer than{' '}
+                      {formatBytes(WINDOW_BYTES)}, which this version of the log reader cannot page past.
+                    </>
+                  ) : oldest.hasMore ? (
                     <>
                       Read from byte {formatNumber(oldest.start)}; {formatBytes(oldest.start)} older remain in
                       the file.
@@ -371,7 +384,7 @@ export default function MessagesLogPage() {
                 leftSection={<IconArrowUp size={14} />}
                 onClick={() => void loadOlder()}
                 loading={loadingOlder}
-                disabled={!oldest?.hasMore}
+                disabled={!oldest?.hasMore || stalled}
               >
                 Older lines
               </Button>

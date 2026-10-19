@@ -131,7 +131,8 @@ ClassMethod PathOfPython(mgr, console, id) As %String [ Language = python ]
 /// `before` (0 or past the end: the end of the file) and starts at most `nbytes` earlier, moved
 /// forward to the first whole line; `lines` are the whole lines in it and `offsets` the byte
 /// offset each one starts at (counted on the raw bytes, so a CR LF file is exact). Paging: pass
-/// `start` back as `before`. `hasMore` says whether anything precedes `start`.
+/// `start` back as `before`. `hasMore` says whether anything precedes `start`. A line longer than
+/// the window comes in pieces, one per window: only the oldest piece starts with its stamp.
 ClassMethod WindowPython(path, before, nbytes, maxbytes, defaultbytes) As %String [ Language = python ]
 {
     import json
@@ -151,14 +152,13 @@ ClassMethod WindowPython(path, before, nbytes, maxbytes, defaultbytes) As %Strin
         data = handle.read(end - start)
     if start > 0:
         # Not at the beginning of the file: the first line is a fragment, skip to the next one.
+        # Unless it is the only line: one line longer than the window keeps its tail as a line of
+        # its own, so paging moves on (the next window ends with its head) instead of stalling.
         cut = data.find(b"\n")
-        if cut < 0:
-            data = b""
-            start = end
-        else:
+        if 0 <= cut < len(data) - 1:
             start += cut + 1
             data = data[cut + 1:]
-    raw_lines = data.split(b"\n")
+    raw_lines = data.split(b"\n") if data else []
     if data.endswith(b"\n"):
         raw_lines.pop()
     offsets = []

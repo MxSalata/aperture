@@ -18,6 +18,10 @@
   About page or the health check: the Messages log says which resource it needs instead of asking for a password
   (a JWT session's stored password is no longer forgotten), and the health check lists the log check as needing
   %Admin_Operate. The demo answers such an account with IRIS's 401.
+- **The Messages log pages past a line longer than its window.** The log reader skipped a window that held no
+  line start and answered the same empty window again, so "Older lines" stayed enabled, read nothing, and nothing
+  older than a line over 64 KiB could be reached. It now answers that line in pieces, one per window, and the page
+  stops and says so when an older reader answers the same window twice.
 
 ## 1.3.0 - Every screen fits a phone and a laptop (2 October 2026)
 
