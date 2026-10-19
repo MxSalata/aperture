@@ -30,35 +30,21 @@ import { ErrorAlert } from '@/components/ErrorAlert';
 import { StatusBadge } from '@/components/StatusBadge';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { formatDateTime, formatNumber } from '@/lib/format';
+import { setAuditEvent, splitEvent } from './audit';
 import { secKeys } from './keys';
 
 type EventRow = AuditEventList[number];
 type Record_ = Schemas['AsyncTaskResultListAuditRecords'][number];
-
-/** `%System/%Login/LoginFailure` → parts for the query params. */
-function splitEvent(name: string | undefined): { source: string; type: string; name: string } {
-  const [source = '', type = '', ...rest] = (name ?? '').split('/');
-  return { source, type, name: rest.join('/') };
-}
 
 function EventsTab() {
   const list = useQuery({
     queryKey: secKeys.auditEvents,
     queryFn: () => result(api().GET('/v2/security/audit/events')),
   });
-  const toggle = useApiMutation(
-    (v: { id: string; enabled: boolean }) => {
-      const p = splitEvent(v.id);
-      return run(
-        api().PUT('/v2/security/audit/event', { params: { query: p }, body: { Enabled: v.enabled } }),
-        'PUT',
-      );
-    },
-    {
-      invalidate: [secKeys.auditEvents],
-      success: (_d, v) => `${v.id} ${v.enabled ? 'enabled' : 'disabled'}`,
-    },
-  );
+  const toggle = useApiMutation((v: { id: string; enabled: boolean }) => setAuditEvent(v.id, v.enabled), {
+    invalidate: [secKeys.auditEvents],
+    success: (_d, v) => `${v.id} ${v.enabled ? 'enabled' : 'disabled'}`,
+  });
   const clear = useApiMutation(
     (id: string) =>
       run(api().POST('/v2/security/audit/event/clear-count', { params: { query: splitEvent(id) } })),
