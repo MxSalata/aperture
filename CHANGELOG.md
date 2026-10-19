@@ -36,6 +36,8 @@
   size given a default IRIS does not have.
 - **The readiness report checks `/api/interop-editors`**: enabled, and with JWT, that it takes JWT and shares
   `/api/admin`'s by-ID group, which is what lets the Productions screens use the session's token.
+- **`scripts/live/lab.mjs` fails when the test production does not start**, and `--stop` leaves alone a production
+  of the namespace other than the test one.
 - **nginx passes the client's address to every IRIS route.** `/api/monitor/`, `/api/aperture/` and `/api/mgmnt/`
   now set `X-Forwarded-For` and `X-Forwarded-Proto` as `/api/admin/` already did.
 - **source-map-js 1.2.2** (a build-time dependency) closes GHSA-68fv-2mgg-jv7q; `npm audit` reports nothing.

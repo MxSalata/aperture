@@ -33,9 +33,19 @@ const state = (value) =>
 const status = async () => (await interop('GET', '/productions/status')).json;
 
 if (argv.includes('--stop')) {
+  // Ens.Director stops whichever production runs in the namespace, whatever the URL names.
+  const running = await status();
+  if (running?.ProdRunning !== PRODUCTION) {
+    console.log(
+      `stop: ${PRODUCTION} is not the production of ${NS}, left alone`,
+      JSON.stringify(running ?? {}),
+    );
+    process.exit(running?.ProdRunning ? 1 : 0);
+  }
   const r = await state('stop');
-  console.log(`stop: HTTP ${r.status}`, JSON.stringify((await status()) ?? {}));
-  process.exit(r.status === 200 ? 0 : 1);
+  const after = await status();
+  console.log(`stop: HTTP ${r.status}`, JSON.stringify(after ?? {}));
+  process.exit(r.status === 200 && !after?.ProdRunning ? 0 : 1);
 }
 
 const namespaces = await http('GET', '/v2/namespaces', { auth: session.auth });
@@ -90,6 +100,13 @@ const before = await status();
 if (before?.ProdRunning !== PRODUCTION) {
   const r = await state('start');
   console.log(`start: HTTP ${r.status} ${JSON.stringify(r.json)}`);
+  if (r.status !== 200) process.exit(1);
   await sleep(3000);
 }
-console.log('status:', JSON.stringify(await status()));
+// The route answers success whatever happened: only the status says whether the production runs.
+const after = await status();
+console.log('status:', JSON.stringify(after));
+if (after?.ProdRunning !== PRODUCTION || after?.State !== 1) {
+  console.error(`${PRODUCTION} is not running in ${NS}`);
+  process.exit(1);
+}
