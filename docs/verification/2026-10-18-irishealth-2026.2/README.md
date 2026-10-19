@@ -37,3 +37,15 @@ What the screens rely on, as recorded here and while building them:
   without credentials and refuses the portal's token (401). `e2e/live/fhir.spec.ts` reads the screens, and its
   @mutate test disables and enables the server.
 - **Jobs**: `{}` throughout, even while a host was working; the screens do not show them.
+
+## The runs that change the instance, 19 October 2026
+
+With the test production running and `LIVE_MUTATE=1`, `e2e/live/productions.spec.ts`, `sql.spec.ts` and
+`fhir.spec.ts` passed, their @mutate tests included (6 tests): a host stopped and started again, read back from IRIS;
+a table created, written, read back and dropped in APERTURELAB; "Aperture lab R4" disabled and enabled again. The
+test production was stopped again afterwards.
+
+For that run the `%System/%SQL/DynamicStatementDML` and `DynamicStatementDDL` audit events were switched on (and off
+again after it). The audit log then held three records under the signed-in account, `_SYSTEM`: the `CREATE TABLE`,
+the `INSERT` and the `DROP TABLE` of `ApertureProbe.Note`. The `SELECT` was not recorded, as
+`DynamicStatementQuery` stayed off. The records reached `%SYS.Audit` a few seconds after the statements.
