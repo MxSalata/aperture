@@ -29,7 +29,7 @@ jobs:
         with:
           # The whole history with its tags: the www/ check looks for updates since the last release.
           fetch-depth: 0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -67,7 +67,7 @@ jobs:
       - run: npm run test:e2e
         env:
           CI: 'true'
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: playwright-report
@@ -77,7 +77,7 @@ jobs:
       # Every run keeps the demo build as a plain artifact (download, unzip, serve with any static
       # server). The Pages artifact and the deployment below are opt-in through the repository
       # variable DEPLOY_DEMO, because GitHub Pages is not available while the repository is private.
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: demo-site
           path: dist-demo
@@ -118,7 +118,7 @@ jobs:
           # The whole history with its tags, back to the last release.
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -159,7 +159,7 @@ jobs:
           [ -z "$version" ] || cp release-notes.md "$RUNNER_TEMP/release/"
           echo "commit=true" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: steps.build.outputs.commit == 'true'
         with:
           name: dependency-release
@@ -178,7 +178,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: dependency-release
           path: ${{ runner.temp }}/release
@@ -253,7 +253,7 @@ jobs:
         with:
           # The release commit, when one was pushed; this push's commit otherwise (never a newer one).
           ref: ${{ needs.www-after-dependabot-merge.outputs.sha || github.sha }}
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
       # The container gets a password of its own at start (IRIS_PASSWORD), as users are told to
@@ -344,7 +344,7 @@ jobs:
       - name: Readiness report (Embedded Python, inside the running container)
         if: always()
         run: docker exec aperture-iris iris session IRIS -U USER "##class(Aperture.Installer).Doctor()" || true
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: iris-verification
