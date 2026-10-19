@@ -12,6 +12,11 @@ interface MutationOptions<TVars, TData> {
   success?: string | ((data: TData, vars: TVars) => string);
   /** Query keys (prefixes) to invalidate after success. */
   invalidate?: QueryKey[];
+  /**
+   * Invalidate them after a failure too: for a mutation that makes several writes in turn, where
+   * the ones before the failure have already changed the server.
+   */
+  invalidateOnError?: boolean;
   onSuccess?: (data: TData, vars: TVars) => void;
   silent?: boolean;
 }
@@ -38,7 +43,11 @@ export function useApiMutation<TVars, TData extends { summary?: string } = { sum
       for (const key of opts.invalidate ?? []) void qc.invalidateQueries({ queryKey: key });
       opts.onSuccess?.(data, vars);
     },
-    onError: (e) => notifyError(e),
+    onError: (e) => {
+      notifyError(e);
+      if (opts.invalidateOnError)
+        for (const key of opts.invalidate ?? []) void qc.invalidateQueries({ queryKey: key });
+    },
   });
 }
 

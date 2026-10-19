@@ -223,6 +223,66 @@ describe('the SQL screen', () => {
       expect(mockDb.auditEnabled).toBe(true);
     }, 30_000);
 
+    it('shows what IRIS reports after a switch-on that fails part-way, and names what goes unrecorded', async () => {
+      server.use(
+        http.put('*/api/admin/v2/security/audit/event', ({ request }) => {
+          if (new URL(request.url).searchParams.get('name') !== 'DynamicStatementDDL') return;
+          return HttpResponse.json(
+            { status: { errors: [{ error: 'ERROR #5001: refused' }], summary: '' }, console: [], result: {} },
+            { status: 500 },
+          );
+        }),
+      );
+      await signIn('_SYSTEM', 'basic');
+      open();
+      const notice = await screen.findByRole(
+        'alert',
+        { name: 'IRIS SQL audit is disabled' },
+        { timeout: 10_000 },
+      );
+      fireEvent.click(within(notice).getByRole('button', { name: 'Audit SQL changes…' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Audit SQL changes on the whole instance' });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Audit SQL changes' }));
+      // DML went through before DDL failed: the notice reads the settings again and says so.
+      await waitFor(
+        () =>
+          expect(screen.getByRole('alert', { name: 'IRIS SQL audit is disabled' })).toHaveTextContent(
+            /^IRIS SQL audit is disabledChanges to definitions \(DDL\) run here are not written to the IRIS audit log, under any user\. DynamicStatementDDL is off\./,
+          ),
+        { timeout: 10_000 },
+      );
+      expect(sqlEvent('DynamicStatementDML').Enabled).toBe(true);
+      expect(sqlEvent('DynamicStatementDDL').Enabled).toBe(false);
+    }, 30_000);
+
+    it('says nothing is written until auditing is on when both it and the events are off', async () => {
+      mockDb.auditEnabled = false;
+      await signIn('_SYSTEM', 'basic');
+      open();
+      const notice = await screen.findByRole(
+        'alert',
+        { name: 'IRIS SQL audit is disabled' },
+        { timeout: 10_000 },
+      );
+      fireEvent.click(within(notice).getByRole('button', { name: 'Audit SQL changes…' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Audit SQL changes on the whole instance' });
+      expect(dialog).toHaveTextContent(/Nothing is written until auditing is switched on/);
+    }, 30_000);
+
+    it('says why query auditing cannot be switched on from a read-only tab', async () => {
+      for (const n of ['DynamicStatementDML', 'DynamicStatementDDL']) sqlEvent(n).Enabled = true;
+      useReadOnly.getState().setReadOnly(true);
+      await signIn('_SYSTEM', 'basic');
+      open();
+      const button = await screen.findByRole(
+        'button',
+        { name: 'Audit every query too…' },
+        { timeout: 10_000 },
+      );
+      expect(button).toBeDisabled();
+      expect(screen.getByText(/This tab is read-only, so it changes no audit setting/)).toBeVisible();
+    }, 30_000);
+
     it('changes nothing from a read-only tab', async () => {
       useReadOnly.getState().setReadOnly(true);
       await signIn('_SYSTEM', 'basic');

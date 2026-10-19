@@ -6,7 +6,7 @@ import { api, result, useApiMutation } from '@/api/hooks';
 import { checkPrivileges } from '@/api/privileges';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { isApiError } from '@/lib/errors';
-import { sqlAuditState, type AuditEventRow } from '@/lib/sqlAudit';
+import { sqlAuditState, unauditedChanges, type AuditEventRow } from '@/lib/sqlAudit';
 import { enableAuditing, enableSqlAuditEvents } from '@/features/security/audit';
 import { secKeys } from '@/features/security/keys';
 import { useReadOnly } from '@/stores/readOnly';
@@ -47,11 +47,18 @@ export function SqlAuditNotice() {
     enabled: readable,
   });
   const invalidate = [secKeys.auditEnabled, secKeys.auditEvents];
+  // Each write is a PUT of its own, so one that fails part-way has already changed IRIS: read the
+  // settings again either way, and show what IRIS reports.
   const enableEvents = useApiMutation((ids: string[]) => enableSqlAuditEvents(ids), {
     invalidate,
+    invalidateOnError: true,
     success: (_d, ids) => `${names(ids)} switched on`,
   });
-  const enableAll = useApiMutation(() => enableAuditing(), { invalidate, success: 'Auditing switched on' });
+  const enableAll = useApiMutation(() => enableAuditing(), {
+    invalidate,
+    invalidateOnError: true,
+    success: 'Auditing switched on',
+  });
 
   const failed = enabled.error ?? events.error;
   if (!readable || failed)
@@ -78,7 +85,7 @@ export function SqlAuditNotice() {
   const auditChanges = () =>
     confirmDanger({
       title: 'Audit SQL changes on the whole instance',
-      message: `This switches on ${names(state.changeEvents)}. IRIS then writes every INSERT, UPDATE, DELETE and DDL statement run through Dynamic SQL to its audit log, under the account that runs it, from every SQL client and not only Aperture. Each one adds a record to the audit database, which keeps it until it is purged.`,
+      message: `This switches on ${names(state.changeEvents)}. IRIS then writes every INSERT, UPDATE, DELETE and DDL statement run through Dynamic SQL to its audit log, under the account that runs it, from every SQL client and not only Aperture. Each one adds a record to the audit database, which keeps it until it is purged.${state.auditing === false ? ' Nothing is written until auditing is switched on for the whole instance as well.' : ''}`,
       confirmLabel: 'Audit SQL changes',
       color: 'orange',
       onConfirm: () => enableEvents.mutateAsync(state.changeEvents),
@@ -101,6 +108,12 @@ export function SqlAuditNotice() {
       onConfirm: () => enableAll.mutateAsync(),
     });
   const mayChange = !readOnly;
+  const gap = unauditedChanges(state);
+  const readOnlyNote = readOnly ? (
+    <Text size="xs" c="dimmed">
+      This tab is read-only, so it changes no audit setting.
+    </Text>
+  ) : null;
 
   if (state.level === 'unknown')
     return (
@@ -152,6 +165,7 @@ export function SqlAuditNotice() {
               </Button>
             </Group>
           ) : null}
+          {state.queryEvent ? readOnlyNote : null}
         </Stack>
       </Alert>
     );
@@ -160,8 +174,9 @@ export function SqlAuditNotice() {
     <Alert color="orange" icon={<IconShieldOff size={16} />} title="IRIS SQL audit is disabled" mb="sm">
       <Stack gap={6}>
         <Text size="sm">
-          Statements run here are not written to the IRIS audit log, under any user: nothing records who
-          changed what through SQL.{' '}
+          {gap.all
+            ? 'Statements run here are not written to the IRIS audit log, under any user: nothing records who changed what through SQL.'
+            : `${gap.kinds.charAt(0).toUpperCase()}${gap.kinds.slice(1)} run here are not written to the IRIS audit log, under any user.`}{' '}
           {state.auditing === false
             ? 'Auditing is off for the whole instance, so no event is written until it is switched on.'
             : state.changeEvents.length
@@ -199,11 +214,7 @@ export function SqlAuditNotice() {
             </Button>
           ) : null}
         </Group>
-        {readOnly ? (
-          <Text size="xs" c="dimmed">
-            This tab is read-only, so it changes no audit setting.
-          </Text>
-        ) : null}
+        {readOnlyNote}
       </Stack>
     </Alert>
   );
