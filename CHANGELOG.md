@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.7.0 - SQL statements in the audit log (19 October 2026)
 
 - **SQL audit.** The SQL screen says when IRIS does not write the statements run there to its audit log: "IRIS SQL
   audit is disabled" (as IRIS ships, every `%System/%SQL` event is off), under any user. It reads system-wide
