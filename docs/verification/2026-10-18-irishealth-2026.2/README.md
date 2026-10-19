@@ -41,12 +41,5 @@ What the screens rely on, as recorded here and while building them:
 
 ## The runs that change the instance, 19 October 2026
 
-With the test production running and `LIVE_MUTATE=1`, `e2e/live/productions.spec.ts`, `sql.spec.ts` and
-`fhir.spec.ts` passed, their @mutate tests included (6 tests): a host stopped and started again, read back from IRIS;
-a table created, written, read back and dropped in APERTURELAB; "Aperture lab R4" disabled and enabled again. The
-test production was stopped again afterwards.
-
-For that run the `%System/%SQL/DynamicStatementDML` and `DynamicStatementDDL` audit events were switched on (and off
-again after it). The audit log then held three records under the signed-in account, `_SYSTEM`: the `CREATE TABLE`,
-the `INSERT` and the `DROP TABLE` of `ApertureProbe.Note`. The `SELECT` was not recorded, as
-`DynamicStatementQuery` stayed off. The records reached `%SYS.Audit` a few seconds after the statements.
+The @mutate run of the productions, SQL and FHIR tests, and the audit records IRIS wrote for the SQL test, are
+written up with the 19 October evidence: [`../2026-10-19-irishealth-2026.2/`](../2026-10-19-irishealth-2026.2/).
