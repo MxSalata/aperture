@@ -97,6 +97,8 @@ describe('a FHIR server job followed after its dialog closes', () => {
     );
   });
 
+  // Rendering the page and Mantine's menu under jsdom takes seconds on a loaded machine: these two
+  // ran past Vitest's 5 s default on a busy runner.
   it('stays busy when the server is disabled or enabled meanwhile', async () => {
     mount();
     await startRemoval('Reset');
@@ -109,7 +111,7 @@ describe('a FHIR server job followed after its dialog closes', () => {
       expect(screen.getByRole('button', { name: 'Disable' })).not.toHaveAttribute('data-loading'),
     );
     expect(removeBusy()).toBe(true);
-  });
+  }, 15_000);
 
   it('is no longer followed once the route moves to another server', async () => {
     mount();
@@ -119,5 +121,5 @@ describe('a FHIR server job followed after its dialog closes', () => {
     expect(await screen.findByRole('heading', { name: 'Server 2' })).toBeInTheDocument();
     await waitFor(() => expect(removeBusy()).toBe(false));
     expect(screen.queryByText('All servers')).toBeNull();
-  });
+  }, 15_000);
 });
