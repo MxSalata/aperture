@@ -12,7 +12,8 @@
  *   INSERT INTO t [(cols)] VALUES (...), ...    UPDATE t SET col = value, ... [WHERE ...]
  *   DELETE FROM t [WHERE ...]    CREATE TABLE s.t (col TYPE, ...)    DROP TABLE s.t    EXPLAIN SELECT ...
  * Values are literals or `?` parameters. A name may be delimited (`"Sample"."Person"`); names match
- * whatever their case, as on IRIS. An unqualified table is in SQLUser. INFORMATION_SCHEMA
+ * whatever their case, as on IRIS, and so do string values in conditions (IRIS's default collation,
+ * SQLUPPER). `--` and `/* *\/` comments are skipped. An unqualified table is in SQLUser. INFORMATION_SCHEMA
  * (SCHEMATA, TABLES, COLUMNS, CURRENT_STATEMENTS, STATEMENTS) is built from the tables as they are.
  * Errors carry the SQLCODE IRIS would use: -30 a missing table, -29 a missing field, -1 anything the
  * evaluator cannot read (it says what it reads).
@@ -142,7 +143,7 @@ type Token = { t: 'word' | 'str' | 'num' | 'param' | 'op'; v: string; quoted?: t
 function tokenize(sql: string): Token[] {
   const out: Token[] = [];
   const re =
-    /\s+|('(?:[^']|'')*')|(\d+(?:\.\d+)?)|(\?)|(<>|!=|<=|>=|[=<>(),.*;-])|(%?[A-Za-z_][\w%]*)|("(?:[^"]|"")*")/y;
+    /\s+|--[^\n]*|\/\*[\s\S]*?(?:\*\/|$)|('(?:[^']|'')*')|(\d+(?:\.\d+)?)|(\?)|(<>|!=|<=|>=|[=<>(),.*;-])|(%?[A-Za-z_][\w%]*)|("(?:[^"]|"")*")/y;
   let at = 0;
   while (at < sql.length) {
     re.lastIndex = at;
@@ -350,14 +351,16 @@ type Cond = (r: Row) => boolean;
 function compare(a: unknown, op: string, b: unknown): boolean {
   if (a === null || a === undefined || b === null || b === undefined) return false;
   const x = typeof a === 'number' && typeof b === 'string' && b !== '' && !isNaN(Number(b)) ? Number(b) : b;
-  const l = a as string | number;
-  const r = x as string | number;
+  // Strings compare as IRIS's default collation (SQLUPPER) has them: whatever their case.
+  const text = typeof a === 'string' || typeof x === 'string';
+  const l = text ? String(a).toUpperCase() : (a as number);
+  const r = text ? String(x).toUpperCase() : (x as number);
   switch (op) {
     case '=':
-      return l === r || String(l) === String(r);
+      return l === r;
     case '<>':
     case '!=':
-      return String(l) !== String(r);
+      return l !== r;
     case '<':
       return l < r;
     case '<=':
@@ -412,7 +415,10 @@ function term(c: Cursor, t: Table): Cond {
   }
   if (c.eat('%STARTSWITH')) {
     const prefix = String(c.value());
-    return (r) => (r[col] !== null && r[col] !== undefined && String(r[col]).startsWith(prefix)) !== not;
+    return (r) =>
+      (r[col] !== null &&
+        r[col] !== undefined &&
+        String(r[col]).toUpperCase().startsWith(prefix.toUpperCase())) !== not;
   }
   const op = c.peek();
   if (!op || op.t !== 'op' || !['=', '<>', '!=', '<', '<=', '>', '>='].includes(op.v))

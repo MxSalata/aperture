@@ -51,6 +51,9 @@
 - **SQL errors read as text.** IRIS escapes an SQL error's message for HTML, and only `&#39;` was decoded, so a
   name with `<`, `>` or `&` showed `&lt;`, `&gt;` and `&amp;`, in the error and in Activity; the whole message is
   decoded now, and the demo escapes its messages as IRIS does.
+- **The demo's SQL behaves more like IRIS's.** Its conditions compare strings whatever their case, as IRIS's
+  default collation does (`City = 'leeds'`, `%STARTSWITH 'ada'`), and it skips `--` and `/* */` comments, which
+  it used to refuse.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 

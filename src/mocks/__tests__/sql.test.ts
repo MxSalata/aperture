@@ -74,10 +74,23 @@ describe("the demo's SQL", () => {
   });
 
   it('reads delimited names, whatever their case, and never as keywords', () => {
-    expect(run('SELECT TOP 1 "Name" FROM "Sample"."Person" ORDER BY "Name"').rows).toEqual([['Ada Lovelace']]);
+    expect(run('SELECT TOP 1 "Name" FROM "Sample"."Person" ORDER BY "Name"').rows).toEqual([
+      ['Ada Lovelace'],
+    ]);
     expect(run('SELECT COUNT(*) AS n FROM "sample"."person"').rows).toEqual([[8]]);
     run('CREATE TABLE Scratch."Order" (ID INTEGER, "Select" VARCHAR(20))');
     run('INSERT INTO Scratch."Order" ("Select") VALUES (\'x\')');
     expect(run('SELECT "Select" FROM Scratch."Order" "Where"').rows).toEqual([['x']]);
+  });
+
+  it('compares strings whatever their case and skips comments, as IRIS does', () => {
+    expect(run("SELECT COUNT(*) AS n FROM Sample.Person WHERE City = 'leeds'").rows).toEqual([[2]]);
+    expect(run("SELECT COUNT(*) AS n FROM Sample.Person WHERE City <> 'LEEDS'").rows).toEqual([[6]]);
+    expect(run("SELECT Name FROM Sample.Person WHERE Name %STARTSWITH 'ada'").rows).toEqual([
+      ['Ada Lovelace'],
+    ]);
+    expect(
+      run("-- don't mind me\nSELECT /* the name */ Name FROM Sample.Person WHERE ID = 1 -- the first").rows,
+    ).toEqual([['Ada Lovelace']]);
   });
 });
