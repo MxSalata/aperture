@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { fetchAtelierServer, NOTHING_TO_RUN, runSql, SqlError } from '../atelier';
 import { basicCredentials } from '../base';
 import { resetClients } from '../client';
-import { resetDb } from '@/mocks/db';
+import { mockDb, resetDb } from '@/mocks/db';
 import { resetSql } from '@/mocks/sql';
 import { resetInstanceState, useSession } from '@/stores/session';
 import { useAtelierAuth } from '@/stores/atelierAuth';
@@ -93,6 +93,32 @@ describe('SQL through Atelier, on the demo instance', () => {
     await expect(
       runSql('USER', "-- don't\nDELETE FROM Sample.Person WHERE City = 'Hull'"),
     ).rejects.toBeInstanceOf(NotSentError);
+  });
+
+  it('counts each statement under its audit event, and writes it under the account once the event is on', async () => {
+    await signIn('_SYSTEM', 'basic');
+    const dml = mockDb.auditEvents.find(
+      (e) => e.EventType === '%SQL' && e.EventName === 'DynamicStatementDML',
+    )!;
+    const before = { total: dml.Total, records: mockDb.auditLog.length };
+    await runSql('USER', "UPDATE Sample.Person SET City = 'Hull' WHERE ID = 1");
+    expect([dml.Total, dml.Written, mockDb.auditLog.length]).toEqual([before.total + 1, 0, before.records]);
+    dml.Enabled = true;
+    // A statement that fails with an SQLCODE is counted and written too.
+    await expect(runSql('USER', 'DELETE FROM Sample.Nope')).rejects.toBeInstanceOf(SqlError);
+    expect([dml.Total, dml.Written]).toEqual([before.total + 2, 1]);
+    expect(mockDb.auditLog[0]).toMatchObject({
+      EventSource: '%System',
+      EventType: '%SQL',
+      Event: 'DynamicStatementDML',
+      Username: '_SYSTEM',
+      Namespace: 'USER',
+      EventData: 'DELETE FROM Sample.Nope',
+    });
+    // Nothing is written while auditing is off for the whole instance.
+    mockDb.auditEnabled = false;
+    await runSql('USER', "UPDATE Sample.Person SET City = 'York' WHERE ID = 1");
+    expect([dml.Total, dml.Written]).toEqual([before.total + 3, 1]);
   });
 
   it('keeps no CSP session cookie: every request carries its own credentials', async () => {

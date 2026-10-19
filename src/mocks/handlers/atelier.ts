@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { mockDb } from '../db';
+import { recordAudit } from '../audit';
 import { findAccount } from '../auth';
 import { runStatement, SqlCode } from '../sql';
 
@@ -32,10 +33,11 @@ const escapeHtml = (text: string) =>
 
 /**
  * IRIS counts every Dynamic SQL statement under its kind's audit event (the `Total` of
- * GET /v2/security/audit/events) whether the event is on or not, and writes it only when the
- * event and auditing are both on.
+ * GET /v2/security/audit/events) whether the event is on or not, one that fails with an SQLCODE
+ * included, and writes it to the audit log, under the account that ran it with the statement as
+ * the record's data, only when the event and auditing are both on.
  */
-function countSqlAudit(query: string) {
+function auditSql(account: { username: string }, ns: string, query: string) {
   const first = (
     query.replace(/^(\s|--[^\n]*\n|\/\*[\s\S]*?\*\/)+/, '').match(/^[A-Za-z]+/)?.[0] ?? ''
   ).toUpperCase();
@@ -46,12 +48,21 @@ function countSqlAudit(query: string) {
       : ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'].includes(first)
         ? 'DML'
         : 'Utility';
+  const name = `DynamicStatement${kind}`;
   const e = mockDb.auditEvents.find(
-    (x) => x.EventSource === '%System' && x.EventType === '%SQL' && x.EventName === `DynamicStatement${kind}`,
+    (x) => x.EventSource === '%System' && x.EventType === '%SQL' && x.EventName === name,
   );
   if (!e) return;
-  e.Total += 1;
-  if (e.Enabled && mockDb.auditEnabled) e.Written += 1;
+  if (!e.Enabled || !mockDb.auditEnabled) {
+    e.Total += 1;
+    return;
+  }
+  // recordAudit counts the record under the event (Total and Written).
+  recordAudit(account, name, `SQL ${first || 'Dynamic'} Statement`, query, {
+    EventType: '%SQL',
+    Namespace: ns,
+    Authentication: 'Password',
+  });
 }
 
 const unauthorized = () =>
@@ -86,7 +97,7 @@ export const atelierHandlers = [
     });
   }),
   http.post('*/api/atelier/:version/:ns/action/query', async ({ request, params }) => {
-    const { refusal } = allowed(request);
+    const { refusal, account } = allowed(request);
     if (refusal) return refusal;
     const url = new URL(request.url);
     const ns = decodeURIComponent(String(params.ns));
@@ -94,9 +105,9 @@ export const atelierHandlers = [
     if (!mockDb.namespaces.some((n) => n.Name === ns)) return new HttpResponse(null, { status: 404 });
     const body = (await request.json().catch(() => ({}))) as { query?: string; parameters?: unknown[] };
     const max = Number(url.searchParams.get('max')) || 1000;
+    auditSql(account, ns, body.query ?? '');
     try {
       const { columns, rows } = runStatement(ns, body.query ?? '', body.parameters ?? [], max);
-      countSqlAudit(body.query ?? '');
       // A change answers an empty result, as on IRIS.
       return envelope(columns.length ? [{ columns, content: rows }] : []);
     } catch (e) {

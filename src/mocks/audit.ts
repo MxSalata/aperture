@@ -13,6 +13,7 @@ export function recordAudit(
   event: string,
   description: string,
   eventData = '',
+  fields: Partial<AuditRecordRec> = {},
 ): AuditRecordRec {
   const stamp = now();
   const rec: AuditRecordRec = {
@@ -38,9 +39,12 @@ export function recordAudit(
     RoutineSpec: '%SYS.REST.1',
     UserInfo: '',
     Status: 'Success',
+    ...fields,
   };
   mockDb.auditLog.unshift(rec);
-  const ev = mockDb.auditEvents.find((e) => e.EventType === '%Security' && e.EventName === event);
+  const ev = mockDb.auditEvents.find(
+    (e) => e.EventSource === rec.EventSource && e.EventType === rec.EventType && e.EventName === event,
+  );
   if (ev) {
     ev.Total += 1;
     ev.Written += 1;

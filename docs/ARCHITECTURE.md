@@ -433,8 +433,10 @@ API's query action, `POST /api/atelier/v8/{ns}/action/query?positional=1&max=N` 
   auditing check reports the same state as advice.
 - **The demo** answers from `mocks/sql.ts`, a small evaluator (one table per `SELECT`, `WHERE`, `GROUP BY`,
   `ORDER BY`, `TOP`, the five aggregates, `INSERT`, `UPDATE`, `DELETE`, `CREATE TABLE`, `DROP TABLE`, `EXPLAIN`)
-  with IRIS's SQLCODEs for what it cannot do, and counts each statement under its `DynamicStatement*` audit event. An SQL engine compiled to JavaScript at run time was tried: it needs
-  `unsafe-eval`, which the portal's Content-Security-Policy refuses, and the demo runs inside the real portal.
+  with IRIS's SQLCODEs for what it cannot do, and counts each statement under its `DynamicStatement*` audit event
+  (a failed one too), writing it to the audit log under the account once the event and auditing are on. An SQL
+  engine compiled to JavaScript at run time was tried: it needs `unsafe-eval`, which the portal's
+  Content-Security-Policy refuses, and the demo runs inside the real portal.
 
 ### 2.7h FHIR servers (/csp/fhir-management/api)
 
