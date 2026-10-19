@@ -136,8 +136,10 @@ export default function SqlPage() {
   );
   // A namespace the instance does not list (a stale link, a typo) gives way to the default one.
   const asked = params.get('ns');
-  const unknownNs = !!asked && !!server.data && !namespaces.includes(asked);
+  // %SYS and the other system namespaces are left out of the list but open from a link.
+  const unknownNs = !!asked && !!server.data && !server.data.namespaces.includes(asked);
   const ns = asked && !unknownNs ? asked : namespaces.includes('USER') ? 'USER' : (namespaces[0] ?? '');
+  const choices = ns && !namespaces.includes(ns) ? [ns, ...namespaces] : namespaces;
 
   const [tab, setTab] = useState<string | null>('query');
   const [sql, setSql] = useState(
@@ -275,7 +277,7 @@ export default function SqlPage() {
           <Group mt="sm" mb="sm" gap="sm" align="flex-end">
             <Select
               label="Namespace"
-              data={namespaces}
+              data={choices}
               value={ns}
               onChange={setNs}
               allowDeselect={false}

@@ -169,4 +169,13 @@ describe('the SQL screen', () => {
     ).toHaveTextContent('showing USER');
     expect(screen.getByRole('textbox', { name: 'Namespace' })).toHaveValue('USER');
   }, 30_000);
+
+  it('opens %SYS from a link, though the list leaves it out', async () => {
+    await signIn('_SYSTEM', 'basic');
+    open('/sql?ns=%25SYS');
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Namespace' })).toHaveValue('%SYS'), {
+      timeout: 10_000,
+    });
+    expect(screen.queryByText(/There is no namespace/)).toBeNull();
+  }, 30_000);
 });
