@@ -66,6 +66,29 @@ describe('the SQL screen', () => {
     expect(useMgmntAuth.getState().basic).toBe(shared);
   });
 
+  it('forgets everywhere a password given on its own gate that Atelier refused', async () => {
+    await signIn('operator', 'jwt');
+    open();
+    const field = await screen.findByLabelText('Password for operator');
+    fireEvent.change(field, { target: { value: 'SYS' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Open the SQL explorer' }));
+    expect(await screen.findByText(/refused the password given here/)).toBeVisible();
+    // The log reader, REST services and the Health check do not send it on.
+    expect(useMgmntAuth.getState().basic).toBeNull();
+    expect(useAtelierAuth.getState().refused).toBe(basicCredentials('operator', 'SYS'));
+    expect(useAtelierAuth.getState().typed).toBeNull();
+  });
+
+  it('keeps a password given on its gate once Atelier takes it', async () => {
+    await signIn('_SYSTEM', 'jwt');
+    open();
+    fireEvent.change(await screen.findByLabelText('Password for _SYSTEM'), { target: { value: 'SYS' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Open the SQL explorer' }));
+    expect(await screen.findByRole('textbox', { name: 'Statement' }, { timeout: 10_000 })).toBeVisible();
+    expect(useMgmntAuth.getState().basic).toBe(basicCredentials('_SYSTEM', 'SYS'));
+    expect(useAtelierAuth.getState().typed).toBeNull();
+  }, 30_000);
+
   it("shows the result set a CALL returns, as IRIS's catalogue procedures do", async () => {
     await signIn('_SYSTEM', 'basic');
     // The demo's SQL has no procedures: the answer IRIS gave for this CALL (two of its rows).

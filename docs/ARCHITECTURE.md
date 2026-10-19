@@ -398,7 +398,8 @@ API's query action, `POST /api/atelier/v8/{ns}/action/query?positional=1&max=N` 
   `/api/aperture`). IRIS answers an account without `%Development:USE` with the same 401 as a wrong password, so
   a refusal does not clear that shared password (the other applications may accept it): Atelier alone remembers
   the refused credentials and never sends them again (`stores/atelierAuth.ts`, forgotten at sign-out), and a JWT
-  session may give another password.
+  session may give another password. A password given on the SQL screen's own gate has worked nowhere yet, so its
+  refusal does clear the shared slot, and the other screens do not send it on.
   `%Api.Atelier` opens a CSP session whose cookie alone runs SQL as the account, with no password, and sign-out
   could not end it, so the browser keeps no cookie from it (`credentials: 'omit'`, as for `/api/mgmnt`): every
   request carries its own credentials.

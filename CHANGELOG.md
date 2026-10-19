@@ -22,7 +22,8 @@
 - **Opening SQL no longer signs the other screens out.** IRIS answers an account without `%Development:USE` with
   a 401, as for a wrong password, and the SQL screen then forgot the password the Messages log, REST services and
   the Health check share. Now only `/api/atelier` remembers the refusal, never sends those credentials there again,
-  and says it was a wrong password or a missing `%Development:USE`.
+  and says it was a wrong password or a missing `%Development:USE`. A password typed on the SQL screen's own gate
+  that `/api/atelier` refuses is forgotten everywhere, so the other screens do not try it again.
 - **First 100 rows works for any table name.** The catalogue's preview quotes the schema and the table as delimited
   names (`"Sample"."Order"`), so a reserved word or an unusual character no longer fails; the demo reads delimited
   names too, matching them whatever their case, as IRIS does.

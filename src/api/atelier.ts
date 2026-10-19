@@ -1,5 +1,6 @@
 import { useSession } from '@/stores/session';
 import { useAtelierAuth } from '@/stores/atelierAuth';
+import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useActivity } from '@/stores/activity';
 import { useReadOnly } from '@/stores/readOnly';
 import { ApiError, NotSentError, normalizeErrors, unescapeHtml } from '@/lib/errors';
@@ -101,9 +102,20 @@ async function atelierFetch<T>(
   } catch {
     /* no JSON body */
   }
-  if (res.ok) return { json: json as T, res };
-  // The shared password stays: the same 401 may mean only that this account lacks %Development.
-  if (res.status === 401 && credentials) useAtelierAuth.getState().refuse(credentials);
+  const auth = useAtelierAuth.getState();
+  if (res.ok) {
+    if (credentials && credentials === auth.typed) auth.accept();
+    return { json: json as T, res };
+  }
+  if (res.status === 401 && credentials) {
+    auth.refuse(credentials);
+    // The shared password stays: the same 401 may mean only that this account lacks %Development.
+    // One typed on the SQL screen's gate has worked nowhere, so the other screens do not send it on.
+    if (credentials === auth.typed) {
+      auth.accept();
+      if (useMgmntAuth.getState().basic === credentials) useMgmntAuth.getState().clear();
+    }
+  }
   const n = normalizeErrors(json);
   throw new ApiError({
     status: res.status,

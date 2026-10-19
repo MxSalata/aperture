@@ -17,7 +17,7 @@ import {
 } from '@mantine/core';
 import { IconAlertTriangle, IconHistory, IconPlayerPlay, IconRoute } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { fetchAtelierServer, isSystemSchema, runSql, sqlKeys, type SqlResult } from '@/api/atelier';
 import { mgmntCredentials } from '@/api/mgmnt';
@@ -117,6 +117,13 @@ export default function SqlPage() {
   const credentials = basic ?? mgmntCredentials();
   // A JWT session whose password Atelier refused may give another one; the other screens keep theirs.
   const unlocked = !!credentials && !(mode === 'jwt' && credentials === refused);
+  // While the gate shows, a new shared password is the one given on it (see stores/atelierAuth.ts).
+  useEffect(() => {
+    if (unlocked) return;
+    return useMgmntAuth.subscribe((s, prev) => {
+      if (s.basic && s.basic !== prev.basic) useAtelierAuth.getState().type(s.basic);
+    });
+  }, [unlocked]);
   const server = useQuery({
     queryKey: sqlKeys.server,
     queryFn: fetchAtelierServer,
@@ -233,6 +240,11 @@ export default function SqlPage() {
           <Alert color="red" icon={<IconAlertTriangle size={16} />} mb="sm" maw={520}>
             The instance refused the password for /api/atelier: a wrong password, or the account lacks
             %Development:USE. It is not sent there again; the other screens keep it.
+          </Alert>
+        ) : refused ? (
+          <Alert color="red" icon={<IconAlertTriangle size={16} />} mb="sm" maw={520}>
+            The instance refused the password given here: a wrong password, or the account lacks
+            %Development:USE. It is forgotten, so no other screen sends it.
           </Alert>
         ) : null}
         <PasswordGate application="/api/atelier" action="Open the SQL explorer" resetKeys={[sqlKeys.all]} />
