@@ -26,6 +26,27 @@ describe('what a statement does', () => {
     expect(classifyStatement('VACUUM')).toMatchObject({ read: false, effect: 'may change data' });
   });
 
+  it('takes a SELECT that calls a stored function for a change, and a built-in function for a read', () => {
+    expect(classifyStatement('SELECT %iKnow_Objects.DeleteDomain(1)')).toEqual({
+      read: false,
+      keyword: 'SELECT',
+      effect: 'calls a stored function, which may change data',
+    });
+    expect(classifyStatement('SELECT "Sample" . "Purge" (?)')).toMatchObject({ read: false });
+    expect(classifyStatement('WITH x AS (SELECT Sample.Next() AS a) SELECT a FROM x')).toMatchObject({
+      read: false,
+      keyword: 'WITH',
+    });
+    expect(
+      classifyStatement(
+        "SELECT COUNT(*), UPPER(p.Name), %SQLUPPER('a.b(') FROM Sample.Person p WHERE p.ID IN (1)",
+      ),
+    ).toMatchObject({ read: true });
+    expect(classifyStatement('SELECT TOP 100 * FROM "Sample"."Person"')).toMatchObject({ read: true });
+    // A plan runs nothing.
+    expect(classifyStatement('EXPLAIN SELECT Sample.Purge()')).toMatchObject({ read: true });
+  });
+
   it('is not fooled by comments or strings', () => {
     expect(classifyStatement("-- DELETE FROM t\nSELECT 'DROP TABLE x' FROM t")).toMatchObject({ read: true });
     expect(classifyStatement('/* SELECT */ DROP TABLE t')).toMatchObject({ read: false, keyword: 'DROP' });

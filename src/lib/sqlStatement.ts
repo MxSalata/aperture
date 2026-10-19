@@ -4,7 +4,10 @@
  * SQL privileges allow, so this is a warning for the person typing, not a control: IRIS decides.
  *
  * Only a statement whose first keyword is SELECT, EXPLAIN or WITH (a common table expression feeding
- * a SELECT) is a read; everything else, a CALL included (a procedure may write), is a change.
+ * a SELECT) is a read; everything else, a CALL included (a procedure may write), is a change. So is a
+ * SELECT that calls a schema-qualified function (`%iKnow_Objects.DeleteDomain(1)`): IRIS runs SqlProc
+ * class methods as stored functions, and some write. An unqualified stored function cannot be told
+ * apart from a built-in one, so it still counts as a read.
  */
 export interface StatementKind {
   read: boolean;
@@ -28,6 +31,7 @@ const EFFECTS: Record<string, string> = {
   GRANT: 'gives privileges',
   REVOKE: 'takes privileges away',
   CALL: 'runs a stored procedure, which may change data',
+  FUNCTION: 'calls a stored function, which may change data',
   SET: 'changes a setting',
   LOCK: 'locks a table',
   INSERT_OR_UPDATE: 'adds or changes rows',
@@ -65,19 +69,22 @@ export function stripSql(sql: string): string {
   return out.trim();
 }
 
+/** A call of `schema.name(` (each part plain or delimited, which `stripSql` leaves as `""`). */
+const STORED_FUNCTION = /(?:[A-Za-z_%][\w%]*|"")\s*\.\s*(?:[A-Za-z_%][\w%]*|"")\s*\(/;
+
 export function classifyStatement(sql: string): StatementKind {
   const text = stripSql(sql);
   const words = text.toUpperCase().match(/[A-Z_%]+/g) ?? [];
   const first = words[0] ?? '';
   if (!first) return { read: false, keyword: '' };
-  if (first === 'SELECT' || first === 'EXPLAIN') return { read: true, keyword: first };
-  if (first === 'WITH') {
-    // A CTE reads unless the statement it feeds writes.
-    const writes = words.find((w) => ['INSERT', 'UPDATE', 'DELETE'].includes(w));
-    return writes
-      ? { read: false, keyword: writes, effect: EFFECTS[writes] }
+  if (first === 'EXPLAIN') return { read: true, keyword: first };
+  // A CTE reads unless the statement it feeds writes.
+  const writes = first === 'WITH' && words.find((w) => ['INSERT', 'UPDATE', 'DELETE'].includes(w));
+  if (writes) return { read: false, keyword: writes, effect: EFFECTS[writes] };
+  if (first === 'SELECT' || first === 'WITH')
+    return STORED_FUNCTION.test(text)
+      ? { read: false, keyword: first, effect: EFFECTS.FUNCTION }
       : { read: true, keyword: first };
-  }
   const keyword =
     first === 'INSERT' && words[1] === 'OR' && words[2] === 'UPDATE' ? 'INSERT_OR_UPDATE' : first;
   return {

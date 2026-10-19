@@ -28,6 +28,10 @@
   names too, matching them whatever their case, as IRIS does.
 - **Explain works with parameters filled in.** The values typed for a query were sent with its `EXPLAIN`, which
   IRIS refuses (SQLCODE -400); a plan is now asked for without them, and the demo refuses them as IRIS does.
+- **A SELECT that calls a stored function is asked about.** IRIS runs SqlProc class methods as functions inside a
+  SELECT, and some of them write (`%iKnow_Objects.DeleteDomain`), so a SELECT that calls a schema-qualified
+  function is now named, confirmed, refused in a read-only tab and recorded in Activity, as a CALL is. The check
+  reads the text only: an unqualified stored function still passes for a built-in one.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 
