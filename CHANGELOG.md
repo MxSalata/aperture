@@ -7,8 +7,8 @@
 - **source-map-js 1.2.2** (a build-time dependency) closes GHSA-68fv-2mgg-jv7q; `npm audit` reports nothing.
 - **A dependency release no longer runs package code next to a write token, or publishes a newer commit.** The
   updated packages are installed and built in a job with a read-only token it does not keep; a second job, which
-  holds the write token and runs no package code, checks that the commit touches only the release's files, then
-  pushes, tags and releases it. Both work on the push's own commit, not main's tip: when main has moved on, the
+  holds the write token and runs no package code, checks that the commit touches only the release's files, and
+  `package.json`, `package-lock.json` and `module.xml` only in their version, then pushes, tags and releases it. Both work on the push's own commit, not main's tip: when main has moved on, the
   release is left to the newer push's run, and the image job builds the push's commit. Before, a run could check
   out a commit pushed while it was running and publish it as `latest`, and as the version, before that commit's
   own checks had run.
