@@ -288,7 +288,8 @@ const SETTINGS: Omit<ProductionSetting, 'Value'>[] = [
   },
   {
     Name: 'PoolSize',
-    DefaultValue: 1,
+    // As on IRIS: a host's pool size has no default of its own.
+    DefaultValue: '',
     ValueSource: 1,
     DataType: '%Library.Integer',
     Category: 'Basic',

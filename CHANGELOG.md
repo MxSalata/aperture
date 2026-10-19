@@ -31,6 +31,9 @@
   page no longer calls it stopped beside itself, and counts its hosts' errors. The start, stop and recover buttons
   need both run privileges, as IRIS does, and say when IRIS would refuse a read-only production; the Read-only row
   gives its real causes. The demo follows Ens.Director: a production does not start while another runs.
+- **The demo's interoperability API is held to IRIS's answers.** The mock-versus-IRIS test now checks the reads of
+  the production screens against the shapes IRIS for Health 2026.2 sent (`p-interop.json`), and found a host's pool
+  size given a default IRIS does not have.
 - **nginx passes the client's address to every IRIS route.** `/api/monitor/`, `/api/aperture/` and `/api/mgmnt/`
   now set `X-Forwarded-For` and `X-Forwarded-Proto` as `/api/admin/` already did.
 - **source-map-js 1.2.2** (a build-time dependency) closes GHSA-68fv-2mgg-jv7q; `npm audit` reports nothing.

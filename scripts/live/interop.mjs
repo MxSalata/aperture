@@ -23,6 +23,8 @@ if (!admin) {
 
 const base = `${IRIS_URL}/api/interop-editors`;
 const first = (v, n = 3) => (Array.isArray(v) ? v.slice(0, n) : v);
+// The first entries and the last one, which ends a log longer than IRIS returns ({"Id":"more..."}).
+const ends = (v) => (Array.isArray(v) && v.length > 3 ? [...first(v), v.at(-1)] : v);
 const brief = (r, keep = (j) => j) => ({
   status: r.status,
   contentType: r.headers['content-type'],
@@ -67,7 +69,7 @@ const hosts = {};
 for (const it of items) {
   const h = encodeURIComponent(it.name);
   hosts[it.name] = {
-    log: brief(await get(`${p}/${h}/log`), (j) => ({ ...j, children: first(j?.children) })),
+    log: brief(await get(`${p}/${h}/log`), (j) => ({ ...j, children: ends(j?.children) })),
     messages: brief(await get(`${p}/${h}/messages`), (j) => ({ ...j, messages: first(j?.messages) })),
     queue: brief(await get(`${p}/${h}/queue`), (j) => ({ ...j, children: first(j?.children) })),
     jobs: brief(await get(`${p}/${h}/jobs`)),

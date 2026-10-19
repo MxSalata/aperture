@@ -16,6 +16,7 @@ import { resetClients } from '@/api/client';
 import { loadSpec, resolveSchema, resultSchema, type JsonSchema, type OpenApiDoc } from '@/lib/openapi';
 import { index } from '@/lib/specIndex';
 import iris from './iris-shapes.json';
+import interop from '../../../docs/verification/2026-10-18-irishealth-2026.2/p-interop.json';
 
 const BASE = 'http://iris.test';
 
@@ -269,3 +270,127 @@ function realAt(real: Record<string, string[]>, path: string): string[] | 'unsee
   }
   return undefined;
 }
+
+/**
+ * `/api/interop-editors` is outside the spec, so its mock is held to the answers IRIS for Health 2026.2
+ * gave the reads of the production screens (p-interop.json, scripts/live/interop.mjs): no field IRIS did
+ * not send, no type IRIS did not send there. Every recorded namespace or host counts for its route, and
+ * arrays there were cut to their first entries.
+ */
+describe('mock ⇄ IRIS: /api/interop-editors', () => {
+  type Recorded = { body?: unknown };
+  const rec = interop as unknown as {
+    privileges: unknown;
+    namespaces: Record<string, { productions: unknown; status: unknown }>;
+    production: {
+      definition: Recorded;
+      connections: Recorded;
+      hostById: Recorded;
+      hosts: Record<string, Record<'log' | 'messages' | 'queue' | 'jobs', Recorded>>;
+    };
+  };
+  const shapes = (...bodies: unknown[]) => {
+    const out: Record<string, string[]> = {};
+    for (const b of bodies)
+      for (const [p, types] of Object.entries(shapeOf(b)))
+        for (const t of types) if (!(out[p] ??= []).includes(t)) out[p].push(t);
+    return out;
+  };
+  const hosts = Object.values(rec.production.hosts);
+  const REAL: Record<string, Record<string, string[]>> = {
+    info: shapes({ privileges: rec.privileges }),
+    productions: shapes(...Object.values(rec.namespaces).map((n) => n.productions)),
+    status: shapes(...Object.values(rec.namespaces).map((n) => n.status)),
+    definition: shapes(rec.production.definition.body),
+    connections: shapes(rec.production.connections.body),
+    settings: shapes(rec.production.hostById.body),
+    log: shapes(...hosts.map((h) => h.log.body)),
+    messages: shapes(...hosts.map((h) => h.messages.body)),
+    queue: shapes(...hosts.map((h) => h.queue.body)),
+    jobs: shapes(...hosts.map((h) => h.jobs.body)),
+  };
+  /** What IRIS sends that the recording does not hold, with where it was seen. */
+  const UNRECORDED: Record<string, { paths: RegExp; evidence: string }[]> = {
+    log: [
+      {
+        paths: /^result\.children\[\]\.Id: mock sent integer\|string, IRIS integer$/,
+        evidence:
+          'the {"Id":"more..."} that ends a log longer than 50 entries (GET Lab.Flaky/log on 19 Oct 2026; GetLog in %Api.InteropEditors.v5.impl)',
+      },
+    ],
+    queue: [
+      {
+        paths: /^result\.children/,
+        evidence:
+          'every queue was empty ({}) when recorded; a waiting message has the fields of GetQueue in %Api.InteropEditors.v5.impl',
+      },
+    ],
+    settings: [
+      {
+        paths:
+          /^result\.children\[\]\.(Value|DefaultValue): mock sent (string\|)?integer(\|string)?, IRIS string$/,
+        evidence:
+          'the recorded host has string settings only; GET Aperture.Lab.Production/4 on 19 Oct 2026 sent PoolSize 1, Enabled 1, RetryInterval 5',
+      },
+    ],
+  };
+
+  /** The types IRIS sent at a path; 'unseen' when it lies inside an array IRIS returned empty. */
+  function knownAt(real: Record<string, string[]>, path: string): string[] | 'unseen' | undefined {
+    if (real[path]) return real[path];
+    for (let i = path.lastIndexOf('[]'); i > 0; i = path.lastIndexOf('[]', i - 1)) {
+      const array = path.slice(0, i);
+      if (real[array]?.includes('array') && !real[`${array}[]`]) return 'unseen';
+      if (real[`${array}[]`]) return undefined;
+    }
+    return undefined;
+  }
+
+  async function get(path: string): Promise<unknown> {
+    const res = await fetch(`${BASE}/api/interop-editors${path}`, {
+      headers: {
+        Authorization: useSession.getState().authorizationHeader() ?? '',
+        Accept: 'application/json',
+      },
+    });
+    expect(res.status, path).toBe(200);
+    return res.json();
+  }
+
+  it('answers the reads of the production screens in the shapes IRIS sends', async () => {
+    const p = '/v7/INTEROP/productions/HL7.Production';
+    const definition = (await get(p)) as { Items: { name: string; itemId: string }[] };
+    const reads: [string, unknown][] = [
+      ['info', { privileges: ((await get('/info')) as { privileges: unknown }).privileges }],
+      ['productions', await get('/v7/INTEROP/productions')],
+      ['status', await get('/v7/INTEROP/productions/status')],
+      ['definition', definition],
+      ['connections', await get(`${p}/connections`)],
+      ['settings', await get(`${p}/${definition.Items[0].itemId}`)],
+    ];
+    for (const { name } of definition.Items)
+      for (const part of ['log', 'messages', 'queue', 'jobs'])
+        reads.push([part, await get(`${p}/${encodeURIComponent(name)}/${part}`)]);
+    const problems = new Set<string>();
+    const needed = new Set<{ paths: RegExp; evidence: string }>();
+    for (const [route, body] of reads)
+      for (const [path, types] of Object.entries(shapeOf(body))) {
+        const known = knownAt(REAL[route], path);
+        if (known === 'unseen') continue;
+        const problem = !known
+          ? `${path}: IRIS sends no such field`
+          : types.every((t) => known.includes(t) || (t === 'integer' && known.includes('number')))
+            ? ''
+            : `${path}: mock sent ${types.join('|')}, IRIS ${known.join('|')}`;
+        const allowed = problem ? UNRECORDED[route]?.find((u) => u.paths.test(problem)) : undefined;
+        if (allowed) needed.add(allowed);
+        else if (problem) problems.add(`${route} ${problem}`);
+      }
+    expect([...problems]).toEqual([]);
+    // An allowance the mock no longer needs fails, so the list cannot outlive what it covers.
+    const unneeded = Object.values(UNRECORDED)
+      .flat()
+      .filter((u) => !needed.has(u));
+    expect(unneeded.map((u) => u.evidence)).toEqual([]);
+  });
+});
