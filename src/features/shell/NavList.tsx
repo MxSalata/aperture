@@ -2,7 +2,7 @@ import { NavLink, Stack, Text, UnstyledButton, VisuallyHidden } from '@mantine/c
 import { useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
-import { NAV, type NavItem, type NavSection } from './nav';
+import { activeNavPath, NAV, type NavItem, type NavSection } from './nav';
 import { isCustomOrder, orderNav, useNavOrder } from '@/stores/navOrder';
 import { useHoldToReorder } from '@/components/useHoldToReorder';
 
@@ -39,6 +39,10 @@ export function NavList({ canUse, onNavigate }: Props) {
     [order, canUse],
   );
   const custom = useMemo(() => isCustomOrder(NAV, order), [order]);
+  const activeTo = activeNavPath(
+    location.pathname,
+    sections.flatMap((s) => s.items),
+  );
 
   const [announcement, setAnnouncement] = useState('');
 
@@ -122,11 +126,7 @@ export function NavList({ canUse, onNavigate }: Props) {
               {section.label}
             </Text>
             {section.items.map((item, ii) => {
-              // By path segment: /security/users is not active on /security/users-audit.
-              const active =
-                item.to === '/'
-                  ? location.pathname === '/'
-                  : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
+              const active = item.to === activeTo;
               return (
                 <div
                   key={item.to}

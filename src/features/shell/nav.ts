@@ -430,5 +430,19 @@ export const NAV: NavSection[] = [
 
 export const ALL_NAV_ITEMS = NAV.flatMap((s) => s.items);
 
+/**
+ * The one entry a path belongs to: matched by path segment (/security/users is not active on
+ * /security/users-audit), and the longest match wins, so /health/fhir/... is FHIR servers, not
+ * Health check.
+ */
+export function activeNavPath(pathname: string, items: Pick<NavItem, 'to'>[]): string | null {
+  const matches = (to: string) =>
+    to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`);
+  return items.reduce<string | null>(
+    (best, { to }) => (matches(to) && (best === null || to.length > best.length) ? to : best),
+    null,
+  );
+}
+
 export const NAV_ICON_FALLBACK = IconAddressBook;
 export const SHIELD_ICON = IconShieldLock;
