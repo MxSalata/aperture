@@ -112,3 +112,34 @@ export function writeReport(testInfo: TestInfo, name: string, data: unknown) {
   writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`);
   return file;
 }
+
+/**
+ * With LIVE_EVIDENCE set to a folder, saves a screenshot of the whole page there as `<name>.png`;
+ * without it, does nothing. It closes the notice that the browser's clock is not the instance's,
+ * which covers the header and the signed-in account, and waits for running transitions to end (a
+ * drawer still sliding in shows the page through it). For a page longer than the window it makes
+ * the window as tall as the page for the shot, as the sidebar is as tall as the window: a full-page
+ * screenshot of the short window leaves an empty band under it.
+ */
+export async function evidence(page: Page, name: string) {
+  const folder = process.env.LIVE_EVIDENCE;
+  if (!folder) return;
+  const notice = page
+    .locator('.mantine-Notification-root')
+    .filter({ hasText: "The instance's clock is not this browser's" });
+  if (await notice.isVisible()) {
+    await notice.locator('.mantine-Notification-closeButton').click();
+    await expect(notice).toBeHidden();
+  }
+  const settled = () =>
+    page.waitForFunction(() => !document.getAnimations().some((a) => a instanceof CSSTransition));
+  await settled();
+  const size = page.viewportSize();
+  const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  if (size && height > size.height) {
+    await page.setViewportSize({ width: size.width, height });
+    await settled();
+  }
+  await page.screenshot({ path: `${folder}/${name}.png` });
+  if (size && height > size.height) await page.setViewportSize(size);
+}
