@@ -32,6 +32,9 @@
   SELECT, and some of them write (`%iKnow_Objects.DeleteDomain`), so a SELECT that calls a schema-qualified
   function is now named, confirmed, refused in a read-only tab and recorded in Activity, as a CALL is. The check
   reads the text only: an unqualified stored function still passes for a built-in one.
+- **A procedure's result set is shown.** A CALL (or a SELECT that calls a stored function) that answers rows now
+  shows them in the table, with their CSV export, where the screen used to say that IRIS reports nothing for a
+  change.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 

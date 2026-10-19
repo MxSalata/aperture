@@ -364,7 +364,8 @@ export default function SqlPage() {
                       .replace(/<\/?plans?>/g, '')
                       .trim()}
                   </Code>
-                ) : !result.kind.read ? (
+                ) : !result.data.columns.length ? (
+                  // A change answers no result set; a procedure's result set is shown like a query's.
                   <Alert color="teal" title={`${result.kind.keyword} done`}>
                     In {Math.max(1, result.data.ms)} ms. IRIS reports no row count for a change through this
                     API: query the table to see the result.
@@ -373,7 +374,7 @@ export default function SqlPage() {
                   <Stack gap={4}>
                     <Group gap="xs">
                       <Badge variant="light" color="gray" style={{ textTransform: 'none' }}>
-                        {`${result.data.rows.length} rows in ${Math.max(1, result.data.ms)} ms`}
+                        {`${result.kind.read ? '' : `${result.kind.keyword} done: `}${result.data.rows.length} rows in ${Math.max(1, result.data.ms)} ms`}
                       </Badge>
                       {result.data.truncated ? (
                         <Text size="xs" c="dimmed">
