@@ -339,6 +339,20 @@ describe('the demo instance', () => {
     expect(await fetchProductionStatus('INTEROP')).toEqual({ State: 1, ProdRunning: 'HL7.Production' });
   });
 
+  it("keeps a stopped production's event log as it was when it stopped, and none for one that has not run", async () => {
+    await signIn('_SYSTEM');
+    expect(await fetchHostLog('INTEROP', 'HL7.TestProduction', 'Test.In.File')).toMatchObject({
+      entries: [],
+    });
+    await setProductionState('INTEROP', 'HL7.Production', 'stop');
+    const read = () => fetchHostLog('INTEROP', 'HL7.Production', 'HL7.Out.Results.TCP');
+    const first = await read();
+    expect(first.entries.some((e) => e.Type === 'Error')).toBe(true);
+    // Nothing is logged after the stop: a later read finds the same entries at the same times.
+    await new Promise((r) => setTimeout(r, 20));
+    expect(await read()).toEqual(first);
+  });
+
   it('recovers a troubled production, which neither starts nor stops, and starts it again', async () => {
     await signIn('_SYSTEM');
     troubleInteropMock('INTEROP', 'HL7.Production');
@@ -354,6 +368,11 @@ describe('the demo instance', () => {
     await setProductionState('INTEROP', 'HL7.Production', 'recover');
     const suspended = await fetchProductionStatus('INTEROP');
     expect(productionState(suspended, 'HL7.Production')).toBe('Suspended');
+    // As on IRIS, the recovery leaves the hosts' event logs, messages and queues where they were.
+    const log = await fetchHostLog('INTEROP', 'HL7.Production', 'HL7.Out.Results.TCP');
+    expect(log.entries.some((e) => e.Type === 'Error')).toBe(true);
+    expect(await fetchHostMessages('INTEROP', 'HL7.Production', 'HL7.Out.Results.TCP')).not.toEqual([]);
+    expect(await fetchHostQueue('INTEROP', 'HL7.Production', 'HL7.Out.Results.TCP')).toHaveLength(3);
     await expect(setProductionState('INTEROP', 'HL7.TestProduction', 'start')).rejects.toMatchObject({
       status: 400,
     });

@@ -34,6 +34,8 @@ interface MockProduction {
   troubled?: boolean;
   /** Not running, but left suspended by a recovery (state 3): the only one its namespace may start. */
   suspended?: boolean;
+  /** When the demo stopped or recovered it: its event log and messages stay, up to then. */
+  stoppedAt?: number;
   hosts: Host[];
 }
 
@@ -192,6 +194,12 @@ const wallClock = (d: Date) =>
 const utc = (d: Date) =>
   `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}.${pad(d.getUTCMilliseconds(), 3)}`;
 
+/**
+ * Where a production's history ends: now while it runs, or when it stopped. As on IRIS, a stopped or
+ * suspended production's event log, messages and queues stay; one that has not run in the demo has none.
+ */
+const historyEnd = (p: MockProduction) => (p.running ? Date.now() : p.stoppedAt);
+
 /** As on IRIS (EnsPortal.Utils.ItemEventLog(host, ..., 0, 50)): a host's log route returns its newest 50. */
 const LOG_LIMIT = 50;
 
@@ -200,9 +208,10 @@ const LOG_LIMIT = 50;
  * minutes since then, more than the route returns.
  */
 function logOf(p: MockProduction, host: Host, index: number): EventLogEntry[] {
-  if (!p.running) return [];
+  const end = historyEnd(p);
+  if (end === undefined) return [];
   const rnd = seeded(index * 7919 + p.name.length);
-  const started = new Date(Date.now() - 6 * 3_600_000 - index * 1_300);
+  const started = new Date(end - 6 * 3_600_000 - index * 1_300);
   const job = String(1400 + index * 3);
   const out: EventLogEntry[] = [];
   let id = (index + 1) * 1000;
@@ -221,7 +230,7 @@ function logOf(p: MockProduction, host: Host, index: number): EventLogEntry[] {
   });
   if (host.error) {
     for (let k = 72; k >= 1; k--) {
-      const at = new Date(Date.now() - (k * 5 - rnd() * 2) * 60_000);
+      const at = new Date(end - (k * 5 - rnd() * 2) * 60_000);
       out.push({
         Id: id++,
         TimeLogged: wallClock(at),
@@ -246,12 +255,13 @@ function logOf(p: MockProduction, host: Host, index: number): EventLogEntry[] {
  * (MessageBodyId): a router sends each body it receives on to two targets, so pairs of its rows share one.
  */
 function messagesOf(p: MockProduction, host: Host, index: number): HostMessage[] {
-  if (!p.running) return [];
+  const end = historyEnd(p);
+  if (end === undefined) return [];
   const rnd = seeded(index * 104729 + 17);
   const peers = p.hosts.filter((h) => h !== host && h.name !== 'Ens.Alert');
   const out: HostMessage[] = [];
   for (let k = 0; k < 20; k++) {
-    const at = new Date(Date.now() - (k * 37 + Math.floor(rnd() * 30)) * 1000);
+    const at = new Date(end - (k * 37 + Math.floor(rnd() * 30)) * 1000);
     const peer = peers[Math.floor(rnd() * peers.length)];
     const outbound = host.type !== 'operation';
     out.push({
@@ -369,6 +379,7 @@ export function resetInteropMock() {
     p.running = INITIAL[i];
     p.troubled = false;
     p.suspended = false;
+    p.stoppedAt = undefined;
     for (const h of p.hosts) h.stopped = false;
   });
   overrides.clear();
@@ -423,12 +434,13 @@ export const interopHandlers = [
         return refused(
           `ERROR <Ens>ErrProductionSuspendedMismatch: Production '${suspended.name}' is suspended`,
         );
-      Object.assign(p, { running: true, suspended: false });
+      Object.assign(p, { running: true, suspended: false, stoppedAt: undefined });
       for (const h of p.hosts) h.stopped = false;
     } else if (state === 'stop') {
-      if (running && !running.troubled) running.running = false;
+      if (running && !running.troubled) Object.assign(running, { running: false, stoppedAt: Date.now() });
     } else if (state === 'recover') {
-      if (running?.troubled) Object.assign(running, { running: false, troubled: false, suspended: true });
+      if (running?.troubled)
+        Object.assign(running, { running: false, troubled: false, suspended: true, stoppedAt: Date.now() });
     }
     return HttpResponse.json({ Success: 1 });
   }),
@@ -542,20 +554,22 @@ export const interopHandlers = [
       return HttpResponse.json({ messages: p && h ? messagesOf(p, h.host, h.index) : [] });
     }, 'readMessages'),
   ),
-  // Only the host in error has a queue: what it could not send waits (IRIS answers {} for an empty one).
+  // Only the host in error has a queue: what it could not send waits, through a stop or a recovery too
+  // (IRIS answers {} for an empty one).
   http.get(
     `${V}/:ns/productions/:production/:host/queue`,
     readable(({ params }) => {
       const p = find(params.ns, params.production);
       const h = p && hostOf(p, params.host);
-      if (!p || !h || !p.running || !h.host.error) return HttpResponse.json({});
+      const end = p && historyEnd(p);
+      if (!h || end === undefined || !h.host.error) return HttpResponse.json({});
       const waiting = 3;
       const children: QueuedMessage[] = Array.from({ length: waiting }, (_, k) => ({
         QId: `${h.index + 1}:${k + 1}`,
         QCount: waiting,
         HeaderId: String(70000 + k),
         IsRequest: 1,
-        TimeCreated: wallClock(new Date(Date.now() - (waiting - k) * 95_000)),
+        TimeCreated: wallClock(new Date(end - (waiting - k) * 95_000)),
         Source: 'HL7.Router.ORU',
         Target: h.host.name,
         Status: 2,
