@@ -293,8 +293,14 @@ export const useSession = create<SessionState>()(
       login: async (args) => {
         const base = apiBase(args.baseUrl);
         const previous = get();
+        // A reload that ends a Basic (or not-kept) session leaves the tab anonymous on the same
+        // connection, with the per-tab stores (SQL history, Activity, Jobs) still in sessionStorage:
+        // another account signing in there must not inherit them.
+        const otherAccount =
+          !!previous.username && previous.username.toLowerCase() !== args.username.toLowerCase();
         if (
           previous.status === 'authenticated' ||
+          otherAccount ||
           previous.connectionId !== args.connectionId ||
           previous.baseUrl !== args.baseUrl
         ) {

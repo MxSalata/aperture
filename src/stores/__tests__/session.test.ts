@@ -145,6 +145,26 @@ describe('session', () => {
     expect(useHealth.getState().reachable).toBe(true);
   });
 
+  it("does not hand one account's tab history to another after a reload ended its session", async () => {
+    const { useSqlHistory } = await import('../sqlHistory');
+    // What a reload leaves of a Basic session: anonymous, same connection, the stores still there.
+    useSession.setState({ status: 'anonymous', username: 'Ada', connectionId: 't', baseUrl: BASE });
+    useSqlHistory.getState().add("SELECT Name FROM Sample.Person WHERE Name = 'Smith'");
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+    expect(useSqlHistory.getState().statements).toEqual([]);
+
+    // The same account signing in again keeps its own.
+    await useSession.getState().logout();
+    useSession.setState({ status: 'anonymous', username: '_system', connectionId: 't', baseUrl: BASE });
+    useSqlHistory.getState().add('SELECT 1');
+    await useSession
+      .getState()
+      .login({ connectionId: 't', baseUrl: BASE, username: '_SYSTEM', password: 'SYS' });
+    expect(useSqlHistory.getState().statements).toEqual(['SELECT 1']);
+  });
+
   it('resets the cache when signing in to a different instance without signing out', async () => {
     await useSession
       .getState()
