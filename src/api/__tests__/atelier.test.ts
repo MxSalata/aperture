@@ -62,6 +62,9 @@ describe('SQL through Atelier, on the demo instance', () => {
     expect((await runSql('USER', 'SELECT * FROM Sample.Person', [], 3)).truncated).toBe(true);
     const plan = await runSql('USER', 'EXPLAIN SELECT Name FROM Sample.Person');
     expect(String(plan.rows[0][0])).toContain('Read master map Sample.Person');
+    // The values typed for the query itself are not sent with its EXPLAIN, which IRIS would refuse.
+    const withValue = await runSql('USER', 'EXPLAIN SELECT Name FROM Sample.Person WHERE City = ?', ['Leeds']);
+    expect(String(withValue.rows[0][0])).toContain('Sample.Person');
     expect(
       (await runSql('USER', "SELECT Name FROM Sample.Person WHERE Name %STARTSWITH 'Ada'")).rows,
     ).toEqual([['Ada Lovelace']]);

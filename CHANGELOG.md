@@ -26,6 +26,8 @@
 - **First 100 rows works for any table name.** The catalogue's preview quotes the schema and the table as delimited
   names (`"Sample"."Order"`), so a reserved word or an unusual character no longer fails; the demo reads delimited
   names too, matching them whatever their case, as IRIS does.
+- **Explain works with parameters filled in.** The values typed for a query were sent with its `EXPLAIN`, which
+  IRIS refuses (SQLCODE -400); a plan is now asked for without them, and the demo refuses them as IRIS does.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 

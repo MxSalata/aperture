@@ -144,6 +144,8 @@ export async function runSql(
   if (!kind.keyword) throw new NotSentError(NOTHING_TO_RUN, `${ATELIER_PREFIX}${path}`);
   if (!kind.read && useReadOnly.getState().readOnly)
     throw new NotSentError(READ_ONLY_REFUSAL, `${ATELIER_PREFIX}${path}`);
+  // IRIS prepares an EXPLAIN without binding values, and refuses any it is given (SQLCODE -400).
+  if (kind.keyword === 'EXPLAIN') parameters = [];
   const started = Date.now();
   // One row more than shown says whether there are more.
   const qs = `?positional=1&max=${max + 1}`;

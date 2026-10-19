@@ -63,6 +63,16 @@ describe("the demo's SQL", () => {
     expect(String(run('EXPLAIN SELECT * FROM Sample.Person').rows[0][0])).toContain('Sample.Person.IDKEY');
   });
 
+  it('refuses more values than the statement has parameters, and any value for an EXPLAIN', () => {
+    expect(() => run('SELECT 1 AS One', ['a'])).toThrow(/more parameter values/);
+    expect(() => run('EXPLAIN SELECT Name FROM Sample.Person WHERE City = ?', ['Leeds'])).toThrow(
+      expect.objectContaining({ sqlcode: -400 }),
+    );
+    expect(String(run('EXPLAIN SELECT Name FROM Sample.Person WHERE City = ?').rows[0][0])).toContain(
+      'Sample.Person',
+    );
+  });
+
   it('reads delimited names, whatever their case, and never as keywords', () => {
     expect(run('SELECT TOP 1 "Name" FROM "Sample"."Person" ORDER BY "Name"').rows).toEqual([['Ada Lovelace']]);
     expect(run('SELECT COUNT(*) AS n FROM "sample"."person"').rows).toEqual([[8]]);

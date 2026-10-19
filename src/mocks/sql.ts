@@ -693,8 +693,16 @@ export function runStatement(
 ): { columns: { name: string; type: string }[]; rows: unknown[][] } {
   const text = sql.trim().replace(/;\s*$/, '');
   const started = performance.now();
-  const c = new Cursor(tokenize(text), parameters);
+  const tokens = tokenize(text);
+  const c = new Cursor(tokens, parameters);
   const verb = c.peek()?.quoted ? '' : (c.peek()?.v.toUpperCase() ?? '');
+  // IRIS refuses more values than the statement has `?`; an EXPLAIN binds none.
+  const slots = verb === 'EXPLAIN' ? 0 : tokens.filter((t) => t.t === 'param').length;
+  if (parameters.length > slots)
+    throw new SqlCode(
+      -400,
+      'Dynamic SQL Execute, more parameter values passed than are specified in the dynamic statement',
+    );
   let answer: { columns: Column[]; rows: unknown[][] } = { columns: [], rows: [] };
   let count = 0;
   if (verb === 'EXPLAIN') {
