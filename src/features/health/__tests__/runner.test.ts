@@ -34,6 +34,7 @@ describe('the health check runner', () => {
       expect.arrayContaining([
         'unknown-user:enabled',
         'auditing:Login',
+        'auditing:sql',
         'services:%Service_Terminal',
         'web-apps:/csp/legacy:namespace',
         'journal-freeze:off',

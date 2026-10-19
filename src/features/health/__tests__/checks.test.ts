@@ -131,6 +131,39 @@ describe('health checks', () => {
       ['critical', 'auditing:off'],
       ['warning', 'auditing:Login'],
     ]);
+    // With auditing on, the SQL change events off are advice, with each event read as evidence.
+    const sqlOff = checkAuditing(
+      {
+        enabled: true,
+        events: [
+          { EventName: '%System/%SQL/DynamicStatementDML', Enabled: true },
+          { EventName: '%System/%SQL/DynamicStatementDDL', Enabled: false },
+          { EventName: '%System/%SQL/DynamicStatementQuery', Enabled: false },
+        ],
+      },
+      READ,
+    );
+    expect(sqlOff.map((f) => [f.severity, f.id])).toEqual([['advice', 'auditing:sql']]);
+    expect(sqlOff[0].action).toMatch(/^Enable DynamicStatementDDL on/);
+    expect(sqlOff[0].evidence.fields).toEqual([
+      { label: '%System/%SQL/DynamicStatementDML', value: 'true' },
+      { label: '%System/%SQL/DynamicStatementDDL', value: 'false' },
+      { label: '%System/%SQL/DynamicStatementQuery', value: 'false' },
+    ]);
+    // Changes audited, queries not: nothing to report.
+    expect(
+      checkAuditing(
+        {
+          enabled: true,
+          events: [
+            { EventName: '%System/%SQL/DynamicStatementDML', Enabled: true },
+            { EventName: '%System/%SQL/DynamicStatementDDL', Enabled: true },
+            { EventName: '%System/%SQL/DynamicStatementQuery', Enabled: false },
+          ],
+        },
+        READ,
+      ),
+    ).toEqual([]);
     const services = checkServices(
       [
         { Name: '%Service_Terminal', Enabled: true, AuthenticationMethods: ['Unauthenticated', 'Password'] },

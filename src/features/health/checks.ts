@@ -1,6 +1,7 @@
 import { certificateStatus, EXPIRY_WARNING_DAYS } from '@/lib/certs';
 import { parseIrisDate } from '@/lib/format';
 import { serviceEnabled } from '@/features/security/keys';
+import { sqlAuditState } from '@/features/security/audit';
 import type { StorageLocation } from '@/features/databases/storage';
 
 /**
@@ -124,7 +125,7 @@ export const CHECKS: CheckInfo[] = [
   },
   {
     id: 'auditing',
-    title: 'Auditing, and the login events',
+    title: 'Auditing, the login events, and SQL statements',
     area: 'Security',
     needs: ['%Admin_Secure:U'],
     reads: 'GET /v2/security/audit/enabled, GET /v2/security/audit/events',
@@ -504,6 +505,25 @@ export function checkAuditing(a: AuditFacts, read: number): Finding[] {
           { to: '/security/audit', label: 'Audit' },
         ),
       );
+  // With auditing off the finding above says it all; with it on, SQL changes may still go unrecorded.
+  const sql = sqlAuditState(a.enabled, a.events);
+  if (a.enabled === true && sql.level === 'off' && sql.changeEvents.length)
+    out.push(
+      finding(
+        'auditing',
+        'sql',
+        'advice',
+        'SQL statements are not audited',
+        'Statements run through Dynamic SQL (the SQL screen, the Atelier API, %SQL.Statement in code) are not written to the audit log, under any user, so a change made to data or tables through SQL cannot be traced to an account.',
+        `Enable ${sql.changeEvents.map((e) => e.split('/').pop()).join(' and ')} on the Audit screen, or from the SQL screen; it applies to every SQL client and adds a record for each change.`,
+        {
+          source: 'GET /v2/security/audit/events',
+          read,
+          fields: sql.events.map((e) => f(e.id, e.enabled)),
+        },
+        { to: '/security/audit', label: 'Audit' },
+      ),
+    );
   return out;
 }
 
