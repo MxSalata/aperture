@@ -101,3 +101,19 @@ export function sqlAuditState(
   const level: SqlAuditLevel = !auditing || !changes ? 'off' : queries ? 'all' : 'changes';
   return { ...base, level };
 }
+
+const KIND: Record<string, string> = {
+  [SQL_AUDIT.dml]: 'changes to data (INSERT, UPDATE, DELETE)',
+  [SQL_AUDIT.ddl]: 'changes to definitions (DDL)',
+  [SQL_AUDIT.combined]: 'statements',
+};
+
+/**
+ * What goes unrecorded while system-wide auditing is on but some change events are off: every
+ * statement when no SQL event is on, otherwise the kinds of change those events would record
+ * ("changes to definitions (DDL)"), so a partial state is not described as nothing audited.
+ */
+export function unauditedChanges(state: SqlAuditState): { all: boolean; kinds: string } {
+  const all = state.auditing === false || state.events.every((e) => !e.enabled);
+  return { all, kinds: state.changeEvents.map((id) => KIND[id] ?? id).join(' and ') };
+}

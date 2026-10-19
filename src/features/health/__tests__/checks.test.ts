@@ -145,6 +145,9 @@ describe('health checks', () => {
     );
     expect(sqlOff.map((f) => [f.severity, f.id])).toEqual([['advice', 'auditing:sql']]);
     expect(sqlOff[0].action).toMatch(/^Enable DynamicStatementDDL on/);
+    // DML is on, so the finding names what goes unrecorded rather than saying nothing is.
+    expect(sqlOff[0].title).toBe('Some SQL changes are not audited');
+    expect(sqlOff[0].meaning).toMatch(/^The changes to definitions \(DDL\) run through Dynamic SQL/);
     expect(sqlOff[0].evidence.fields).toEqual([
       { label: '%System/%SQL/DynamicStatementDML', value: 'true' },
       { label: '%System/%SQL/DynamicStatementDDL', value: 'false' },
