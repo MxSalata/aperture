@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { delay, http, HttpResponse } from 'msw';
 import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -97,5 +97,31 @@ describe('the SQL screen', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Run CALL' }));
     expect(await screen.findByText('Ens.AlarmResponse', {}, { timeout: 10_000 })).toBeVisible();
     expect(screen.getByText(/CALL done: 2 rows in/)).toBeVisible();
+  }, 30_000);
+
+  it('shows the newest run when an older, slower one answers after it, and keeps both in Recent', async () => {
+    await signIn('_SYSTEM', 'basic');
+    server.use(
+      http.post('*/api/atelier/:version/:ns/action/query', async ({ request }) => {
+        const { query } = (await request.json()) as { query: string };
+        const slow = query.includes('slow');
+        if (slow) await delay(1500);
+        return HttpResponse.json({
+          status: { errors: [], summary: '' },
+          console: [],
+          result: [{ columns: [{ name: 'A', type: 'VARCHAR(10)' }], content: [[slow ? 'older' : 'newer']] }],
+        });
+      }),
+    );
+    open();
+    const statement = await screen.findByRole('textbox', { name: 'Statement' }, { timeout: 10_000 });
+    fireEvent.change(statement, { target: { value: "SELECT 'slow' AS A" } });
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    fireEvent.change(statement, { target: { value: "SELECT 'quick' AS A" } });
+    fireEvent.keyDown(statement, { key: 'Enter', ctrlKey: true });
+    expect(await screen.findAllByText('newer', {}, { timeout: 10_000 })).not.toHaveLength(0);
+    await waitFor(() => expect(useSqlHistory.getState().statements).toHaveLength(2), { timeout: 10_000 });
+    expect(screen.getAllByText('newer')).not.toHaveLength(0);
+    expect(screen.queryAllByText('older')).toHaveLength(0);
   }, 30_000);
 });

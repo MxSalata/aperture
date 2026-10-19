@@ -17,7 +17,7 @@ import {
 } from '@mantine/core';
 import { IconAlertTriangle, IconHistory, IconPlayerPlay, IconRoute } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { fetchAtelierServer, isSystemSchema, runSql, sqlKeys, type SqlResult } from '@/api/atelier';
 import { mgmntCredentials } from '@/api/mgmnt';
@@ -159,21 +159,25 @@ export default function SqlPage() {
   const count = placeholders(sql);
   const shaped = useMemo(() => (result ? asRows(result.data) : null), [result]);
 
+  // Run, Ctrl+Enter, Explain and the catalogue's preview may overlap: only the newest run's answer is shown.
+  const latest = useRef(0);
   const execute = async (text: string) => {
+    const id = ++latest.current;
     setRunning(true);
     setError(null);
     const k = classifyStatement(text);
     try {
       const data = await runSql(ns, text, values.slice(0, placeholders(text)), Number(limit));
-      setResult({ sql: text, kind: k, data });
       remember(text);
       // A change may have altered the catalogue.
       if (!k.read) void qc.invalidateQueries({ queryKey: sqlKeys.all });
+      if (id === latest.current) setResult({ sql: text, kind: k, data });
     } catch (e) {
+      if (id !== latest.current) return;
       setResult(null);
       setError(e);
     } finally {
-      setRunning(false);
+      if (id === latest.current) setRunning(false);
     }
   };
 
