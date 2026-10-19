@@ -424,13 +424,15 @@ API's query action, `POST /api/atelier/v8/{ns}/action/query?positional=1&max=N` 
   as IRIS 2026.2 ships, every `%SQL` event is off, though it still counts the statements (`Total` goes up,
   `Written` stays 0). `sqlAuditState` (`lib/sqlAudit.ts`) reads both: changes are audited with
   `DynamicStatementDML` and `DynamicStatementDDL` on (or the combined `DynamicStatement`, on an instance that lists
-  no split events), queries with `DynamicStatementQuery`. The screen says "IRIS SQL audit is disabled" when changes
-  are not, a calmer note when only queries are not, and a line when all are; an account without
-  `%Admin_Secure:U` (or a refused read) is told the state is unknown. With it, the notice switches the change
-  events on, query auditing as a separate step and system-wide auditing when it is off, each confirmed (they are
-  instance-wide: every SQL client, and the audit database grows), refused in a read-only tab, recorded in Activity
-  as `PUT /v2/security/audit/event` (IRIS audits the change as `AuditChange`) and read back. The Health check's
-  auditing check reports the same state as advice.
+  no split events), queries with `DynamicStatementQuery`; an instance that lists one split change event but not the
+  other leaves the state unknown. A partial state names the changes it leaves unrecorded. The screen says "IRIS SQL
+  audit is disabled" when changes are not, a calmer note when only queries are not, and a line when all are; an
+  account without `%Admin_Secure:U` (or a refused read) is told the state is unknown. With it, the notice switches
+  the change events on, query auditing as a separate step and system-wide auditing when it is off, each confirmed
+  (they are instance-wide: every SQL client, and the audit database grows), refused in a read-only tab, recorded in
+  Activity as `PUT /v2/security/audit/event` (IRIS audits the change as `AuditChange`) and read back, the settings
+  read again after a switch-on that fails part-way (each event is a PUT of its own). The Health check's auditing
+  check reports the same state as advice.
 - **The demo** answers from `mocks/sql.ts`, a small evaluator (one table per `SELECT`, `WHERE`, `GROUP BY`,
   `ORDER BY`, `TOP`, the five aggregates, `INSERT`, `UPDATE`, `DELETE`, `CREATE TABLE`, `DROP TABLE`, `EXPLAIN`)
   with IRIS's SQLCODEs for what it cannot do, and counts each statement under its `DynamicStatement*` audit event
