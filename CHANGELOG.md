@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.1 - Dependency updates (19 October 2026)
+
+- Bump nginx from 1.30-alpine to 1.31-alpine in /docker.
+- Bump vitest from 4.1.11 to 5.0.2.
+
 ## 1.7.0 - SQL statements in the audit log (19 October 2026)
 
 - **SQL audit.** The SQL screen says when IRIS does not write the statements run there to its audit log: "IRIS SQL
