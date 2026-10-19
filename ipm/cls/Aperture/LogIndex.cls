@@ -9,7 +9,9 @@
 /// (each entry is one HNSW insert); a rotation or truncation is noticed by the file's signature
 /// and size, and that file starts afresh. A query reads one entry from its file at the offset it
 /// was given, vectorises it and asks SQL for the TOPK nearest by VECTOR_COSINE. Nothing here
-/// reads outside the catalogued files, and nothing writes outside the two tables.
+/// reads outside the catalogued files, and nothing writes outside the two tables. The SQL runs
+/// without the caller's table privileges (ipm/python/lib/aperture_sql.py): the routes have
+/// already checked %Admin_Operate, which is all an operator account brings.
 Class Aperture.LogIndex
 {
 
@@ -86,11 +88,16 @@ ClassMethod StatusPython(pydir, catalog, maxbytes, maxlines, firsttail, dims) As
 {
     import json
     import os
-    import iris
+    import sys
+
+    pydir = str(pydir)
+    if pydir not in sys.path:
+        sys.path.insert(0, pydir)
+    import aperture_sql as sql
 
     files = [f for f in json.loads(str(catalog)) if f.get("kind") == "messages"]
     marks = {}
-    for row in iris.sql.exec("SELECT LogFile, IndexedTo, Bytes, Lines, IndexedAt FROM Aperture.LogIndexFile"):
+    for row in sql.rows("SELECT LogFile, IndexedTo, Bytes, Lines, IndexedAt FROM Aperture.LogIndexFile"):
         marks[row[0]] = {"indexedTo": int(row[1] or 0), "bytes": int(row[2] or 0), "lines": int(row[3] or 0), "indexedAt": row[4] or ""}
     out = []
     pending = 0
@@ -115,7 +122,7 @@ ClassMethod StatusPython(pydir, catalog, maxbytes, maxlines, firsttail, dims) As
             "pending": int(todo),
         })
     total = 0
-    for row in iris.sql.exec("SELECT COUNT(*) FROM Aperture.LogLine"):
+    for row in sql.rows("SELECT COUNT(*) FROM Aperture.LogLine"):
         total = int(row[0] or 0)
     return json.dumps({
         "files": out,
@@ -138,11 +145,11 @@ ClassMethod RefreshPython(pydir, catalog, maxbytes, maxlines, firsttail, maxtext
     import json
     import os
     import sys
-    import iris
 
     pydir = str(pydir)
     if pydir not in sys.path:
         sys.path.insert(0, pydir)
+    import aperture_sql as sql
     import aperture_vectors as av
 
     maxbytes, maxlines, firsttail = int(maxbytes), int(maxlines), int(firsttail)
@@ -175,13 +182,13 @@ ClassMethod RefreshPython(pydir, catalog, maxbytes, maxlines, firsttail, maxtext
         except OSError:
             continue
         mark = None
-        for row in iris.sql.exec("SELECT Signature, IndexedTo, Lines FROM Aperture.LogIndexFile WHERE LogFile = ?", fid):
+        for row in sql.rows("SELECT Signature, IndexedTo, Lines FROM Aperture.LogIndexFile WHERE LogFile = ?", fid):
             mark = {"signature": row[0], "indexedTo": int(row[1] or 0), "lines": int(row[2] or 0)}
         fresh = mark is None
         if mark and (mark["signature"] != sig or size < mark["indexedTo"]):
             # Another file under this name (a rotation), or the file was truncated: start afresh.
-            list(iris.sql.exec("DELETE FROM Aperture.LogLine WHERE LogFile = ?", fid))
-            list(iris.sql.exec("DELETE FROM Aperture.LogIndexFile WHERE LogFile = ?", fid))
+            sql.rows("DELETE FROM Aperture.LogLine WHERE LogFile = ?", fid)
+            sql.rows("DELETE FROM Aperture.LogIndexFile WHERE LogFile = ?", fid)
             mark, fresh = None, True
         entry = {"id": fid, "added": 0, "indexedTo": mark["indexedTo"] if mark else 0, "size": int(size)}
         if budget <= 0:
@@ -218,21 +225,23 @@ ClassMethod RefreshPython(pydir, catalog, maxbytes, maxlines, firsttail, maxtext
                 continue
             vector = av.literal(av.vectorise(text))
             try:
-                list(iris.sql.exec(insert, fid, int(e["offset"]), e["time"], int(e["severity"]), e["category"][:64],
-                                   text, template[:maxtemplate], vector))
+                sql.rows(insert, fid, int(e["offset"]), e["time"], int(e["severity"]), e["category"][:64],
+                         text, template[:maxtemplate], vector)
                 added += 1
                 budget -= 1
-            except Exception:
+            except sql.SQLError as error:
                 # Already indexed (the unique index refused it): the watermark was behind, move on.
-                pass
+                # Anything else stops the refresh before the watermark passes the entry.
+                if error.sqlcode != sql.DUPLICATE:
+                    raise
         if fresh:
-            list(iris.sql.exec(
+            sql.rows(
                 "INSERT INTO Aperture.LogIndexFile (LogFile, Path, Signature, IndexedTo, Bytes, Lines, IndexedAt) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                fid, path, sig, int(indexed_to), int(size), int(added), now))
+                fid, path, sig, int(indexed_to), int(size), int(added), now)
         else:
-            list(iris.sql.exec(
+            sql.rows(
                 "UPDATE Aperture.LogIndexFile SET Path = ?, IndexedTo = ?, Bytes = ?, Lines = Lines + ?, IndexedAt = ? WHERE LogFile = ?",
-                path, int(indexed_to), int(size), int(added), now, fid))
+                path, int(indexed_to), int(size), int(added), now, fid)
         entry.update({"added": int(added), "indexedTo": int(indexed_to), "pending": int(size - indexed_to)})
         report["files"].append(entry)
         report["lines"] += added
@@ -245,11 +254,11 @@ ClassMethod SimilarPython(pydir, file, path, offset, limit, topk, same, dims, ma
     import json
     import os
     import sys
-    import iris
 
     pydir = str(pydir)
     if pydir not in sys.path:
         sys.path.insert(0, pydir)
+    import aperture_sql as sql
     import aperture_vectors as av
 
     fid, path = str(file), str(path)
@@ -293,11 +302,11 @@ ClassMethod SimilarPython(pydir, file, path, offset, limit, topk, same, dims, ma
         return json.dumps({"entry": entry, "matches": [], "summary": {"similar": 0, "of": 0, "first": "", "last": "", "threshold": same},
                            "method": "cosine similarity over hashed words (IRIS Vector Search, HNSW index)"})
     vector = av.literal(av.vectorise(text))
-    sql = ("SELECT TOP %d LogFile, ByteOffset, Stamp, Severity, Category, Entry, "
+    query = ("SELECT TOP %d LogFile, ByteOffset, Stamp, Severity, Category, Entry, "
            "VECTOR_COSINE(Embedding, TO_VECTOR(?, DOUBLE, %d)) AS Score FROM Aperture.LogLine "
            "ORDER BY VECTOR_COSINE(Embedding, TO_VECTOR(?, DOUBLE, %d)) DESC" % (topk, dims, dims))
     rows = []
-    for row in iris.sql.exec(sql, vector, vector):
+    for row in sql.rows(query, vector, vector):
         rows.append({
             "file": row[0],
             "offset": int(row[1]),

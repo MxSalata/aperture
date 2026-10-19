@@ -26,6 +26,11 @@
   comma, a missing quote) went into the curl command, the `.http` block and the Postman collection as typed,
   password included, although the panel says secret values are redacted. Such a body is still exported as typed,
   with every secret value masked.
+- **Similar entries work for an operator account.** The wording index ran its SQL as Dynamic SQL, which checks
+  table privileges the package never grants, so an account with %Admin_Operate but not %All (the %Operator role)
+  would get a 500 from the index and from Similar entries. Its statements are now prepared without that check
+  (`aperture_sql.py`, beside the vectoriser), as the routes already check %Admin_Operate. A refresh no longer
+  passes over an entry it failed to insert for any reason other than already holding it.
 
 ## 1.3.0 - Every screen fits a phone and a laptop (2 October 2026)
 

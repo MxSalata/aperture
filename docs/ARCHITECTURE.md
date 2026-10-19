@@ -296,6 +296,11 @@ what was appended since the watermark; one call indexes at most 2 MB and 4,000 e
 files (each entry is an HNSW insert), and reports what is still pending. Refreshes run one at a
 time (a lock on `^Aperture.LogIndex`): a second caller waits up to 20 seconds for the first, then
 finds little or nothing left, or answers `busy` and adds nothing. `GET /logs/similar` only reads.
+The SQL runs through `ipm/python/lib/aperture_sql.py`, which prepares each statement without the
+caller's table privileges (as `%SQL.Statement`'s `%ExecDirectNoPriv` does): the package grants none on
+its tables, and the routes have already checked `%Admin_Operate`, which is all an operator account
+brings. A refresh skips an entry the unique index already holds and stops at any other SQL error,
+before its watermark passes the entry.
 An opened entry shows its count at once from the index as it stands (`GET /logs/index`, then
 `GET /logs/similar` for one match; no refresh); **Show similar entries** calls `POST /logs/index`
 until nothing is pending, then asks. The browser demo's mock keeps its index current, as on an
