@@ -19,6 +19,7 @@ import {
   messageStatus,
   productionState,
   setProductionState,
+  startRefusal,
   utcInstant,
   type EventLogEntry,
   type ProductionItem,
@@ -71,6 +72,22 @@ describe('reading what IRIS reports', () => {
     expect(productionState({ State: 4, ProdRunning: 'A' }, 'A')).toBe('Troubled');
     expect(productionState({ State: 9, ProdRunning: 'A' }, 'A')).toBe('State 9');
     expect(productionState(undefined, 'A')).toBe('Unknown');
+  });
+
+  it('says why Ens.Director would not start a production while another holds the namespace', () => {
+    expect(startRefusal({ State: 1, ProdRunning: 'A' }, 'B', 'NS')).toBe(
+      'A is running in NS, and IRIS starts no other production until it is stopped',
+    );
+    expect(startRefusal({ State: 4, ProdRunning: 'A' }, 'B', 'NS')).toMatch(
+      /^A is troubled .* until it is recovered$/,
+    );
+    expect(startRefusal({ State: 3, ProdRunning: 'A' }, 'B', 'NS')).toMatch(
+      /^A is suspended .* has run again$/,
+    );
+    // A suspended production starts again, and with none named any starts.
+    expect(startRefusal({ State: 3, ProdRunning: 'A' }, 'A', 'NS')).toBeUndefined();
+    expect(startRefusal({ State: 2, ProdRunning: '' }, 'A', 'NS')).toBeUndefined();
+    expect(startRefusal(undefined, 'A', 'NS')).toBeUndefined();
   });
 
   it('counts a troubled or suspended production as the one its namespace names, and no other', () => {

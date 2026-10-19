@@ -54,13 +54,17 @@ export function ProductionStateButton({
   production,
   running,
   readOnly,
+  blocked,
 }: {
   ns: string;
   production: string;
   running: boolean;
   readOnly: ProductionDefinition['ReadOnly'];
+  /** Why IRIS would refuse to start it while another production holds the namespace (startRefusal). */
+  blocked?: string;
 }) {
-  const refusal = controlRefusal(useInteropPrivileges()?.production, readOnly);
+  const refusal =
+    controlRefusal(useInteropPrivileges()?.production, readOnly) ?? (running ? undefined : blocked);
   const live = useSession((s) => s.info?.systemMode === 'LIVE');
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);

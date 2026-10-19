@@ -20,6 +20,7 @@ import {
   isProductionActive,
   messageStatus,
   productionState,
+  startRefusal,
   statusRank,
   utcInstant,
   type EventLogEntry,
@@ -435,6 +436,7 @@ export default function ProductionPage() {
   const state = status ? productionState(status, production) : undefined;
   // Running, troubled or suspended: its hosts' event logs are its own recent ones.
   const active = isProductionActive(status, production);
+  const blocked = startRefusal(status, production, namespace);
   const items = d?.Items ?? [];
   const scanned = active && canReadLogs ? items.slice(0, LOG_SCAN_LIMIT) : [];
   const logs = useQueries({
@@ -539,6 +541,7 @@ export default function ProductionPage() {
                 production={production}
                 running={state === 'Running'}
                 readOnly={d.ReadOnly}
+                blocked={blocked}
               />
             ) : null}
             <RefreshControl
@@ -575,9 +578,11 @@ export default function ProductionPage() {
           />
           {!active ? (
             <Alert color="gray" icon={<IconInfoCircle size={16} />}>
-              {d.ProdRunning
-                ? `${d.ProdRunning} is the production running in ${namespace}; this one is stopped, so its hosts report stopped.`
-                : `No production is running in ${namespace}.`}
+              {blocked
+                ? `${blocked}. This one is stopped, so its hosts report stopped.`
+                : d.ProdRunning
+                  ? `IRIS reports ${d.ProdRunning} as ${productionState(status, d.ProdRunning).toLowerCase()} in ${namespace}; this one is stopped, so its hosts report stopped.`
+                  : `No production is running in ${namespace}.`}
             </Alert>
           ) : state !== 'Running' ? (
             <Alert color="yellow" icon={<IconInfoCircle size={16} />}>

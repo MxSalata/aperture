@@ -121,6 +121,17 @@ describe('the production screen', () => {
     await waitFor(() => expect(within(row).getByText(/^\d+\+$/)).toBeInTheDocument());
   });
 
+  it('says when a troubled production of the namespace keeps this one from starting', async () => {
+    troubleInteropMock('INTEROP', 'HL7.Production');
+    await open('_SYSTEM', 'HL7.TestProduction');
+    expect(
+      await screen.findByText(
+        /^HL7\.Production is troubled in INTEROP, and IRIS starts no other production until it is recovered\./,
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Start production' })).toBeDisabled());
+  });
+
   it('disables Stop for an account with run but not runItem, and says why', async () => {
     setInteropPrivileges('operator', {
       production: { read: true, write: false, run: true, runItem: false },

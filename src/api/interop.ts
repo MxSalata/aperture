@@ -275,6 +275,26 @@ export const isProductionActive = (status: ProductionStatus | undefined, product
   !!status && status.ProdRunning === production;
 
 /**
+ * Why Ens.Director would refuse to start `production` because another production of the namespace holds
+ * it (StartProduction: ErrProductionAlreadyRunning, ErrProductionSuspendedMismatch or
+ * ErrProductionNotShutdownCleanly), or undefined when none does.
+ */
+export function startRefusal(
+  status: ProductionStatus | undefined,
+  production: string,
+  namespace: string,
+): string | undefined {
+  const other = status?.ProdRunning;
+  if (!other || other === production) return undefined;
+  const until = { 1: 'it is stopped', 3: 'it has run again', 4: 'it is recovered' }[
+    status.State as 1 | 3 | 4
+  ];
+  if (!until) return undefined;
+  const state = PRODUCTION_STATES[status.State].toLowerCase();
+  return `${other} is ${state} in ${namespace}, and IRIS starts no other production until ${until}`;
+}
+
+/**
  * Why IRIS would refuse to start or stop this production or its hosts, or undefined when it would not:
  * the route wants both run privileges for either, and refuses a read-only production class. The
  * definition's `ReadOnly` also says so when the account merely may not edit productions, so it only

@@ -30,7 +30,9 @@
   cleanly and stopping one does nothing, so it is offered Recover, which leaves it suspended and ready to start; the
   page no longer calls it stopped beside itself, and counts its hosts' errors. The start, stop and recover buttons
   need both run privileges, as IRIS does, and say when IRIS would refuse a read-only production; the Read-only row
-  gives its real causes. The demo follows Ens.Director: a production does not start while another runs.
+  gives its real causes. While another production of the namespace runs, is troubled or is suspended, the page
+  says so and why, and disables Start, which Ens.Director would refuse. The demo follows Ens.Director: a production
+  does not start while another runs.
 - **The demo's interoperability API is held to IRIS's answers.** The mock-versus-IRIS test now checks the reads of
   the production screens against the shapes IRIS for Health 2026.2 sent (`p-interop.json`), and found a host's pool
   size given a default IRIS does not have.
