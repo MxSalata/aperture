@@ -53,7 +53,7 @@ Lock removal with transaction check, devices with the telnet and default-device 
 
 ## Health: FHIR servers
 
-IRIS for Health's FHIR servers, namespace by namespace: version, storage, state and resources; a server's configuration, resources per type, CapabilityStatement and jobs; the FHIR packages. Enable and disable (read back), reset, decommission and delete (typed URL, a job followed to its end); open servers and debug mode called out.
+IRIS for Health's FHIR servers, namespace by namespace: version, storage, state and resources; a server's configuration, resources per type, CapabilityStatement and jobs; the FHIR packages. Enable and disable (read back), reset, decommission and delete (typed URL, a job followed to its end); servers that answer an anonymous search, and debug mode, called out.
 
 _Notable:_ InterSystems' FHIR Server Management API with the session's own token; `src/api/fhir.ts`, `src/features/fhir/`.
 

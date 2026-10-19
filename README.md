@@ -281,7 +281,8 @@ Other scripts:
 | `/api/monitor` | host CPU, memory and disk, licence use and the interoperability metrics |
 | `/api/mgmnt` | the instance's REST applications and the routes their dispatch classes declare |
 | `/csp/fhir-management/api` | FHIR servers of IRIS for Health: what they store and serve, enable, disable, reset, decommission, delete; packages (InterSystems' FHIR Server Management API, with the session's own token) |
-| `/api/atelier` | SQL: queries, plans, the catalogue, running statements and the statement index, as the signed-in account (password only) |
+| `/csp/healthshare/<namespace>/fhir/<version>` | a FHIR server's own CapabilityStatement (`/metadata`) and one anonymous search that says whether it is open to anyone; only these, GET only and without credentials, are proxied |
+| `/api/atelier` | SQL: queries, plans, the catalogue, running statements and the statement index, as the signed-in account (password only; the account needs `%Development:USE`) |
 | `/api/interop-editors` | interoperability productions: their state, hosts, event logs, messages and queues (the API of IRIS's own Interoperability UI, with the session's own token) |
 | `/api/aperture` | the package's own read-only log reader and wording index (Embedded Python, IRIS Vector Search) |
 

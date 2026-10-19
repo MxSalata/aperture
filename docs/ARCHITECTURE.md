@@ -1,8 +1,9 @@
 # Architecture
 
 Aperture is a front-end: everything it shows or changes goes through the InterSystems IRIS
-**SysAdmin REST API v2** (`/api/admin`), with three native services beside it (`/api/interop-editors` for productions, `/api/monitor` for host
-metrics, `/api/mgmnt` for REST routes) and one small read-only REST class of its own on the instance
+**SysAdmin REST API v2** (`/api/admin`), with native services beside it (`/api/interop-editors` for productions, `/api/monitor` for host
+metrics, `/api/mgmnt` for REST routes, `/api/atelier` for SQL, `/csp/fhir-management/api` and the FHIR servers'
+own `/metadata` under `/csp/healthshare` for FHIR) and one small read-only REST class of its own on the instance
 for the log files the API has no route for (§2.7b). This document explains how the pieces fit, in
 enough detail to extend the portal or reuse the patterns.
 
@@ -439,8 +440,16 @@ the session's own token (the same `%ISCMgtPortal` group as `/api/admin`; `api/se
   decommission|delete` answers with a job (`job_key`), which `waitForJob` follows through `GET /jobs/{key}` until it
   is no longer pending or running; the screen asks for the server's URL first. IRIS keeps jobs only for a while.
 - **What a server serves** is its own CapabilityStatement (`GET <url>/metadata`), asked for without credentials: the
-  server's FHIR API does not take the portal's token (401), a new server answers anyone (so the screen calls it
-  open), and a disabled one answers 503 with an OperationOutcome.
+  server's FHIR API does not take the portal's token (401), its `/metadata` answers anyone, and a disabled one
+  answers 503 with an OperationOutcome. An answer that is not a CapabilityStatement (the portal's own page, where a
+  proxy does not forward that path) is reported as not reachable through this deployment.
+- **Open to anyone** is decided by an anonymous search of the first type the server serves (`GET <url>/<type>?_count=0`):
+  IRIS refuses it (401) unless the web application lets anyone in, so `/metadata` answering alone says nothing.
+  nginx and the Vite proxy forward only these two paths of `/csp/healthshare`, GET only and without credentials.
+- **A 404 with no body** means an unknown server, job or namespace, so only the discovery calls (`/info`,
+  `/namespaces`) say the instance lacks the API; a job IRIS no longer knows is reported as such, and the screen
+  reads the server again. The dialog closes once IRIS accepts a job; the screen follows it (retrying a failed
+  poll) until it ends, three minutes pass ("still running") or the page is left.
 
 ### 2.8 Spec quirks
 
@@ -625,7 +634,7 @@ screens that were broken against every real instance. Where the server contradic
 mock follows the server and `DOCUMENTED_DIVERGENCE` names the answer paths and the evidence; an
 entry the mock no longer needs fails the test.
 
-`e2e/a11y.spec.ts` runs axe-core (WCAG 2.1 A/AA) over the sign-in page and seventeen screens in
+`e2e/a11y.spec.ts` runs axe-core (WCAG 2.1 A/AA) over the sign-in page and the main screens in
 light, pastel, dark, and both high-contrast modes (Playwright emulates `prefers-color-scheme` and
 `prefers-contrast`; Pastel is the stored device setting, written before the page loads). Serious
 and critical findings fail the run. Colour contrast is solved at the

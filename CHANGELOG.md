@@ -6,9 +6,19 @@
   servers with their FHIR version, storage, state and resources stored; a server's configuration, resources per
   type and re-index progress, the resource types and interactions its CapabilityStatement declares, and its jobs;
   the FHIR packages loaded. A server can be disabled and enabled (read back from IRIS), and reset, decommissioned or
-  deleted after its URL is typed, each as a job followed to its end. A server whose CapabilityStatement answers
-  without credentials is called out, as is debug mode. Through InterSystems' FHIR Server Management API
+  deleted after its URL is typed, each as a job followed to its end. A server that answers a search without
+  credentials is called out, as is debug mode. Through InterSystems' FHIR Server Management API
   (`/csp/fhir-management/api`), with the session's own sign-in; on IRIS, the screen says the API is not there.
+- **What the FHIR screens say.** A server is called open only when an anonymous search of its resources answers:
+  IRIS serves every server's `/metadata` to anyone, so that alone no longer raises the alarm. An answer that is not
+  a CapabilityStatement says the server is not reachable through this deployment. An unknown server, job or
+  namespace says so instead of claiming the instance is not IRIS for Health, and on plain IRIS the missing-API
+  explanation shows whatever page the 404 carries. The dialog closes once IRIS accepts a reset, decommission or
+  delete; the job is followed after it (a failed poll tried again, one still running after three minutes said to
+  be running, and nothing followed once the page is left). Disabling a server on a LIVE instance asks for its URL;
+  a decommissioned server's Serves tab says it serves nothing; the Packages tab picks the namespace. nginx and the
+  Vite proxy forward only an endpoint's `/metadata` and that search from `/csp/healthshare`, GET only and without
+  credentials.
 
 ## 1.5.0 - SQL as yourself: queries, the catalogue, plans and the statements (18 October 2026)
 
