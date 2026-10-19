@@ -2,7 +2,7 @@ import { useSession } from '@/stores/session';
 import { useAtelierAuth } from '@/stores/atelierAuth';
 import { useActivity } from '@/stores/activity';
 import { useReadOnly } from '@/stores/readOnly';
-import { ApiError, NotSentError, normalizeErrors } from '@/lib/errors';
+import { ApiError, NotSentError, normalizeErrors, unescapeHtml } from '@/lib/errors';
 import { classifyStatement } from '@/lib/sqlStatement';
 import { mgmntCredentials } from './mgmnt';
 import { READ_ONLY_REFUSAL } from './readOnly';
@@ -178,13 +178,13 @@ export async function runSql(
     const sqlcode = first?.id === 'SQLCode' && first.params?.length ? Number(first.params[0]) : null;
     const message =
       sqlcode !== null && first.params?.[1] !== undefined
-        ? `SQLCODE ${sqlcode}: ${String(first.params[1]).trim()}`
+        ? `SQLCODE ${sqlcode}: ${unescapeHtml(String(first.params[1]).trim())}`
         : n.summary || n.errors[0] || 'The statement failed.';
     if (!kind.read) record(path, qs, 200, false, message, started);
     throw new SqlError(
       `${ATELIER_PREFIX}${path}`,
       Number.isFinite(sqlcode) ? sqlcode : null,
-      message.replace(/&#39;/g, "'"),
+      message,
       n.errors,
     );
   }

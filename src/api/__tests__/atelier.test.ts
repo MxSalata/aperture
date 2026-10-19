@@ -122,6 +122,12 @@ describe('SQL through Atelier, on the demo instance', () => {
     expect(e).toBeInstanceOf(SqlError);
     expect((e as SqlError).sqlcode).toBe(-30);
     expect((e as SqlError).message).toMatch(/^SQLCODE -30: Table 'SAMPLE.NOPE' not found/);
+    // IRIS escapes the message for HTML; it is shown, and recorded for a change, as text.
+    await expect(runSql('USER', 'SELECT * FROM "a<b&c"')).rejects.toThrow(
+      "SQLCODE -30: Table 'SQLUSER.A<B&C' not found",
+    );
+    await expect(runSql('USER', 'DELETE FROM "a<b"')).rejects.toThrow("Table 'SQLUSER.A<B' not found");
+    expect(useActivity.getState().entries[0].summary).toBe("SQLCODE -30: Table 'SQLUSER.A<B' not found");
     await expect(runSql('USER', 'SELEC 1')).rejects.toMatchObject({ sqlcode: -1 });
     // IRIS answers a namespace that does not exist with a bodiless 404, though Atelier itself answers.
     await expect(runSql('NOPE', 'SELECT 1')).rejects.toMatchObject({

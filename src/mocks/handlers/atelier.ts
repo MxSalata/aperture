@@ -22,6 +22,14 @@ function basicAccount(request: Request) {
   }
 }
 
+const escapeHtml = (text: string) =>
+  text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 const unauthorized = () =>
   new HttpResponse(null, { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="IRIS"' } });
 const envelope = (result: unknown, errors: unknown[] = []) =>
@@ -75,7 +83,8 @@ export const atelierHandlers = [
           code: 5540,
           domain: '%ObjectErrors',
           id: 'SQLCode',
-          params: [String(code), ` ${message}`],
+          // IRIS escapes the message for HTML in `params`, though not in `error`.
+          params: [String(code), ` ${escapeHtml(message)}`],
         },
       ]);
     }

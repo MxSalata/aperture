@@ -48,6 +48,9 @@
   bodiless 404, which read as "the /api/atelier web application is not enabled"; the message now names the
   namespace, and a link whose `?ns=` the instance does not list (a stale bookmark, a typo) opens the default
   namespace with a note. The demo answers such a namespace as IRIS does.
+- **SQL errors read as text.** IRIS escapes an SQL error's message for HTML, and only `&#39;` was decoded, so a
+  name with `<`, `>` or `&` showed `&lt;`, `&gt;` and `&amp;`, in the error and in Activity; the whole message is
+  decoded now, and the demo escapes its messages as IRIS does.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 
