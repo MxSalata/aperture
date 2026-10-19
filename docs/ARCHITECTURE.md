@@ -404,11 +404,15 @@ API's query action, `POST /api/atelier/v8/{ns}/action/query?positional=1&max=N` 
   request carries its own credentials.
 - **The answer.** With `positional=1`, one entry per result set: `columns` (`name`, SQL `type`) and `content`
   (rows as arrays). `max` is sent as the limit plus one, so the screen knows when rows were cut. An SQL error is
-  an HTTP 200 whose `status.errors[0]` has `id: "SQLCode"` and `params: [SQLCODE, message]` (`SqlError`); a change
-  answers `result: []`, with no row count.
+  an HTTP 200 whose `status.errors[0]` has `id: "SQLCode"` and `params: [SQLCODE, message]` (`SqlError`), the
+  message escaped for HTML; a change answers `result: []`, with no row count, and a `CALL` answers its
+  procedure's result set like a query. A namespace that does not exist (or that the account may not use) is a
+  bodiless 404, which is told apart from a missing web application by the path. `EXPLAIN` takes no parameter
+  values (IRIS answers SQLCODE -400), so none are sent with it.
 - **Changes are named first.** `lib/sqlStatement.ts` reads the first keyword outside comments and strings:
   `SELECT`, `EXPLAIN` and a `WITH` that feeds a `SELECT` are reads, everything else (a `CALL` included) is a
-  change. A change shows a warning as it is typed, is confirmed with its kind and namespace, is refused in a
+  change, and so is a `SELECT` that calls a schema-qualified function (IRIS runs SqlProc class methods there,
+  and some write). A change shows a warning as it is typed, is confirmed with its kind and namespace, is refused in a
   read-only tab and is recorded in Activity. It is a warning, not a control: the account's SQL privileges decide.
 - **The catalogue and the diagnostics** are queries too: `INFORMATION_SCHEMA.TABLES` and `COLUMNS`,
   `CURRENT_STATEMENTS` (which has no column with the statement's text) and `STATEMENTS` (count, total and average
