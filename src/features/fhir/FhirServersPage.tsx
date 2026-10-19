@@ -1,9 +1,10 @@
-import { Alert, Anchor, Badge, Tabs, Text } from '@mantine/core';
+import { Alert, Anchor, Badge, Group, NativeSelect, Tabs, Text } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import {
+  FHIR_MISSING,
   fetchFhirInfo,
   fetchFhirNamespaces,
   fetchPackages,
@@ -102,11 +103,18 @@ export default function FhirServersPage() {
     queryFn: fetchFhirNamespaces,
     enabled: !!info.data,
   });
-  const firstNs = list.data?.[0]?.name ?? '';
+  // Packages are loaded per namespace: the first one with a server, unless another is picked.
+  const [pickedNs, setPickedNs] = useState<string | null>(null);
+  const nsNames = (list.data ?? []).map((n) => n.name);
+  const packagesNs =
+    (pickedNs && nsNames.includes(pickedNs) ? pickedNs : undefined) ??
+    list.data?.find((n) => n.endpoints?.length)?.name ??
+    nsNames[0] ??
+    '';
   const packages = useQuery({
-    queryKey: fhirKeys.packages(firstNs),
-    queryFn: () => fetchPackages(firstNs),
-    enabled: !!firstNs && tab === 'packages',
+    queryKey: fhirKeys.packages(packagesNs),
+    queryFn: () => fetchPackages(packagesNs),
+    enabled: !!packagesNs && tab === 'packages',
   });
   const rows: Row[] = (list.data ?? []).flatMap((ns) =>
     (ns.endpoints ?? []).map((e) => ({
@@ -135,7 +143,7 @@ export default function FhirServersPage() {
       />
       {missing ? (
         <Alert color="gray" icon={<IconInfoCircle size={16} />} title="No FHIR server management here">
-          {info.error instanceof ApiError ? info.error.summary : ''}
+          {FHIR_MISSING}
         </Alert>
       ) : info.error ? (
         <ErrorAlert error={info.error} onRetry={() => info.refetch()} />
@@ -164,13 +172,25 @@ export default function FhirServersPage() {
             />
           </Tabs.Panel>
           <Tabs.Panel value="packages">
-            <Text size="sm" c="dimmed" mb="xs">
-              {firstNs ? `The packages loaded in ${firstNs}.` : 'No FHIR-enabled namespace.'}
-            </Text>
+            <Group gap="sm" mb="xs" align="center">
+              {nsNames.length > 1 ? (
+                <NativeSelect
+                  size="xs"
+                  aria-label="Namespace"
+                  data={nsNames}
+                  value={packagesNs}
+                  onChange={(ev) => setPickedNs(ev.currentTarget.value)}
+                  w={200}
+                />
+              ) : null}
+              <Text size="sm" c="dimmed">
+                {packagesNs ? `The packages loaded in ${packagesNs}.` : 'No FHIR-enabled namespace.'}
+              </Text>
+            </Group>
             <DataTable
               data={packages.data}
               columns={packageColumns}
-              loading={!!firstNs && packages.isPending}
+              loading={!!packagesNs && packages.isPending}
               error={packages.error}
               getRowId={(p) => p.id}
               exportName="fhir-packages"

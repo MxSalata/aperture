@@ -7,8 +7,10 @@ import type { EndpointEntry, FhirEndpoint, FhirJob } from '@/api/fhir';
  * The FHIR Server Management API (`/csp/fhir-management/api`) as IRIS for Health 2026.2 answers it, for
  * one R4 server in the demo's CLINICAL namespace, beside the FHIR.Production its dashboard charts: the
  * session's token or a password, `%HSAdmin_InstallationManagement` (the demo's %All accounts), a PUT
- * that merges, removals that run as jobs for a few seconds, and the endpoint's own CapabilityStatement,
- * which answers without credentials (as a new endpoint's does) and 503 while it is disabled.
+ * that merges, removals that run as jobs for a few seconds, a second FHIR-enabled namespace with no
+ * server, an empty 404 for an unknown endpoint, job or namespace, and the endpoint's own FHIR API: its
+ * CapabilityStatement answers without credentials (503 while it is disabled), its resources only with
+ * a sign-in (an anonymous search is a 401, as on IRIS).
  */
 interface MockEndpoint extends FhirEndpoint {
   counts: Record<string, number>;
@@ -61,6 +63,8 @@ export function resetFhirMock() {
 }
 
 const NS = 'CLINICAL';
+/** FHIR-enabled (its packages are loaded) but with no server. */
+const NS_EMPTY = 'FHIRSTAGE';
 const allowed = (request: Request) => {
   const account = authenticate(request);
   if (!account) return { refusal: unauthorized() };
@@ -111,14 +115,18 @@ function advance(j: (typeof jobs)[number]) {
 }
 
 const find = (id: string) => endpoints.find((e) => String(e.serviceId) === String(id));
-const nsOk = (request: Request) => new URL(request.url).searchParams.get('namespace')?.toUpperCase() === NS;
+const nsParam = (request: Request) => new URL(request.url).searchParams.get('namespace')?.toUpperCase();
+const nsOk = (request: Request) => nsParam(request) === NS;
 
 export const fhirHandlers = [
   http.get('*/csp/fhir-management/api/info', ({ request }) => {
     const { refusal } = allowed(request);
     if (refusal) return refusal;
     return HttpResponse.json({
-      namespaces: [{ name: NS, endpoints: endpoints.map((e) => entry(e, false)) }],
+      namespaces: [
+        { name: NS, endpoints: endpoints.map((e) => entry(e, false)) },
+        { name: NS_EMPTY, endpoints: [] },
+      ],
       instance_info: {
         system_mode: 'DEVELOPMENT',
         product_version:
@@ -129,11 +137,18 @@ export const fhirHandlers = [
   http.get('*/csp/fhir-management/api/namespaces', ({ request }) => {
     const { refusal } = allowed(request);
     if (refusal) return refusal;
-    return HttpResponse.json([{ name: NS, endpoints: endpoints.map((e) => entry(e, true)) }]);
+    return HttpResponse.json([
+      { name: NS, endpoints: endpoints.map((e) => entry(e, true)) },
+      { name: NS_EMPTY, endpoints: [] },
+    ]);
   }),
   http.get('*/csp/fhir-management/api/packages', ({ request }) => {
     const { refusal } = allowed(request);
     if (refusal) return refusal;
+    const ns = nsParam(request);
+    if (ns !== NS && ns !== NS_EMPTY) return new HttpResponse(null, { status: 404 });
+    // Only CLINICAL's server uses a package.
+    const used = ns === NS && endpoints.length > 0;
     return HttpResponse.json([
       {
         id: 'hl7.fhir.r5.core@5.0.0',
@@ -149,7 +164,7 @@ export const fhirHandlers = [
         version: '4.0.1',
         type: 'fhir.core',
         core_version: '4.0.1',
-        inUse: true,
+        inUse: used,
       },
       {
         id: 'hl7.fhir.us.core@3.1.0',
@@ -247,7 +262,7 @@ export const fhirHandlers = [
       { status: 202, headers: { Location: `/csp/fhir-management/api/jobs/${key}` } },
     );
   }),
-  // The endpoint's own FHIR API: open to anyone, as a new endpoint's is, and closed while disabled.
+  // The endpoint's own FHIR API: its CapabilityStatement answers anyone, and 503 while it is disabled.
   http.get(`*${URL_R4}/metadata`, () => {
     const e = endpoints.find((x) => x.url === URL_R4);
     if (!e) return new HttpResponse(null, { status: 404 });
@@ -289,4 +304,9 @@ export const fhirHandlers = [
       ],
     });
   }),
+  // Its resources ask for a sign-in: an anonymous search is refused before it reaches the server.
+  http.get(
+    `*${URL_R4}/:type`,
+    () => new HttpResponse(null, { status: 401, headers: { 'Content-Type': 'text/html' } }),
+  ),
 ];

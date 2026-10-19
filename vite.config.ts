@@ -81,16 +81,23 @@ export default defineConfig(({ mode }) => {
             });
           },
         },
-        // FHIR Server Management API (the FHIR screens; the session's own token) and the FHIR
-        // endpoints themselves, whose CapabilityStatements the screens read without credentials.
+        // FHIR Server Management API (the FHIR screens; the session's own token) and, of the FHIR
+        // endpoints themselves, only what the screens read without credentials: an endpoint's
+        // /metadata and a search of one resource type (as in the nginx configuration).
         '/csp/fhir-management/api': { target: irisUrl, changeOrigin: true, secure: false },
-        '/csp/healthshare': {
+        '^/csp/healthshare/[^/]+/fhir/[^/]+/(metadata|[A-Z][A-Za-z]+)(\\?.*)?$': {
           target: irisUrl,
           changeOrigin: true,
           secure: false,
+          bypass: (req) => (req.method === 'GET' ? undefined : false),
           configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.removeHeader('authorization');
+              proxyReq.removeHeader('cookie');
+            });
             proxy.on('proxyRes', (proxyRes) => {
               delete proxyRes.headers['www-authenticate'];
+              delete proxyRes.headers['set-cookie'];
             });
           },
         },

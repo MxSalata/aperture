@@ -10,12 +10,13 @@ import { sessionFetch } from './sessionFetch';
  *
  * Recorded on IRIS for Health 2026.2 (`docs/verification/2026-10-18-irishealth-2026.2/`): an endpoint's
  * `serviceId` is a number in the lists and a string when it is read alone; a PUT merges, so it carries
- * only what changes; an endpoint's own FHIR API (its `/metadata`) does not take this token, and a new
- * endpoint's answers anyone (no credentials needed), so the CapabilityStatement is asked for without
- * credentials and a 401 there says the endpoint wants its own sign-in.
+ * only what changes; an unknown endpoint, job or namespace is a 404 with no body. An endpoint's own
+ * FHIR API does not take this token. Its `/metadata` answers anyone, but its resources ask for a
+ * sign-in (an anonymous search was refused with 401), so the CapabilityStatement is read without
+ * credentials and an anonymous search says whether the endpoint is really open.
  */
 export const FHIR_PREFIX = '/csp/fhir-management/api';
-const MISSING =
+export const FHIR_MISSING =
   'This instance has no FHIR Server Management API (/csp/fhir-management/api): it is not IRIS for Health or Health Connect.';
 
 export interface FhirServiceConfig {
@@ -91,38 +92,54 @@ export interface FhirPackage {
 
 const enc = encodeURIComponent;
 
-export const fetchFhirInfo = () =>
-  sessionFetch<{
+/**
+ * What the management API knows of the instance. Behind a proxy that does not forward the API, the
+ * app's own page answers 200; that is not the API, and is said so.
+ */
+export async function fetchFhirInfo() {
+  const info = await sessionFetch<{
     namespaces?: FhirNamespace[];
     instance_info?: { system_mode?: string; product_version?: string };
-  }>(`${FHIR_PREFIX}/info`, { missing: MISSING });
+  }>(`${FHIR_PREFIX}/info`, { missing: FHIR_MISSING });
+  if (!info || typeof info !== 'object')
+    throw new ApiError({
+      status: 200,
+      url: `${FHIR_PREFIX}/info`,
+      summary: `${FHIR_PREFIX} is not reachable through this deployment: the answer was not the API's.`,
+    });
+  return info;
+}
 
 /** Every FHIR-enabled namespace with its endpoints and their resource counts. */
 export const fetchFhirNamespaces = () =>
   sessionFetch<FhirNamespace[]>(`${FHIR_PREFIX}/namespaces?endpoints=true&metrics=rsrc-count`, {
-    missing: MISSING,
+    missing: FHIR_MISSING,
   });
+
+const noEndpoint = (ns: string, id: string) => `IRIS has no FHIR server ${id} in ${ns}.`;
+/** What a 404 for a job says: IRIS forgets jobs (a restart clears them). */
+export const JOB_GONE = 'IRIS no longer knows this job; the server below shows what it holds now.';
 
 export const fetchEndpoint = (ns: string, id: string) =>
   sessionFetch<EndpointEntry>(
     `${FHIR_PREFIX}/endpoints/${enc(id)}?namespace=${enc(ns)}&metrics=all&jobs=true`,
-    {
-      missing: MISSING,
-    },
+    { missing: noEndpoint(ns, id) },
   );
 
 export const fetchPackages = (ns: string) =>
-  sessionFetch<FhirPackage[]>(`${FHIR_PREFIX}/packages?namespace=${enc(ns)}`, { missing: MISSING });
+  sessionFetch<FhirPackage[]>(`${FHIR_PREFIX}/packages?namespace=${enc(ns)}`, {
+    missing: `${ns} is not a FHIR-enabled namespace.`,
+  });
 
 export const fetchJob = (key: string) =>
-  sessionFetch<FhirJob>(`${FHIR_PREFIX}/jobs/${enc(key)}`, { missing: MISSING });
+  sessionFetch<FhirJob>(`${FHIR_PREFIX}/jobs/${enc(key)}`, { missing: JOB_GONE });
 
 /** A PUT merges: only what changes is sent. */
 export const updateEndpoint = (ns: string, id: string, changes: Partial<FhirEndpoint>) =>
   sessionFetch<FhirEndpoint>(`${FHIR_PREFIX}/endpoints/${enc(id)}?namespace=${enc(ns)}`, {
     method: 'PUT',
     body: { serviceId: Number(id), ...changes },
-    missing: MISSING,
+    missing: noEndpoint(ns, id),
   });
 
 export type EndpointRemoval = 'reset' | 'decommission' | 'delete';
@@ -131,13 +148,13 @@ export type EndpointRemoval = 'reset' | 'decommission' | 'delete';
 export const removeEndpoint = (ns: string, id: string, action: EndpointRemoval) =>
   sessionFetch<FhirJob>(`${FHIR_PREFIX}/endpoints/${enc(id)}?namespace=${enc(ns)}&action=${action}`, {
     method: 'DELETE',
-    missing: MISSING,
+    missing: noEndpoint(ns, id),
   });
 
 export interface Capability {
   /** 200: the statement; 401: the endpoint asks for its own sign-in; 503: disabled. */
   status: number;
-  /** The endpoint answered without credentials. */
+  /** An anonymous search of its resources answered 200: anyone who reaches it reads its data. */
   open: boolean;
   fhirVersion?: string;
   software?: string;
@@ -145,52 +162,107 @@ export interface Capability {
   issue?: string;
 }
 
-/** An endpoint's CapabilityStatement (`GET <url>/metadata`), asked for without credentials. */
+const anonymous = (full: string) =>
+  fetch(full, { headers: { Accept: 'application/fhir+json' }, credentials: 'omit' });
+
+/** Said when the answer is not FHIR's: in Docker only `/csp/healthshare/<ns>/fhir/<version>` is forwarded. */
+export const notReachable = (url: string) =>
+  `${url} is not reachable through this deployment: its answer was not a FHIR CapabilityStatement. Aperture's proxy forwards only endpoints under /csp/healthshare/<namespace>/fhir/<version>.`;
+
+/**
+ * An endpoint's CapabilityStatement (`GET <url>/metadata`), asked for without credentials, and whether
+ * it is open: IRIS serves `/metadata` to anyone, so that is decided by an anonymous search of the first
+ * type it serves (`?_count=0`, which returns no resource).
+ */
 export async function fetchCapability(url: string): Promise<Capability> {
-  const full = `${useSession.getState().baseUrl.replace(/\/+$/, '')}${url.replace(/\/+$/, '')}/metadata`;
+  const base = `${useSession.getState().baseUrl.replace(/\/+$/, '')}${url.replace(/\/+$/, '')}`;
+  const full = `${base}/metadata`;
   let res: Response;
   try {
-    res = await fetch(full, { headers: { Accept: 'application/fhir+json' }, credentials: 'omit' });
+    res = await anonymous(full);
   } catch (e) {
     throw new ApiError({ status: 0, url: full, summary: e instanceof Error ? e.message : 'Network error' });
   }
-  const body = (await res.json().catch(() => null)) as {
+  const json = /json/i.test(res.headers.get('content-type') ?? '');
+  const body = (json ? await res.json().catch(() => null) : null) as {
+    resourceType?: string;
     fhirVersion?: string;
     software?: { name?: string; version?: string };
     rest?: { resource?: { type: string; interaction?: { code: string }[]; searchParam?: unknown[] }[] }[];
     issue?: { details?: { text?: string }; diagnostics?: string }[];
   } | null;
+  if (res.ok && body?.resourceType !== 'CapabilityStatement')
+    throw new ApiError({ status: res.status, url: full, summary: notReachable(url) });
+  const resources = (body?.rest?.[0]?.resource ?? []).map((r) => ({
+    type: r.type,
+    interactions: (r.interaction ?? []).map((i) => i.code),
+    searchParams: r.searchParam?.length ?? 0,
+  }));
+  let open = false;
+  const probe = resources.find((r) => r.interactions.includes('search-type'));
+  if (res.ok && probe) {
+    try {
+      open = (await anonymous(`${base}/${enc(probe.type)}?_count=0`)).ok;
+    } catch {
+      open = false;
+    }
+  }
   return {
     status: res.status,
-    open: res.ok,
+    open,
     fhirVersion: body?.fhirVersion,
     software: body?.software?.name,
-    resources: (body?.rest?.[0]?.resource ?? []).map((r) => ({
-      type: r.type,
-      interactions: (r.interaction ?? []).map((i) => i.code),
-      searchParams: r.searchParam?.length ?? 0,
-    })),
+    resources,
     issue: body?.issue?.[0]?.details?.text ?? body?.issue?.[0]?.diagnostics,
   };
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve) => {
+    const t = setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(t);
+      resolve();
+    });
+  });
 
-/** Follow a job until it ends (at most `budgetMs`): creating, resetting or deleting takes a while. */
+/** A job's end as the screens tell it: `gone` when IRIS no longer knows it, `running` when the wait ran out. */
+export type JobOutcome =
+  | { kind: 'ended'; job: FhirJob }
+  | { kind: 'running'; job: FhirJob }
+  | { kind: 'gone' }
+  | { kind: 'aborted' };
+
+/**
+ * Follow a job until it ends (at most `budgetMs`): creating, resetting or deleting takes a while. A
+ * failed poll is tried again a few times before it counts; a 404 means IRIS has dropped the job, whose
+ * outcome is then unknown.
+ */
 export async function waitForJob(
   key: string,
-  budgetMs = 180_000,
-  onUpdate?: (j: FhirJob) => void,
-): Promise<FhirJob> {
+  {
+    budgetMs = 180_000,
+    intervalMs = 1500,
+    signal,
+  }: { budgetMs?: number; intervalMs?: number; signal?: AbortSignal } = {},
+): Promise<JobOutcome> {
   const t0 = Date.now();
   let job: FhirJob = { job_key: key, status: 'pending' };
+  let failures = 0;
   while (Date.now() - t0 < budgetMs) {
-    job = await fetchJob(key);
-    onUpdate?.(job);
-    if (!['pending', 'running'].includes(job.status)) return job;
-    await sleep(1500);
+    if (signal?.aborted) return { kind: 'aborted' };
+    try {
+      job = await fetchJob(key);
+      failures = 0;
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return { kind: 'gone' };
+      if (++failures >= 3) throw e;
+    }
+    if (signal?.aborted) return { kind: 'aborted' };
+    if (failures === 0 && !['pending', 'running'].includes(job.status)) return { kind: 'ended', job };
+    await sleep(intervalMs, signal);
   }
-  return job;
+  return { kind: 'running', job };
 }
 
 export const fhirKeys = {

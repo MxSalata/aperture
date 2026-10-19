@@ -11,10 +11,11 @@ test('a FHIR server, what it stores and serves, disabled and enabled again', asy
   await expect(row).toContainText('161');
   await row.getByRole('link', { name: 'Clinical R4' }).click();
   await expect(page.getByRole('heading', { name: 'Clinical R4' })).toBeVisible();
-  await expect(page.getByText('Open to anyone')).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Observation' })).toBeVisible();
   await page.getByRole('tab', { name: 'Serves' }).click();
   await expect(page.getByText('FHIR 4.0.1, 5 resource types')).toBeVisible();
+  // Its /metadata answers anyone, but a search without credentials is refused: not open.
+  await expect(page.getByText('Open to anyone')).toBeHidden();
 
   await page.getByRole('button', { name: 'Disable' }).click();
   await page
