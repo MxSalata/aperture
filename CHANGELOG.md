@@ -34,6 +34,8 @@
 - **The demo's interoperability API is held to IRIS's answers.** The mock-versus-IRIS test now checks the reads of
   the production screens against the shapes IRIS for Health 2026.2 sent (`p-interop.json`), and found a host's pool
   size given a default IRIS does not have.
+- **The readiness report checks `/api/interop-editors`**: enabled, and with JWT, that it takes JWT and shares
+  `/api/admin`'s by-ID group, which is what lets the Productions screens use the session's token.
 - **nginx passes the client's address to every IRIS route.** `/api/monitor/`, `/api/aperture/` and `/api/mgmnt/`
   now set `X-Forwarded-For` and `X-Forwarded-Proto` as `/api/admin/` already did.
 - **source-map-js 1.2.2** (a build-time dependency) closes GHSA-68fv-2mgg-jv7q; `npm audit` reports nothing.

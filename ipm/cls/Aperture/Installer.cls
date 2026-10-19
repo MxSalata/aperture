@@ -21,6 +21,9 @@ Parameter PORTAL = "/aperture";
 /// Web application module.xml creates for the log reader (Aperture.API, read-only).
 Parameter LOGAPI = "/api/aperture";
 
+/// IRIS's own interoperability API, which the Productions screens read with the /api/admin token.
+Parameter INTEROPAPI = "/api/interop-editors";
+
 /// Makes sure /api/admin is enabled with password and JWT authentication so the portal can
 /// sign in straight after `zpm "install iris-aperture"`. Python first, ObjectScript fallback.
 ClassMethod Configure() As %Status
@@ -36,7 +39,8 @@ ClassMethod Configure() As %Status
 }
 
 /// Readiness report: IRIS version, JWT availability, the state of /api/admin (enabled,
-/// password + JWT authentication), the /aperture web application and its files on disk.
+/// password + JWT authentication), the /aperture web application and its files on disk, the log
+/// reader, and whether /api/interop-editors takes the /api/admin token (Productions screens).
 /// Safe to run at any time; never changes anything.
 /// module.xml runs this in the Activate phase: where Embedded Python is not usable the report
 /// is skipped with a note, and the installation (which Configure completed) still succeeds.
@@ -44,7 +48,7 @@ ClassMethod Doctor() As %Status
 {
     Set sc = $$$OK
     Try {
-        Set sc = ..DoctorPython(..#API, ..#PORTAL, ..#LOGAPI)
+        Set sc = ..DoctorPython(..#API, ..#PORTAL, ..#LOGAPI, ..#INTEROPAPI)
     } Catch ex {
         Write !, "Aperture: readiness report skipped, Embedded Python is not usable here (", ex.DisplayString(), ")", !
     }
@@ -93,7 +97,7 @@ ClassMethod ConfigurePython(api As %String) As %Status [ Language = python ]
 }
 
 /// Embedded Python implementation of <method>Doctor</method>.
-ClassMethod DoctorPython(api As %String, portal As %String, logapi As %String = "/api/aperture") As %Status [ Language = python ]
+ClassMethod DoctorPython(api As %String, portal As %String, logapi As %String = "/api/aperture", interop As %String = "/api/interop-editors") As %Status [ Language = python ]
 {
     import iris
     import os
@@ -166,6 +170,25 @@ ClassMethod DoctorPython(api As %String, portal As %String, logapi As %String = 
                 check(False, "log files readable", catalog_error)
             else:
                 check(len(catalog_names) > 0, "log files readable", ", ".join(catalog_names[:5]) + (" …" if len(catalog_names) > 5 else ""))
+
+        # The Productions screens send the /api/admin token to /api/interop-editors. IRIS takes it there
+        # while that application is enabled, has JWT on and shares /api/admin's by-ID group; a Basic
+        # session sends the password instead, so only the first matters without JWT.
+        editors = open_app(interop)
+        if editors is None:
+            check(False, interop + " (Productions screens)", "web application missing; it ships with IRIS 2023.1+")
+        else:
+            group = str(getattr(editors, "GroupById", "") or "")
+            admin_group = str(getattr(app, "GroupById", "") or "") if app is not None else ""
+            ok = int(editors.Enabled or 0) == 1
+            detail = "enabled" if ok else "disabled"
+            if has_jwt:
+                jwt_on = int(editors.JWTAuthEnabled or 0) == 1
+                ok = ok and jwt_on and group != "" and group == admin_group
+                detail = detail + ", JWTAuthEnabled=" + ("1" if jwt_on else "0") + ", by-ID group " + (group or "(none)")
+                if group != admin_group:
+                    detail = detail + " (" + api + ": " + (admin_group or "(none)") + ")"
+            check(ok, interop + " (Productions screens)", detail)
 
         print("\nAperture readiness report")
         for mark, label, detail in rows:
