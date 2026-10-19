@@ -9,7 +9,7 @@ import { runStatement, SqlCode } from '../sql';
  * demo's %All accounts only; IRIS answers an account without it with the same 401 as a wrong
  * password, and audits a LoginFailure), the server descriptor, and the query action with `positional` and
  * `max` (a namespace that does not exist is a bodiless 404). An SQL error is an HTTP 200 whose `status.errors` carry the SQLCODE, as on IRIS; the
- * statements run in the demo's SQL engine (`mocks/sql.ts`).
+ * statements run in the demo's SQL engine (`mocks/sql.ts`), and are counted under their audit event.
  */
 function basicAccount(request: Request) {
   const header = request.headers.get('authorization') ?? '';
@@ -29,6 +29,30 @@ const escapeHtml = (text: string) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+
+/**
+ * IRIS counts every Dynamic SQL statement under its kind's audit event (the `Total` of
+ * GET /v2/security/audit/events) whether the event is on or not, and writes it only when the
+ * event and auditing are both on.
+ */
+function countSqlAudit(query: string) {
+  const first = (
+    query.replace(/^(\s|--[^\n]*\n|\/\*[\s\S]*?\*\/)+/, '').match(/^[A-Za-z]+/)?.[0] ?? ''
+  ).toUpperCase();
+  const kind = ['SELECT', 'WITH', 'EXPLAIN'].includes(first)
+    ? 'Query'
+    : ['CREATE', 'ALTER', 'DROP', 'GRANT', 'REVOKE'].includes(first)
+      ? 'DDL'
+      : ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'].includes(first)
+        ? 'DML'
+        : 'Utility';
+  const e = mockDb.auditEvents.find(
+    (x) => x.EventSource === '%System' && x.EventType === '%SQL' && x.EventName === `DynamicStatement${kind}`,
+  );
+  if (!e) return;
+  e.Total += 1;
+  if (e.Enabled && mockDb.auditEnabled) e.Written += 1;
+}
 
 const unauthorized = () =>
   new HttpResponse(null, { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="IRIS"' } });
@@ -72,6 +96,7 @@ export const atelierHandlers = [
     const max = Number(url.searchParams.get('max')) || 1000;
     try {
       const { columns, rows } = runStatement(ns, body.query ?? '', body.parameters ?? [], max);
+      countSqlAudit(body.query ?? '');
       // A change answers an empty result, as on IRIS.
       return envelope(columns.length ? [{ columns, content: rows }] : []);
     } catch (e) {

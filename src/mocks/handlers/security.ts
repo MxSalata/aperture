@@ -370,7 +370,7 @@ export const securityHandlers = [
     );
     return e ? ok({ Description: e.Description, Enabled: e.Enabled }) : notFound('Audit event');
   }),
-  route('put', '/v2/security/audit/event', SECURE, async ({ request }) => {
+  route('put', '/v2/security/audit/event', SECURE, async ({ request, account }) => {
     const q = new URL(request.url).searchParams;
     const body = await jsonBody<{ Description?: string; Enabled?: boolean }>(request);
     const e = mockDb.auditEvents.find(
@@ -380,6 +380,12 @@ export const securityHandlers = [
     if (e) {
       if (body.Enabled !== undefined) e.Enabled = body.Enabled;
       if (body.Description !== undefined) e.Description = body.Description;
+      // A change to an event is itself audited, as %System/%Security/AuditChange.
+      recordAudit(
+        account,
+        'AuditChange',
+        `Audit event ${e.EventSource}/${e.EventType}/${e.EventName} ${e.Enabled ? 'enabled' : 'disabled'}`,
+      );
       return ok({}, { summary: 'Audit event updated' });
     }
     mockDb.auditEvents.push({
