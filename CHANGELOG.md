@@ -37,8 +37,8 @@
   shows them in the table, with their CSV export, where the screen used to say that IRIS reports nothing for a
   change.
 - **Recent statements keep no passwords and end at sign-out.** A statement that may carry a password
-  (`IDENTIFIED BY`, `PASSWORD`) is no longer kept in the tab's list of recent statements, and the list is
-  forgotten at sign-out, so the next account on the tab does not see it.
+  (`IDENTIFY BY`, `IDENTIFIED BY`, `PASSWORD`) is no longer kept in the tab's list of recent statements, and the
+  list is forgotten at sign-out, so the next account on the tab does not see it.
 - **Overlapping runs show the newest answer.** Ctrl+Enter, Explain and the catalogue's preview could start a run
   while another was out, and whichever answered last replaced the result, with the Run button idle while a run was
   still out; now only the newest run's answer is shown, and each run that succeeds is kept in Recent.

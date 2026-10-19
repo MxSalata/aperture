@@ -3,8 +3,8 @@ import { safeSessionStorage } from './storage';
 
 const KEY = 'aperture.sql.history';
 
-/** A statement that may carry a password (`CREATE USER x IDENTIFIED BY 'secret'`, `SET PASSWORD`). */
-const SECRET = /\bIDENTIFIED\s+BY\b|\bPASSWORD\b/i;
+/** A statement that may carry a password (`CREATE USER x IDENTIFY BY secret`, `IDENTIFIED BY`, `SET PASSWORD`). */
+const SECRET = /\bIDENTIF(?:Y|IED)\s+BY\b|\bPASSWORD\b/i;
 
 /**
  * The SQL explorer's recent statements (the last 20), kept in this tab's sessionStorage so they

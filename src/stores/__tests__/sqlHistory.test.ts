@@ -20,6 +20,7 @@ describe("the SQL explorer's recent statements", () => {
     const { add } = useSqlHistory.getState();
     add("CREATE USER ada IDENTIFIED BY 'secret'");
     add("ALTER USER ada identified  by 'other'");
+    add('CREATE USER bob IDENTIFY BY secret');
     add("SET PASSWORD = 'x'");
     expect(useSqlHistory.getState().statements).toEqual([]);
     expect(window.sessionStorage.getItem(KEY)).toBeNull();
