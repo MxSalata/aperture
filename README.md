@@ -26,12 +26,13 @@
   <a href="https://community.intersystems.com/post/aperture-management-portal-intersystems-iris-no-separate-application-server">The article</a> ·
   <a href="https://youtu.be/5U8rcPj7wJ4">The video</a> ·
   <a href="https://community.intersystems.com/post/20-places-where-sysadmin-api-specification-and-iris-disagree">The 20 spec findings</a> ·
-  <a href="https://openexchange.intersystems.com/contest/48">Vote for Aperture in the contest (until 4 October)</a>
+  <a href="https://github.com/MxSalata/aperture/blob/main/CHANGELOG.md">What's new</a> ·
+  <a href="https://github.com/MxSalata/aperture/releases">Releases</a>
 </p>
 
 ![Aperture's dashboard](docs/screenshots/02-dashboard.png)
 
-Aperture is an entry for the [InterSystems Programming Contest: Build Your Own Management Portal](https://openexchange.intersystems.com/contest/48). It is a set of static files that IRIS serves itself. Your browser calls IRIS's own [SysAdmin REST API](https://github.com/intersystems-community/sysadmin-api-specification) (`/api/admin`, 273 operations) directly, signed in as you, so IRIS checks your privileges on every call and audits you by name. The one thing that API cannot give you, the instance's log files, comes through a small read-only reader the IPM package adds, written in Embedded Python, with a wording index on IRIS Vector Search beside it.
+Aperture is an entry for the [InterSystems Programming Contest: Build Your Own Management Portal](https://openexchange.intersystems.com/contest/48). It is a set of static files that IRIS serves itself. Your browser calls IRIS's own [SysAdmin REST API](https://github.com/intersystems-community/sysadmin-api-specification) (`/api/admin`, 273 operations) directly, signed in as you, so IRIS checks your privileges on every call and audits your changes under your name. Since 1.4 it also runs interoperability productions, SQL and the FHIR servers of IRIS for Health, through the APIs IRIS's own tools use, again as you. The one thing that API cannot give you, the instance's log files, comes through a small read-only reader the IPM package adds, written in Embedded Python, with a wording index on IRIS Vector Search beside it.
 
 ## For judges: two minutes
 
@@ -41,6 +42,7 @@ Aperture is an entry for the [InterSystems Programming Contest: Build Your Own M
    - Open _Security → Users → jdoe_, remove a role and press Save: the review lists old → new and **who loses which privilege**.
    - Press <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>⌘</kbd><kbd>K</kbd>), type `databases`, open `USER` and choose _Actions → Integrity check_: the `202 Accepted` lands in the **Job Center** with console output and progress.
    - Open _REST services_ and export an application's routes as a Postman collection or a `.http` file.
+   - Open _Productions_ and `HL7.Production`: the failing host comes first; open it for its event log, stop and start it, and the page says what IRIS reports afterwards. Open _SQL_ (**Use it** gives the password) and run a query: each column shows its SQL type, and the notice above says IRIS does not audit the statements yet.
    - Sign out and sign in as `operator` / `SYS`: the security area disappears, and every disabled action names the resource it needs.
 2. **On real IRIS, one command.** `docker run -d --name aperture -p 127.0.0.1:52773:52773 ghcr.io/mxsalata/aperture`, then http://localhost:52773/aperture/index.html as `_SYSTEM` / `SYS` ([more](https://github.com/MxSalata/aperture#docker)).
 3. **On your own IRIS 2026.2.** `zpm "install iris-aperture"`, then `/aperture/index.html` on the instance's web server ([more](https://github.com/MxSalata/aperture#ipm)).
@@ -52,23 +54,29 @@ Aperture is an entry for the [InterSystems Programming Contest: Build Your Own M
 | `operator` | `SYS` | `%Admin_Operate`, `%Admin_Task`, `%Admin_Journal` | security screens disappear, actions explain what they need |
 | `auditor` | `SYS` | `%Admin_Secure` only | only the security area is usable |
 
-The demo is Aperture itself, built with a mock of the whole API that runs in the browser (Mock Service Worker), seeded to look like a busy instance with interoperability productions, tasks, journals, users and audit history. Writes change that in-memory instance; the same mock drives the unit and browser tests. Every real deployment also has a **Try the demo** button on its sign-in page.
+The demo is Aperture itself, built with a mock of the whole API that runs in the browser (Mock Service Worker), seeded to look like a busy instance with interoperability productions, SQL tables, a FHIR server, tasks, journals, users and audit history. Writes change that in-memory instance; the same mock drives the unit and browser tests. Every real deployment also has a **Try the demo** button on its sign-in page.
 
 ## Why Aperture
 
-- **You sign in as yourself.** No service account in the middle: `POST /login` gives you your own short-lived JWT, IRIS enforces your privileges on every call and writes your name into its audit log. The portal reads what you may do (`GET /info`) and shows exactly that.
+- **You sign in as yourself.** No service account in the middle: `POST /login` gives you your own short-lived JWT, IRIS enforces your privileges on every call, and the changes you make through the SysAdmin API are audited under your name. SQL statements are audited only once IRIS's `%SQL` audit events are on, which IRIS ships off; the SQL screen says so and offers to switch them on. The portal reads what you may do (`GET /info`) and shows exactly that.
 - **All 273 operations.** Hand-made screens for the daily work, and the API Explorer renders every operation from the OpenAPI document, so nothing in the API is out of reach.
 - **Who loses what, before you save.** Every edit is reviewed old → new against a fresh read of the object. A user or role change lists every account it reaches with the privileges gained and lost, and a change that would leave nobody able to administer security is refused.
 - **A health check that shows its work.** Sixteen deterministic, read-only checks (disks, databases, journal, backups, auditing, open services and applications, `%All` holders, certificates, tasks, the licence, severe log entries) run with your own access. Each finding says what it means and what to do, shows the fields it read and where, and opens the Aperture screen that fixes it; a check your account may not read is listed as not checked, with the privilege it needs. No invented score.
+- **Productions you can start, stop and recover.** Every production of every namespace with its hosts, the failing ones first with their errors of the last 24 hours, and a host's event log, messages, queue, connections and settings. Starting or stopping a production or one of its hosts, and recovering a production that did not shut down cleanly, is confirmed, then read back, and the page says what IRIS reports now, since IRIS answers success to any request on that route.
+- **SQL as yourself.** Queries in any namespace through the Atelier API (VS Code's), so IRIS applies your own SQL privileges: results with each column's SQL type, plans, the catalogue, the statements running now and the statement index. A statement that changes data is named (what it does, where, with no undo) and confirmed first, and refused in a read-only tab.
+- **SQL statements in the audit log.** IRIS ships with its `%SQL` audit events off, so nothing records who changed what through SQL. The SQL screen says so, and an account with `%Admin_Secure:U` can switch change auditing on, and query auditing as a separate step, each confirmed and read back. The Health check reports it too.
+- **FHIR servers of IRIS for Health.** Every FHIR server with what it stores, what its CapabilityStatement serves and its jobs; disable and enable, read back, and reset, decommission or delete after typing its URL. A server that answers a search without credentials is called out.
 - **Every background job in one place.** `202 Accepted` answers become jobs by themselves; the Job Center follows them with console output, progress, pause, resume and cancel.
 - **Every log, and the entries worded like it.** `messages.log`, `alerts.log`, `SystemMonitor.log` and every rotation (Ideas Portal DPI-I-966), read in bounded windows. **Similar entries** finds the entries worded like any of them with IRIS Vector Search: an HNSW index over hashed words, built in Embedded Python inside IRIS, with nothing sent anywhere else.
 - **Requests you do not have to type.** Any REST application's routes, and any SysAdmin operation, export as a Postman collection, a `.http` file or curl (Ideas Portal DPI-I-813).
 - **Disk space you can act on.** The databases screen shows how much of each disk behind the database files is free, as a share and as a size, and says when one is running low.
-- **Tested on real IRIS.** 139 operations verified on IRIS for Health 2026.2, the API contract checked against IRIS Community 2026.2 on every push, and every screen audited for accessibility in five appearance modes ([details](https://github.com/MxSalata/aperture#verified-against-real-iris)).
+- **Tested on real IRIS.** 139 operations verified on IRIS for Health 2026.2, the production, SQL and FHIR screens checked in a browser against that instance, the API contract checked against IRIS Community 2026.2 on every push, and every screen audited for accessibility in five appearance modes ([details](https://github.com/MxSalata/aperture#verified-against-real-iris)).
 - **Made for long sessions.** Light, Dark and Pastel themes and high contrast, a command palette, a navigation menu you arrange yourself, charts you choose, a colour per connection so production never looks like staging, and browser tabs you can make read-only.
 
 |  |  |
 | --- | --- |
+| ![A production and its failing host](docs/screenshots/35-production.png) | ![SQL with column types](docs/screenshots/36-sql.png) |
+| ![FHIR server](docs/screenshots/39-fhir-server.png) | ![SQL audit notice and switch-on](docs/screenshots/37-sql-audit.png) |
 | ![Health check](docs/screenshots/33-health-check.png) | ![Messages log](docs/screenshots/29-messages-log.png) |
 | ![Who loses what](docs/screenshots/24-who-loses-what.png) | ![Similar entries](docs/screenshots/31-similar-entries.png) |
 | ![Job Center](docs/screenshots/05-job-center.png) | ![Databases and disk space](docs/screenshots/03-databases.png) |
@@ -80,6 +88,7 @@ The demo is Aperture itself, built with a mock of the whole API that runs in the
 
 |  |  |
 | --- | --- |
+| ![Productions](docs/screenshots/34-productions.png) | ![FHIR servers](docs/screenshots/38-fhir-servers.png) |
 | ![Database detail](docs/screenshots/04-database-detail.png) | ![Processes](docs/screenshots/06-processes.png) |
 | ![Audit](docs/screenshots/09-audit.png) | ![High contrast](docs/screenshots/19-high-contrast.png) |
 | ![Mobile](docs/screenshots/15-mobile.png) | ![Host monitor](docs/screenshots/16-monitor.png) |
@@ -98,10 +107,12 @@ The demo is Aperture itself, built with a mock of the whole API that runs in the
 
 - **Web applications and REST APIs.** _Security → Web applications_ lists, shows, creates, edits and deletes them, JWT and CORS settings included, and the API Explorer has every `/v2/web-app*` operation. _REST services_ lists every REST application with the routes its dispatch class declares, from `/api/mgmnt`, exported as a Postman collection or a `.http` file or copied as curl (Ideas Portal DPI-I-813). Boundary: `/api/mgmnt` takes a password only, so a JWT session asks for it once and keeps it in the tab's memory.
 - **Permission management.** Users, roles, resources, services and SQL privileges, with escalation-role sign-in. Every edit is reviewed field by field against a fresh read, a change to a role says who loses what, and one that would leave nobody able to administer security is refused. Boundary: the portal adds no privilege of its own; what the account cannot do stays visible and disabled, with the resource it needs.
-- **Security and secrets.** TLS configurations with a connection test, X.509 credentials with their expiry, wallet collections and write-only secrets, OAuth 2.0 in its three roles, audit settings, and a notice on the SQL screen when IRIS does not audit the statements run there, with SQL change auditing one confirmed step away; LDAP, MFT, encryption and the remaining OAuth writes in the API Explorer. Boundary: passwords, secrets, tokens and private keys are redacted before they are shown, copied or exported, and wallet secret values are never fetched.
+- **Security and secrets.** TLS configurations with a connection test, X.509 credentials with their expiry, wallet collections and write-only secrets, OAuth 2.0 in its three roles, audit settings, and a notice on the SQL screen when IRIS does not audit the statements run there, with SQL change auditing one confirmed step away and query auditing a second; LDAP, MFT, encryption and the remaining OAuth writes in the API Explorer. Boundary: passwords, secrets, tokens and private keys are redacted before they are shown, copied or exported, and wallet secret values are never fetched.
 - **Task management.** Tasks with their schedules, run now or at a time, suspend and resume, their history, the task manager daemon and the upcoming runs. Boundary: a task is read again after every change, and the page says when IRIS reports something else.
 - **Operating system.** Dashboard, Host monitor (CPU, memory and disk from `/api/monitor`), processes, devices, locks, databases with the free space of their disks, namespaces, journals, the License screen and web sessions; ECP, external language servers and file-system access in the API Explorer. Boundary: host measurements come from IRIS's native monitor service, not from the SysAdmin API.
-- **The logs.** `messages.log`, `alerts.log` and `SystemMonitor.log` with every rotation (Ideas Portal DPI-I-966), newest first, older windows on request, a severity filter, and **Similar entries** on any entry (IRIS Vector Search); the audit log, journal records, task history, and this tab's own changes, where a security change can be matched to the audit record that proves it. Boundary: the SysAdmin API has no route for the log files, so the package's read-only reader (`/api/aperture`, Embedded Python) reads them in bounded windows; `^ERRORS` and the SQL Diagnostics log stay in the classic portal (running statements and the statement index are on the SQL screen).
+- **The logs.** `messages.log`, `alerts.log` and `SystemMonitor.log` with every rotation (Ideas Portal DPI-I-966), newest first, older windows on request, a severity filter, and **Similar entries** on any entry (IRIS Vector Search); the audit log, journal records, task history, a production host's event log, and this tab's own changes, where a security change can be matched to the audit record that proves it. Boundary: the SysAdmin API has no route for the log files, so the package's read-only reader (`/api/aperture`, Embedded Python) reads them in bounded windows; `^ERRORS` and the SQL Diagnostics log stay in the classic portal (running statements and the statement index are on the SQL screen).
+
+Beyond the six areas, three screens of 1.4 to 1.6: _Interoperability → Productions_, _SQL_ (in Operations) and _Health → FHIR servers_.
 
 Every screen and what it does, area by area: [docs/FEATURES.md](docs/FEATURES.md).
 
@@ -232,7 +243,7 @@ docker exec aperture iris session IRIS -U USER "##class(Aperture.Installer).Doct
 - **More than 20 CPU cores.** IRIS Community stops at start-up with _Invalid Community Edition license, may have exceeded core limit_ (reported by the IRIS Atrium entry). Give the container 20 cores at most: `docker run --cpuset-cpus=0-19 ...`, or with Compose a `docker-compose.override.yml` next to the compose file: `services: { iris: { cpuset: "0-19" } }`.
 - **Other machines.** The ports are published on `127.0.0.1` only by default. To use Aperture from other machines, set `IRIS_PASSWORD`, put TLS in front (nginx and IRIS's web server speak plain HTTP), then start with `APERTURE_BIND=0.0.0.0`.
 - **The address.** IRIS's built-in web server needs the file name: a bare `/aperture/` answers 404.
-- **IRIS for Health.** IRIS for Health Community 2026.2 is tested too, against a real instance ([evidence](docs/verification/2026-09-23-irishealth-2026.2/)): to build on it, put `IRIS_IMAGE=containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3` in a `.env` file next to `docker-compose.build.yml`.
+- **IRIS for Health.** IRIS for Health Community 2026.2 is tested too, against a real instance ([evidence](docs/verification/2026-09-23-irishealth-2026.2/)), and the FHIR servers screens need it: to build on it, put `IRIS_IMAGE=containers.intersystems.com/intersystems/irishealth-community:2026.2@sha256:7c06b6b3d950bc25f3e353b0a65db0c4045f251fb9103eade63514302b662cf3` in a `.env` file next to `docker-compose.build.yml`.
 
 ### IPM
 
@@ -240,13 +251,16 @@ docker exec aperture iris session IRIS -U USER "##class(Aperture.Installer).Doct
 zpm "install iris-aperture"
 ```
 
-copies the pre-built portal (`www/`) into the instance's manager directory (`mgr/aperture/`, which durable %SYS keeps across container updates), creates the `/aperture` web application and the `/api/aperture` log reader (a read-only `%CSP.REST` class over an Embedded Python file reader, needs `%Admin_Operate:USE`) with its wording index (`Aperture.LogLine`, a `%Library.Vector` column under an HNSW index, the package's only tables), and runs [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls), an Embedded Python class that enables `/api/admin` with password and JWT authentication and prints a readiness report (IRIS version, JWT availability, the API's authentication settings, the portal's files, the log reader and the log files it can read). Then open `http://<host>:52773/aperture/index.html`. From a checkout, `zpm "load /path/to/aperture"` installs the same package; `##class(Aperture.Installer).Doctor()` prints the report again.
+copies the pre-built portal (`www/`) into the instance's manager directory (`mgr/aperture/`, which durable %SYS keeps across container updates), creates the `/aperture` web application and the `/api/aperture` log reader (a read-only `%CSP.REST` class over an Embedded Python file reader, needs `%Admin_Operate:USE`) with its wording index (`Aperture.LogLine`, a `%Library.Vector` column under an HNSW index, the package's only tables), and runs [`Aperture.Installer`](ipm/cls/Aperture/Installer.cls), an Embedded Python class that enables `/api/admin` with password and JWT authentication and prints a readiness report (IRIS version, JWT availability, the API's authentication settings, the portal's files, the log reader and the log files it can read, and whether `/api/interop-editors` takes the session's token for the Productions screens). Then open `http://<host>:52773/aperture/index.html`. From a checkout, `zpm "load /path/to/aperture"` installs the same package; `##class(Aperture.Installer).Doctor()` prints the report again.
 
 ### Requirements on the IRIS side
 
 - IRIS or IRIS for Health **2026.2+** with the `/api/admin` web application. Aperture speaks SysAdmin API v2, which ships with 2026.2; IRIS 2026.1 serves only v1 (every `/v2` path answers 404) and older releases have no SysAdmin API, so sign-in there stops with an explanation. Sign-in uses JWT and falls back to HTTP Basic when `/login` is unavailable (for example with JWT authentication switched off on `/api/admin`).
 - The account needs at least one `%Admin_*` privilege (`GET /info` refuses everyone else).
 - _Logs → Messages log_ reads the log files through the package's own `/api/aperture` web application (created by `zpm "install"`, `zpm "load"` and the Docker image; password authentication, `%Admin_Operate:USE`). On an instance without the package that screen says so and everything else works.
+- _Productions_ uses `/api/interop-editors` (IRIS 2023.1+) with the session's token: the web application must be enabled and, for a JWT session, take JWT and share `/api/admin`'s by-ID group (the readiness report checks both). What it shows and allows follows the interoperability privileges IRIS reports for the account there: reading event logs, messages and queues, and both run privileges to start, stop or recover.
+- _SQL_ uses `/api/atelier` (enabled), which takes a password only (a JWT session asks for it once), and the account needs `%Development:USE`; IRIS then applies the account's own SQL privileges. Switching SQL auditing on needs `%Admin_Secure:U`.
+- _FHIR servers_ needs IRIS for Health or Health Connect, whose `/csp/fhir-management/api` takes the session's token; on IRIS the screen says the API is not there.
 - The portal must be served from the same origin as the API it talks to: `/api/admin/v2` sends no CORS headers, by design (InterSystems, in the contest announcement thread, 22 September 2026), so a browser cannot call it across origins whatever the web application's allow-list says. The three supported topologies are all same-origin: nginx in front of IRIS (compose), the `/aperture` web application served by IRIS itself (IPM), and the Vite dev server's proxy. Further instances go behind the same nginx under a path prefix.
 
 ### Development
@@ -268,6 +282,7 @@ Other scripts:
 | `npm run test:e2e` | Playwright end-to-end tests against the demo build, with axe-core WCAG 2.1 AA audits |
 | `npm run smoke` | walks the main screens in headless Chromium and refreshes `docs/screenshots/` |
 | `npm run verify:live` | conformance check of a real instance (`IRIS_URL`, `IRIS_USER`, `IRIS_PASSWORD`), the log reader included, saves JSON evidence |
+| `npm run test:live` | the browser tests in `e2e/live/` against a real instance (`IRIS_URL`, `IRIS_USER`, `IRIS_PASSWORD`); tests that change it run only with `LIVE_MUTATE=1` |
 | `npm run gen:api` | regenerate `src/api/schema.d.ts` and the operation index from `spec/mainspec_v2.json` |
 
 ## Architecture
@@ -304,7 +319,7 @@ The portal and the APIs share an origin (the SysAdmin API sends no CORS headers,
 
 ## Security
 
-- **Only your own tokens.** The portal holds the tokens IRIS gave you, in the browser tab's sessionStorage for the tab's life, and ends the session as soon as IRIS refuses them. Other passwords it needs (the log reader's, for a JWT session) stay in the tab's memory.
+- **Only your own tokens.** The portal holds the tokens IRIS gave you, in the browser tab's sessionStorage for the tab's life, and ends the session as soon as IRIS refuses them. The password a JWT session gives for the applications that take a password only (the log reader, REST services and SQL) stays in the tab's memory.
 - **A small footprint on the instance.** At run time the package writes nothing but its own wording index, two tables in its namespace; the log reader only reads, in bounded windows, the files IRIS itself writes. At install time it creates its two web applications and enables password and JWT authentication on `/api/admin`: review that before installing on an existing instance.
 - **No script but the portal's own.** Every page carries a Content-Security-Policy, as a header behind nginx and in the page itself when IRIS or GitHub Pages serves it, that admits scripts from the portal's own files only and calls to its own origin only.
 - **Run it behind TLS.** IRIS's web server and the nginx here speak plain HTTP.
@@ -332,15 +347,17 @@ Two ideas with the "Community Opportunity" status on the [InterSystems Ideas Por
 
 ## Verified against real IRIS
 
-- **On IRIS for Health 2026.2** (Build 221U), [docs/COVERAGE.md](docs/COVERAGE.md) accounts for every one of the 273 operations: 139 verified on that instance (every read that had an object to read, and each write with its evidence, undone after its check); a hand-made screen calls 139 as well, a different set with more writes in it, and the online demo answers 173. Every screen was walked as an administrator and as an operator, from a browser in another time zone ([evidence](docs/verification/)).
+- **On IRIS for Health 2026.2** (Build 221U), [docs/COVERAGE.md](docs/COVERAGE.md) accounts for every one of the 273 operations: 139 verified on that instance (every read that had an object to read, and each write with its evidence, undone after its check); a hand-made screen calls 139 as well, a different set with more writes in it, and the online demo answers 173. Every screen of 1.0.1 was walked as an administrator and as an operator, from a browser in another time zone ([evidence](docs/verification/)); the Productions, SQL and FHIR servers screens were checked as an administrator (below).
 - **On IRIS Community 2026.2, in CI, on every push:** the `verify-iris` job builds the image (Aperture installed by `zpm "load"` of its `module.xml`, the Embedded Python installer), starts it and runs [`scripts/live-check.mjs`](scripts/live-check.mjs): JWT sign-in and refresh, `/info`, list shapes, the error envelope, a full `202` round trip, the portal served at `/aperture/index.html`, the log reader and a similar-entries query on the wording index. It checks the image with a password set at start and with the demonstration one before publishing it.
+- **Productions, SQL and FHIR, on IRIS for Health 2026.2, 18 and 19 October 2026:** the answers of `/api/interop-editors` are recorded in [docs/verification/2026-10-18-irishealth-2026.2](docs/verification/2026-10-18-irishealth-2026.2/), whose README describes what `/api/atelier` and `/csp/fhir-management/api` answered, and the browser tests [`e2e/live/productions.spec.ts`](e2e/live/productions.spec.ts), [`sql.spec.ts`](e2e/live/sql.spec.ts) and [`fhir.spec.ts`](e2e/live/fhir.spec.ts) passed there on 19 October, their @mutate tests included: a host stopped and started, a table created, written, read and dropped, the FHIR server disabled and enabled, each read back. With `DynamicStatementDML` and `DynamicStatementDDL` on, IRIS wrote that table's `CREATE TABLE`, `INSERT` and `DROP TABLE` to its audit log under the signed-in account. Screenshots of the SQL and FHIR servers screens on that instance, the SQL audit notice included, and the write-up of those runs: [docs/verification/2026-10-19-irishealth-2026.2](docs/verification/2026-10-19-irishealth-2026.2/).
 - **Everywhere else:** `npm run verify:live` runs the same check against your instance ([docs/VERIFICATION.md](docs/VERIFICATION.md)); the answers of real instances are also the second oracle of the mock's contract test.
 
 ## What it does not do yet
 
 - Mirroring, ECP, LDAP, MFT, encryption, external language servers and file-system access are reachable through the API Explorer rather than hand-made screens.
 - Globals and classes are outside Aperture, and `^ERRORS` stays in the classic Management Portal. SQL runs through the Atelier API (the SQL screen); there is no query builder.
-- Interoperability productions can be read (hosts, errors, event logs, messages, queues) but not edited: no production editor, rule or DTL editor.
+- Interoperability productions can be read (hosts, errors, event logs, messages, queues), started, stopped and recovered, but not edited: no production editor, rule or DTL editor.
+- FHIR servers are not created and FHIR packages not loaded from Aperture: those stay in IRIS for Health's own pages.
 - Similar entries match wording, not meaning: two messages that describe one fault in different words are not paired.
 - The log reader and the wording index need the IPM package (or the Docker image); without them the Messages log says so and everything else works.
 
@@ -357,12 +374,13 @@ Implementing the whole specification against real instances turned up 20 places 
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | how the layers fit: typed client, auth, async jobs, privileges, mock, deployment |
 | [docs/COVERAGE.md](docs/COVERAGE.md) | all 273 operations: the screen that calls each, what a real IRIS for Health instance answered (139 verified), and what the demo answers |
 | [docs/VERIFICATION.md](docs/VERIFICATION.md) | the conformance check against a real instance, and how to run it against yours |
-| [docs/verification/](docs/verification/) | recorded answers of real IRIS 2026.2 instances, one folder per run, the evidence for the spec findings |
+| [docs/verification/](docs/verification/) | recorded answers of real IRIS 2026.2 instances, one folder per run, the evidence for the spec findings and for the production, SQL and FHIR screens |
+| [e2e/live/](e2e/live/) | browser tests of the screens against a real instance (`npm run test:live`) |
 | [CHANGELOG.md](CHANGELOG.md) | what changed, and why |
 
 ## Tech stack
 
-React 19 · TypeScript 5.9 · Vite 7 · Mantine 8 (+ charts, spotlight, notifications, modals) · TanStack Query 5 · TanStack Table 8 · React Router 7 · zustand · openapi-typescript / openapi-fetch · Mock Service Worker 2 · Vitest 4 · Playwright · nginx · IPM · ObjectScript (`%CSP.REST`, `%Persistent`) · Embedded Python (installer, log reader, wording index) · IRIS Vector Search (`%Library.Vector`, `%SQL.Index.HNSW`, `VECTOR_COSINE`)
+React 19 · TypeScript 5.9 · Vite 7 · Mantine 8 (+ charts, spotlight, notifications, modals) · TanStack Query 5 · TanStack Table 8 · React Router 7 · zustand · openapi-typescript / openapi-fetch · Mock Service Worker 2 · Vitest 4 · Playwright · nginx · IPM · ObjectScript (`%CSP.REST`, `%Persistent`) · Embedded Python (installer, log reader, wording index) · IRIS's Atelier, Interoperability and FHIR Server Management APIs · IRIS Vector Search (`%Library.Vector`, `%SQL.Index.HNSW`, `VECTOR_COSINE`)
 
 ## License
 

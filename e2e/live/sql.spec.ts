@@ -1,9 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
-import { account, signIn } from './live';
+import { account, evidence, signIn } from './live';
 
 /**
  * The SQL screen on a real instance. Reads by default; the @mutate test creates a table in
  * APERTURELAB (the namespace of scripts/live/lab.mjs), writes to it, reads it back and drops it.
+ * With LIVE_EVIDENCE set to a folder, the read-only test's screenshots go there.
  */
 const admin = account('admin');
 test.skip(!admin, 'IRIS_USER / IRIS_PASSWORD are not set');
@@ -24,17 +25,24 @@ async function open(page: Page, ns: string) {
 
 test('a query with its column types, a plan, and the catalogue', async ({ page }) => {
   const statement = await open(page, 'USER');
+  // Whether IRIS audits what the screen runs, in whichever state the instance is (only read here).
+  await expect(page.getByText(/^IRIS SQL audit|^IRIS audits the/).first()).toBeVisible();
+  await evidence(page, 'sql-audit-notice');
   await statement.fill('SELECT TOP 5 TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES');
   await page.getByRole('button', { name: 'Run', exact: true }).click();
   await expect(page.getByText(/^\d+ rows in/)).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /TABLE_NAME VARCHAR\(128\)/ })).toBeVisible();
+  await evidence(page, 'sql-query');
   await page.getByRole('button', { name: 'Explain' }).click();
   await expect(page.getByText(/Module|Read/).first()).toBeVisible();
+  await evidence(page, 'sql-plan');
   await statement.fill('SELECT nothing FROM Nowhere.AtAll');
   await page.getByRole('button', { name: 'Run', exact: true }).click();
   await expect(page.getByText(/SQLCODE -30/)).toBeVisible();
+  await evidence(page, 'sql-error');
   await page.getByRole('tab', { name: 'Statement index' }).click();
   await expect(page.getByRole('columnheader', { name: /StatCount/ })).toBeVisible();
+  await evidence(page, 'sql-statement-index');
 });
 
 test('a table created, written, read back and dropped @mutate', async ({ page }) => {

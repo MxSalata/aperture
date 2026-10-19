@@ -43,12 +43,15 @@ try {
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 const errors = [];
 const failed = [];
+// The FHIR screen asks each server for a search without credentials (`?_count=0`) to learn whether it
+// is open to anyone: the refusal it expects is not an error.
+const anonymousProbe = (u) => /\/fhir\/.*\?_count=0$/.test(u);
 page.on('console', (m) => {
-  if (m.type() === 'error') errors.push(m.text().slice(0, 300));
+  if (m.type() === 'error' && !anonymousProbe(m.location().url)) errors.push(m.text().slice(0, 300));
 });
 page.on('pageerror', (e) => errors.push(`PAGEERROR ${e.message.slice(0, 300)}`));
 page.on('response', (r) => {
-  if (r.status() >= 400 && !r.url().includes('/login'))
+  if (r.status() >= 400 && !r.url().includes('/login') && !anonymousProbe(r.url()))
     failed.push(`${r.status()} ${r.request().method()} ${r.url().replace(BASE, '')}`);
 });
 
@@ -321,6 +324,73 @@ await step('health check', async () => {
   await page.getByText(/^\d+ findings$/).waitFor({ timeout: 20000 });
   await page.waitForTimeout(600);
   await shot('33-health-check');
+});
+await step('productions', async () => {
+  await page.goto(url(`/interop/productions`));
+  const row = page.getByRole('row').filter({ hasText: 'HL7.Production' }).filter({ hasText: 'Running' });
+  await row.getByText('1 Error').waitFor({ timeout: 15000 });
+  await page.waitForTimeout(600);
+  await shot('34-productions');
+});
+await step('a production and its failing host', async () => {
+  await page
+    .getByRole('row')
+    .filter({ hasText: 'HL7.Production' })
+    .filter({ hasText: 'Running' })
+    .getByRole('link', { name: 'HL7.Production' })
+    .click();
+  await page.getByRole('heading', { name: 'HL7.Production' }).waitFor({ timeout: 15000 });
+  await page.getByRole('button', { name: 'Open HL7.Out.Results.TCP' }).click();
+  const drawer = page.getByRole('dialog');
+  await drawer.getByRole('tab', { name: 'Event log' }).waitFor({ timeout: 15000 });
+  await drawer.getByRole('cell', { name: 'Error', exact: true }).first().waitFor({ timeout: 15000 });
+  await page.waitForTimeout(600);
+  await shot('35-production');
+  await page.keyboard.press('Escape');
+});
+await step('SQL audit notice', async () => {
+  await page.goto(url(`/sql`));
+  // The password Atelier needs may already be in this tab's memory from an earlier screen.
+  const useIt = page.getByRole('button', { name: 'Use it' });
+  if (await useIt.isVisible().catch(() => false)) await useIt.click();
+  const notice = page.getByRole('alert', { name: 'IRIS SQL audit is disabled' });
+  await notice.waitFor({ timeout: 15000 });
+  // The notice with the confirmation it offers; closed again, so the demo keeps SQL auditing off.
+  await notice.getByRole('button', { name: 'Audit SQL changes…' }).click();
+  await page
+    .getByRole('dialog', { name: 'Audit SQL changes on the whole instance' })
+    .getByText('every SQL client and not only Aperture')
+    .waitFor({ timeout: 15000 });
+  await page.waitForTimeout(500);
+  await shot('37-sql-audit');
+  await page.keyboard.press('Escape');
+  await page.getByRole('dialog').waitFor({ state: 'detached', timeout: 5000 });
+});
+await step('SQL query with column types', async () => {
+  const statement = page.getByRole('textbox', { name: 'Statement', exact: true });
+  await statement.fill("SELECT Name, City FROM Sample.Person WHERE City = 'Leeds' ORDER BY Name");
+  await page.getByRole('button', { name: 'Run', exact: true }).click();
+  await page.getByRole('cell', { name: 'Grace Hopper' }).waitFor({ timeout: 15000 });
+  await page.getByRole('columnheader', { name: /City VARCHAR/ }).waitFor({ timeout: 15000 });
+  await page.waitForTimeout(500);
+  await shot('36-sql');
+});
+await step('FHIR servers', async () => {
+  await page.goto(url(`/health/fhir`));
+  await page
+    .getByRole('row')
+    .filter({ hasText: 'Clinical R4' })
+    .getByText('Enabled')
+    .waitFor({ timeout: 15000 });
+  await page.waitForTimeout(600);
+  await shot('38-fhir-servers');
+});
+await step('a FHIR server', async () => {
+  await page.goto(url(`/health/fhir/CLINICAL/1`));
+  await page.getByRole('heading', { name: 'Clinical R4' }).waitFor({ timeout: 15000 });
+  await page.getByRole('cell', { name: 'Observation' }).waitFor({ timeout: 15000 });
+  await page.waitForTimeout(600);
+  await shot('39-fhir-server');
 });
 await step('pastel theme', async () => {
   await page.goto(url(`/`));

@@ -8,6 +8,7 @@ bursts queue, and `Lab.Spare` is disabled.
 | File | What it shows |
 | --- | --- |
 | `p-interop.json` | [`scripts/live/interop.mjs`](../../../scripts/live/interop.mjs), read-only: `/api/interop-editors` (`%Api.InteropEditors`, `apiVersion` 7) answers 200 to the token of `/api/admin/login` (its `app` claim is `/api/admin/`; both applications have JWT on and the by-ID group `%ISCMgtPortal`) and to Basic; the privileges it reports; the productions and status of every namespace; the test production's definition, connections, categories, each host's event log, messages, queue and jobs, a host by name (404) and by item id (200), its settings, and a message search |
+| `ui/productions.png`, `ui/production.png`, `ui/host-messages.png` | the screens against the running test production at 00:53 (House time), from the working build before the productions commits of 1.4.0 and before the fixes of 19 October (the busy-host badge, the start guard, the wording of errors and controls): the Productions list (four productions in `APERTURELAB`, `MXNAMESPACE` and `MXSAMPLE`, the lab one running with 1 error, 4 OK, 1 disabled), `Aperture.Lab.Production` with its six hosts and `Lab.Flaky`'s 16 errors in 24 hours, and `Lab.Flaky`'s drawer on its Messages tab (Error and Completed by turns). Its Event log tab was taken too, but while the drawer was still sliding in, so it is not kept; the tests now wait for such transitions to end. `e2e/live/productions.spec.ts` writes them, and the Event log tab, with `LIVE_EVIDENCE` set, and needs the test production running. The SQL and FHIR servers screens on the same instance are in [`../2026-10-19-irishealth-2026.2/`](../2026-10-19-irishealth-2026.2/). |
 
 What the screens rely on, as recorded here and while building them:
 
@@ -37,3 +38,8 @@ What the screens rely on, as recorded here and while building them:
   without credentials and refuses the portal's token (401). `e2e/live/fhir.spec.ts` reads the screens, and its
   @mutate test disables and enables the server.
 - **Jobs**: `{}` throughout, even while a host was working; the screens do not show them.
+
+## The runs that change the instance, 19 October 2026
+
+The @mutate run of the productions, SQL and FHIR tests, and the audit records IRIS wrote for the SQL test, are
+written up with the 19 October evidence: [`../2026-10-19-irishealth-2026.2/`](../2026-10-19-irishealth-2026.2/).

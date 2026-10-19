@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { account, signIn } from './live';
+import { account, evidence, signIn } from './live';
 
 /**
  * The production screens on a real instance, read-only. The instance needs a running production;
@@ -13,10 +13,6 @@ test.skip(!admin, 'IRIS_USER / IRIS_PASSWORD are not set');
 
 const [NS, PRODUCTION] = (process.env.LIVE_PRODUCTION ?? 'APERTURELAB/Aperture.Lab.Production').split('/');
 const FAILING = process.env.LIVE_FAILING_HOST ?? 'Lab.Flaky';
-const shot = (name: string) =>
-  process.env.LIVE_EVIDENCE
-    ? { path: `${process.env.LIVE_EVIDENCE}/${name}.png`, fullPage: true }
-    : undefined;
 
 test('the productions of the instance, one production, and a failing host', async ({ page }) => {
   await signIn(page, admin!);
@@ -25,8 +21,7 @@ test('the productions of the instance, one production, and a failing host', asyn
   const row = page.getByRole('row').filter({ hasText: PRODUCTION });
   await expect(row).toContainText(NS);
   await expect(row).toContainText('Running');
-  const opts = shot('productions');
-  if (opts) await page.screenshot(opts);
+  await evidence(page, 'productions');
 
   await row.getByRole('link', { name: PRODUCTION }).click();
   await expect(page.getByRole('heading', { name: PRODUCTION })).toBeVisible();
@@ -41,18 +36,15 @@ test('the productions of the instance, one production, and a failing host', asyn
       .getByRole('button', { name: /^Open / })
       .first(),
   ).toHaveAccessibleName(`Open ${FAILING}`);
-  const p = shot('production');
-  if (p) await page.screenshot(p);
+  await evidence(page, 'production');
 
   await failing.click();
   const drawer = page.getByRole('dialog');
   await expect(drawer.getByText(/refused|ERROR/).first()).toBeVisible();
-  const d = shot('host-event-log');
-  if (d) await page.screenshot(d);
+  await evidence(page, 'host-event-log');
   await drawer.getByRole('tab', { name: 'Messages' }).click();
   await expect(drawer.getByRole('row').nth(1)).toBeVisible();
-  const m = shot('host-messages');
-  if (m) await page.screenshot(m);
+  await evidence(page, 'host-messages');
   await drawer.getByRole('tab', { name: 'Settings' }).click();
   await expect(drawer.getByRole('row').filter({ hasText: 'PoolSize' })).toBeVisible();
   await drawer.getByRole('tab', { name: 'Connections' }).click();

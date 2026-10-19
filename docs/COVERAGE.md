@@ -13,6 +13,8 @@ Every operation of the SysAdmin API v2 specification (273), with the screen of A
 
 "Verified" means an answer read back from the instance: every GET that could be called with an object that exists (sample objects were created for the ones that had none, see `scripts/live/sample-data.mjs`), and every write in the evidence folders, each undone after its check. Writes that stop, delete or reconfigure what an instance runs on (terminating processes, dismounting or deleting databases, switching journals, licence and mirror changes) were not run here; the demo answers most of them.
 
+The Productions, SQL and FHIR servers screens (1.4.0 to 1.6.0) call other APIs of IRIS, which this table does not count: `/api/interop-editors`, `/api/atelier` and `/csp/fhir-management/api`. What IRIS for Health 2026.2 answered there is in [verification/2026-10-18-irishealth-2026.2](verification/2026-10-18-irishealth-2026.2/): the `/api/interop-editors` answers recorded in `p-interop.json`, the other two described in its README; and the browser tests in `e2e/live/` check those screens against a real instance.
+
 ## Differences from the specification seen in this run
 
 The sweep checked every answer against the schema the spec declares; the sample data met the rest:
