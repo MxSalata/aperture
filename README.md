@@ -282,7 +282,7 @@ Other scripts:
 | `npm run test:e2e` | Playwright end-to-end tests against the demo build, with axe-core WCAG 2.1 AA audits |
 | `npm run smoke` | walks the main screens in headless Chromium and refreshes `docs/screenshots/` |
 | `npm run verify:live` | conformance check of a real instance (`IRIS_URL`, `IRIS_USER`, `IRIS_PASSWORD`), the log reader included, saves JSON evidence |
-| `npm run test:live` | the browser tests in `e2e/live/` against a real instance (`IRIS_URL`); tests that change it run only with `LIVE_MUTATE=1` |
+| `npm run test:live` | the browser tests in `e2e/live/` against a real instance (`IRIS_URL`, `IRIS_USER`, `IRIS_PASSWORD`); tests that change it run only with `LIVE_MUTATE=1` |
 | `npm run gen:api` | regenerate `src/api/schema.d.ts` and the operation index from `spec/mainspec_v2.json` |
 
 ## Architecture
