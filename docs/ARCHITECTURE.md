@@ -368,15 +368,22 @@ they mean, were recorded on IRIS for Health 2026.2 (`docs/verification/2026-10-1
   so the menu entry has no `%Admin_*` badge and the screens say what IRIS reported.
 - **Errors come from the event log.** A host's `status` is the outcome of its last message (`ok`, `error`, `ok`
   again), so it hides a host that fails now and then. The production screen reads the event log of each host (the
-  first 60) and counts its errors of the 24 hours before the reading (`hostErrors`).
+  first 60) and counts its errors of the 24 hours before the reading (`hostErrors`). The route returns a host's
+  newest 50 entries and ends a longer log with `{"Id":"more..."}`, which `fetchHostLog` drops, so a busy host's
+  count is a lower bound and shows as `n+`. IRIS finds a host's log and messages by name across the namespace,
+  whatever production the URL names, and the screen says so. A refresh reads the logs again once they are 30 s
+  old, and an account without `readEventLog` (or `readMessages`, `readQueue`) is not sent those reads.
 - **Host routes take the item id** for settings (a name answers 404); log, messages and queue take the name.
 - **Clocks.** Event log times and a queue's `TimeCreated` are the instance's wall clock; message `Date`s are UTC
   without a designator, so `utcInstant` adds one and `Timestamp` shows them on the instance's clock.
 - **Start and stop** (`POST {ns}/productions/production/state/{production}?state=start|stop`, `&hostID=` for one
   host, by item id). The route answers `{"Success":1}` to any value of `state` (`restart` stopped a host on 2026.2),
-  so `setProductionState` sends only these two, and `features/interop/actions.tsx` reads the state back for up to
-  20 s and reports what IRIS says, or that it did not change. `sessionFetch` refuses the call in a read-only tab and
-  records it in Activity; the buttons follow `privileges.production.run` and `runItem`.
+  so `setProductionState` sends only these two and `recover`, and `features/interop/actions.tsx` reads the state
+  back for up to 20 s and reports what IRIS says, or that it did not change. `sessionFetch` refuses the call in a
+  read-only tab and records it in Activity. IRIS wants both `privileges.production.run` and `runItem` for a
+  production and for a host, and refuses a read-only production class (`controlRefusal`). Ens.Director refuses to
+  start a troubled production (one that did not shut down cleanly) and stopping one does nothing, so it is offered
+  Recover, which leaves it suspended and ready to start.
 - **Language.** Names and messages follow the request's `Accept-Language` (none or `*` gets Arabic, the first
   language IRIS has): the screens read raw fields, never the `Localized*` ones.
 

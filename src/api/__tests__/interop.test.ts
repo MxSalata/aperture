@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   categoriesOf,
+  controlRefusal,
   countByStatus,
   fetchConnections,
   fetchHostLog,
@@ -11,8 +12,10 @@ import {
   fetchProduction,
   fetchProductions,
   fetchProductionStatus,
+  HOST_LOG_LIMIT,
   hostErrors,
   hostStatus,
+  isProductionActive,
   messageStatus,
   productionState,
   setProductionState,
@@ -22,7 +25,7 @@ import {
 } from '../interop';
 import { resetClients } from '../client';
 import { resetDb } from '@/mocks/db';
-import { resetInteropMock } from '@/mocks/handlers/interop';
+import { resetInteropMock, setInteropPrivileges, troubleInteropMock } from '@/mocks/handlers/interop';
 import { useActivity } from '@/stores/activity';
 import { useReadOnly } from '@/stores/readOnly';
 import { NotSentError } from '@/lib/errors';
@@ -70,6 +73,26 @@ describe('reading what IRIS reports', () => {
     expect(productionState(undefined, 'A')).toBe('Unknown');
   });
 
+  it('counts a troubled or suspended production as the one its namespace names, and no other', () => {
+    expect(isProductionActive({ State: 1, ProdRunning: 'A' }, 'A')).toBe(true);
+    expect(isProductionActive({ State: 4, ProdRunning: 'A' }, 'A')).toBe(true);
+    expect(isProductionActive({ State: 3, ProdRunning: 'A' }, 'A')).toBe(true);
+    expect(isProductionActive({ State: 1, ProdRunning: 'A' }, 'B')).toBe(false);
+    expect(isProductionActive({ State: 2, ProdRunning: '' }, 'A')).toBe(false);
+    expect(isProductionActive(undefined, 'A')).toBe(false);
+  });
+
+  it('says why IRIS would refuse a start or stop: both run privileges, and a class that is not read-only', () => {
+    const all = { read: true, write: true, run: true, runItem: true };
+    expect(controlRefusal(all, 0)).toBeUndefined();
+    expect(controlRefusal(undefined, 0)).toBeUndefined();
+    expect(controlRefusal({ ...all, runItem: false }, 0)).toMatch(/both run privileges/);
+    expect(controlRefusal({ ...all, run: false }, 0)).toMatch(/both run privileges/);
+    expect(controlRefusal(all, 1)).toMatch(/read-only/);
+    // Without the write privilege IRIS reads every production as read-only, whatever its class.
+    expect(controlRefusal({ ...all, write: false }, 1)).toBeUndefined();
+  });
+
   it('labels host statuses, a disabled host whatever its status says', () => {
     expect(hostStatus(item({ status: 'ok' }))).toBe('OK');
     expect(hostStatus(item({ status: 'stopped' }))).toBe('Stopped');
@@ -99,10 +122,27 @@ describe('reading what IRIS reports', () => {
       entry({ Id: 1, Type: 'Error', TimeLogged: '2026-10-18 00:30:00.000', Text: 'older' }),
       entry({ Id: 0, Type: 'Error', TimeLogged: '2026-10-16 00:30:00.000', Text: 'outside the window' }),
     ];
-    const r = hostErrors(log, toMs('2026-10-17 01:00:00.000'), toMs);
+    const r = hostErrors({ entries: log, more: false }, toMs('2026-10-17 01:00:00.000'), toMs);
     expect(r.count).toBe(2);
+    expect(r.atLeast).toBe(false);
     expect(r.last?.Text).toBe('newest');
-    expect(hostErrors([], 0, toMs)).toEqual({ count: 0, last: undefined });
+    expect(hostErrors({ entries: [], more: false }, 0, toMs)).toEqual({
+      count: 0,
+      atLeast: false,
+      last: undefined,
+    });
+  });
+
+  it('counts a cut-off log as a lower bound only while its oldest entry is inside the window', () => {
+    const toMs = (s: string) => Date.parse(s.replace(' ', 'T') + 'Z');
+    const entries = [
+      entry({ Id: 2, Type: 'Error', TimeLogged: '2026-10-18 00:40:00.000' }),
+      entry({ Id: 1, Type: 'Error', TimeLogged: '2026-10-18 00:30:00.000' }),
+    ];
+    const inside = hostErrors({ entries, more: true }, toMs('2026-10-17 01:00:00.000'), toMs);
+    expect(inside).toMatchObject({ count: 2, atLeast: true });
+    const reaches = hostErrors({ entries, more: true }, toMs('2026-10-18 00:35:00.000'), toMs);
+    expect(reaches).toMatchObject({ count: 1, atLeast: false });
   });
 
   it('reads message statuses, categories and UTC message dates', () => {
@@ -143,7 +183,7 @@ describe('the demo instance', () => {
     // As on IRIS, a host's status is the outcome of its last message: this one cannot connect at all.
     expect(d.Items.filter((i) => i.status === 'error')).toEqual([failing]);
     const log = await fetchHostLog('INTEROP', 'HL7.Production', failing.name);
-    expect(log.some((e) => e.Type === 'Error' && /6059/.test(e.Text))).toBe(true);
+    expect(log.entries.some((e) => e.Type === 'Error' && /6059/.test(e.Text))).toBe(true);
     expect((await fetchHostQueue('INTEROP', 'HL7.Production', failing.name)).length).toBe(3);
     expect(await fetchHostQueue('INTEROP', 'HL7.Production', 'HL7.Out.PAS.TCP')).toEqual([]);
     const messages = await fetchHostMessages('INTEROP', 'HL7.Production', failing.name);
@@ -154,6 +194,46 @@ describe('the demo instance', () => {
     const router = d.Items.find((i) => i.name === 'HL7.Router.ORU')!;
     const mine = connections.find((c) => c.itemId === router.itemId)!.connections;
     expect(mine.filter((c) => c.isTarget).map((c) => c.itemName)).toContain('HL7.Out.Results.TCP');
+  });
+
+  it("returns a host's newest 50 log entries and drops the marker IRIS ends a longer log with", async () => {
+    await signIn('_SYSTEM');
+    const raw = (await (
+      await fetch(
+        'http://iris.test/api/interop-editors/v7/INTEROP/productions/HL7.Production/HL7.Out.Results.TCP/log',
+        { headers: { Authorization: useSession.getState().authorizationHeader() ?? '' } },
+      )
+    ).json()) as { children: { Id: unknown }[] };
+    expect(raw.children).toHaveLength(HOST_LOG_LIMIT + 1);
+    expect(raw.children.at(-1)).toEqual({ Id: 'more...' });
+    const busy = await fetchHostLog('INTEROP', 'HL7.Production', 'HL7.Out.Results.TCP');
+    expect(busy.entries).toHaveLength(HOST_LOG_LIMIT);
+    expect(busy.more).toBe(true);
+    expect(busy.entries.every((e) => e.TimeLogged)).toBe(true);
+    const quiet = await fetchHostLog('INTEROP', 'HL7.Production', 'HL7.Out.PAS.TCP');
+    expect(quiet.more).toBe(false);
+    expect(quiet.entries.length).toBeGreaterThan(0);
+  });
+
+  it("sends the body id as Header, as IRIS does: a router's rows share one per body it sends on", async () => {
+    await signIn('_SYSTEM');
+    const routed = await fetchHostMessages('INTEROP', 'HL7.Production', 'HL7.Router.ADT');
+    expect(new Set(routed.map((m) => m.Header)).size).toBe(routed.length / 2);
+  });
+
+  it("refuses a host's log, messages and queue to an account IRIS does not let read them", async () => {
+    setInteropPrivileges('operator', {
+      production: { read: true },
+      readEventLog: false,
+      readMessages: false,
+      readQueue: false,
+    });
+    await signIn('operator');
+    for (const read of [fetchHostLog, fetchHostMessages, fetchHostQueue])
+      await expect(read('INTEROP', 'HL7.Production', 'HL7.Out.PAS.TCP')).rejects.toMatchObject({
+        status: 403,
+      });
+    expect((await fetchProduction('INTEROP', 'HL7.Production')).Items).toHaveLength(15);
   });
 
   it('answers a host by name with 404, as IRIS does: its routes take the item id', async () => {
@@ -217,5 +297,50 @@ describe('the demo instance', () => {
     await expect(setProductionState('INTEROP', 'HL7.Production', 'stop')).rejects.toMatchObject({
       status: 403,
     });
+  });
+
+  it('wants both run privileges for a production and for a host, and reports read-only without write', async () => {
+    setInteropPrivileges('operator', { production: { read: true, run: true, runItem: false } });
+    await signIn('operator');
+    await expect(setProductionState('INTEROP', 'HL7.Production', 'stop')).rejects.toMatchObject({
+      status: 403,
+    });
+    setInteropPrivileges('operator', { production: { read: true, run: false, runItem: true } });
+    await expect(setProductionState('INTEROP', 'HL7.Production', 'stop', '8')).rejects.toMatchObject({
+      status: 403,
+    });
+    expect((await fetchProduction('INTEROP', 'HL7.Production')).ReadOnly).toBe(1);
+    await signIn('_SYSTEM');
+    expect((await fetchProduction('INTEROP', 'HL7.Production')).ReadOnly).toBe(0);
+  });
+
+  it('refuses to start a production while another runs, as Ens.Director does', async () => {
+    await signIn('_SYSTEM');
+    await expect(setProductionState('INTEROP', 'HL7.TestProduction', 'start')).rejects.toMatchObject({
+      status: 400,
+    });
+    expect(await fetchProductionStatus('INTEROP')).toEqual({ State: 1, ProdRunning: 'HL7.Production' });
+  });
+
+  it('recovers a troubled production, which neither starts nor stops, and starts it again', async () => {
+    await signIn('_SYSTEM');
+    troubleInteropMock('INTEROP', 'HL7.Production');
+    const troubled = await fetchProductionStatus('INTEROP');
+    expect(troubled).toEqual({ State: 4, ProdRunning: 'HL7.Production' });
+    expect(productionState(troubled, 'HL7.Production')).toBe('Troubled');
+    await expect(setProductionState('INTEROP', 'HL7.Production', 'start')).rejects.toMatchObject({
+      status: 400,
+    });
+    // StopProduction does nothing unless the production is running.
+    await setProductionState('INTEROP', 'HL7.Production', 'stop');
+    expect(await fetchProductionStatus('INTEROP')).toEqual(troubled);
+    await setProductionState('INTEROP', 'HL7.Production', 'recover');
+    const suspended = await fetchProductionStatus('INTEROP');
+    expect(productionState(suspended, 'HL7.Production')).toBe('Suspended');
+    await expect(setProductionState('INTEROP', 'HL7.TestProduction', 'start')).rejects.toMatchObject({
+      status: 400,
+    });
+    await setProductionState('INTEROP', 'HL7.Production', 'start');
+    expect(await fetchProductionStatus('INTEROP')).toEqual({ State: 1, ProdRunning: 'HL7.Production' });
   });
 });

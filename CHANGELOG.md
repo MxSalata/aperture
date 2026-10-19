@@ -19,6 +19,18 @@
   answered with a fresh token is final: nothing retries it, so it no longer rotates the session's tokens again, and
   it says which web application refused the token and why it may, not that the credentials are wrong. A page
   where JSON was expected (a path no proxy passes on to IRIS) is an error, not an empty list.
+- **A production's errors say what IRIS can tell.** IRIS returns a host's newest 50 event log entries and nothing
+  older, so a busy host's count of the last 24 hours reads `n+`, the screen says so, and the marker IRIS ends such a
+  log with no longer shows as a row of `undefined`. A refresh (or auto-refresh) reads the event logs again once
+  they are 30 seconds old. The Messages tab's id column is the body id, which is what IRIS sends under `Header`.
+  An account IRIS does not let read event logs, messages or queues is not sent those reads, and the screen and
+  drawer say why. Where the namespace has another production, the screen says that IRIS finds a host's log by its
+  name across the namespace.
+- **A troubled production can be recovered.** Ens.Director refuses to start a production that did not shut down
+  cleanly and stopping one does nothing, so it is offered Recover, which leaves it suspended and ready to start; the
+  page no longer calls it stopped beside itself, and counts its hosts' errors. The start, stop and recover buttons
+  need both run privileges, as IRIS does, and say when IRIS would refuse a read-only production; the Read-only row
+  gives its real causes. The demo follows Ens.Director: a production does not start while another runs.
 - **nginx passes the client's address to every IRIS route.** `/api/monitor/`, `/api/aperture/` and `/api/mgmnt/`
   now set `X-Forwarded-For` and `X-Forwarded-Proto` as `/api/admin/` already did.
 - **source-map-js 1.2.2** (a build-time dependency) closes GHSA-68fv-2mgg-jv7q; `npm audit` reports nothing.

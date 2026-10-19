@@ -11,10 +11,13 @@ import {
   fetchHostQueue,
   fetchHostSettings,
   fetchProduction,
+  fetchProductions,
+  HOST_LOG_LIMIT,
   hostErrors,
   hostStatus,
   hostType,
   interopKeys,
+  isProductionActive,
   messageStatus,
   productionState,
   statusRank,
@@ -23,6 +26,7 @@ import {
   type HostErrors,
   type HostMessage,
   type ItemConnections,
+  type ProductionDefinition,
   type ProductionItem,
   type ProductionSetting,
   type QueuedMessage,
@@ -37,12 +41,15 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Timestamp } from '@/components/Timestamp';
 import { parseIrisDate } from '@/lib/format';
 import { HostCounts } from './ProductionsPage';
-import { HostStateButton, ProductionStateButton } from './actions';
+import { HostStateButton, ProductionRecoverButton, ProductionStateButton } from './actions';
+import { useInteropPrivileges } from './useInteropPrivileges';
 
 type HostRow = ProductionItem & { errors?: HostErrors };
 
 /** How many hosts' event logs the production screen reads for their errors (one request each). */
 const LOG_SCAN_LIMIT = 60;
+/** How often a refresh of the production screen also reads those event logs again. */
+const LOG_REFRESH_MS = 30_000;
 const DAY = 86_400_000;
 const toMs = (time: string) => parseIrisDate(time)?.valueOf() ?? NaN;
 
@@ -131,8 +138,9 @@ const messageColumns: ColumnDef<HostMessage, unknown>[] = [
     cell: (c) => <span className="mono">{String(c.getValue())}</span>,
   },
   {
+    // IRIS sends the body's id under this name (HostMessage.Header).
     accessorKey: 'Header',
-    header: 'Header',
+    header: 'Body id',
     cell: (c) => <span className="mono">{String(c.getValue())}</span>,
   },
 ];
@@ -214,12 +222,22 @@ function HostConnections({ item, all }: { item: ProductionItem; all: ItemConnect
   );
 }
 
+/** What a drawer tab shows in place of its table when IRIS reports the account may not read it. */
+function NotAllowed({ what }: { what: string }) {
+  return (
+    <Alert color="gray" icon={<IconInfoCircle size={16} />}>
+      {`IRIS reports that this account may not read ${what}.`}
+    </Alert>
+  );
+}
+
 function HostDrawer({
   ns,
   production,
   item,
   connections,
   running,
+  readOnly,
   onClose,
 }: {
   ns: string;
@@ -227,25 +245,32 @@ function HostDrawer({
   item: ProductionItem | null;
   connections: ItemConnections[] | undefined;
   running: boolean;
+  readOnly: ProductionDefinition['ReadOnly'];
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<string | null>('log');
   const host = item?.name ?? '';
   const enabled = !!item;
+  const privileges = useInteropPrivileges();
+  const canRead = {
+    log: privileges?.readEventLog !== false,
+    messages: privileges?.readMessages !== false,
+    queue: privileges?.readQueue !== false,
+  };
   const log = useQuery({
     queryKey: interopKeys.host(ns, production, host, 'log'),
     queryFn: () => fetchHostLog(ns, production, host),
-    enabled: enabled && tab === 'log',
+    enabled: enabled && tab === 'log' && canRead.log,
   });
   const messages = useQuery({
     queryKey: interopKeys.host(ns, production, host, 'messages'),
     queryFn: () => fetchHostMessages(ns, production, host),
-    enabled: enabled && tab === 'messages',
+    enabled: enabled && tab === 'messages' && canRead.messages,
   });
   const queue = useQuery({
     queryKey: interopKeys.host(ns, production, host, 'queue'),
     queryFn: () => fetchHostQueue(ns, production, host),
-    enabled: enabled && tab === 'queue',
+    enabled: enabled && tab === 'queue' && canRead.queue,
   });
   const settings = useQuery({
     queryKey: interopKeys.host(ns, production, item?.itemId ?? '', 'settings'),
@@ -270,6 +295,7 @@ function HostDrawer({
                 id={item.itemId}
                 name={item.name}
                 stopped={hostStatus(item) === 'Stopped'}
+                readOnly={readOnly}
               />
             </Group>
           ) : null}
@@ -301,42 +327,62 @@ function HostDrawer({
               <Tabs.Tab value="settings">Settings</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="log" pt="sm">
-              <DataTable
-                data={log.data}
-                columns={logColumns}
-                loading={log.isPending}
-                error={log.error}
-                getRowId={(r) => String(r.Id)}
-                searchable
-                searchPlaceholder="Filter the event log…"
-                exportName={`event-log-${host}`}
-                emptyMessage="Nothing in this host's event log."
-                dense
-              />
+              {canRead.log ? (
+                <Stack gap="xs">
+                  {log.data?.more ? (
+                    <Text size="xs" c="dimmed">
+                      {`The newest ${HOST_LOG_LIMIT} entries: IRIS returns no older ones here.`}
+                    </Text>
+                  ) : null}
+                  <DataTable
+                    data={log.data?.entries}
+                    columns={logColumns}
+                    loading={log.isPending}
+                    error={log.error}
+                    getRowId={(r) => String(r.Id)}
+                    searchable
+                    searchPlaceholder="Filter the event log…"
+                    exportName={`event-log-${host}`}
+                    emptyMessage="Nothing in this host's event log."
+                    dense
+                  />
+                </Stack>
+              ) : (
+                <NotAllowed what="the event log" />
+              )}
             </Tabs.Panel>
             <Tabs.Panel value="messages" pt="sm">
-              <DataTable
-                data={messages.data}
-                columns={messageColumns}
-                loading={messages.isPending}
-                error={messages.error}
-                getRowId={(r) => `${r.Header}-${r.Source}-${r.Target}`}
-                exportName={`messages-${host}`}
-                emptyMessage="No message sent or received lately."
-                dense
-              />
+              {canRead.messages ? (
+                <DataTable
+                  data={messages.data}
+                  columns={messageColumns}
+                  loading={messages.isPending}
+                  error={messages.error}
+                  // Neither the body id nor the hosts make a message unique: the list is newest first.
+                  getRowId={(_, i) => String(i)}
+                  exportName={`messages-${host}`}
+                  emptyMessage="No message sent or received lately."
+                  dense
+                />
+              ) : (
+                <NotAllowed what="messages" />
+              )}
             </Tabs.Panel>
             <Tabs.Panel value="queue" pt="sm">
-              <DataTable
-                data={queue.data}
-                columns={queueColumns}
-                loading={queue.isPending}
-                error={queue.error}
-                getRowId={(r) => r.QId}
-                exportName={`queue-${host}`}
-                emptyMessage="Nothing waits for this host."
-                dense
-              />
+              {canRead.queue ? (
+                <DataTable
+                  data={queue.data}
+                  columns={queueColumns}
+                  loading={queue.isPending}
+                  error={queue.error}
+                  getRowId={(r) => r.QId}
+                  exportName={`queue-${host}`}
+                  emptyMessage="Nothing waits for this host."
+                  dense
+                />
+              ) : (
+                <NotAllowed what="queues" />
+              )}
             </Tabs.Panel>
             <Tabs.Panel value="connections" pt="sm">
               <HostConnections item={item} all={connections} />
@@ -356,6 +402,9 @@ function HostDrawer({
               />
             </Tabs.Panel>
           </Tabs>
+          <Text size="xs" c="dimmed">
+            {`IRIS finds a host's event log and messages by its name across ${ns}, so a host of the same name in another production of the namespace adds its own.`}
+          </Text>
         </Stack>
       ) : null}
     </Drawer>
@@ -373,22 +422,34 @@ export default function ProductionPage() {
     queryKey: interopKeys.connections(namespace, production),
     queryFn: () => fetchConnections(namespace, production),
   });
+  // Only to say when a host's name may stand for hosts of other productions too (the list page read it).
+  const siblings = useQuery({
+    queryKey: interopKeys.productions(namespace),
+    queryFn: () => fetchProductions(namespace),
+    staleTime: 60_000,
+  });
+  const privileges = useInteropPrivileges();
+  const canReadLogs = privileges?.readEventLog !== false;
   const d = definition.data;
-  const state = d ? productionState({ State: d.State, ProdRunning: d.ProdRunning }, production) : undefined;
+  const status = d ? { State: d.State, ProdRunning: d.ProdRunning } : undefined;
+  const state = status ? productionState(status, production) : undefined;
+  // Running, troubled or suspended: its hosts' event logs are its own recent ones.
+  const active = isProductionActive(status, production);
   const items = d?.Items ?? [];
-  const scanned = state === 'Running' ? items.slice(0, LOG_SCAN_LIMIT) : [];
+  const scanned = active && canReadLogs ? items.slice(0, LOG_SCAN_LIMIT) : [];
   const logs = useQueries({
     queries: scanned.map((it) => ({
       queryKey: interopKeys.host(namespace, production, it.name, 'log'),
       queryFn: () => fetchHostLog(namespace, production, it.name),
     })),
   });
+  const shared = (siblings.data?.length ?? 0) > 1;
   // The rows carry their errors, so the table sorts by them once the event logs arrive (it keeps the
   // values it read from a row object until it gets another). The window ends at the newest reading.
   const readAt = Math.max(0, ...logs.map((q) => q.dataUpdatedAt));
   const rows: HostRow[] = items.map((it, i) => {
-    const entries = i < scanned.length ? logs[i]?.data : undefined;
-    return { ...it, errors: entries ? hostErrors(entries, readAt - DAY, toMs) : undefined };
+    const log = i < scanned.length ? logs[i]?.data : undefined;
+    return { ...it, errors: log ? hostErrors(log, readAt - DAY, toMs) : undefined };
   });
 
   const columns: ColumnDef<HostRow, unknown>[] = [
@@ -423,9 +484,9 @@ export default function ProductionPage() {
               -
             </Text>
           );
-        return e.count ? (
+        return e.count || e.atLeast ? (
           <Badge size="sm" variant="light" color="red">
-            {e.count}
+            {e.atLeast ? `${e.count}+` : e.count}
           </Badge>
         ) : (
           <Text size="sm">0</Text>
@@ -468,14 +529,25 @@ export default function ProductionPage() {
         }
         actions={
           <>
-            {d ? (
-              <ProductionStateButton ns={namespace} production={production} running={state === 'Running'} />
+            {d && state === 'Troubled' ? (
+              // Ens.Director refuses to start a troubled production, and stopping one does nothing.
+              <ProductionRecoverButton ns={namespace} production={production} readOnly={d.ReadOnly} />
+            ) : d ? (
+              <ProductionStateButton
+                ns={namespace}
+                production={production}
+                running={state === 'Running'}
+                readOnly={d.ReadOnly}
+              />
             ) : null}
             <RefreshControl
               screen="production"
               onRefresh={() => {
                 void definition.refetch();
                 void connections.refetch();
+                // One request a host: at the 5 s interval they would be the bulk of the traffic.
+                for (const q of logs)
+                  if (Date.now() - q.dataUpdatedAt >= LOG_REFRESH_MS && !q.isFetching) void q.refetch();
               }}
               loading={definition.isFetching}
             />
@@ -492,20 +564,45 @@ export default function ProductionPage() {
               { label: 'Hosts', value: <HostCounts items={items} /> },
               {
                 label: 'Read-only',
-                value: d.ReadOnly ? 'Yes (source control or a deployed production)' : 'No',
+                value: !d.ReadOnly
+                  ? 'No'
+                  : privileges?.production?.write === false
+                    ? 'Yes (this account may not edit productions)'
+                    : 'Yes (its class is in a read-only database, this account may not write code in the namespace, or source control locks it)',
               },
             ]}
           />
-          {state !== 'Running' ? (
+          {!active ? (
             <Alert color="gray" icon={<IconInfoCircle size={16} />}>
               {d.ProdRunning
                 ? `${d.ProdRunning} is the production running in ${namespace}; this one is stopped, so its hosts report stopped.`
                 : `No production is running in ${namespace}.`}
             </Alert>
+          ) : state !== 'Running' ? (
+            <Alert color="yellow" icon={<IconInfoCircle size={16} />}>
+              {state === 'Troubled'
+                ? `IRIS reports ${production} as troubled: it did not shut down cleanly, so it can be neither started nor stopped until it is recovered.`
+                : state === 'Suspended'
+                  ? `IRIS reports ${production} as suspended: it is not running, and no other production of ${namespace} can start until it has run again.`
+                  : `IRIS reports ${production} as ${state?.toLowerCase()}.`}
+            </Alert>
           ) : null}
-          {items.length > LOG_SCAN_LIMIT && state === 'Running' ? (
+          {active && !canReadLogs ? (
             <Text size="xs" c="dimmed">
-              {`Errors are counted from the event logs of the first ${LOG_SCAN_LIMIT} hosts; open any other host for its own.`}
+              IRIS reports that this account may not read event logs, so no errors are counted.
+            </Text>
+          ) : null}
+          {scanned.length ? (
+            <Text size="xs" c="dimmed">
+              {`Errors (24 h) counts the errors among each host's newest ${HOST_LOG_LIMIT} event log entries, all IRIS returns (n+ when the 24 hours hold more)${
+                items.length > LOG_SCAN_LIMIT
+                  ? `, for the first ${LOG_SCAN_LIMIT} hosts; open any other host for its own`
+                  : ''
+              }.${
+                shared
+                  ? ` IRIS finds a host's event log by its name across ${namespace}, so a host of the same name in another production of the namespace adds its errors too.`
+                  : ''
+              }`}
             </Text>
           ) : null}
           <DataTable
@@ -529,6 +626,7 @@ export default function ProductionPage() {
         item={open ? (items.find((i) => i.itemId === open.itemId) ?? open) : null}
         connections={connections.data}
         running={state === 'Running'}
+        readOnly={d?.ReadOnly}
         onClose={() => setOpen(null)}
       />
     </>

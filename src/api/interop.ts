@@ -128,7 +128,10 @@ export interface HostMessage {
   Source: string;
   Target: string;
   MessageBodyClassName: string;
-  /** The message header's id. */
+  /**
+   * The id of the message's body, despite the name: IRIS fills it from `MessageBodyId`, not the header's
+   * `ID`, so a body a router sends to several targets has the same value on each of their rows.
+   */
   Header: string;
 }
 
@@ -158,12 +161,29 @@ export const fetchConnections = (ns: string, production: string) =>
     missing: MISSING,
   });
 
-/** The event log of one host, newest first. */
-export const fetchHostLog = (ns: string, production: string, host: string) =>
-  sessionFetch<{ children?: EventLogEntry[] }>(
+/** How many event log entries IRIS returns for a host: its newest, whatever their age. */
+export const HOST_LOG_LIMIT = 50;
+
+export interface HostLog {
+  /** Newest first, at most `HOST_LOG_LIMIT`. */
+  entries: EventLogEntry[];
+  /** The log holds older entries than these. */
+  more: boolean;
+}
+
+/**
+ * The newest entries of one host's event log. The route takes no paging or time window: IRIS returns
+ * the newest 50 and ends the list with `{"Id":"more..."}` when there are more, which is dropped here.
+ */
+export const fetchHostLog = (ns: string, production: string, host: string): Promise<HostLog> =>
+  sessionFetch<{ children?: (EventLogEntry | { Id: string })[] }>(
     `${V}/${enc(ns)}/productions/${enc(production)}/${enc(host)}/log`,
     { missing: MISSING },
-  ).then((r) => r?.children ?? []);
+  ).then((r) => {
+    const children = r?.children ?? [];
+    const entries = children.filter((e): e is EventLogEntry => 'TimeLogged' in e);
+    return { entries, more: entries.length < children.length };
+  });
 
 /** The messages a host sent or received lately, newest first. */
 export const fetchHostMessages = (ns: string, production: string, host: string) =>
@@ -211,14 +231,16 @@ export const fetchHostSettings = (ns: string, production: string, itemId: string
   ).then((r) => r?.children ?? []);
 
 /**
- * Start or stop a production, or one of its hosts (`hostId`, the item id). The route answers
- * `{"Success":1}` to any value of `state` (on 2026.2 `restart` stopped a host), so only these two are
- * ever sent, and the caller reads the state back: the answer itself proves nothing.
+ * Start, stop or recover a production, or start or stop one of its hosts (`hostId`, the item id). The
+ * route answers `{"Success":1}` to any value of `state` (on 2026.2 `restart` stopped a host), so only
+ * these are ever sent, `recover` (Ens.Director's RecoverProduction, which leaves a troubled production
+ * suspended) only for a production, and the caller reads the state back: the answer itself proves
+ * nothing.
  */
 export const setProductionState = (
   ns: string,
   production: string,
-  state: 'start' | 'stop',
+  state: 'start' | 'stop' | 'recover',
   hostId?: string,
 ) =>
   sessionFetch<{ Success?: number }>(
@@ -241,6 +263,32 @@ export function productionState(status: ProductionStatus | undefined, production
   if (!status) return 'Unknown';
   if (status.ProdRunning && status.ProdRunning !== production) return 'Stopped';
   return PRODUCTION_STATES[status.State] ?? `State ${status.State}`;
+}
+
+/**
+ * Whether `production` is the one Ens.Director names in its namespace: running, troubled (it did not shut
+ * down cleanly: starting it fails, stopping it does nothing, only recovering it helps) or suspended
+ * (recovered, or stopped with work left: no other production starts until it does). Its hosts' event
+ * logs are then its own recent ones.
+ */
+export const isProductionActive = (status: ProductionStatus | undefined, production: string) =>
+  !!status && status.ProdRunning === production;
+
+/**
+ * Why IRIS would refuse to start or stop this production or its hosts, or undefined when it would not:
+ * the route wants both run privileges for either, and refuses a read-only production class. The
+ * definition's `ReadOnly` also says so when the account merely may not edit productions, so it only
+ * counts here when the account may (then it can only come from the class itself).
+ */
+export function controlRefusal(
+  rights: InteropPrivileges['production'] | undefined,
+  readOnly: ProductionDefinition['ReadOnly'] | undefined,
+): string | undefined {
+  if (rights?.run === false || rights?.runItem === false)
+    return 'IRIS reports that this account may not start or stop productions and their hosts (it needs both run privileges)';
+  if (readOnly && rights?.write)
+    return 'IRIS reports this production as read-only, and refuses to start or stop it: its class is in a read-only database, this account may not write code in the namespace, or source control locks it';
+  return undefined;
 }
 
 /** Ens.DataType.MessageStatus. */
@@ -296,6 +344,11 @@ export function countByStatus(items: readonly ProductionItem[]): { status: strin
 
 export interface HostErrors {
   count: number;
+  /**
+   * The log holds older entries than IRIS returned and the oldest returned is still inside the window,
+   * so the window may hold more errors than `count`.
+   */
+  atLeast: boolean;
   /** The newest error in the window. */
   last?: EventLogEntry;
 }
@@ -304,17 +357,20 @@ export interface HostErrors {
  * The errors in a host's event log since `since` (epoch ms). A host's `status` is the outcome of its last
  * message (`error` after a failure, `ok` again after the next success: Lab.Flaky of scripts/live/lab.mjs
  * on IRIS for Health 2026.2), so it hides a host that fails now and then; the event log keeps every failure. `toMs` reads an
- * event log time, which is on the instance's clock.
+ * event log time, which is on the instance's clock. IRIS returns only a host's newest 50 entries, so a
+ * busy host's count is a lower bound (`atLeast`).
  */
 export function hostErrors(
-  entries: readonly EventLogEntry[],
+  { entries, more }: HostLog,
   since: number,
   toMs: (time: string) => number,
 ): HostErrors {
   let count = 0;
   let last: EventLogEntry | undefined;
   let lastAt = -Infinity;
+  let oldest = Infinity;
   for (const e of entries) {
+    oldest = Math.min(oldest, toMs(e.TimeLogged));
     if (e.Type !== 'Error') continue;
     const at = toMs(e.TimeLogged);
     if (!(at >= since)) continue;
@@ -324,7 +380,7 @@ export function hostErrors(
       last = e;
     }
   }
-  return { count, last };
+  return { count, atLeast: more && oldest >= since, last };
 }
 
 /** The categories of an item: IRIS keeps them as one comma-separated string. */

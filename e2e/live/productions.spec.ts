@@ -34,7 +34,7 @@ test('the productions of the instance, one production, and a failing host', asyn
   // outcome of its last message, ok or error by turns; its errors come from its event log, and it
   // sorts first.
   const failing = page.getByRole('button', { name: `Open ${FAILING}` });
-  await expect(failing.locator('.mantine-Badge-root').filter({ hasText: /^[1-9]\d*$/ })).toBeVisible();
+  await expect(failing.locator('.mantine-Badge-root').filter({ hasText: /^[1-9]\d*\+?$/ })).toBeVisible();
   await expect(
     page
       .locator('table')

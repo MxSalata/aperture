@@ -1,30 +1,32 @@
 import { Button, Tooltip } from '@mantine/core';
-import { IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { IconFirstAidKit, IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import {
-  fetchInteropInfo,
+  controlRefusal,
   fetchProduction,
   fetchProductionStatus,
   hostStatus,
   interopKeys,
   productionState,
   setProductionState,
+  type ProductionDefinition,
 } from '@/api/interop';
 import { confirmDanger } from '@/components/ConfirmDanger';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { useSession } from '@/stores/session';
+import { useInteropPrivileges } from './useInteropPrivileges';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Start or stop, then read the state back until IRIS reports the one asked for (at most 20 s): the
- * route answers success whatever happened, so only the read-back says whether it did.
+ * Start, stop or recover, then read the state back until IRIS reports the one asked for (at most 20 s):
+ * the route answers success whatever happened, so only the read-back says whether it did.
  */
 async function changeAndReadBack(
   ns: string,
   production: string,
-  state: 'start' | 'stop',
+  state: 'start' | 'stop' | 'recover',
   host?: { id: string; name: string },
 ) {
   await setProductionState(ns, production, state, host?.id);
@@ -39,15 +41,11 @@ async function changeAndReadBack(
       if (seen === wanted || (state === 'start' && seen === 'Error')) return seen;
     } else {
       seen = productionState(await fetchProductionStatus(ns), production);
-      if (seen === wanted) return seen;
+      // Recovering leaves the production suspended, whatever it had been doing.
+      if (seen === wanted || (state === 'recover' && seen !== 'Troubled')) return seen;
     }
   }
   throw new Error(`IRIS accepted the request, but ${host ? host.name : production} still reads ${seen}.`);
-}
-
-function useRights() {
-  const info = useQuery({ queryKey: interopKeys.info, queryFn: fetchInteropInfo, staleTime: 60_000 });
-  return info.data?.privileges.production;
 }
 
 /** Start or stop the production, by its page's header. Stopping on a LIVE instance asks for its name. */
@@ -55,12 +53,14 @@ export function ProductionStateButton({
   ns,
   production,
   running,
+  readOnly,
 }: {
   ns: string;
   production: string;
   running: boolean;
+  readOnly: ProductionDefinition['ReadOnly'];
 }) {
-  const rights = useRights();
+  const refusal = controlRefusal(useInteropPrivileges()?.production, readOnly);
   const live = useSession((s) => s.info?.systemMode === 'LIVE');
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -87,7 +87,7 @@ export function ProductionStateButton({
       color={running ? 'red' : 'teal'}
       leftSection={running ? <IconPlayerStop size={14} /> : <IconPlayerPlay size={14} />}
       loading={busy}
-      disabled={rights?.run === false}
+      disabled={!!refusal}
       onClick={() =>
         confirmDanger({
           title: running ? 'Stop production' : 'Start production',
@@ -104,11 +104,56 @@ export function ProductionStateButton({
       {running ? 'Stop production' : 'Start production'}
     </Button>
   );
-  return rights?.run === false ? (
-    <Tooltip label="IRIS reports that this account may not start or stop productions">{button}</Tooltip>
-  ) : (
-    button
+  return refusal ? <Tooltip label={refusal}>{button}</Tooltip> : button;
+}
+
+/** Recover a troubled production (Ens.Director's RecoverProduction), by its page's header. */
+export function ProductionRecoverButton({
+  ns,
+  production,
+  readOnly,
+}: {
+  ns: string;
+  production: string;
+  readOnly: ProductionDefinition['ReadOnly'];
+}) {
+  const refusal = controlRefusal(useInteropPrivileges()?.production, readOnly);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    try {
+      const seen = await changeAndReadBack(ns, production, 'recover');
+      notifySuccess(`${production} in ${ns}: IRIS now reports ${seen}.`, 'Production recovered');
+    } catch (e) {
+      notifyError(e, 'Recover production');
+    } finally {
+      setBusy(false);
+      void qc.invalidateQueries({ queryKey: interopKeys.all });
+    }
+  };
+  const button = (
+    <Button
+      size="xs"
+      variant="light"
+      color="yellow"
+      leftSection={<IconFirstAidKit size={14} />}
+      loading={busy}
+      disabled={!!refusal}
+      onClick={() =>
+        confirmDanger({
+          title: 'Recover production',
+          message: `Recover ${production} in ${ns}? IRIS clears what is left of the run that did not shut down cleanly; the production then reads Suspended and can be started again.`,
+          confirmLabel: 'Recover',
+          color: 'yellow',
+          onConfirm: run,
+        })
+      }
+    >
+      Recover production
+    </Button>
   );
+  return refusal ? <Tooltip label={refusal}>{button}</Tooltip> : button;
 }
 
 /** Start or stop one host of a running production, from its drawer. */
@@ -118,14 +163,16 @@ export function HostStateButton({
   id,
   name,
   stopped,
+  readOnly,
 }: {
   ns: string;
   production: string;
   id: string;
   name: string;
   stopped: boolean;
+  readOnly: ProductionDefinition['ReadOnly'];
 }) {
-  const rights = useRights();
+  const refusal = controlRefusal(useInteropPrivileges()?.production, readOnly);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const state = stopped ? 'start' : 'stop';
@@ -148,7 +195,7 @@ export function HostStateButton({
       color={stopped ? 'teal' : 'red'}
       leftSection={stopped ? <IconPlayerPlay size={14} /> : <IconPlayerStop size={14} />}
       loading={busy}
-      disabled={rights?.runItem === false}
+      disabled={!!refusal}
       onClick={() =>
         confirmDanger({
           title: stopped ? 'Start host' : 'Stop host',
@@ -164,9 +211,5 @@ export function HostStateButton({
       {stopped ? 'Start host' : 'Stop host'}
     </Button>
   );
-  return rights?.runItem === false ? (
-    <Tooltip label="IRIS reports that this account may not start or stop hosts">{button}</Tooltip>
-  ) : (
-    button
-  );
+  return refusal ? <Tooltip label={refusal}>{button}</Tooltip> : button;
 }
