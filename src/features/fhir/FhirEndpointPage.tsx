@@ -66,15 +66,21 @@ export default function FhirEndpointPage() {
   const { namespace = '', id = '' } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [busy, setBusy] = useState<string | null>(null);
+  const [toggling, setToggling] = useState(false);
+  // The removal whose job is being followed, kept apart from the toggle so one cannot clear the other.
+  const [following, setFollowing] = useState<EndpointRemoval | null>(null);
   const live = useSession((s) => s.info?.systemMode === 'LIVE');
-  // Jobs are followed after their dialog closes; leaving the page stops following them.
-  const following = useRef<AbortController | null>(null);
+  // Jobs are followed after their dialog closes; leaving the page, or this server for another, stops
+  // following them.
+  const followCtl = useRef<AbortController | null>(null);
   useEffect(() => {
     const ctl = new AbortController();
-    following.current = ctl;
-    return () => ctl.abort();
-  }, []);
+    followCtl.current = ctl;
+    return () => {
+      ctl.abort();
+      setFollowing(null);
+    };
+  }, [namespace, id]);
   const q = useQuery({
     queryKey: fhirKeys.endpoint(namespace, id),
     queryFn: () => fetchEndpoint(namespace, id),
@@ -101,7 +107,7 @@ export default function FhirEndpointPage() {
       confirmLabel: enable ? 'Enable' : 'Disable',
       color: enable ? 'teal' : 'red',
       onConfirm: async () => {
-        setBusy('toggle');
+        setToggling(true);
         try {
           await updateEndpoint(namespace, id, { enabled: enable });
           // The answer is the endpoint; read it again to be sure of what IRIS now holds.
@@ -117,7 +123,7 @@ export default function FhirEndpointPage() {
         } catch (err) {
           notifyError(err, enable ? 'Enable FHIR server' : 'Disable FHIR server');
         } finally {
-          setBusy(null);
+          setToggling(false);
           void refresh();
         }
       },
@@ -148,8 +154,8 @@ export default function FhirEndpointPage() {
   const follow = async (action: EndpointRemoval, key: string) => {
     if (!e) return;
     const label = REMOVALS[action].label;
-    const signal = following.current?.signal;
-    setBusy(action);
+    const signal = followCtl.current?.signal;
+    setFollowing(action);
     try {
       const out = await waitForJob(key, { signal });
       if (out.kind === 'aborted') return;
@@ -170,7 +176,7 @@ export default function FhirEndpointPage() {
     } catch (err) {
       if (!signal?.aborted) notifyError(err, `${label} FHIR server`);
     } finally {
-      if (!signal?.aborted) setBusy(null);
+      if (!signal?.aborted) setFollowing(null);
       void refresh();
     }
   };
@@ -195,7 +201,7 @@ export default function FhirEndpointPage() {
                   size="xs"
                   variant="light"
                   color={e.enabled ? 'red' : 'teal'}
-                  loading={busy === 'toggle'}
+                  loading={toggling}
                   leftSection={e.enabled ? <IconPlayerStop size={14} /> : <IconPlayerPlay size={14} />}
                   onClick={toggle}
                 >
@@ -209,7 +215,7 @@ export default function FhirEndpointPage() {
                     variant="default"
                     color="red"
                     rightSection={<IconChevronDown size={14} />}
-                    loading={!!busy && busy !== 'toggle'}
+                    loading={!!following}
                   >
                     Remove
                   </Button>
