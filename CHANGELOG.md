@@ -32,6 +32,10 @@
   a decommissioned server's Serves tab says it serves nothing; the Packages tab picks the namespace. nginx and the
   Vite proxy forward only an endpoint's `/metadata` and that search from `/csp/healthshare`, GET only and without
   credentials.
+- **One menu entry per screen.** The FHIR screens sit under `/health/fhir`, and the menu marked Health check as
+  well as FHIR servers there; the longest matching entry is now the only one marked. nginx passes `X-Forwarded-For`
+  and `X-Forwarded-Proto` on the interoperability, SQL and FHIR routes too, and the README and the multi-instance
+  recipe list every route the screens read.
 
 ## 1.5.0 - SQL as yourself: queries, the catalogue, plans and the statements (18 October 2026)
 
@@ -89,6 +93,9 @@
 - **The demo's SQL behaves more like IRIS's.** Its conditions compare strings whatever their case, as IRIS's
   default collation does (`City = 'leeds'`, `%STARTSWITH 'ada'`), while a number and a value written through a
   parameter still compare as numbers; and it skips `--` and `/* */` comments, which it used to refuse.
+- **Recent statements stay with their account after a reload.** A reload ends a Basic session (and a JWT session
+  not kept) without signing out, and the next account to sign in on that tab and connection saw the previous
+  account's recent statements, Activity and jobs; signing in as another account now starts afresh.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 
@@ -161,6 +168,10 @@
   would get a 500 from the index and from Similar entries. Its statements are now prepared without that check
   (`aperture_sql.py`, beside the vectoriser), as the routes already check %Admin_Operate. A refresh no longer
   passes over an entry it failed to insert for any reason other than already holding it.
+- **The log reader keeps the shared password under an escalation role.** A session signed in with an escalation
+  role is granted that role's resources, but the log reader's password signs in as the account alone, so IRIS could
+  refuse it with a 401; that cleared the password REST services were using, and the health check sent it again
+  every five minutes. Now the password is kept, not sent to the log reader again, and the message says why.
 
 ## 1.3.0 - Every screen fits a phone and a laptop (2 October 2026)
 
