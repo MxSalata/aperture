@@ -124,4 +124,17 @@ describe('the SQL screen', () => {
     expect(screen.getAllByText('newer')).not.toHaveLength(0);
     expect(screen.queryAllByText('older')).toHaveLength(0);
   }, 30_000);
+
+  it("drops the last result and the catalogue's choice when the namespace changes", async () => {
+    await signIn('_SYSTEM', 'basic');
+    open('/sql?ns=USER');
+    const statement = await screen.findByRole('textbox', { name: 'Statement' }, { timeout: 10_000 });
+    fireEvent.change(statement, { target: { value: 'SELECT Name FROM Sample.Person WHERE ID = 1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    expect(await screen.findByText(/1 rows in/, {}, { timeout: 10_000 })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('textbox', { name: 'Namespace' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'CLINICAL', hidden: true }));
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Namespace' })).toHaveValue('CLINICAL'));
+    expect(screen.queryByText(/1 rows in/)).toBeNull();
+  }, 30_000);
 });

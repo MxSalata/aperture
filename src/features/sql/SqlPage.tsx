@@ -128,12 +128,6 @@ export default function SqlPage() {
     (n) => n !== '%SYS' && !/^HSSYSLOCALTEMP$/.test(n),
   );
   const ns = params.get('ns') ?? (namespaces.includes('USER') ? 'USER' : (namespaces[0] ?? ''));
-  const setNs = (v: string | null) => {
-    if (!v) return;
-    const next = new URLSearchParams(params);
-    next.set('ns', v);
-    setParams(next, { replace: true });
-  };
 
   const [tab, setTab] = useState<string | null>('query');
   const [sql, setSql] = useState(
@@ -145,6 +139,7 @@ export default function SqlPage() {
   const remember = useSqlHistory((s) => s.add);
   const [result, setResult] = useState<{
     sql: string;
+    ns: string;
     kind: ReturnType<typeof classifyStatement>;
     data: SqlResult;
   } | null>(null);
@@ -171,7 +166,7 @@ export default function SqlPage() {
       remember(text);
       // A change may have altered the catalogue.
       if (!k.read) void qc.invalidateQueries({ queryKey: sqlKeys.all });
-      if (id === latest.current) setResult({ sql: text, kind: k, data });
+      if (id === latest.current) setResult({ sql: text, ns, kind: k, data });
     } catch (e) {
       if (id !== latest.current) return;
       setResult(null);
@@ -179,6 +174,20 @@ export default function SqlPage() {
     } finally {
       if (id === latest.current) setRunning(false);
     }
+  };
+
+  // What was chosen or run in one namespace says nothing about another.
+  const setNs = (v: string | null) => {
+    if (!v || v === ns) return;
+    const next = new URLSearchParams(params);
+    next.set('ns', v);
+    setParams(next, { replace: true });
+    latest.current++;
+    setRunning(false);
+    setResult(null);
+    setError(null);
+    setSchema(null);
+    setTable(null);
   };
 
   const run = (text = sql) => {
@@ -377,7 +386,7 @@ export default function SqlPage() {
                       data={shaped?.rows}
                       columns={shaped?.columns ?? []}
                       searchable
-                      exportName={`sql-${ns}`}
+                      exportName={`sql-${result.ns}`}
                       emptyMessage="The query returned no rows."
                       dense
                     />

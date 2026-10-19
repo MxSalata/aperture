@@ -41,6 +41,9 @@
 - **Overlapping runs show the newest answer.** Ctrl+Enter, Explain and the catalogue's preview could start a run
   while another was out, and whichever answered last replaced the result, with the Run button idle while a run was
   still out; now only the newest run's answer is shown, and each run that succeeds is kept in Recent.
+- **Changing the namespace starts afresh.** The last result, a run still out and the catalogue's chosen schema and
+  table no longer carry over to another namespace, and a result's CSV export is named after the namespace it came
+  from.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 
