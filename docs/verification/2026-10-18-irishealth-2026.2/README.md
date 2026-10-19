@@ -23,5 +23,5 @@ What the screens rely on, as recorded here and while building them:
 - **Starting and stopping** (`POST {ns}/productions/production/state/{production}?state=start|stop`, with
   `&hostID=` the item id for one host): both work, and a stopped host reads `stopped` while staying enabled. The
   route answers `{"Success":1}` to any other value too (`restart`, `recover`, `bogus`), and `restart` stopped a
-  host: Aperture sends `start` or `stop` only and reads the state back afterwards.
+  host: Aperture sends `start` or `stop`, and `recover` for a troubled production, and reads the state back afterwards. What `recover` does was taken from the `%Api.InteropEditors` source (`RecoverProduction`), not recorded here.
 - **Jobs**: `{}` throughout, even while a host was working; the screens do not show them.
