@@ -365,11 +365,9 @@ export function AppLayout() {
           </Group>
           <Group gap={4} wrap="nowrap">
             <Tooltip label="Command palette">
-              <UnstyledButton
-                onClick={() => spotlight.open()}
-                aria-label="Open command palette"
-                visibleFrom="sm"
-              >
+              {/* Named by what it shows ("Search ⌘K"), so speech input and screen readers agree with the
+                  screen (WCAG 2.5.3, axe's label-content-name-mismatch); the tooltip says what it opens. */}
+              <UnstyledButton onClick={() => spotlight.open()} visibleFrom="sm">
                 <Group
                   gap={6}
                   px="sm"

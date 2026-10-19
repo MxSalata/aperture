@@ -212,7 +212,7 @@ test.describe('Aperture (demo mode)', () => {
 
   test('a click on the backdrop closes the command palette, not an edit dialog', async ({ page }) => {
     await loginDemo(page);
-    await page.getByRole('button', { name: 'Open command palette' }).click();
+    await page.getByRole('button', { name: /^Search/ }).click();
     const search = page.getByPlaceholder(/Jump to a screen/);
     await expect(search).toBeVisible();
     await page.mouse.click(40, 600);
