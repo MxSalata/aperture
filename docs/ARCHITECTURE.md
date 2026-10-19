@@ -419,9 +419,21 @@ API's query action, `POST /api/atelier/v8/{ns}/action/query?positional=1&max=N` 
 - **The catalogue and the diagnostics** are queries too: `INFORMATION_SCHEMA.TABLES` and `COLUMNS`,
   `CURRENT_STATEMENTS` (which has no column with the statement's text) and `STATEMENTS` (count, total and average
   time, rows), each per namespace. System schemas are hidden until asked for (`isSystemSchema`).
+- **Whether IRIS audits them.** The statements run as Dynamic SQL, which IRIS writes to its audit log only when
+  system-wide auditing (`GET /v2/security/audit/enabled`) and the `%System/%SQL/DynamicStatement*` events are on;
+  as IRIS 2026.2 ships, every `%SQL` event is off, though it still counts the statements (`Total` goes up,
+  `Written` stays 0). `sqlAuditState` (`features/security/audit.ts`) reads both: changes are audited with
+  `DynamicStatementDML` and `DynamicStatementDDL` on (or the combined `DynamicStatement`, on an instance that lists
+  no split events), queries with `DynamicStatementQuery`. The screen says "IRIS SQL audit is disabled" when changes
+  are not, a calmer note when only queries are not, and a line when all are; an account without
+  `%Admin_Secure:U` (or a refused read) is told the state is unknown. With it, the notice switches the change
+  events on, query auditing as a separate step and system-wide auditing when it is off, each confirmed (they are
+  instance-wide: every SQL client, and the audit database grows), refused in a read-only tab, recorded in Activity
+  as `PUT /v2/security/audit/event` (IRIS audits the change as `AuditChange`) and read back. The Health check's
+  auditing check reports the same state as advice.
 - **The demo** answers from `mocks/sql.ts`, a small evaluator (one table per `SELECT`, `WHERE`, `GROUP BY`,
   `ORDER BY`, `TOP`, the five aggregates, `INSERT`, `UPDATE`, `DELETE`, `CREATE TABLE`, `DROP TABLE`, `EXPLAIN`)
-  with IRIS's SQLCODEs for what it cannot do. An SQL engine compiled to JavaScript at run time was tried: it needs
+  with IRIS's SQLCODEs for what it cannot do, and counts each statement under its `DynamicStatement*` audit event. An SQL engine compiled to JavaScript at run time was tried: it needs
   `unsafe-eval`, which the portal's Content-Security-Policy refuses, and the demo runs inside the real portal.
 
 ### 2.7h FHIR servers (/csp/fhir-management/api)

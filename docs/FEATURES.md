@@ -17,7 +17,7 @@ _Notable:_ fed automatically by the API client (Location header or body GUID); t
 
 ## Health check
 
-Sixteen read-only checks run with your own access (disks, databases, journal, backup, UnknownUser, auditing, open services and applications, %All holders, certificates, tasks, monitor, alerts, licence, severe log entries), findings by severity with what they mean, what to do, the evidence and a link to the screen that fixes it; what the account may not read is listed as not checked; Markdown and JSON export; a dashboard card.
+Sixteen read-only checks run with your own access (disks, databases, journal, backup, UnknownUser, auditing with the login events and SQL statements, open services and applications, %All holders, certificates, tasks, monitor, alerts, licence, severe log entries), findings by severity with what they mean, what to do, the evidence and a link to the screen that fixes it; what the account may not read is listed as not checked; Markdown and JSON export; a dashboard card.
 
 _Notable:_ `src/features/health/checks.ts` (pure checks, one test each), `runner.ts`.
 
@@ -59,9 +59,9 @@ _Notable:_ InterSystems' FHIR Server Management API with the session's own token
 
 ## SQL
 
-Run SQL in any namespace as yourself: parameters, a row limit, results with each column's SQL type, `EXPLAIN`; the catalogue (schemas, tables, columns, first 100 rows); the statements running now and the statement index. A change is named, confirmed and recorded first.
+Run SQL in any namespace as yourself: parameters, a row limit, results with each column's SQL type, `EXPLAIN`; the catalogue (schemas, tables, columns, first 100 rows); the statements running now and the statement index. A change is named, confirmed and recorded first. The screen says whether IRIS writes its statements to the audit log ("IRIS SQL audit is disabled" as IRIS ships), and an account with `%Admin_Secure:U` can switch change auditing on, and query auditing as a separate step, each confirmed, read back and recorded.
 
-_Notable:_ the Atelier API (`/api/atelier`), password only; `src/api/atelier.ts`, `src/lib/sqlStatement.ts`, `src/features/sql/`; the demo's evaluator `src/mocks/sql.ts`.
+_Notable:_ the Atelier API (`/api/atelier`), password only; `src/api/atelier.ts`, `src/lib/sqlStatement.ts`, `src/features/sql/`; the demo's evaluator `src/mocks/sql.ts`; the audit state from `/v2/security/audit/enabled` and `/events`, `src/features/security/audit.ts`.
 
 ## Interoperability: Productions
 

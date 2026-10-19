@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- **SQL audit.** The SQL screen says when IRIS does not write the statements run there to its audit log: "IRIS
+  SQL audit is disabled" (as IRIS ships, every `%System/%SQL` event is off), under any user. It reads system-wide
+  auditing and the Dynamic SQL events: changes are audited with `DynamicStatementDML` and `DynamicStatementDDL` on,
+  queries with `DynamicStatementQuery`, and the notice is calmer when only queries go unrecorded. An account with
+  `%Admin_Secure:U` can switch change auditing on from there, query auditing as a separate step and system-wide
+  auditing if it is off, each confirmed (it applies to every SQL client and grows the audit database), refused in
+  a read-only tab, recorded in Activity and read back; any other account is told the state is unknown. The Health
+  check's auditing check reports SQL statements not audited. The demo lists the `%SQL` events IRIS 2026.2 has, all
+  off, counts the SQL screen's statements under them, and audits a change to an event as IRIS does.
+
 ## 1.6.0 - FHIR servers of IRIS for Health (18 October 2026)
 
 - **FHIR servers** (IRIS for Health and Health Connect), in a new Health group: every FHIR-enabled namespace and its
