@@ -32,6 +32,7 @@ import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useReadOnly } from '@/stores/readOnly';
 import { useSession } from '@/stores/session';
 import { useSqlHistory } from '@/stores/sqlHistory';
+import { SqlAuditNotice } from './SqlAuditNotice';
 
 const LIMITS = ['100', '500', '1000', '5000'];
 
@@ -266,6 +267,7 @@ export default function SqlPage() {
           {ns || 'none'}.
         </Alert>
       ) : null}
+      {server.data ? <SqlAuditNotice /> : null}
       {server.data ? (
         <Tabs value={tab} onChange={setTab}>
           <Tabs.List>

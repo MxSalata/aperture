@@ -8,7 +8,7 @@ import { MemoryRouter } from 'react-router';
 import SqlPage from '../SqlPage';
 import { basicCredentials } from '@/api/base';
 import { resetClients } from '@/api/client';
-import { resetDb } from '@/mocks/db';
+import { mockDb, resetDb } from '@/mocks/db';
 import { resetSql } from '@/mocks/sql';
 import { useAtelierAuth } from '@/stores/atelierAuth';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
@@ -178,4 +178,102 @@ describe('the SQL screen', () => {
     });
     expect(screen.queryByText(/There is no namespace/)).toBeNull();
   }, 30_000);
+
+  describe('the SQL audit notice', () => {
+    const sqlEvent = (name: string) =>
+      mockDb.auditEvents.find((e) => e.EventType === '%SQL' && e.EventName === name)!;
+
+    it('says IRIS does not audit the statements, and audits changes once confirmed', async () => {
+      await signIn('_SYSTEM', 'basic');
+      open();
+      const notice = await screen.findByRole(
+        'alert',
+        { name: 'IRIS SQL audit is disabled' },
+        { timeout: 10_000 },
+      );
+      expect(notice).toHaveTextContent(/not written to the IRIS audit log, under any user/);
+      expect(notice).toHaveTextContent(/DynamicStatementDML and DynamicStatementDDL are off/);
+      fireEvent.click(within(notice).getByRole('button', { name: 'Audit SQL changes…' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Audit SQL changes on the whole instance' });
+      expect(dialog).toHaveTextContent(/every SQL client and not only Aperture/);
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Audit SQL changes' }));
+      expect(await screen.findByText(/queries are not written to the audit log/)).toBeVisible();
+      expect(sqlEvent('DynamicStatementDML').Enabled).toBe(true);
+      expect(sqlEvent('DynamicStatementDDL').Enabled).toBe(true);
+      expect(sqlEvent('DynamicStatementQuery').Enabled).toBe(false);
+      expect(screen.queryByRole('alert', { name: 'IRIS SQL audit is disabled' })).toBeNull();
+    }, 30_000);
+
+    it('offers to switch auditing on when it is off for the whole instance', async () => {
+      mockDb.auditEnabled = false;
+      for (const n of ['DynamicStatementDML', 'DynamicStatementDDL']) sqlEvent(n).Enabled = true;
+      await signIn('_SYSTEM', 'basic');
+      open();
+      const notice = await screen.findByRole(
+        'alert',
+        { name: 'IRIS SQL audit is disabled' },
+        { timeout: 10_000 },
+      );
+      expect(notice).toHaveTextContent(/Auditing is off for the whole instance/);
+      expect(within(notice).queryByRole('button', { name: 'Audit SQL changes…' })).toBeNull();
+      fireEvent.click(within(notice).getByRole('button', { name: 'Switch auditing on…' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Switch auditing on' });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Switch on' }));
+      expect(await screen.findByText(/queries are not written to the audit log/)).toBeVisible();
+      expect(mockDb.auditEnabled).toBe(true);
+    }, 30_000);
+
+    it('changes nothing from a read-only tab', async () => {
+      useReadOnly.getState().setReadOnly(true);
+      await signIn('_SYSTEM', 'basic');
+      open();
+      const notice = await screen.findByRole(
+        'alert',
+        { name: 'IRIS SQL audit is disabled' },
+        { timeout: 10_000 },
+      );
+      expect(within(notice).getByRole('button', { name: 'Audit SQL changes…' })).toBeDisabled();
+      expect(notice).toHaveTextContent(/This tab is read-only/);
+    }, 30_000);
+
+    it('says only that changes and queries are audited when they are', async () => {
+      for (const n of ['DynamicStatementDML', 'DynamicStatementDDL', 'DynamicStatementQuery'])
+        sqlEvent(n).Enabled = true;
+      await signIn('_SYSTEM', 'basic');
+      open();
+      expect(
+        await screen.findByText(/IRIS audits the statements run here, changes and queries/, undefined, {
+          timeout: 10_000,
+        }),
+      ).toBeVisible();
+      expect(screen.queryByRole('alert')).toBeNull();
+    }, 30_000);
+
+    it('calls the state unknown when the account may not read the audit settings', async () => {
+      server.use(
+        http.get('*/api/admin/v2/security/audit/events', () =>
+          HttpResponse.json(
+            {
+              status: { errors: [{ error: 'ERROR #5915: Forbidden' }], summary: '' },
+              console: [],
+              result: {},
+            },
+            { status: 403 },
+          ),
+        ),
+      );
+      await signIn('_SYSTEM', 'basic');
+      open();
+      expect(
+        await screen.findByText(
+          /IRIS SQL audit state unknown: reading the audit settings needs %Admin_Secure:U/,
+          undefined,
+          {
+            timeout: 10_000,
+          },
+        ),
+      ).toBeVisible();
+      expect(screen.queryByRole('alert', { name: 'IRIS SQL audit is disabled' })).toBeNull();
+    }, 30_000);
+  });
 });
