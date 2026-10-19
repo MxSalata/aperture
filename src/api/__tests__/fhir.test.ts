@@ -113,7 +113,8 @@ describe('FHIR servers on the demo instance', () => {
           }),
       ),
     );
-    await expect(fetchFhirInfo()).rejects.toThrow(/not reachable through this deployment/);
+    // The proxy's own page never reaches the API: sessionFetch refuses an answer that is not JSON.
+    await expect(fetchFhirInfo()).rejects.toThrow(/did not reach IRIS/);
   });
 
   it('calls a server open only when a search without credentials answers', async () => {
