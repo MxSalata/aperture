@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isSecretKey, redactDeep, redactField, REDACTED } from '../redact';
+import { isSecretKey, redactDeep, redactField, redactText, REDACTED } from '../redact';
 
 describe('isSecretKey', () => {
   it('matches the secret vocabulary of the SysAdmin API', () => {
@@ -130,5 +130,25 @@ describe('settings that end in a secret word', () => {
     expect(isSecretKey('ReturnRefreshToken')).toBe(false);
     expect(isSecretKey('refresh_token')).toBe(true);
     expect(isSecretKey('RefreshToken')).toBe(true);
+  });
+});
+
+describe('redactText', () => {
+  it('hides secret values in a body that does not parse, and keeps the rest as typed', () => {
+    expect(redactText('{"Name":"bob","Password":"hunter2",}')).toBe(
+      `{"Name":"bob","Password":"${REDACTED}",}`,
+    );
+    expect(redactText("{Name: 'bob', ClientSecret: 'a\\'b' PasswordNeverExpires: \"1\"")).toBe(
+      `{Name: 'bob', ClientSecret: '${REDACTED}' PasswordNeverExpires: "1"`,
+    );
+  });
+
+  it('hides a value whose closing quote is missing, up to the end of its line', () => {
+    expect(redactText('{\n  "Password": "hunter2\n  "Name": "bob"\n')).toBe(
+      `{\n  "Password": "${REDACTED}\n  "Name": "bob"\n`,
+    );
+    expect(redactText('{"access_token": "abc", "Password": ""')).toBe(
+      `{"access_token": "${REDACTED}", "Password": ""`,
+    );
   });
 });

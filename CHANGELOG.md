@@ -22,6 +22,10 @@
   line start and answered the same empty window again, so "Older lines" stayed enabled, read nothing, and nothing
   older than a line over 64 KiB could be reached. It now answers that line in pieces, one per window, and the page
   stops and says so when an older reader answers the same window twice.
+- **The Explorer's request export redacts secrets in a body that does not parse.** A body with a typo (a trailing
+  comma, a missing quote) went into the curl command, the `.http` block and the Postman collection as typed,
+  password included, although the panel says secret values are redacted. Such a body is still exported as typed,
+  with every secret value masked.
 
 ## 1.3.0 - Every screen fits a phone and a laptop (2 October 2026)
 

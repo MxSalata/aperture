@@ -69,3 +69,16 @@ export function redactDeep<T>(value: T, key?: string): { value: T; count: number
   };
   return { value: walk(value, key, false) as T, count };
 }
+
+// A `"key": "value"` pair in text that is not valid JSON (a body being edited): the key quoted or
+// bare, the value in either quote and, when its closing quote is missing, up to the end of the line.
+const TEXT_PAIR = /(["']?)([A-Za-z_$][\w$-]*)\1(\s*:\s*)(["'])((?:(?!\4)[^\\\n]|\\.)*)(\4|$)/gm;
+
+/** Redact the secret string values in text that does not parse as JSON, by the same keys. */
+export function redactText(text: string): string {
+  return text.replace(
+    TEXT_PAIR,
+    (pair, q: string, key: string, sep: string, vq: string, value: string, close: string) =>
+      value !== '' && isSecretKey(key) ? `${q}${key}${q}${sep}${vq}${REDACTED}${close}` : pair,
+  );
+}

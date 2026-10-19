@@ -7,7 +7,7 @@ import {
   type OpenApiDoc,
 } from '@/lib/openapi';
 import { index } from '@/lib/specIndex';
-import { redactDeep } from '@/lib/redact';
+import { redactDeep, redactText } from '@/lib/redact';
 import type { GeneratedRequest } from '@/lib/requestExport';
 
 /**
@@ -15,7 +15,8 @@ import type { GeneratedRequest } from '@/lib/requestExport';
  * Postman, a `.http` file or curl: the values typed into the panel where there are any, the
  * spec's examples for the required parameters, an example body from the schema (with the quirk
  * adapters applied, as the panel does), and the privileges and 202 as notes. Secret values in
- * the body are redacted, so a copied request never carries a password.
+ * the body are redacted, also in a body that does not parse yet, so a copied request never
+ * carries a password.
  */
 export function operationRequest(
   op: IndexedOperation,
@@ -41,7 +42,8 @@ export function operationRequest(
     }
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
       parsed = applyQuirks(op, parsed as Record<string, unknown>);
-    text = typeof parsed === 'string' ? parsed : JSON.stringify(redactDeep(parsed).value, null, 2);
+    text =
+      typeof parsed === 'string' ? redactText(parsed) : JSON.stringify(redactDeep(parsed).value, null, 2);
   }
   return {
     name: `${op.method} ${op.path}`,
