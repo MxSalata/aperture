@@ -107,7 +107,11 @@ export function SqlAuditNotice() {
       <Group gap={6} mb="sm" wrap="nowrap" align="flex-start">
         <IconShieldQuestion size={16} style={{ flex: 'none', marginTop: 2 }} />
         <Text size="sm" c="dimmed">
-          IRIS SQL audit state unknown: this instance lists no Dynamic SQL audit events. See {auditLink}.
+          IRIS SQL audit state unknown:{' '}
+          {state.missing.length
+            ? `this instance lists Dynamic SQL audit events but not ${names(state.missing)}, so whether the changes run here are audited cannot be told.`
+            : 'this instance lists no Dynamic SQL audit events.'}{' '}
+          See {auditLink}.
         </Text>
       </Group>
     );

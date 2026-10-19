@@ -92,6 +92,16 @@ describe('sqlAuditState', () => {
     expect(sqlAuditState(true, undefined).level).toBe('unknown');
     expect(sqlAuditState(true, [row('%System/%Login/Login', true)]).level).toBe('unknown');
   });
+
+  it('is unknown when a split instance lists only one change event, and names the other', () => {
+    const s = sqlAuditState(true, [row(SQL_AUDIT.dml, true), row(SQL_AUDIT.query, false)]);
+    expect(s).toMatchObject({ level: 'unknown', missing: [SQL_AUDIT.ddl] });
+  });
+
+  it('audits changes only, with nothing to offer, when a split instance lists no query event', () => {
+    const s = sqlAuditState(true, [row(SQL_AUDIT.dml, true), row(SQL_AUDIT.ddl, true)]);
+    expect(s).toMatchObject({ level: 'changes', queries: false, queryEvent: undefined, missing: [] });
+  });
 });
 
 describe('enabling SQL auditing', () => {

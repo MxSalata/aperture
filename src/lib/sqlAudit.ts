@@ -32,7 +32,10 @@ export const SQL_AUDIT = {
 } as const;
 
 export type SqlAuditLevel =
-  /** The audit settings could not be read: no %Admin_Secure:U, or the read failed. */
+  /**
+   * The audit settings could not be read (no %Admin_Secure:U, or the read failed), or the instance
+   * does not list the events that would tell.
+   */
   | 'unknown'
   /** Neither changes nor queries are written to the audit log. */
   | 'off'
@@ -53,13 +56,17 @@ export interface SqlAuditState {
   queries: boolean;
   /** The SQL events as read, with their state, for the evidence. */
   events: { id: string; enabled: boolean }[];
+  /** A split change event the instance does not list (it lists the other): the state is unknown. */
+  missing: string[];
 }
 
 /**
  * Whether IRIS writes the SQL screen's statements to its audit log. Nothing is written while
  * system-wide auditing is off, whatever the events say; with it on, changes are written when
  * both DynamicStatementDML and DynamicStatementDDL are on (or the combined DynamicStatement, on
- * an instance that lists no split events), and queries when DynamicStatementQuery is on.
+ * an instance that lists no split events), and queries when DynamicStatementQuery is on. An
+ * instance that lists one split change event but not the other leaves the state unknown, and a
+ * split instance with no query event audits changes at most, never "all".
  */
 export function sqlAuditState(
   auditing: boolean | undefined,
@@ -84,11 +91,13 @@ export function sqlAuditState(
   const changeEvents = changeIds.filter((id) => !byId.get(id));
   const queryEvent = queryId && !byId.get(queryId) ? queryId : undefined;
   const queries = auditing === true && !!queryId && byId.get(queryId) === true;
-  const base = { auditing, changeEvents, queryEvent, queries, events };
-  // Not read, or the instance lists none of the events: nothing to go on.
-  if (auditing === undefined || !rows || !changeIds.length) return { ...base, level: 'unknown' };
-  // A split instance needs both change events; one of them alone leaves the other kind unrecorded.
-  const changes = changeIds.length === (split ? 2 : 1) && !changeEvents.length;
-  const level: SqlAuditLevel = !auditing || !changes ? 'off' : queryEvent ? 'changes' : 'all';
+  const missing = split ? [SQL_AUDIT.dml, SQL_AUDIT.ddl].filter((id) => !byId.has(id)) : [];
+  const base = { auditing, changeEvents, queryEvent, queries, events, missing };
+  // Not read, or the instance lists none of the events (or only one of the split change events):
+  // nothing to go on.
+  if (auditing === undefined || !rows || !changeIds.length || missing.length)
+    return { ...base, level: 'unknown' };
+  const changes = !changeEvents.length;
+  const level: SqlAuditLevel = !auditing || !changes ? 'off' : queries ? 'all' : 'changes';
   return { ...base, level };
 }
