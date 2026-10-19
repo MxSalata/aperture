@@ -484,12 +484,13 @@ export default function ProductionPage() {
               -
             </Text>
           );
-        return e.count || e.atLeast ? (
+        // A busy host whose newest entries hold no error is not failing: its 0+ stays plain.
+        return e.count ? (
           <Badge size="sm" variant="light" color="red">
             {e.atLeast ? `${e.count}+` : e.count}
           </Badge>
         ) : (
-          <Text size="sm">0</Text>
+          <Text size="sm">{e.atLeast ? '0+' : 0}</Text>
         );
       },
     },

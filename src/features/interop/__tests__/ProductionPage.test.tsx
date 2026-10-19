@@ -4,6 +4,7 @@ import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router';
+import { http, HttpResponse } from 'msw';
 import ProductionPage from '../ProductionPage';
 import { resetClients } from '@/api/client';
 import { resetDb } from '@/mocks/db';
@@ -49,6 +50,42 @@ describe('the production screen', () => {
     expect(screen.getByText(/newest 50 event log entries/)).toBeInTheDocument();
     // HL7.Production shares its namespace with HL7.TestProduction, whose host names IRIS would mix in.
     expect(await screen.findByText(/a host of the same name in another production/)).toBeInTheDocument();
+  });
+
+  it('shows a plain 0+ for a busy host whose newest entries hold no error', async () => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const d = new Date();
+    const now = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.000`;
+    const entry = (i: number) => ({
+      Id: i + 1,
+      Seq: i + 1,
+      TimeLogged: now,
+      TraceCat: '',
+      Type: 'Info',
+      Job: '1400',
+      Session: '',
+      Source: 'HL7.Router.ADT',
+      Method: '',
+      Stack: '',
+      MessageId: 1,
+      Text: 'Routed',
+    });
+    server.use(
+      http.get('*/api/interop-editors/v7/:ns/productions/:production/HL7.Router.ADT/log', () =>
+        HttpResponse.json({
+          children: [...Array.from({ length: 50 }, (_, i) => entry(i)), { Id: 'more...' }],
+        }),
+      ),
+    );
+    await open('_SYSTEM');
+    const row = await screen.findByRole('button', { name: 'Open HL7.Router.ADT' });
+    const cell = await within(row).findByText('0+');
+    expect(cell.closest('.mantine-Badge-root')).toBeNull();
+    expect(
+      within(await failingRow())
+        .getByText(/^\d+\+$/)
+        .closest('.mantine-Badge-root'),
+    ).not.toBeNull();
   });
 
   it('reads the event logs again on a refresh once they are 30 s old', async () => {

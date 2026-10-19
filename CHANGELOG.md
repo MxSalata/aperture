@@ -21,8 +21,8 @@
   where JSON was expected (a path no proxy passes on to IRIS) is an error, not an empty list.
 - **A production's errors say what IRIS can tell.** IRIS returns a host's newest 50 event log entries and nothing
   older, so a busy host's count of the last 24 hours reads `n+`, the screen says so, and the marker IRIS ends such a
-  log with no longer shows as a row of `undefined`. A refresh (or auto-refresh) reads the event logs again once
-  they are 30 seconds old. The Messages tab's id column is the body id, which is what IRIS sends under `Header`.
+  log with no longer shows as a row of `undefined`. A busy host whose newest entries hold no error reads a plain
+  `0+`, not a red badge. A refresh (or auto-refresh) reads the event logs again once they are 30 seconds old. The Messages tab's id column is the body id, which is what IRIS sends under `Header`.
   An account IRIS does not let read event logs, messages or queues is not sent those reads, and the screen and
   drawer say why. Where the namespace has another production, the screen says that IRIS finds a host's log by its
   name across the namespace.
