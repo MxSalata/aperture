@@ -13,7 +13,7 @@
   IRIS serves every server's `/metadata` to anyone, so that alone no longer raises the alarm. An answer that is not
   a CapabilityStatement says the server is not reachable through this deployment. An unknown server, job or
   namespace says so instead of claiming the instance is not IRIS for Health, and on plain IRIS the missing-API
-  explanation shows whatever page the 404 carries. The dialog closes once IRIS accepts a reset, decommission or
+  explanation is shown whatever page the 404 carries. The dialog closes once IRIS accepts a reset, decommission or
   delete; the job is followed after it (a failed poll tried again, one still running after three minutes said to
   be running, and nothing followed once the page is left). Disabling a server on a LIVE instance asks for its URL;
   a decommissioned server's Serves tab says it serves nothing; the Packages tab picks the namespace. nginx and the

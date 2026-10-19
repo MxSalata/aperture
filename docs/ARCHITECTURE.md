@@ -3,7 +3,7 @@
 Aperture is a front-end: everything it shows or changes goes through the InterSystems IRIS
 **SysAdmin REST API v2** (`/api/admin`), with native services beside it (`/api/interop-editors` for productions, `/api/monitor` for host
 metrics, `/api/mgmnt` for REST routes, `/api/atelier` for SQL, `/csp/fhir-management/api` and the FHIR servers'
-own `/metadata` under `/csp/healthshare` for FHIR) and one small read-only REST class of its own on the instance
+own `/metadata` and one anonymous search under `/csp/healthshare` for FHIR) and one small read-only REST class of its own on the instance
 for the log files the API has no route for (§2.7b). This document explains how the pieces fit, in
 enough detail to extend the portal or reuse the patterns.
 
