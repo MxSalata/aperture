@@ -99,5 +99,14 @@ for (const width of [360, 1024]) {
       }
       expect(found).toEqual([]);
     });
+
+    // The list above opens the SQL screen at its password gate; once given, the audit notice and its buttons.
+    test('the SQL screen with its audit notice fits', async ({ page }) => {
+      await signIn(page);
+      await page.goto('/#/sql');
+      await page.getByRole('button', { name: 'Use it' }).click();
+      await expect(page.getByRole('alert', { name: 'IRIS SQL audit is disabled' })).toBeVisible();
+      expect(await page.evaluate(overflow)).toBeNull();
+    });
   });
 }

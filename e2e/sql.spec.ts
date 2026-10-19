@@ -41,3 +41,34 @@ test('a query, a change behind its warning, and the catalogue', async ({ page })
   await page.getByRole('button', { name: 'First 100 rows' }).click();
   await expect(page.getByRole('cell', { name: 'Hull' })).toBeVisible();
 });
+
+/**
+ * The demo's %SQL audit events are off, as IRIS ships them: the screen says IRIS does not audit
+ * its statements, switches change auditing on after a confirmation, then query auditing as a
+ * separate step, and each change is in Activity.
+ */
+test('the SQL audit notice, and switching SQL auditing on', async ({ page }) => {
+  await page.goto('/#/login');
+  await page.getByRole('button', { name: /Try the demo/ }).click();
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await page.goto('/#/sql');
+  await page.getByRole('button', { name: 'Use it' }).click();
+
+  const notice = page.getByRole('alert', { name: 'IRIS SQL audit is disabled' });
+  await expect(notice).toContainText('not written to the IRIS audit log, under any user');
+  await notice.getByRole('button', { name: 'Audit SQL changes…' }).click();
+  const changes = page.getByRole('dialog', { name: 'Audit SQL changes on the whole instance' });
+  await expect(changes).toContainText('every SQL client and not only Aperture');
+  await changes.getByRole('button', { name: 'Audit SQL changes' }).click();
+  await expect(notice).toBeHidden();
+  await expect(page.getByText(/queries are not written to the audit log/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Audit every query too…' }).click();
+  const queries = page.getByRole('dialog', { name: 'Audit every SQL query' });
+  await expect(queries).toContainText('the audit database grows quickly');
+  await queries.getByRole('button', { name: 'Audit every query' }).click();
+  await expect(page.getByText(/IRIS audits the statements run here, changes and queries/)).toBeVisible();
+
+  await page.goto('/#/activity');
+  await expect(page.getByRole('cell', { name: '/v2/security/audit/event' })).toHaveCount(3);
+});

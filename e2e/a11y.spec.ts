@@ -91,6 +91,15 @@ for (const { colorScheme, contrast, palette } of MODES) {
       });
     }
 
+    // The SQL screen once its password is given, with the notice that IRIS does not audit its statements.
+    test('SQL audit notice', async ({ page }) => {
+      await signIn(page);
+      await go(page, '/sql');
+      await page.getByRole('button', { name: 'Use it' }).click();
+      await expect(page.getByRole('alert', { name: 'IRIS SQL audit is disabled' })).toBeVisible();
+      expect(await audit(page)).toEqual([]);
+    });
+
     // A drawer, open: its close button and its content are audited too (the theme names the button).
     // Audited once it has settled: mid-transition, axe blends the drawer with its overlay.
     test('Job Center drawer', async ({ page }) => {
