@@ -70,15 +70,42 @@ export function redactDeep<T>(value: T, key?: string): { value: T; count: number
   return { value: walk(value, key, false) as T, count };
 }
 
-// A `"key": "value"` pair in text that is not valid JSON (a body being edited): the key quoted or
-// bare, the value in either quote and, when its closing quote is missing, up to the end of the line.
-const TEXT_PAIR = /(["']?)([A-Za-z_$][\w$-]*)\1(\s*:\s*)(["'])((?:(?!\4)[^\\\n]|\\.)*)(\4|$)/gm;
+// A key in text that is not valid JSON (a body being edited), quoted or bare, and its colon. Each
+// key is found on its own, so a missing quote earlier in the text cannot hide a later one.
+const TEXT_KEY = /(["']?)([A-Za-z_$][\w$-]*)\1\s*:\s*/g;
 
-/** Redact the secret string values in text that does not parse as JSON, by the same keys. */
+/**
+ * The value that starts at `from` and its masked form: a quoted value up to its closing quote
+ * or, when that is missing, the end of its line; an unquoted one up to the next comma, brace,
+ * bracket or line end. Nested values and JSON literals are left for their own keys.
+ */
+function maskedValue(text: string, from: number): { end: number; masked: string } | undefined {
+  const q = text[from];
+  if (q === '"' || q === "'") {
+    let i = from + 1;
+    while (i < text.length && text[i] !== q && text[i] !== '\n')
+      i += text[i] === '\\' && text[i + 1] !== '\n' ? 2 : 1;
+    if (i === from + 1) return undefined;
+    return text[i] === q
+      ? { end: i + 1, masked: `${q}${REDACTED}${q}` }
+      : { end: Math.min(i, text.length), masked: `${q}${REDACTED}` };
+  }
+  const value = /^[^,}\]\n]*/.exec(text.slice(from))![0].trimEnd();
+  if (value === '' || /^[{[]/.test(value) || /^(true|false|null)$/.test(value)) return undefined;
+  return { end: from + value.length, masked: REDACTED };
+}
+
+/** Redact the secret values in text that does not parse as JSON, by the same keys. */
 export function redactText(text: string): string {
-  return text.replace(
-    TEXT_PAIR,
-    (pair, q: string, key: string, sep: string, vq: string, value: string, close: string) =>
-      value !== '' && isSecretKey(key) ? `${q}${key}${q}${sep}${vq}${REDACTED}${close}` : pair,
-  );
+  const key = new RegExp(TEXT_KEY);
+  let out = '';
+  let done = 0;
+  for (let m = key.exec(text); m; m = key.exec(text)) {
+    if (!isSecretKey(m[2])) continue;
+    const value = maskedValue(text, key.lastIndex);
+    if (!value) continue;
+    out += text.slice(done, key.lastIndex) + value.masked;
+    done = key.lastIndex = value.end;
+  }
+  return out + text.slice(done);
 }

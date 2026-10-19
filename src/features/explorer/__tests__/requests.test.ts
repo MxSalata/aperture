@@ -43,6 +43,8 @@ describe('Explorer operations as requests', () => {
     // A body that does not parse while it is being edited is exported as typed, but not its secrets.
     const typo = operationRequest(op, doc, {}, '{"Name":"jdoe","Password":"hunter2",}');
     expect(typo.body).toBe('{"Name":"jdoe","Password":"••••••••",}');
+    const quote = operationRequest(op, doc, {}, '{"Name": "jdoe, "Password": hunter2}');
+    expect(quote.body).toBe('{"Name": "jdoe, "Password": ••••••••}');
   });
 
   it('sends a moved operation where IRIS serves it', async () => {

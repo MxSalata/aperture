@@ -151,4 +151,24 @@ describe('redactText', () => {
       `{"access_token": "${REDACTED}", "Password": ""`,
     );
   });
+
+  it('finds a secret key after an earlier value lost its closing quote', () => {
+    expect(redactText('{"Name": "bob, "Password": "hunter2"}')).toBe(
+      `{"Name": "bob, "Password": "${REDACTED}"}`,
+    );
+    expect(redactText('{"Note": "x\\", "Password": "hunter2"}')).toBe(
+      `{"Note": "x\\", "Password": "${REDACTED}"}`,
+    );
+    expect(redactText('{"Note": "x\\\\\\", "Password": "hunter2"}')).not.toContain('hunter2');
+  });
+
+  it('hides a value typed without quotes, and leaves literals and nested values to their keys', () => {
+    expect(redactText('{"Password": hunter2, "Name": "x"}')).toBe(`{"Password": ${REDACTED}, "Name": "x"}`);
+    expect(redactText('{ClientSecret: s3 cr3t }')).toBe(`{ClientSecret: ${REDACTED} }`);
+    expect(redactText('{"Password":\n  hunter2\n}')).toBe(`{"Password":\n  ${REDACTED}\n}`);
+    expect(redactText('{"ChangePassword": true, "Password": null,}')).toBe(
+      '{"ChangePassword": true, "Password": null,}',
+    );
+    expect(redactText('{"Secret": {"Password": "p"},}')).toBe(`{"Secret": {"Password": "${REDACTED}"},}`);
+  });
 });

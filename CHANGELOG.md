@@ -23,9 +23,10 @@
   older than a line over 64 KiB could be reached. It now answers that line in pieces, one per window, and the page
   stops and says so when an older reader answers the same window twice.
 - **The Explorer's request export redacts secrets in a body that does not parse.** A body with a typo (a trailing
-  comma, a missing quote) went into the curl command, the `.http` block and the Postman collection as typed,
-  password included, although the panel says secret values are redacted. Such a body is still exported as typed,
-  with every secret value masked.
+  comma, a missing quote, a value without quotes) went into the curl command, the `.http` block and the Postman
+  collection as typed, password included, although the panel says secret values are redacted. Such a body is still
+  exported as typed, with every secret value masked: each secret key is found on its own, so a quote missing
+  earlier in the body does not hide a later password.
 - **Similar entries work for an operator account.** The wording index ran its SQL as Dynamic SQL, which checks
   table privileges the package never grants, so an account with %Admin_Operate but not %All (the %Operator role)
   would get a 500 from the index and from Similar entries. Its statements are now prepared without that check
