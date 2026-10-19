@@ -9,6 +9,7 @@ import { useMetrics } from '@/stores/metrics';
 import { useActivity } from '@/stores/activity';
 import { useHealth } from '@/stores/health';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
+import { logsRefusal } from '@/stores/logsRefusal';
 import { queryClient } from '@/query';
 import { forgetEndedTasks } from '@/api/endedTasks';
 import { setInstanceTimezone, setMeasuredOffset } from '@/lib/format';
@@ -250,6 +251,7 @@ export function resetInstanceState(): void {
   useActivity.getState().clear();
   useHealth.getState().reset();
   useMgmntAuth.getState().clear();
+  logsRefusal.forget();
 }
 
 const anonymous = {

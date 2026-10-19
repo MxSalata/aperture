@@ -3,6 +3,7 @@ import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { ApiError } from '@/lib/errors';
 import { mgmntCredentials } from './mgmnt';
 import { canUse } from './privileges';
+import { logsRefusal } from '@/stores/logsRefusal';
 
 /**
  * Aperture's own log reader, `/api/aperture` (ipm/cls/Aperture/API.cls, created by the IPM
@@ -60,6 +61,10 @@ export const LOG_READER_MISSING =
 export const LOG_READER_FORBIDDEN =
   'Reading the logs needs %Admin_Operate:USE, which this account does not hold.';
 
+/** What a session with an escalation role is told when the account's own sign-in is refused. */
+export const LOG_READER_ESCALATED =
+  "The instance refused this account's own sign-in for /api/aperture. A password signs in without the escalation role, so the account itself needs %Admin_Operate:USE (or the password is wrong).";
+
 /**
  * A request to the reader, GET unless said otherwise (POST /logs/index refreshes the wording index).
  * /api/aperture's web application requires %Admin_Operate, and IRIS refuses an account without it
@@ -72,6 +77,8 @@ export async function logsRequest<T>(path: string, method: 'GET' | 'POST' = 'GET
   if (!canUse(info, ['%Admin_Operate:U']))
     throw new ApiError({ status: 403, url, summary: LOG_READER_FORBIDDEN });
   const credentials = mgmntCredentials();
+  if (credentials && credentials === logsRefusal.get())
+    throw new ApiError({ status: 401, url, summary: LOG_READER_ESCALATED });
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (credentials) headers.Authorization = `Basic ${credentials}`;
   let res: Response;
@@ -88,16 +95,23 @@ export async function logsRequest<T>(path: string, method: 'GET' | 'POST' = 'GET
     /* no JSON body: the web server's own 401, or an HTML error page */
   }
   // A refused password is forgotten at once: sending it again would count toward the account's
-  // invalid-login limit.
-  if (res.status === 401) useMgmntAuth.getState().clear();
+  // invalid-login limit. In a session signed in with an escalation role, /info grants that role's
+  // resources while the password signs in as the account alone, so a 401 may only mean the account
+  // lacks %Admin_Operate itself: the shared password (which REST services may be using) is kept,
+  // and not sent here again.
+  const escalated = res.status === 401 && !!credentials && !!useSession.getState().role;
+  if (escalated) logsRefusal.set(credentials);
+  else if (res.status === 401) useMgmntAuth.getState().clear();
   throw new ApiError({
     status: res.status,
     url,
     summary:
       res.status === 401
-        ? credentials
-          ? 'The instance refused the password for /api/aperture.'
-          : 'The log reader needs your password: its web application accepts a password only.'
+        ? escalated
+          ? LOG_READER_ESCALATED
+          : credentials
+            ? 'The instance refused the password for /api/aperture.'
+            : 'The log reader needs your password: its web application accepts a password only.'
         : res.status === 403
           ? message || LOG_READER_FORBIDDEN
           : res.status === 404 && !message

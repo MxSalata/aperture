@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/node';
-import { fetchLogSources, isReaderMissing, LOG_READER_FORBIDDEN, readLogWindow } from '../logs';
+import {
+  fetchLogSources,
+  isReaderMissing,
+  LOG_READER_ESCALATED,
+  LOG_READER_FORBIDDEN,
+  readLogWindow,
+} from '../logs';
 import { basicCredentials } from '../base';
 import { resetClients } from '../client';
 import { resetDb } from '@/mocks/db';
@@ -127,5 +133,25 @@ describe('/api/aperture (the log reader)', () => {
       (e: unknown) => e instanceof ApiError && e.status === 403 && e.summary === LOG_READER_FORBIDDEN,
     );
     expect(requests).toBe(0);
+  });
+  it('keeps the shared password when an escalated session is refused, and does not send it again', async () => {
+    await signIn('_SYSTEM', 'jwt');
+    // Signed in with an escalation role: /info grants its resources, the password signs in without it.
+    useSession.setState({ role: '%Manager' });
+    const basic = basicCredentials('_SYSTEM', 'SYS');
+    useMgmntAuth.getState().set(basic);
+    let requests = 0;
+    server.use(
+      http.all('*/api/aperture/*', () => {
+        requests++;
+        return new HttpResponse(null, { status: 401 });
+      }),
+    );
+    for (let i = 0; i < 2; i++)
+      await expect(fetchLogSources()).rejects.toSatisfy(
+        (e: unknown) => e instanceof ApiError && e.status === 401 && e.summary === LOG_READER_ESCALATED,
+      );
+    expect(requests).toBe(1);
+    expect(useMgmntAuth.getState().basic).toBe(basic);
   });
 });
