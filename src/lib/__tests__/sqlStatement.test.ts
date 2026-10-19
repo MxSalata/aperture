@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyStatement, placeholders, stripSql } from '../sqlStatement';
+import { classifyStatement, placeholders, quoteIdentifier, stripSql } from '../sqlStatement';
 
 describe('what a statement does', () => {
   it('reads with SELECT, EXPLAIN and a CTE that feeds a SELECT', () => {
@@ -55,5 +55,11 @@ describe('what a statement does', () => {
   it('has nothing to run in an empty text or one of comments only, and it is no read', () => {
     expect(classifyStatement('')).toEqual({ read: false, keyword: '' });
     expect(classifyStatement('  -- just a note\n/* and another */ ')).toEqual({ read: false, keyword: '' });
+  });
+
+  it('quotes a name as a delimited identifier, doubling its quotes', () => {
+    expect(quoteIdentifier('Person')).toBe('"Person"');
+    expect(quoteIdentifier('Order')).toBe('"Order"');
+    expect(quoteIdentifier('a"b')).toBe('"a""b"');
   });
 });

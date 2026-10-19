@@ -11,7 +11,8 @@
  *           cond: col =, <>, !=, <, <=, >, >=, [NOT] LIKE, %STARTSWITH a value, col IS [NOT] NULL)
  *   INSERT INTO t [(cols)] VALUES (...), ...    UPDATE t SET col = value, ... [WHERE ...]
  *   DELETE FROM t [WHERE ...]    CREATE TABLE s.t (col TYPE, ...)    DROP TABLE s.t    EXPLAIN SELECT ...
- * Values are literals or `?` parameters. An unqualified table is in SQLUser. INFORMATION_SCHEMA
+ * Values are literals or `?` parameters. A name may be delimited (`"Sample"."Person"`); names match
+ * whatever their case, as on IRIS. An unqualified table is in SQLUser. INFORMATION_SCHEMA
  * (SCHEMATA, TABLES, COLUMNS, CURRENT_STATEMENTS, STATEMENTS) is built from the tables as they are.
  * Errors carry the SQLCODE IRIS would use: -30 a missing table, -29 a missing field, -1 anything the
  * evaluator cannot read (it says what it reads).
@@ -135,11 +136,13 @@ resetSql();
 
 // ---- tokens -------------------------------------------------------------------------------------
 
-type Token = { t: 'word' | 'str' | 'num' | 'param' | 'op'; v: string };
+/** A delimited identifier (`"..."`) is a word that is never a keyword. */
+type Token = { t: 'word' | 'str' | 'num' | 'param' | 'op'; v: string; quoted?: true };
 
 function tokenize(sql: string): Token[] {
   const out: Token[] = [];
-  const re = /\s+|('(?:[^']|'')*')|(\d+(?:\.\d+)?)|(\?)|(<>|!=|<=|>=|[=<>(),.*;-])|(%?[A-Za-z_][\w%]*)/y;
+  const re =
+    /\s+|('(?:[^']|'')*')|(\d+(?:\.\d+)?)|(\?)|(<>|!=|<=|>=|[=<>(),.*;-])|(%?[A-Za-z_][\w%]*)|("(?:[^"]|"")*")/y;
   let at = 0;
   while (at < sql.length) {
     re.lastIndex = at;
@@ -151,6 +154,7 @@ function tokenize(sql: string): Token[] {
     else if (m[3]) out.push({ t: 'param', v: '?' });
     else if (m[4]) out.push({ t: 'op', v: m[4] });
     else if (m[5]) out.push({ t: 'word', v: m[5] });
+    else if (m[6]) out.push({ t: 'word', v: m[6].slice(1, -1).replace(/""/g, '"'), quoted: true });
   }
   return out;
 }
@@ -167,7 +171,7 @@ class Cursor {
   }
   is(word: string, n = 0) {
     const t = this.peek(n);
-    return !!t && (t.t === 'word' || t.t === 'op') && t.v.toUpperCase() === word;
+    return !!t && !t.quoted && (t.t === 'word' || t.t === 'op') && t.v.toUpperCase() === word;
   }
   eat(word: string) {
     if (this.is(word)) {
@@ -190,7 +194,7 @@ class Cursor {
     if (t.t === 'str') return t.v;
     if (t.t === 'num') return Number(t.v);
     if (t.t === 'param') return this.params[this.p++] ?? null;
-    if (t.t === 'word' && t.v.toUpperCase() === 'NULL') return null;
+    if (t.t === 'word' && !t.quoted && t.v.toUpperCase() === 'NULL') return null;
     if (t.t === 'op' && t.v === '-' && this.peek()?.t === 'num') return -Number(this.tokens[this.i++].v);
     throw invalid(`a value expected, found "${t.v}"`);
   }
@@ -460,7 +464,8 @@ function select(c: Cursor, ns: string): { columns: Column[]; rows: unknown[][] }
   if (c.eat('FROM')) {
     t = findTable(ns, tableName(c));
     // A table alias is read and not needed: one table, so every column is its.
-    if (c.peek()?.t === 'word' && !CLAUSES.includes(c.peek()!.v.toUpperCase())) c.name();
+    if (c.peek()?.t === 'word' && (c.peek()!.quoted || !CLAUSES.includes(c.peek()!.v.toUpperCase())))
+      c.name();
   }
   const where = c.eat('WHERE') ? condition(c, t) : () => true;
   const groups: string[] = [];
@@ -689,7 +694,7 @@ export function runStatement(
   const text = sql.trim().replace(/;\s*$/, '');
   const started = performance.now();
   const c = new Cursor(tokenize(text), parameters);
-  const verb = c.peek()?.v.toUpperCase() ?? '';
+  const verb = c.peek()?.quoted ? '' : (c.peek()?.v.toUpperCase() ?? '');
   let answer: { columns: Column[]; rows: unknown[][] } = { columns: [], rows: [] };
   let count = 0;
   if (verb === 'EXPLAIN') {

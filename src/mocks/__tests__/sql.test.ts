@@ -62,4 +62,12 @@ describe("the demo's SQL", () => {
     expect(code('MERGE INTO x')).toBe(-1);
     expect(String(run('EXPLAIN SELECT * FROM Sample.Person').rows[0][0])).toContain('Sample.Person.IDKEY');
   });
+
+  it('reads delimited names, whatever their case, and never as keywords', () => {
+    expect(run('SELECT TOP 1 "Name" FROM "Sample"."Person" ORDER BY "Name"').rows).toEqual([['Ada Lovelace']]);
+    expect(run('SELECT COUNT(*) AS n FROM "sample"."person"').rows).toEqual([[8]]);
+    run('CREATE TABLE Scratch."Order" (ID INTEGER, "Select" VARCHAR(20))');
+    run('INSERT INTO Scratch."Order" ("Select") VALUES (\'x\')');
+    expect(run('SELECT "Select" FROM Scratch."Order" "Where"').rows).toEqual([['x']]);
+  });
 });

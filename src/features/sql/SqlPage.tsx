@@ -26,7 +26,7 @@ import { DataTable, type ColumnDef } from '@/components/DataTable';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { PageHeader } from '@/components/PageHeader';
 import { PasswordGate } from '@/components/PasswordGate';
-import { classifyStatement, placeholders } from '@/lib/sqlStatement';
+import { classifyStatement, placeholders, quoteIdentifier } from '@/lib/sqlStatement';
 import { useAtelierAuth } from '@/stores/atelierAuth';
 import { useMgmntAuth } from '@/stores/mgmntAuth';
 import { useReadOnly } from '@/stores/readOnly';
@@ -212,7 +212,7 @@ export default function SqlPage() {
   };
 
   const preview = (s: string, t: string) => {
-    const text = `SELECT TOP 100 * FROM ${s}.${t}`;
+    const text = `SELECT TOP 100 * FROM ${quoteIdentifier(s)}.${quoteIdentifier(t)}`;
     setSql(text);
     setTab('query');
     void execute(text);

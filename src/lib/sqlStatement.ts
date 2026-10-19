@@ -87,5 +87,8 @@ export function classifyStatement(sql: string): StatementKind {
   };
 }
 
+/** A name as a delimited identifier (`"Sample"."Person"`), so a reserved word or any character is fine. */
+export const quoteIdentifier = (name: string) => `"${name.replace(/"/g, '""')}"`;
+
 /** How many `?` placeholders a statement has (outside strings and comments). */
 export const placeholders = (sql: string) => (stripSql(sql).match(/\?/g) ?? []).length;
