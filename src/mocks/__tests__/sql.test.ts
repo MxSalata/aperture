@@ -93,4 +93,11 @@ describe("the demo's SQL", () => {
       run("-- don't mind me\nSELECT /* the name */ Name FROM Sample.Person WHERE ID = 1 -- the first").rows,
     ).toEqual([['Ada Lovelace']]);
   });
+
+  it('compares a number with a value written through a parameter as numbers', () => {
+    // The parameter boxes send text, so the demo keeps '40'; IRIS stores the integer.
+    run('INSERT INTO Sample.Person (Name, Company) VALUES (?, ?)', ['Zed', '40']);
+    expect(run('SELECT Name FROM Sample.Person WHERE Company > 5 AND Company < 100').rows).toEqual([['Zed']]);
+    expect(run('SELECT Name FROM Sample.Person WHERE Company = ?', ['40']).rows).toEqual([['Zed']]);
+  });
 });

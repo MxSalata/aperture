@@ -52,8 +52,8 @@
   name with `<`, `>` or `&` showed `&lt;`, `&gt;` and `&amp;`, in the error and in Activity; the whole message is
   decoded now, and the demo escapes its messages as IRIS does.
 - **The demo's SQL behaves more like IRIS's.** Its conditions compare strings whatever their case, as IRIS's
-  default collation does (`City = 'leeds'`, `%STARTSWITH 'ada'`), and it skips `--` and `/* */` comments, which
-  it used to refuse.
+  default collation does (`City = 'leeds'`, `%STARTSWITH 'ada'`), while a number and a value written through a
+  parameter still compare as numbers; and it skips `--` and `/* */` comments, which it used to refuse.
 
 ## 1.4.0 - Productions: every production, its hosts, their errors, start and stop (18 October 2026)
 

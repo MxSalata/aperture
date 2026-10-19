@@ -350,11 +350,13 @@ type Cond = (r: Row) => boolean;
 
 function compare(a: unknown, op: string, b: unknown): boolean {
   if (a === null || a === undefined || b === null || b === undefined) return false;
-  const x = typeof a === 'number' && typeof b === 'string' && b !== '' && !isNaN(Number(b)) ? Number(b) : b;
+  // A number against a numeric string (a value written through a parameter) compares as numbers.
+  const numeric = (v: unknown) =>
+    typeof v === 'number' || (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v)));
+  const asNumbers = (typeof a === 'number' || typeof b === 'number') && numeric(a) && numeric(b);
   // Strings compare as IRIS's default collation (SQLUPPER) has them: whatever their case.
-  const text = typeof a === 'string' || typeof x === 'string';
-  const l = text ? String(a).toUpperCase() : (a as number);
-  const r = text ? String(x).toUpperCase() : (x as number);
+  const l = asNumbers ? Number(a) : String(a).toUpperCase();
+  const r = asNumbers ? Number(b) : String(b).toUpperCase();
   switch (op) {
     case '=':
       return l === r;
