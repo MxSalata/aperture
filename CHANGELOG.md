@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.3 - Dependency updates (20 October 2026)
+
+- Bump the minor-and-patch group across 1 directory with 10 updates: @tabler/icons-react 3.48.0 to 3.49.0, @tanstack/react-query 5.103.2 to 5.104.3, react 19.3.0 to 19.3.1, react-dom 19.3.0 to 19.3.1, @axe-core/playwright 4.13.0 to 4.14.0, @playwright/test 1.63.0 to 1.64.1, @testing-library/user-event 14.6.7 to 14.6.8, postcss 8.5.28 to 8.5.30, prettier 3.9.9 to 3.9.10, vitest 5.0.2 to 5.0.5.
+
 ## 1.7.2 - Dependency updates (20 October 2026)
 
 - Bump the actions group across 1 directory with 3 updates: actions/setup-node 7.0.0 to 7.1.0, actions/upload-artifact 7.0.1 to 7.0.2, actions/download-artifact 7.0.0 to 8.0.2.
