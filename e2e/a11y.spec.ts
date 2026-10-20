@@ -117,7 +117,7 @@ for (const { colorScheme, contrast, palette } of MODES) {
       await signIn(page);
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await go(page, '/interop/productions/INTEROP/HL7.Production');
-      await page.getByRole('button', { name: 'Open HL7.Out.Results.TCP' }).click();
+      await page.locator('[data-row-label="Open HL7.Out.Results.TCP"]').click();
       await expect(
         page
           .getByRole('dialog')

@@ -46,7 +46,7 @@ test.describe('Aperture (demo mode)', () => {
 
     // The column shows the share of the disk; a click on a value shows sizes instead, without
     // opening the database, and the choice is kept on this device.
-    const clinical = page.getByRole('button', { name: 'Open database CLINICAL' });
+    const clinical = page.locator('[data-row-label="Open database CLINICAL"]');
     await expect(clinical.getByRole('cell', { name: '12% low' })).toBeVisible();
     await clinical.getByText('12%', { exact: true }).click();
     await expect(clinical.getByRole('cell', { name: '9.2 GiB low' })).toBeVisible();
@@ -61,7 +61,7 @@ test.describe('Aperture (demo mode)', () => {
     // IRISLIB has no disk figure of its own (as on a real instance): it shows its disk's.
     await expect(
       page
-        .getByRole('button', { name: 'Open database IRISLIB' })
+        .locator('[data-row-label="Open database IRISLIB"]')
         .getByRole('cell', { name: '36%', exact: true }),
     ).toBeVisible();
   });
@@ -192,7 +192,7 @@ test.describe('Aperture (demo mode)', () => {
     await page.getByLabel(/Password for/).fill('SYS');
     await page.getByRole('button', { name: 'Read the logs' }).click();
     // Clickable rows are buttons named by the entry's time (DataTable's getRowLabel).
-    await expect(page.getByRole('button', { name: /^Log entry / }).first()).toBeVisible();
+    await expect(page.locator('[data-row-label^="Log entry "]').first()).toBeVisible();
     await expect(page.getByText(/entries from the last/)).toBeVisible();
     const before = await page.getByText(/entries from the last/).textContent();
     await page.getByRole('button', { name: 'Older lines' }).click();
@@ -325,7 +325,7 @@ test.describe('Aperture (demo mode)', () => {
 
   test('a read-only tab shows it, and a change cannot be confirmed', async ({ page }) => {
     await loginDemo(page);
-    await page.getByRole('button', { name: 'Account menu' }).click();
+    await page.getByRole('button', { name: /account menu/ }).click();
     await page.getByRole('menuitem', { name: 'Make this tab read-only' }).click();
     await expect(page.getByRole('banner').getByLabel('Read-only tab')).toBeVisible();
     await go(page, '/locks');
@@ -344,7 +344,7 @@ test.describe('Aperture (demo mode)', () => {
     // The demo signs in with a JWT, which /api/mgmnt does not take: it asks for the password.
     await page.getByLabel(/Password for/).fill('SYS');
     await page.getByRole('button', { name: 'Read REST services' }).click();
-    await page.getByRole('button', { name: 'Routes of /api/atelier' }).click();
+    await page.locator('[data-row-label="Routes of /api/atelier"]').click();
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByText('/api/atelier/v1/{namespace}/doc/{docname}').first()).toBeVisible();
     // What a route takes, from the description: its path parameters, and a body for a write.

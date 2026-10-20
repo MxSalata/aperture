@@ -13,7 +13,7 @@ async function openMessagesLog(page: Page) {
   await page.goto('/#/logs/messages');
   await page.getByLabel(/Password for/).fill('SYS');
   await page.getByRole('button', { name: 'Read the logs' }).click();
-  await expect(page.getByRole('button', { name: /^Log entry / }).first()).toBeVisible();
+  await expect(page.locator('[data-row-label^="Log entry "]').first()).toBeVisible();
 }
 
 test('an entry says how often its message was logged and leads to the entries worded like it', async ({
@@ -22,7 +22,7 @@ test('an entry says how often its message was logged and leads to the entries wo
   await openMessagesLog(page);
   // A message the demo's log repeats with other numbers.
   await page.getByRole('textbox', { name: 'Filter rows' }).fill('expanded by');
-  const firstRow = page.getByRole('button', { name: /^Log entry / }).first();
+  const firstRow = page.locator('[data-row-label^="Log entry "]').first();
   await expect(firstRow).toContainText('expanded by');
   await firstRow.click();
   const drawer = page.getByRole('dialog');
@@ -66,10 +66,7 @@ for (const { colorScheme, contrast, palette } of MODES) {
       );
     test('passes the accessibility audit with an entry and its count open', async ({ page }) => {
       await openMessagesLog(page);
-      await page
-        .getByRole('button', { name: /^Log entry / })
-        .first()
-        .click();
+      await page.locator('[data-row-label^="Log entry "]').first().click();
       await expect(page.getByRole('dialog').getByText(/Found with IRIS Vector Search/)).toBeVisible();
       await expect(page.getByRole('dialog').getByText(/Counting the entries/)).toHaveCount(0, {
         timeout: 20_000,
@@ -86,10 +83,7 @@ for (const { colorScheme, contrast, palette } of MODES) {
 
     test('passes the accessibility audit with the list open', async ({ page }) => {
       await openMessagesLog(page);
-      await page
-        .getByRole('button', { name: /^Log entry / })
-        .first()
-        .click();
+      await page.locator('[data-row-label^="Log entry "]').first().click();
       await page.getByRole('dialog').getByRole('button', { name: 'Show similar entries' }).click();
       await expect(page.getByRole('dialog').getByText(/Matched by wording/)).toBeVisible({ timeout: 20_000 });
       const results = await new AxeBuilder({ page })

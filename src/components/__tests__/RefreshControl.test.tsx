@@ -28,28 +28,28 @@ describe('RefreshControl', () => {
   it('is off by default, shows the interval chosen for its screen, and Refresh still works by hand', () => {
     const onRefresh = vi.fn();
     mount('processes', onRefresh);
-    expect(screen.getByRole('button', { name: 'Auto-refresh off' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Auto-refresh: off' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     expect(onRefresh).toHaveBeenCalledTimes(1);
 
     // The menu itself is exercised in the browser (e2e/auto-refresh.spec.ts); here, the choice it makes.
     act(() => useAutoRefresh.getState().set('processes', 15));
-    expect(screen.getByRole('button', { name: 'Auto-refresh every 15 seconds' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Auto-refresh: every 15 s' })).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('aperture.refresh')!).state.intervals).toEqual({ processes: 15 });
     act(() => useAutoRefresh.getState().set('processes', 0));
-    expect(screen.getByRole('button', { name: 'Auto-refresh off' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Auto-refresh: off' })).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('aperture.refresh')!).state.intervals).toEqual({ processes: 0 });
   });
 
   it('a screen with a default of its own starts on it, and Off chosen there is remembered as off', () => {
     const onRefresh = vi.fn();
     const { unmount } = mount('processes', onRefresh, 5);
-    expect(screen.getByRole('button', { name: 'Auto-refresh every 5 seconds' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Auto-refresh: every 5 s' })).toBeInTheDocument();
     act(() => useAutoRefresh.getState().set('processes', 0));
-    expect(screen.getByRole('button', { name: 'Auto-refresh off' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Auto-refresh: off' })).toBeInTheDocument();
     unmount();
     mount('processes', onRefresh, 5);
-    expect(screen.getByRole('button', { name: 'Auto-refresh off' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Auto-refresh: off' })).toBeInTheDocument();
   });
 
   it('refreshes on the interval while the tab is visible, at once when it comes back, and stops on Off', () => {

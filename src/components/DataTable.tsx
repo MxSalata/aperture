@@ -501,7 +501,9 @@ export function DataTable<T>({
                   onClick={onRowClick ? () => activate(row) : undefined}
                   tabIndex={onRowClick ? 0 : undefined}
                   role={onRowClick ? 'button' : undefined}
-                  aria-label={onRowClick && getRowLabel ? getRowLabel(row.original) : undefined}
+                  // Named by its cells, which is what a speech-input user sees and says (WCAG 2.5.3); the
+                  // short label stays for tests and tooling.
+                  data-row-label={onRowClick && getRowLabel ? getRowLabel(row.original) : undefined}
                   onKeyDown={
                     onRowClick
                       ? (e) => {

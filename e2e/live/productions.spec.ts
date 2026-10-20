@@ -28,14 +28,12 @@ test('the productions of the instance, one production, and a failing host', asyn
   // Rows open a drawer, so they are buttons named after their host. The failing host's status is the
   // outcome of its last message, ok or error by turns; its errors come from its event log, and it
   // sorts first.
-  const failing = page.getByRole('button', { name: `Open ${FAILING}` });
+  const failing = page.locator(`[data-row-label="Open ${FAILING}"]`);
   await expect(failing.locator('.mantine-Badge-root').filter({ hasText: /^[1-9]\d*\+?$/ })).toBeVisible();
-  await expect(
-    page
-      .locator('table')
-      .getByRole('button', { name: /^Open / })
-      .first(),
-  ).toHaveAccessibleName(`Open ${FAILING}`);
+  await expect(page.locator('table').locator('[data-row-label^="Open "]').first()).toHaveAttribute(
+    'data-row-label',
+    `Open ${FAILING}`,
+  );
   await evidence(page, 'production');
 
   await failing.click();
@@ -55,7 +53,7 @@ test('a host stopped and started again, read back from IRIS @mutate', async ({ p
   const host = process.env.LIVE_STOP_HOST ?? 'Lab.Slow';
   await signIn(page, admin!);
   await page.goto(`/interop/productions/${encodeURIComponent(NS)}/${encodeURIComponent(PRODUCTION)}`);
-  await page.getByRole('button', { name: `Open ${host}` }).click();
+  await page.locator(`[data-row-label="Open ${host}"]`).click();
   const drawer = page.getByRole('dialog');
   await drawer.getByRole('button', { name: 'Stop host' }).click();
   await page.getByRole('dialog', { name: 'Stop host' }).getByRole('button', { name: 'Stop' }).click();

@@ -78,7 +78,8 @@ export function RefreshControl({ screen, onRefresh, loading, defaultSeconds }: P
             size="xs"
             variant={seconds ? 'light' : 'default'}
             rightSection={<IconChevronDown size={12} />}
-            aria-label={seconds ? `Auto-refresh every ${seconds} seconds` : 'Auto-refresh off'}
+            // The name holds the visible text (WCAG 2.5.3): "Every 5 s" reads as "Auto-refresh: every 5 s".
+            aria-label={seconds ? `Auto-refresh: every ${seconds} s` : 'Auto-refresh: off'}
           >
             {seconds ? `Every ${seconds} s` : 'Auto-refresh: off'}
           </Button>

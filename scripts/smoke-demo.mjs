@@ -215,7 +215,7 @@ await step('REST services and their routes', async () => {
   // The demo signs in with a JWT, which /api/mgmnt does not take: it asks for the password.
   await page.getByLabel(/Password for/).fill('SYS');
   await page.getByRole('button', { name: 'Read REST services' }).click();
-  await page.getByRole('button', { name: 'Routes of /api/admin' }).click();
+  await page.locator('[data-row-label="Routes of /api/admin"]').click();
   await page.getByRole('dialog').getByText('/api/admin/v2/async-results').first().waitFor({ timeout: 15000 });
   await page.waitForTimeout(500);
   await shot('23-rest-services');
@@ -263,10 +263,7 @@ await step('similar entries (IRIS Vector Search)', async () => {
   // A message the demo's log repeats with other numbers; the drawer lists the entries worded like it.
   await page.getByRole('textbox', { name: 'Filter rows' }).fill('expanded by');
   // Wait for the filter: the first row before it applies is another message.
-  const repeated = page
-    .getByRole('button', { name: /^Log entry / })
-    .filter({ hasText: 'expanded by' })
-    .first();
+  const repeated = page.locator('[data-row-label^="Log entry "]').filter({ hasText: 'expanded by' }).first();
   await repeated.waitFor({ timeout: 10000 });
   await repeated.click();
   const drawer = page.getByRole('dialog');
@@ -277,7 +274,7 @@ await step('similar entries (IRIS Vector Search)', async () => {
   await page.keyboard.press('Escape');
 });
 await step('read-only tab', async () => {
-  await page.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('button', { name: /account menu/ }).click();
   await page.getByRole('menuitem', { name: 'Make this tab read-only' }).click();
   await page.goto(url(`/locks`));
   await page.getByRole('button', { name: 'Remove lock' }).and(page.locator(':enabled')).first().click();
@@ -285,7 +282,7 @@ await step('read-only tab', async () => {
   await page.waitForTimeout(400);
   await shot('25-read-only');
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('button', { name: /account menu/ }).click();
   await page.getByRole('menuitem', { name: 'Allow changes in this tab' }).click();
 });
 await step('explorer executes GET', async () => {
@@ -340,7 +337,7 @@ await step('a production and its failing host', async () => {
     .getByRole('link', { name: 'HL7.Production' })
     .click();
   await page.getByRole('heading', { name: 'HL7.Production' }).waitFor({ timeout: 15000 });
-  await page.getByRole('button', { name: 'Open HL7.Out.Results.TCP' }).click();
+  await page.locator('[data-row-label="Open HL7.Out.Results.TCP"]').click();
   const drawer = page.getByRole('dialog');
   await drawer.getByRole('tab', { name: 'Event log' }).waitFor({ timeout: 15000 });
   await drawer.getByRole('cell', { name: 'Error', exact: true }).first().waitFor({ timeout: 15000 });
@@ -422,7 +419,7 @@ await step('high contrast', async () => {
   await page.waitForTimeout(300);
 });
 await step('operator (limited privileges) login', async () => {
-  await page.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('button', { name: /account menu/ }).click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await page.getByRole('button', { name: /Sign in/ }).waitFor({ timeout: 10000 });
   await page.getByLabel('Username').fill('operator');

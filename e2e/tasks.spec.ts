@@ -10,9 +10,9 @@ test('the Tasks screen shows a suspended task that the task list reports as acti
   await page.getByRole('button', { name: /Try the demo/ }).click();
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   await page.goto('/#/tasks');
-  const suspended = page.getByRole('button', { name: 'Open task Diagnostic Report' });
+  const suspended = page.locator('[data-row-label="Open task Diagnostic Report"]');
   await expect(suspended.getByText('Suspended', { exact: true })).toBeVisible();
   await expect(
-    page.getByRole('button', { name: 'Open task Purge Tasks' }).getByText('Active', { exact: true }),
+    page.locator('[data-row-label="Open task Purge Tasks"]').getByText('Active', { exact: true }),
   ).toBeVisible();
 });

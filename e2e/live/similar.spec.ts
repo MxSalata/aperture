@@ -16,7 +16,7 @@ test('an entry of messages.log leads to the entries worded like it', async ({ pa
   await page.goto('/logs/messages');
   // A JWT session gives the reader its password once (its web application takes a password only).
   const gate = page.getByLabel(/Password for/);
-  const rows = page.getByRole('button', { name: /^Log entry / });
+  const rows = page.locator('[data-row-label^="Log entry "]');
   await expect(gate.or(rows.first())).toBeVisible();
   if (await gate.isVisible()) {
     await gate.fill(admin!.password);

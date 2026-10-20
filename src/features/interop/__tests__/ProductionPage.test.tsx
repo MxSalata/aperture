@@ -34,7 +34,7 @@ async function open(username: string, production = 'HL7.Production') {
   await screen.findByRole('heading', { name: production });
 }
 
-const failingRow = () => screen.findByRole('button', { name: 'Open HL7.Out.Results.TCP' });
+const failingRow = () => screen.findByRole('button', { name: /^HL7\.Out\.Results\.TCP\b/ });
 
 describe('the production screen', () => {
   beforeEach(() => {
@@ -78,7 +78,7 @@ describe('the production screen', () => {
       ),
     );
     await open('_SYSTEM');
-    const row = await screen.findByRole('button', { name: 'Open HL7.Router.ADT' });
+    const row = await screen.findByRole('button', { name: /^HL7\.Router\.ADT\b/ });
     const cell = await within(row).findByText('0+');
     expect(cell.closest('.mantine-Badge-root')).toBeNull();
     expect(
@@ -163,7 +163,7 @@ describe('the production screen', () => {
 
   it("labels the Messages tab's ids as body ids", async () => {
     await open('_SYSTEM');
-    fireEvent.click(await screen.findByRole('button', { name: 'Open HL7.Router.ADT' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^HL7\.Router\.ADT\b/ }));
     fireEvent.click(await screen.findByRole('tab', { name: 'Messages' }));
     expect(await screen.findByRole('columnheader', { name: /Body id/ })).toBeInTheDocument();
   });

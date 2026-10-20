@@ -159,7 +159,7 @@ function UserMenu() {
   return (
     <Menu shadow="md" width={300} position="bottom-end" withinPortal>
       <Menu.Target>
-        <UnstyledButton aria-label="Account menu">
+        <UnstyledButton aria-label={username ? `${username}, account menu` : 'Account menu'}>
           <Group gap={6} wrap="nowrap">
             <IconUserCircle size={22} stroke={1.5} />
             <Text size="sm" fw={500} visibleFrom="sm">

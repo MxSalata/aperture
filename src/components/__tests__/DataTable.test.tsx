@@ -59,10 +59,13 @@ describe('DataTable', () => {
     expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'descending');
   });
 
-  it('exposes clickable rows as buttons with an accessible name', () => {
+  it('exposes clickable rows as buttons named by their cells, with the short label kept for tooling', () => {
     mount(
       <DataTable data={rows} columns={columns} onRowClick={() => {}} getRowLabel={(r) => `Open ${r.name}`} />,
     );
-    expect(screen.getByRole('button', { name: 'Open alpha' })).toHaveAttribute('tabindex', '0');
+    const row = screen.getByRole('button', { name: /^alpha\b/ });
+    expect(row).toHaveAttribute('tabindex', '0');
+    expect(row).not.toHaveAttribute('aria-label');
+    expect(row).toHaveAttribute('data-row-label', 'Open alpha');
   });
 });

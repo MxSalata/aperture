@@ -34,7 +34,7 @@ test('a query, a change behind its warning, and the catalogue', async ({ page })
 
   await page.getByRole('tab', { name: 'Catalogue' }).click();
   await page.getByRole('button', { name: /^Sample/ }).click();
-  await page.getByRole('button', { name: 'Open Person' }).click();
+  await page.locator('[data-row-label="Open Person"]').click();
   await expect(
     page.getByRole('cell', { name: 'BirthDate' }).or(page.getByRole('cell', { name: 'DOB' })),
   ).toBeVisible();
