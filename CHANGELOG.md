@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2 - Dependency updates (20 October 2026)
+
+- Bump the actions group across 1 directory with 3 updates: actions/setup-node 7.0.0 to 7.1.0, actions/upload-artifact 7.0.1 to 7.0.2, actions/download-artifact 7.0.0 to 8.0.2.
+- Bump the eslint group across 1 directory with 3 updates: eslint 9.39.5 to 10.13.0, globals 17.12.0 to 17.13.0, typescript-eslint 8.70.1 to 8.71.2.
+
 ## 1.7.1 - Dependency updates (19 October 2026)
 
 - Bump nginx from 1.30-alpine to 1.31-alpine in /docker.
