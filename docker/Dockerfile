@@ -9,7 +9,7 @@ RUN npm run build
 
 # ---- runtime: nginx serves the SPA and proxies /api/admin to IRIS ------------
 # nginx 1.30, the stable line in September 2026
-FROM nginx:1.31-alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2
+FROM nginx:1.31-alpine@sha256:785835ea65db4bba6f021acc0f3be91b0fef76a53fe41f8588c6698d2aed0606
 COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 ENV IRIS_UPSTREAM=http://iris:52773 \
