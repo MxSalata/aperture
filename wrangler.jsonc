@@ -1,0 +1,20 @@
+// The online demo on Cloudflare (Workers static assets), served at aperture.mxsalata.com. Workers Builds, connected to
+// this repository, runs `npm ci && npm run build:cloudflare` and then `npx wrangler deploy` for each push to main.
+// Only the demo build is published: an in-browser mock of the SysAdmin API, with no server code and no IRIS.
+{
+  "name": "aperture-demo",
+  "compatibility_date": "2026-10-29",
+  // One address only: aperture.mxsalata.com (a custom domain, added in the dashboard; a deploy leaves it as it is).
+  // Without these two lines every deploy turns the workers.dev address and preview URLs back on.
+  "workers_dev": false,
+  "preview_urls": false,
+  // Workers Logs record the Worker's own code running, and this Worker has none: the files are served directly.
+  "observability": {
+    "enabled": false,
+    "logs": { "enabled": false },
+    "traces": { "enabled": false },
+  },
+  "assets": {
+    "directory": "./dist-demo",
+  },
+}
