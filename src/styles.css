@@ -446,3 +446,19 @@ body {
   z-index: 1;
   background: var(--mantine-color-body);
 }
+
+/*
+ * The demo's banner (DemoBanner): the grape of the DEMO badge as a band across the top of the header, its text and
+ * links in the grape light colour, which the tokens above hold at 4.5:1 or more on that tint in every mode.
+ */
+.demo-banner {
+  background: var(--mantine-color-grape-light);
+  color: var(--mantine-color-grape-light-color);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+.demo-banner .demo-banner-link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
