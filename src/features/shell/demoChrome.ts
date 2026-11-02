@@ -1,7 +1,7 @@
 // The demo's banner and welcome share these: kept apart from the components so Fast Refresh can reload them.
 
 /** The banner's height in pixels; the app shell's header grows by this much while the demo runs. */
-export const DEMO_BANNER_HEIGHT = 32;
+export const DEMO_BANNER_HEIGHT = 36;
 
 /** "mxsalata.com" for "https://mxsalata.com/": the home link names the site it goes back to. */
 export function homeLabel(url: string): string {

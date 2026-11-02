@@ -1,1 +1,0 @@
-import{j as e,D as t}from"./mantine-rkAdyiu0.js";function l({label:r,focusable:o=!0,children:a}){return e.jsx(t,{type:"auto",offsetScrollbars:"x",viewportProps:o?{tabIndex:0,role:"group","aria-label":r}:void 0,children:a})}export{l as C};

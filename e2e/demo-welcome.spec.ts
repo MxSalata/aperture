@@ -9,7 +9,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test('a fresh browser gets the welcome once, and the banner stays on every page', async ({ page }) => {
   await page.goto('/#/login');
   // The login page of the demo build already carries the banner.
-  await expect(page.getByRole('region', { name: 'Demo' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Demo environment' })).toBeVisible();
   await page.getByRole('button', { name: /Try the demo/ }).click();
 
   const welcome = page.getByRole('dialog', { name: /Welcome to Aperture's demo/ });
@@ -20,9 +20,9 @@ test('a fresh browser gets the welcome once, and the banner stays on every page'
   await expect(welcome).toBeHidden();
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
-  const banner = page.getByRole('region', { name: 'Demo' });
+  const banner = page.getByRole('region', { name: 'Demo environment' });
   await expect(banner).toBeVisible();
-  await expect(banner.getByText(/made-up data from a mock IRIS in your browser/)).toBeVisible();
+  await expect(banner.getByText(/Made-up IRIS data: nothing leaves this browser/)).toBeVisible();
   // The demo build here names no home page, so there is no "Back to" link.
   await expect(banner.getByRole('link')).toHaveCount(0);
 
@@ -30,7 +30,7 @@ test('a fresh browser gets the welcome once, and the banner stays on every page'
   await expect(page.getByRole('heading', { name: 'Health check' })).toBeVisible();
   await expect(banner).toBeVisible();
 
-  // Once closed, the welcome stays closed after a reload (the tab stays signed in); the banner's link opens it on
+  // Once closed, the welcome stays closed after a reload (the tab stays signed in); the banner's info button opens it on
   // purpose.
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Health check' })).toBeVisible();
@@ -42,7 +42,7 @@ test('a fresh browser gets the welcome once, and the banner stays on every page'
   await expect(welcome).toBeHidden();
 });
 
-test('on a phone the banner keeps to one line with nothing cut off sideways', async ({ page }) => {
+test('on a phone the banner keeps to one row with nothing cut off sideways', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await page.goto('/#/login');
   await page.getByRole('button', { name: /Try the demo/ }).click();
@@ -50,10 +50,10 @@ test('on a phone the banner keeps to one line with nothing cut off sideways', as
     .getByRole('dialog', { name: /Welcome to Aperture's demo/ })
     .getByRole('button', { name: 'Start exploring' })
     .click();
-  const banner = page.getByRole('region', { name: 'Demo' });
-  await expect(banner.getByText('Made-up data, in your browser only')).toBeVisible();
-  await expect(banner.getByRole('button', { name: 'About' })).toBeVisible();
+  const banner = page.getByRole('region', { name: 'Demo environment' });
+  await expect(banner.getByText('Demo environment')).toBeVisible();
+  await expect(banner.getByRole('button', { name: 'About this demo' })).toBeVisible();
   const box = await banner.boundingBox();
-  expect(box?.height).toBeLessThanOrEqual(33);
+  expect(box?.height).toBeLessThanOrEqual(37);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
