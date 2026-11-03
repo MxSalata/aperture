@@ -17,6 +17,16 @@ export default defineConfig({
     baseURL: 'http://localhost:4174',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    // The demo's welcome window opens once per browser; the specs start past it (demo-welcome.spec.ts tests it).
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: 'http://localhost:4174',
+          localStorage: [{ name: 'aperture.demo-welcome.v1', value: 'seen' }],
+        },
+      ],
+    },
     ...(process.env.CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.CHROMIUM_PATH } } : {}),
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

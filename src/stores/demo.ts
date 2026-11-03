@@ -5,6 +5,12 @@ import { safeSessionStorage } from './storage';
 /** True for `vite build --mode demo` (GitHub Pages): the in-browser mock is the only backend there. */
 export const DEMO_BUILD = import.meta.env.VITE_DEMO === '1';
 
+/**
+ * Where the demo's "Back to" link goes: set by the build that serves the online demo on its owner's site
+ * (`npm run build:cloudflare`), and empty everywhere else, so other builds show no link.
+ */
+export const HOME_URL: string = import.meta.env.VITE_HOME_URL ?? '';
+
 /** Every account of the demo instance has this password (the mock's, never a real one). */
 export const DEMO_PASSWORD = 'SYS';
 

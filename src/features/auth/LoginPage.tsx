@@ -34,6 +34,7 @@ import {
   useConnections,
   SAME_ORIGIN_ID,
 } from '@/stores/connections';
+import { DemoBanner } from '@/features/shell/DemoBanner';
 import { DEMO_BUILD, DEMO_PASSWORD, useDemo } from '@/stores/demo';
 import { BrandMark } from '@/components/BrandMark';
 import { describeError } from '@/lib/errors';
@@ -186,6 +187,7 @@ export default function LoginPage() {
           'linear-gradient(160deg, var(--mantine-color-aperture-light) 0%, transparent 55%), var(--aperture-page)',
       }}
     >
+      {DEMO_BUILD ? <DemoBanner /> : null}
       <Container size={460} py={60}>
         <Center mb="lg">
           <Stack gap={4} align="center">

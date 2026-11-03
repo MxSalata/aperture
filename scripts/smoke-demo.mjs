@@ -77,6 +77,10 @@ await step('login page renders', async () => {
 });
 await step('demo login → dashboard', async () => {
   await page.getByRole('button', { name: /Try the demo/ }).click();
+  // The demo's welcome opens once on a fresh browser: it names the demo as made-up data, then closes.
+  const welcome = page.getByRole('dialog', { name: /Welcome to Aperture's demo/ });
+  await welcome.waitFor({ timeout: 20000 });
+  await welcome.getByRole('button', { name: 'Start exploring' }).click();
   await page.getByRole('heading', { name: 'Dashboard' }).waitFor({ timeout: 20000 });
   // The default charts draw once /api/monitor has been read twice (every 9 s).
   await page

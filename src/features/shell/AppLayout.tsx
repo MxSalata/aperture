@@ -34,7 +34,7 @@ import {
   IconLock,
   IconLockOpen,
 } from '@tabler/icons-react';
-import { Suspense, useCallback, type ReactNode } from 'react';
+import { Suspense, useCallback, useState, type ReactNode } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, Outlet, useNavigate } from 'react-router';
 import type { NavItem } from './nav';
@@ -42,6 +42,9 @@ import { NavList } from './NavList';
 import { CommandPalette } from './CommandPalette';
 import { useSession } from '@/stores/session';
 import { useDemo } from '@/stores/demo';
+import { DemoBanner } from './DemoBanner';
+import { DemoWelcome } from './DemoWelcome';
+import { DEMO_BANNER_HEIGHT, welcomeSeen } from './demoChrome';
 import { useHealth } from '@/stores/health';
 import { useReadOnly } from '@/stores/readOnly';
 import { selectActiveJobs, useJobs } from '@/stores/jobs';
@@ -324,6 +327,9 @@ export function AppLayout() {
   const info = useSession((s) => s.info);
   const instance = useInstanceLabel();
   const canUseItem = useCallback((item: NavItem) => canUse(info, item.privileges), [info]);
+  const demo = useDemo((s) => s.enabled);
+  // The demo's welcome opens once per device; the banner's "About this demo" opens it again.
+  const [welcome, setWelcome] = useState(() => demo && !welcomeSeen());
 
   // Timestamps are parsed in the instance's zone once the profile names one. Set while
   // rendering, before the page below renders its first timestamp (an effect runs after the
@@ -336,7 +342,7 @@ export function AppLayout() {
 
   return (
     <AppShell
-      header={{ height: 56 }}
+      header={{ height: 56 + (demo ? DEMO_BANNER_HEIGHT : 0) }}
       navbar={{ width: 250, breakpoint: 'md', collapsed: { mobile: !opened } }}
       padding="md"
       styles={{
@@ -347,7 +353,8 @@ export function AppLayout() {
     >
       <SkipLink />
       <AppShell.Header style={{ boxShadow: `inset 0 3px 0 0 var(--mantine-color-${instance.color}-6)` }}>
-        <Group h="100%" px="md" justify="space-between" wrap="nowrap">
+        {demo ? <DemoBanner onAbout={() => setWelcome(true)} /> : null}
+        <Group h={56} px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
             <Burger
               opened={opened}
@@ -416,6 +423,7 @@ export function AppLayout() {
       </AppShell.Main>
 
       <CommandPalette />
+      {demo ? <DemoWelcome opened={welcome} onClose={() => setWelcome(false)} /> : null}
       <JobsDrawer />
       <JobPoller />
     </AppShell>
