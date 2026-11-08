@@ -1,19 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Aperture's mark, an iris diaphragm: six blades round a hexagonal opening, one tint lighter
-       each, on a rounded square; src/components/BrandMark.tsx draws the same: keep the two alike -->
+  <!-- Aperture's mark, an iris diaphragm: six blades round a hexagonal opening, pale to ocean, on
+       an edged slate tile; src/components/BrandMark.tsx draws the same: keep the two alike -->
   <defs>
-    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="64" y2="64">
-      <stop offset="0" stop-color="#095c7c"/>
-      <stop offset="1" stop-color="#45acd1"/>
+    <linearGradient id="t" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="64" y2="64">
+      <stop offset="0" stop-color="#1f2630"/>
+      <stop offset="1" stop-color="#2a323d"/>
+    </linearGradient>
+    <linearGradient id="b" gradientUnits="userSpaceOnUse" x1="10" y1="10" x2="54" y2="54">
+      <stop offset="0" stop-color="#e7f5fa"/>
+      <stop offset="1" stop-color="#2a9dc9"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="19.2" fill="url(#g)"/>
-  <g fill="#fff" stroke="url(#g)" stroke-width="1.6" stroke-linejoin="round">
+  <rect x="1.25" y="1.25" width="61.5" height="61.5" rx="18" fill="url(#t)" stroke="#4a5463" stroke-width="2.5"/>
+  <g fill="url(#b)" stroke="#1f2630" stroke-width="1.8" stroke-linejoin="round">
     <path d="M32.000 22.000 L7.822 35.959 A24.500 24.500 0 0 1 16.482 13.041 Z"/>
-    <path d="M23.340 27.000 L23.340 54.918 A24.500 24.500 0 0 1 7.822 35.959 Z" fill-opacity="0.92"/>
-    <path d="M23.340 37.000 L47.518 50.959 A24.500 24.500 0 0 1 23.340 54.918 Z" fill-opacity="0.84"/>
-    <path d="M32.000 42.000 L56.178 28.041 A24.500 24.500 0 0 1 47.518 50.959 Z" fill-opacity="0.76"/>
-    <path d="M40.660 37.000 L40.660 9.082 A24.500 24.500 0 0 1 56.178 28.041 Z" fill-opacity="0.68"/>
-    <path d="M40.660 27.000 L16.482 13.041 A24.500 24.500 0 0 1 40.660 9.082 Z" fill-opacity="0.6"/>
+    <path d="M23.340 27.000 L23.340 54.918 A24.500 24.500 0 0 1 7.822 35.959 Z"/>
+    <path d="M23.340 37.000 L47.518 50.959 A24.500 24.500 0 0 1 23.340 54.918 Z"/>
+    <path d="M32.000 42.000 L56.178 28.041 A24.500 24.500 0 0 1 47.518 50.959 Z"/>
+    <path d="M40.660 37.000 L40.660 9.082 A24.500 24.500 0 0 1 56.178 28.041 Z"/>
+    <path d="M40.660 27.000 L16.482 13.041 A24.500 24.500 0 0 1 40.660 9.082 Z"/>
   </g>
 </svg>
