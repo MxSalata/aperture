@@ -36,7 +36,7 @@ const LINKS: [string, string][] = [
     'The article on the Developer Community',
     'https://community.intersystems.com/post/aperture-management-portal-intersystems-iris-no-separate-application-server',
   ],
-  ['The online demo', 'https://mxsalata.github.io/aperture/'],
+  ['The online demo', 'https://aperture.mxsalata.com/'],
   ['SysAdmin API specification', 'https://github.com/intersystems-community/sysadmin-api-specification'],
   [
     'Contest announcement',

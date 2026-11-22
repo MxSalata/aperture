@@ -7,13 +7,13 @@
 <p align="center">
   <a href="https://github.com/MxSalata/aperture/actions/workflows/ci.yml"><img src="https://github.com/MxSalata/aperture/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
   <a href="https://github.com/MxSalata/aperture/tags"><img src="https://img.shields.io/github/v/tag/MxSalata/aperture?label=version&color=0e7299" alt="Version" /></a>
-  <a href="https://mxsalata.github.io/aperture/"><img src="https://img.shields.io/badge/online%20demo-try%20it-45acd1" alt="Online demo" /></a>
+  <a href="https://aperture.mxsalata.com/"><img src="https://img.shields.io/badge/online%20demo-try%20it-45acd1" alt="Online demo" /></a>
   <a href="https://github.com/MxSalata/aperture#docker"><img src="https://img.shields.io/badge/docker-ghcr.io%2Fmxsalata%2Faperture-2496ed?logo=docker&logoColor=white" alt="Docker image" /></a>
   <a href="https://github.com/MxSalata/aperture#ipm"><img src="https://img.shields.io/badge/IPM-iris--aperture-095c7c" alt="IPM package" /></a>
   <a href="https://github.com/MxSalata/aperture/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="MIT licence" /></a>
 </p>
 <p align="center">
-  <a href="https://mxsalata.github.io/aperture/"><b>Online demo</b></a> ·
+  <a href="https://aperture.mxsalata.com/"><b>Online demo</b></a> ·
   <a href="https://github.com/MxSalata/aperture#for-judges-two-minutes">For judges</a> ·
   <a href="https://github.com/MxSalata/aperture#why-aperture">Why Aperture</a> ·
   <a href="https://github.com/MxSalata/aperture#run-it-on-real-iris">Run it</a> ·
@@ -36,7 +36,7 @@ Aperture is an entry for the [InterSystems Programming Contest: Build Your Own M
 
 ## For judges: two minutes
 
-1. **In your browser, nothing to install.** Open the [online demo](https://mxsalata.github.io/aperture/) and press **Try the demo**: a simulated IRIS 2026.2 runs inside the page, so change whatever you like.
+1. **In your browser, nothing to install.** Open the [online demo](https://aperture.mxsalata.com/) and press **Try the demo**: a simulated IRIS 2026.2 runs inside the page, so change whatever you like.
    - Open **Health check**: sixteen read-only checks run with your own access, and every finding says what it means, what to do, shows its evidence and opens the screen that fixes it.
    - Open _Logs → Messages log_ (the reader asks for the password, `SYS`) and open an entry: it says how often that message was logged, and **Show similar entries** lists the entries worded like it, with when (IRIS Vector Search).
    - Open _Security → Users → jdoe_, remove a role and press Save: the review lists old → new and **who loses which privilege**.
@@ -333,7 +333,7 @@ The portal and the APIs share an origin (the SysAdmin API sends no CORS headers,
 | Vector Search | [`Aperture.LogLine`](ipm/cls/Aperture/LogLine.cls): a `%Library.Vector` of 256 doubles under a `%SQL.Index.HNSW` index; `/api/aperture/logs/similar` ranks with `VECTOR_COSINE` (Logs → Messages log: open an entry) |
 | Docker | `ghcr.io/mxsalata/aperture`, [`docker-compose.yml`](docker-compose.yml), [`docker-compose.build.yml`](docker-compose.build.yml) |
 | IPM | `zpm "install iris-aperture"` ([`module.xml`](module.xml)) |
-| Online demo | https://mxsalata.github.io/aperture/ |
+| Online demo | https://aperture.mxsalata.com/ |
 | Articles | [Aperture: a management portal for InterSystems IRIS, with no separate application server](https://community.intersystems.com/post/aperture-management-portal-intersystems-iris-no-separate-application-server) and [20 places where the SysAdmin API specification and IRIS disagree](https://community.intersystems.com/post/20-places-where-sysadmin-api-specification-and-iris-disagree), on the Developer Community |
 | YouTube video | [Aperture: a Management Portal for InterSystems IRIS on the SysAdmin REST API](https://youtu.be/5U8rcPj7wJ4): the online demo, the IPM install on IRIS for Health 2026.2 and the Docker image, then every screen |
 | First-time contribution | The author's first InterSystems programming contest (the Newcomer badge on the contest page) |

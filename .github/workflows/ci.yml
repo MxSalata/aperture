@@ -9,7 +9,7 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Least privilege by default; the Pages deployment job raises what it needs.
+# Least privilege by default; a job that needs more raises it itself.
 permissions:
   contents: read
 
@@ -75,15 +75,10 @@ jobs:
       - name: Build the online demo (in-browser mock, hash router)
         run: npm run build:demo
       # Every run keeps the demo build as a plain artifact (download, unzip, serve with any static
-      # server). The Pages artifact and the deployment below are opt-in through the repository
-      # variable DEPLOY_DEMO, because GitHub Pages is not available while the repository is private.
+      # server). The online demo itself is served at https://aperture.mxsalata.com/.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: demo-site
-          path: dist-demo
-      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-        if: vars.DEPLOY_DEMO == 'true' && github.ref == 'refs/heads/main'
-        with:
           path: dist-demo
 
   # Merged Dependabot pull requests change the bundle but not the committed www/, which the IPM
@@ -352,26 +347,3 @@ jobs:
       - name: IRIS logs
         if: always()
         run: docker logs aperture-iris 2>&1 | tail -80 || true; docker compose down -v
-
-  # Publishes the demo to GitHub Pages. Skipped (not failed) until the repository is public,
-  # Pages is enabled (Settings → Pages → Source: GitHub Actions) and the repository variable
-  # DEPLOY_DEMO is set to 'true'.
-  deploy-demo:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_DEMO == 'true'
-    needs: verify
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    # Pages deployments must never be interrupted, so this job keeps its own serial queue.
-    concurrency:
-      group: pages
-      cancel-in-progress: false
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
-      - id: deployment
-        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
