@@ -37,8 +37,8 @@ describe('copyText', () => {
     const button = document.createElement('button');
     document.body.appendChild(button);
     button.focus();
-    expect(await copyText('curl -u _SYSTEM http://192.168.0.10:52773/api/admin/info')).toBe(true);
-    expect(copied).toEqual(['curl -u _SYSTEM http://192.168.0.10:52773/api/admin/info']);
+    expect(await copyText('curl -u _SYSTEM http://192.0.2.10:52773/api/admin/info')).toBe(true);
+    expect(copied).toEqual(['curl -u _SYSTEM http://192.0.2.10:52773/api/admin/info']);
     expect(document.activeElement).toBe(button);
     expect(document.querySelector('textarea')).toBeNull();
     button.remove();
